@@ -59,10 +59,7 @@ public interface CoverageDriver {
      */
     int numberOfBeneficiariesToProcess(Job job, ContractDTO contract);
 
-    default int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
-        return -1;
-    }
-
+    int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract);
     /**
      * Get first page worth of beneficiaries to run EOB searches on
      * @param job eob job to find first page for

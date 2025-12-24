@@ -181,11 +181,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         return jobOutputs;
     }
 
-    int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
-        // TODO
-        return -1;
-    }
-
     /**
      * Look through and compress the job output files and create JobOutput objects with them
      *

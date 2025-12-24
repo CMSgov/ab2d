@@ -2,7 +2,9 @@ package gov.cms.ab2d.coverage.repository;
 
 import gov.cms.ab2d.coverage.model.CoverageV3;
 import gov.cms.ab2d.coverage.model.CoverageV3Historical;
+import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,4 +16,7 @@ public interface CoverageV3HistoricalRepository extends JpaRepository<CoverageV3
     Optional<CoverageV3Historical> findByContractAndMonthAndYear(String contract, int month, int year);
 
     List<CoverageV3Historical> findAllByMonthAndYear(int month, int year);
+
+    @Query(value = "SELECT COUNT(c) FROM CoverageV3Historical c WHERE (c.year, c.month) IN :yearMonthRecords and c.contract = :contract")
+    int getCountByContractAndYearMonthRecords(String contract, List<YearMonthRecord> yearMonthRecords);
 }

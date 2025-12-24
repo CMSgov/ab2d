@@ -9,11 +9,14 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.coverage.service.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -61,6 +64,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final PdpClientService pdpClientService;
 
     private final CoverageService coverageService;
+    private final CoverageV3Service coverageV3Service;
     private final CoverageProcessor coverageProcessor;
     private final CoverageLockWrapper coverageLockWrapper;
     private final PropertiesService propertiesService;
@@ -80,6 +84,30 @@ public class CoverageDriverImpl implements CoverageDriver {
         this.coverageSearchRepository = coverageSearchRepository;
         this.pdpClientService = pdpClientService;
         this.coverageService = coverageService;
+        this.coverageProcessor = coverageProcessor;
+        this.coverageLockWrapper = coverageLockWrapper;
+        this.propertiesService = propertiesService;
+        this.mapping = mapping;
+        this.coverageSnapshotService = coverageSnapshotService;
+        this.coverageV3Service = null;
+    }
+    //CHECKSTYLE.ON
+
+    //CHECKSTYLE.OFF
+    @Autowired // TODO Remove later -- for now, tell Spring which constructor to use
+    public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
+                              PdpClientService pdpClientService,
+                              CoverageService coverageService,
+                              CoverageV3Service coverageV3Service,
+                              PropertiesService propertiesService,
+                              CoverageProcessor coverageProcessor,
+                              CoverageLockWrapper coverageLockWrapper,
+                              ContractToContractCoverageMapping mapping,
+                              CoverageSnapshotService coverageSnapshotService) {
+        this.coverageSearchRepository = coverageSearchRepository;
+        this.pdpClientService = pdpClientService;
+        this.coverageService = coverageService;
+        this.coverageV3Service = coverageV3Service;
         this.coverageProcessor = coverageProcessor;
         this.coverageLockWrapper = coverageLockWrapper;
         this.propertiesService = propertiesService;
@@ -508,9 +536,32 @@ public class CoverageDriverImpl implements CoverageDriver {
 
     @Trace(metricName = "EnrollmentCountV3", dispatcher = true)
     @Override
-    public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contractDTO) {
-        // TODO
-        return -1;
+    public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
+        ZonedDateTime time = getEndDateTime();
+
+        if (contract == null) {
+            throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
+        }
+
+        ZonedDateTime startDateTime = getStartDateTime(contract);
+
+        final List<YearMonthRecord> periodsToReport = new ArrayList<>();
+        while (startDateTime.isBefore(time)) {
+            val periodToReport = new YearMonthRecord(
+                startDateTime.getMonthValue(),
+                startDateTime.getYear()
+            );
+            periodsToReport.add(periodToReport);
+            startDateTime = startDateTime.plusMonths(1);
+        }
+
+        log.info("counting number of beneficiaries for {} coverage periods for job {}",
+                periodsToReport.size(),
+                job.getJobUuid()
+        );
+        int count = coverageV3Service.countBeneficiariesByCoveragePeriod(periodsToReport, contract.getContractNumber());
+        log.info("number of beneficiaries for job {}: {}", job.getJobUuid(), count);
+        return count;
     }
 
     /**
@@ -548,10 +599,13 @@ public class CoverageDriverImpl implements CoverageDriver {
             startDateTime = startDateTime.plusMonths(1);
         }
 
-        log.debug("counting number of beneficiaries for {} coverage periods for job {}",
-                periodsToReport.size(), job.getJobUuid());
-
-        return coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
+        log.info("counting number of beneficiaries for {} coverage periods for job {}",
+            periodsToReport.size(),
+            job.getJobUuid()
+        );
+        int count = coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
+        log.info("number of beneficiaries for job {}: {}", job.getJobUuid(), count);
+        return count;
     }
 
     /**
