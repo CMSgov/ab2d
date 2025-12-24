@@ -144,7 +144,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
             log.error("Error with native queries", e);
         }
         */
-        return -1;
+        return count1+ count2;
     }
     
 }
