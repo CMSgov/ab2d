@@ -20,14 +20,17 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     private static final String COVERAGE_V3_TABLE = "v3.coverage_v3";
     private static final String COVERAGE_V3_HISTORICAL_TABLE = "v3.coverage_v3_historical";
 
-    private final EntityManager em;
+    private final EntityManager entityManager;
     private final CoverageV3Repository coverageV3Repository;
     private final CoverageV3HistoricalRepository coverageV3HistoricalRepository;
 
-    public CoverageV3ServiceImpl(CoverageV3Repository coverageV3Repository, CoverageV3HistoricalRepository coverageV3HistoricalRepository, EntityManager em) {
+    public CoverageV3ServiceImpl(
+            CoverageV3Repository coverageV3Repository,
+            CoverageV3HistoricalRepository coverageV3HistoricalRepository,
+            EntityManager entityManager) {
         this.coverageV3Repository = coverageV3Repository;
         this.coverageV3HistoricalRepository = coverageV3HistoricalRepository;
-        this.em = em;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -76,11 +79,15 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         log.info("sql1: {}", sql1);
         log.info("sql2: {}", sql2);
 
-        Query query1 = em.createNativeQuery(sql1);
+        Query query1 = entityManager.createNativeQuery(sql1);
         populateSqlParameter(query1, contract, yearMonthRecords);
 
-        Query query2 = em.createNativeQuery(sql2);
+        log.info("sql1 query string: {}", query1.unwrap(org.hibernate.query.Query.class).getQueryString());
+
+        Query query2 = entityManager.createNativeQuery(sql2);
         populateSqlParameter(query2, contract, yearMonthRecords);
+        log.info("sql2 query string: {}", query2.unwrap(org.hibernate.query.Query.class).getQueryString());
+
 
         int count1 = ((Number) query1.getSingleResult()).intValue();
         int count2 = ((Number) query2.getSingleResult()).intValue();
