@@ -46,7 +46,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         try {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < yearMonthRecords.size(); i++) {
-                sb.append("(%s,%s)");
+                sb.append(String.format("(%s,%s)", yearMonthRecords.get(i).getYear(), yearMonthRecords.get(i).getMonth()));
                 if (i!=yearMonthRecords.size()-1) {
                     sb.append(",");
                 }
