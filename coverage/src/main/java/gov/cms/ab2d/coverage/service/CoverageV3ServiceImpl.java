@@ -51,11 +51,11 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                     sb.append(",");
                 }
             }
-            String SQL = "select count(*) from v3.coverage_v3_historical where (year, month) in (" + sb.toString()  +") and contract=?";
+            String SQL = "select count(*) from v3.coverage_v3_historical where (year, month) in (" + sb.toString()  +") and contract = :contract";
             Query nativeQuery = em.createNativeQuery(SQL);
-            nativeQuery.setParameter(1, contract);
-            int count = nativeQuery.getFirstResult();
-            log.info("Count for SQL: {}", count);
+            nativeQuery.setParameter("contract", contract);
+            int count = ((Number) nativeQuery.getSingleResult()).intValue();
+            log.info("Count: {}; SQL: {}", count, SQL);
         }
         catch (Exception e) {
             log.error("oops", e);
