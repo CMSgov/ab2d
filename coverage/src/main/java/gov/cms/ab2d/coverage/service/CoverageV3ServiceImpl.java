@@ -6,18 +6,19 @@ import gov.cms.ab2d.coverage.repository.CoverageV3Repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @Service
 @Transactional
 public class CoverageV3ServiceImpl implements CoverageV3Service {
+
+    private static final String COVERAGE_V3_TABLE = "v3.coverage_v3";
+    private static final String COVERAGE_V3_HISTORICAL_TABLE = "v3.coverage_v3_historical";
 
     private final EntityManager em;
     private final CoverageV3Repository coverageV3Repository;
@@ -42,7 +43,52 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
      ) and contract='Z0001'
      */
 
+
+    static String buildQueryWithPlaceholders(final String table, final int yearMonthRecordsSize) {
+        val whereInTupleValues = "(?,?),"
+                .repeat(yearMonthRecordsSize-1)
+                .concat("(?,?)");
+
+        val sql = String.format("""
+            select count(*) from %s
+            where 
+                contract = ? 
+                and (year, month) in (%s) 
+        """, table, whereInTupleValues);
+
+        return sql;
+    }
+
+    static void populateSqlParameter(Query query, String contract, List<YearMonthRecord> yearMonthRecords) {
+        var parameterIndex = 1;
+        query.setParameter(parameterIndex++, contract);
+        for (YearMonthRecord yearMonthRecord : yearMonthRecords) {
+            query.setParameter(parameterIndex++, yearMonthRecord.getYear());
+            query.setParameter(parameterIndex++, yearMonthRecord.getMonth());
+        }
+    }
+
+
     public int countBeneficiariesByCoveragePeriod(List<YearMonthRecord> yearMonthRecords, final String contract) {
+        val sql1 = buildQueryWithPlaceholders(COVERAGE_V3_TABLE, yearMonthRecords.size());
+        val sql2 = buildQueryWithPlaceholders(COVERAGE_V3_HISTORICAL_TABLE, yearMonthRecords.size());
+
+        log.info("sql1: {}", sql1);
+        log.info("sql2: {}", sql2);
+
+        Query query1 = em.createNativeQuery(sql1);
+        populateSqlParameter(query1, contract, yearMonthRecords);
+
+        Query query2 = em.createNativeQuery(sql1);
+        populateSqlParameter(query2, contract, yearMonthRecords);
+
+        int count1 = ((Number) query1.getSingleResult()).intValue();
+        int count2 = ((Number) query2.getSingleResult()).intValue();
+
+        log.info("count1: {}", count1);
+        log.info("count2: {}", count2);
+
+        /*
         try {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < yearMonthRecords.size(); i++) {
@@ -51,6 +97,10 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                     sb.append(",");
                 }
             }
+
+
+
+
             String SQL = "select count(*) from v3.coverage_v3_historical where (year, month) in (" + sb.toString()  +") and contract = :contract";
             log.info("SQL: {}", SQL);
             Query nativeQuery = em.createNativeQuery(SQL);
@@ -86,7 +136,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         catch (Exception e) {
             log.error("Error with native queries", e);
         }
-
+        */
         return -1;
     }
     
