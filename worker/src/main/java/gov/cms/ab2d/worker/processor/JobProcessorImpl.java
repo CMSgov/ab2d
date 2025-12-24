@@ -105,6 +105,8 @@ public class JobProcessorImpl implements JobProcessor {
                 log.error("major database exception", e);
             } else {
                 message = String.format("Job %s failed for contract #%s because %s", jobUuid, contract, e.getMessage());
+                // TODO Remove this -- only for debugging V3 code
+                log.error(message, e);
             }
 
             // Log exception to relevant loggers
