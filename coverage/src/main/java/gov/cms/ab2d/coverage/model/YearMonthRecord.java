@@ -5,10 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 
+import java.io.Serializable;
+
 @Embeddable
 @Data
 @AllArgsConstructor
-public class YearMonthRecord {
+public class YearMonthRecord implements Serializable {
     private int year;
     private int month;
 }

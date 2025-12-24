@@ -17,6 +17,6 @@ public interface CoverageV3HistoricalRepository extends JpaRepository<CoverageV3
 
     List<CoverageV3Historical> findAllByMonthAndYear(int month, int year);
 
-    @Query(value = "SELECT COUNT(c) FROM CoverageV3Historical c WHERE (c.year, c.month) IN :yearMonthRecords and c.contract = :contract")
+    @Query(value = "SELECT COUNT(c) FROM CoverageV3Historical c WHERE (c.year, c.month) IN (:yearMonthRecords) and c.contract = :contract")
     int getCountByContractAndYearMonthRecords(String contract, List<YearMonthRecord> yearMonthRecords);
 }

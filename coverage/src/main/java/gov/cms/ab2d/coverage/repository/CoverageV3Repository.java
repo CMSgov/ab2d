@@ -20,6 +20,6 @@ public interface CoverageV3Repository extends JpaRepository<CoverageV3, Void> {
 
     List<CoverageV3> findAllByMonthAndYear(int month, int year);
 
-    @Query(value = "SELECT COUNT(c) FROM CoverageV3 c WHERE (c.year, c.month) IN :yearMonthRecords and c.contract = :contract")
+    @Query(value = "SELECT COUNT(c) FROM CoverageV3 c WHERE (c.year, c.month) IN (:yearMonthRecords) and c.contract = :contract")
     int getCountByContractAndYearMonthRecords(String contract, List<YearMonthRecord> yearMonthRecords);
 }
