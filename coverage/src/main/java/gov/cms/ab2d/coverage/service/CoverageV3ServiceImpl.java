@@ -79,7 +79,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         Query query1 = em.createNativeQuery(sql1);
         populateSqlParameter(query1, contract, yearMonthRecords);
 
-        Query query2 = em.createNativeQuery(sql1);
+        Query query2 = em.createNativeQuery(sql2);
         populateSqlParameter(query2, contract, yearMonthRecords);
 
         int count1 = ((Number) query1.getSingleResult()).intValue();
