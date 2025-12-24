@@ -26,7 +26,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     public int countBeneficiariesByCoveragePeriod(List<YearMonthRecord> yearMonthRecords, final String contract) {
         List<Object[]> yearMonthRecordsAsObjects = new ArrayList<>();
         for (YearMonthRecord yearMonthRecord : yearMonthRecords) {
-            Object[] o = new Object[]{yearMonthRecord.getYear(), yearMonthRecord.getMonth()};
+            Object[] o = new Object[]{String.valueOf(yearMonthRecord.getYear()), String.valueOf(yearMonthRecord.getMonth())};
             yearMonthRecordsAsObjects.add(o);
         }
 
