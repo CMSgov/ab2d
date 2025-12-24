@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -23,14 +24,30 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     public int countBeneficiariesByCoveragePeriod(List<YearMonthRecord> yearMonthRecords, final String contract) {
+        List<Object[]> yearMonthRecordsAsObjects = new ArrayList<>();
+        for (YearMonthRecord yearMonthRecord : yearMonthRecords) {
+            Object[] o = new Object[]{yearMonthRecord.getYear(), yearMonthRecord.getMonth()};
+            yearMonthRecordsAsObjects.add(o);
+        }
+
         try {
-            log.info("Count #1: {}", coverageV3Repository.getCountByContractAndYearMonthRecords(contract, yearMonthRecords));
-            log.info("Count #2: {}", coverageV3HistoricalRepository.getCountByContractAndYearMonthRecords(contract, yearMonthRecords));
+            log.info("Count #1: {}", coverageV3Repository.getCountByContractAndYearMonthRecords(contract, yearMonthRecordsAsObjects));
+            log.info("Count #2: {}", coverageV3HistoricalRepository.getCountByContractAndYearMonthRecords(contract, yearMonthRecordsAsObjects));
         }
         catch (Exception e) {
-            log.error("Error", e);
+            log.error("Error with JPA queries", e);
             throw e;
         }
+
+        try {
+            log.info("Count #1: {}", coverageV3Repository.getCountByContractAndYearMonthRecordsNative(contract, yearMonthRecordsAsObjects));
+            log.info("Count #2: {}", coverageV3HistoricalRepository.getCountByContractAndYearMonthRecordsNative(contract, yearMonthRecordsAsObjects));
+        }
+        catch (Exception e) {
+            log.error("Error with native queries", e);
+            throw e;
+        }
+
         return -1;
     }
     

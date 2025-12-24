@@ -6,6 +6,7 @@ import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.lang.annotation.Native;
 import java.time.OffsetDateTime;
@@ -21,5 +22,9 @@ public interface CoverageV3Repository extends JpaRepository<CoverageV3, Void> {
     List<CoverageV3> findAllByMonthAndYear(int month, int year);
 
     @Query(value = "SELECT COUNT(c) FROM CoverageV3 c WHERE (c.year, c.month) IN (:yearMonthRecords) and c.contract = :contract")
-    int getCountByContractAndYearMonthRecords(String contract, List<YearMonthRecord> yearMonthRecords);
+    int getCountByContractAndYearMonthRecords(String contract, List<Object[]> yearMonthRecords);
+
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM v3.coverage_v3 WHERE (year, month) IN (:yearMonthRecords) and contract = :contract")
+    int getCountByContractAndYearMonthRecordsNative(@Param("contract") String contract, @Param("yearMonthRecords") List<Object[]> yearMonthRecords);
+
 }

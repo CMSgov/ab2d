@@ -5,6 +5,7 @@ import gov.cms.ab2d.coverage.model.CoverageV3Historical;
 import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,5 +19,8 @@ public interface CoverageV3HistoricalRepository extends JpaRepository<CoverageV3
     List<CoverageV3Historical> findAllByMonthAndYear(int month, int year);
 
     @Query(value = "SELECT COUNT(c) FROM CoverageV3Historical c WHERE (c.year, c.month) IN (:yearMonthRecords) and c.contract = :contract")
-    int getCountByContractAndYearMonthRecords(String contract, List<YearMonthRecord> yearMonthRecords);
+    int getCountByContractAndYearMonthRecords(String contract, List<Object[]> yearMonthRecords);
+
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM v3.coverage_v3_historical WHERE (year, month) IN (:yearMonthRecords) and contract = :contract")
+    int getCountByContractAndYearMonthRecordsNative(@Param("contract") String contract, @Param("yearMonthRecords") List<Object[]> yearMonthRecords);
 }
