@@ -548,8 +548,8 @@ public class CoverageDriverImpl implements CoverageDriver {
         final List<YearMonthRecord> periodsToReport = new ArrayList<>();
         while (startDateTime.isBefore(time)) {
             val periodToReport = new YearMonthRecord(
-                startDateTime.getMonthValue(),
-                startDateTime.getYear()
+                startDateTime.getYear(),
+                startDateTime.getMonthValue()
             );
             periodsToReport.add(periodToReport);
             startDateTime = startDateTime.plusMonths(1);
