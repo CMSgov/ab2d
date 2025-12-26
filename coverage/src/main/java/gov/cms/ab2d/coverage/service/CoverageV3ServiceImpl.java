@@ -7,9 +7,14 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -21,16 +26,19 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     private static final String COVERAGE_V3_HISTORICAL_TABLE = "v3.coverage_v3_historical";
 
     private final EntityManager entityManager;
+    private final DataSource dataSource;
     private final CoverageV3Repository coverageV3Repository;
     private final CoverageV3HistoricalRepository coverageV3HistoricalRepository;
 
     public CoverageV3ServiceImpl(
             CoverageV3Repository coverageV3Repository,
             CoverageV3HistoricalRepository coverageV3HistoricalRepository,
-            EntityManager entityManager) {
+            EntityManager entityManager,
+            DataSource dataSource) {
         this.coverageV3Repository = coverageV3Repository;
         this.coverageV3HistoricalRepository = coverageV3HistoricalRepository;
         this.entityManager = entityManager;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -51,7 +59,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         val whereInTupleValues = "(?,?),"
                 .repeat(yearMonthRecordsSize-1)
                 .concat("(?,?)");
+        /**
+          TODO -- need to count beneficiaries, NOT coverage periods
 
+         SELECT COUNT(DISTINCT beneficiary_id) FROM coverage c...
+
+
+         */
         val sql = String.format("""
             select count(*) from %s
             where 
@@ -73,6 +87,31 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
 
     public int countBeneficiariesByCoveragePeriod(List<YearMonthRecord> yearMonthRecords, final String contract) {
+        val sql = """
+            select count(*) from v3.coverage_v3_historical
+            where
+                contract = :contract
+                and (year, month) in (:yearMonthRecords)
+        """;
+
+
+        List<Object[]> yearMonthRecordsObjects = new ArrayList<>();
+        for (YearMonthRecord yearMonthRecord : yearMonthRecords) {
+            yearMonthRecordsObjects.add(new Object[]{yearMonthRecord.getYear(), yearMonthRecord.getMonth()});
+        }
+
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("contract", contract)
+                .addValue("yearMonthRecords", yearMonthRecordsObjects);
+
+
+        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+
+        return template.queryForList(sql, parameters, Integer.class)
+                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
+                        "of the coverage periods provided"));
+
+        /*
         val sql1 = buildQueryWithPlaceholders(COVERAGE_V3_TABLE, yearMonthRecords.size());
         val sql2 = buildQueryWithPlaceholders(COVERAGE_V3_HISTORICAL_TABLE, yearMonthRecords.size());
 
@@ -94,6 +133,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
         log.info("count1: {}", count1);
         log.info("count2: {}", count2);
+        */
 
         /*
         try {
@@ -144,7 +184,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
             log.error("Error with native queries", e);
         }
         */
-        return count1+ count2;
+        //return count1+ count2;
     }
     
 }
