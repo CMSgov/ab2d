@@ -138,7 +138,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         log.info("Count #1: {}", count1);
 
         final NamedParameterJdbcTemplate template2 = new NamedParameterJdbcTemplate(dataSource);
-        int count2 = template2.queryForList(sql2, parameters, Integer.class)
+        int count2 = template2.queryForList(sql2WithOptOut, parameters, Integer.class)
                 .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
                         "of the coverage periods provided"));
         log.info("Count #2: {}", count2);
