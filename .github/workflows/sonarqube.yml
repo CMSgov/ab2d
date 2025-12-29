@@ -10,6 +10,7 @@ permissions:
 
 env:
   SONAR_PROJECT_KEY: ab2d-project
+  AWS_REGION: "us-east-1"
 jobs:
   workflow:
     name: Checking workflow
