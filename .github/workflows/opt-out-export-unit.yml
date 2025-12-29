@@ -54,11 +54,11 @@ jobs:
           AWS_REGION: "us-east-1"
         with:
           params: |
-            ARTIFACTORY_URL=/artifactory/url  
-            ARTIFACTORY_USER=/artifactory/user
-            ARTIFACTORY_PASSWORD=/artifactory/password
-            SONAR_HOST_URL=/sonarqube/url
-            SONAR_TOKEN=/sonarqube/token
+            ARTIFACTORY_URL=/cdap/nonsensitive/artifactory/url  
+            ARTIFACTORY_URL=/cdap/nonsensitive/artifactory/user
+            ARTIFACTORY_PASSWORD=/cdap/sensitive/artifactory/password
+            SONAR_HOST_URL=/cdap/nonsensitive/sonarqube/url
+            SONAR_TOKEN=/cdap/sensitive/sonarqube/token
 
       - name: Run unit tests for opt-out-export lambda
         run: ../gradlew test
