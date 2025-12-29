@@ -36,6 +36,7 @@ jobs:
     needs: workflow
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AWS_REGION: "us-east-1"
 
     steps:
       - name: Checkout Code
@@ -54,7 +55,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
       - name: Set env vars from AWS params
         uses: cmsgov/cdap/actions/aws-params-env-action@main
@@ -71,7 +72,7 @@ jobs:
       - name: Assume role in AB2D dev account
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
 
       - name: SonarQube analysis (with coverage)
