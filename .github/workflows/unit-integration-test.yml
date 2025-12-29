@@ -89,7 +89,7 @@ jobs:
       - name: Assume role in AB2D dev account
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
 
       - name: Clean maven
