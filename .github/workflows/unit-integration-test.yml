@@ -6,6 +6,7 @@ on:
       environment:
         required: true
         type: string
+        default: test
   workflow_dispatch:
     inputs:
       environment:
