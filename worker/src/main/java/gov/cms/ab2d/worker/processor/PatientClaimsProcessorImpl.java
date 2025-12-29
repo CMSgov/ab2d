@@ -185,11 +185,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             // Make first request and begin looping over remaining pages
             if (request.isV3Job()) {
-                eobBundle = bfdClient.requestEOBFromServer(FhirVersion.R4v3, patientIdentifier, sinceTime, untilTime, request.getContractNum());
+                // TODO revert this back
+                //eobBundle = bfdClient.requestEOBFromServer(FhirVersion.R4v3, patientIdentifier, sinceTime, untilTime, request.getContractNum());
+
+                // TEMPORARY - TODO remove
+                eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getContractNum());
             }
             else {
                 eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getContractNum());
-
             }
             collector.filterAndAddEntries(eobBundle, patient);
 
