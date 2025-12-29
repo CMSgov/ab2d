@@ -29,7 +29,7 @@ env:
   # run the lengthier/costlier workflows when there are relevant files changed.
   # See https://github.com/orgs/community/discussions/44490 for a discussion.
   workflow_files_re: '^(api|common|coverage|e2e-bfd-test|e2e-test|job|src|worker)/.+$|^(pom.xml|settings.xml)$|^.github/workflows/(build|deploy|e2e-test|unit-integration-test|verify-deploy).yml$'
-  AB2D_ENV: ${{contains(fromJSON('[""]'), inputs.environment) && inputs.environment.default || inputs.environment}}
+  AB2D_ENV: "us-east-1"
 jobs:
   workflow:
     name: Checking workflow
