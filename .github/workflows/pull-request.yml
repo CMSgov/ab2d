@@ -15,6 +15,7 @@ jobs:
     uses: ./.github/workflows/unit-integration-test.yml
     with:
       environment: test
+      AWS_REGION: "us-east-1"
     secrets: inherit
   build-deploy-api:
     uses: ./.github/workflows/build-deploy.yml
