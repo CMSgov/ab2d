@@ -1,15 +1,10 @@
 package gov.cms.ab2d.coverage.repository;
 
-import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageV3;
-import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.lang.annotation.Native;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 

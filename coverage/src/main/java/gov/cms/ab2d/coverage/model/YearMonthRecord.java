@@ -3,7 +3,6 @@ package gov.cms.ab2d.coverage.model;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 
 import java.io.Serializable;
 

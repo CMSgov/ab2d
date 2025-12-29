@@ -1,6 +1,5 @@
 package gov.cms.ab2d.coverage.model;
 
-import gov.cms.ab2d.common.model.TimestampBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;

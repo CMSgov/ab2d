@@ -107,14 +107,14 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
         val sql2WithOptOut =
         """
-           select count(distinct patient_id) from 
+           select count(distinct patient_id) from
            (
                select * from v3.coverage_v3
                    where contract = :contract and (year,month) in (:yearMonthRecords)
                union
                select * from  v3.coverage_v3_historical
                    where contract = :contract and (year, month) in (:yearMonthRecords)
-           ) as union_results 
+           ) as union_results
            join current_mbi on union_results.current_mbi = current_mbi.mbi
            where current_mbi is not null
            and share_data is not false
