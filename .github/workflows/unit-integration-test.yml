@@ -77,7 +77,7 @@ jobs:
       - name: Set env vars from AWS params
         uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
-          AWS_REGION: ${{ env.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
         with:
           params: |
             ARTIFACTORY_URL=/artifactory/url
