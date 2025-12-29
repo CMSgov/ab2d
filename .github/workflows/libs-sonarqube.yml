@@ -42,6 +42,7 @@ jobs:
             ARTIFACTORY_PASSWORD=/cdap/sensitive/artifactory/password
             SONAR_HOST_URL=/cdap/nonsensitive/sonarqube/url
             SONAR_TOKEN=/cdap/sensitive/sonarqube/token
+            SONAR_PROJECT_KEY=${{ env.SONAR_PROJECT_KEY }}
 
       - name: SonarQube Analysis
         run: |
