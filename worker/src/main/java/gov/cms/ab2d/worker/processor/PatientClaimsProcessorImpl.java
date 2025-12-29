@@ -197,6 +197,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
+                log.info("Sleeping for 60 seconds to simulate a long-running job to test ProgressTracker");
+                Thread.sleep(60_000);
+
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
