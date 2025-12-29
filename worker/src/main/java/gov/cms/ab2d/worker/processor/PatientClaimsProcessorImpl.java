@@ -221,7 +221,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         .build());
             }
             logError(request, patientIdentifier, requestStartTime, ex);
-            throw ex;
+            try {
+                throw ex;
+            } catch (InterruptedException e) {
+                log.error("Error sleeping thread", e);
+                throw new RuntimeException(e);
+            }
         } finally {
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
