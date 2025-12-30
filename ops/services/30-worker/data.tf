@@ -33,9 +33,9 @@ data "aws_ecr_image" "worker" {
 }
 
 data "aws_ssm_parameter" "bfd_mtls_private_key" {
-  name = "/ab2d/${local.parent_env}/server/sensitive/server_keystore_public_cert"
+  name = "/ab2d/${local.parent_env}/api/sensitive/tls_private_key"
 }
 
 data "aws_ssm_parameter" "bfd_mtls_public_cert" {
-  name = "/ab2d/${local.parent_env}/api/sensitive/tls_private_key"
+  name = "/ab2d/${local.parent_env}/api/nonsensitive/tls_public_cert"
 }
