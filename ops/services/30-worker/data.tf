@@ -31,3 +31,11 @@ data "aws_ecr_image" "worker" {
   image_tag       = var.worker_service_image_tag
   most_recent     = var.worker_service_image_tag == null ? true : null
 }
+
+data "aws_ssm_parameter" "bfd_mtls_private_key" {
+  name = "/ab2d/${local.env}/api/sensitive/tls_private_key"
+}
+
+data "aws_ssm_parameter" "bfd_mtls_public_cert" {
+  name = "/ab2d/${local.env}/api/nonsensitive/tls_public_cert"
+}
