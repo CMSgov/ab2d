@@ -29,10 +29,6 @@ import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
-import software.amazon.awssdk.services.ssm.SsmClient;
-import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
-import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
-
 /**
  * Credits: most of the code in this class has been copied over from https://github.com/CMSgov/dpc-app
  */
@@ -42,10 +38,10 @@ import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 public class BFDClientConfiguration {
 
     @Value("${bfd.keystore.private_key}")
-    private String ssm_private_key;
+    private String env_private_key;
 
     @Value("${bfd.keystore.certificate}")
-    private String ssm_certificate;
+    private String env_certificate;
 
     @Value("${bfd.keystore.password}")
     private String keystorePassword;
@@ -73,8 +69,8 @@ public class BFDClientConfiguration {
     /**
      * Creates a KeyStore from private key and certificate stored in the ecs container secrets.
      *
-     * @param privateKeyParam SSM parameter name containing the private key
-     * @param certificateParam SSM parameter name containing the certificate
+     * @param privateKeyParam ENV parameter containing the private key
+     * @param certificateParam ENV parameter name containing the certificate
      * @param keystorePassword Password to protect the keystore
      * @param keyAlias Alias for the key entry in the keystore
      * @return Configured KeyStore object
@@ -85,8 +81,6 @@ public class BFDClientConfiguration {
             String certificateParam,
             String keystorePassword,
             String keyAlias) throws Exception {
-
-        try (SsmClient ssmClient = getSSMClient()) {
 
             // Retrieve private key from container environment
             String privateKeyData = System.getenv(privateKeyParam);
@@ -110,7 +104,6 @@ public class BFDClientConfiguration {
             );
 
             return keyStore;
-        }
     }
 
     /**
@@ -168,8 +161,8 @@ public class BFDClientConfiguration {
     public HttpClient bfdHttpClient() {
         try {
             KeyStore keyStore = createKeyStore(
-                    this.ssm_private_key,
-                    this.ssm_certificate,
+                    this.env_private_key,
+                    this.env_certificate,
                     this.keystorePassword,
                     this.keystoreAlias
             );
