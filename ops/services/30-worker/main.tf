@@ -180,8 +180,8 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom : local.bfd_keystore_password_arn },
       { name : "AB2D_BFD_KEYSTORE_BASE64", valueFrom : local.bfd_keystore_base64_arn },
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
-      { name : "AB2D_BFD_KEYSTORE_PRIVATE_KEY", valueFrom : data.aws_ssm_parameter.bfd_mtls_private_key },
-      { name : "AB2D_BFD_KEYSTORE_CERTIFICATE", valueFrom : data.aws_ssm_parameter.bfd_mtls_public_cert },
+      { name : "AB2D_BFD_KEYSTORE_PRIVATE_KEY", valueFrom : data.aws_ssm_parameter.bfd_mtls_private_key.arn },
+      { name : "AB2D_BFD_KEYSTORE_CERTIFICATE", valueFrom : data.aws_ssm_parameter.bfd_mtls_public_cert.arn },
       { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
       { name : "AB2D_DB_USER", valueFrom : local.db_username_arn },
       { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
