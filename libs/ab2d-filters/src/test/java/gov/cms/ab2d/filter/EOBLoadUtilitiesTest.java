@@ -253,7 +253,12 @@ class EOBLoadUtilitiesTest {
 
         // not null tests
         var jsonParser = FhirContext.forR4().newJsonParser();
-        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-HHA-R4v3.json");
+ //       org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Carrier-R4v3.json");
+//        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-HHA-R4v3.json");
+//        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Inpatient-R4v3.json");
+//        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Outpatient-R4v3.json");
+//        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Hospice-R4v3.json");
+        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-SNF-R4v3.json");
         org.hl7.fhir.r4.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.r4.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmer.getBenefit(eob, FhirVersion.R4v3);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);

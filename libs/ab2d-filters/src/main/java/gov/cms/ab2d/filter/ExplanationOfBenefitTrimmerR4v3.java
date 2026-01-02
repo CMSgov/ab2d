@@ -140,9 +140,10 @@ public class ExplanationOfBenefitTrimmerR4v3 {
     private static final String NPI_SYSTEM = "http://hl7.org/fhir/sid/us-npi";
     private static final List<String> roleCodes = List.of("attending", "referring", "operating", "otheroperating", "rendering");
 
-    private static final String EXT_PROVIDER_TYPE_URL = "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD";
-
-    private static final String EXT_RENDERING_PARTICIPATING_URL = "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD";
+    private static final List<String> RENDERING_EXT_URLS = List.of(
+            "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD",
+            "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD"
+    );
 
     /**
      * Pass in an ExplanationOfBenefit, return the copy without the data
@@ -186,9 +187,6 @@ public class ExplanationOfBenefitTrimmerR4v3 {
         copy.setLanguage(benefit.getLanguage());
         copy.setImplicitRules(benefit.getImplicitRules());
 
-//40        List<Extension> extensions = new ArrayList<>(benefit.getExtensionsByUrl(NL_RECORD_IDENTIFICATION));
-//        copy.setExtension(extensions);
-
         List<ExplanationOfBenefit.SupportingInformationComponent> supportingInfo = new ArrayList<>();
         supportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), NL_RECORD_IDENTIFICATION));
         supportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), C4BB_SUPPORTING_INFO_TYPE_SYSTEM, MS_DRG_SYSTEM, "drg"));
@@ -197,11 +195,43 @@ public class ExplanationOfBenefitTrimmerR4v3 {
         copy.setPatient(benefit.getPatient().copy());
         copy.setFacility(benefit.getFacility().copy());
 
-        List<ExplanationOfBenefit.CareTeamComponent> newCars = new ArrayList<>();
-        newCars.addAll(getCareTeamIdentifier(benefit, roleCodes, NPI_SYSTEM));
-//        newCars.addAll(getCareTeamIdentifier(benefit, Optional.empty(), Optional.of(EXT_RENDERING_PARTICIPATING_URL), "rendering"));
-//        newCars.addAll(getCareTeamIdentifier(benefit, Optional.empty(), Optional.of(EXT_PROVIDER_TYPE_URL), "rendering"));
+        List<ExplanationOfBenefit.CareTeamComponent> newCars = getCareTeamsByRoleCodes(benefit, roleCodes);
+
         copy.setCareTeam(newCars);
+
+        //For each careTeam, find its contained provider with NPI
+//        List<Resource> newContainedProviders =
+//                newCars.stream()
+//                        .flatMap(ct -> getProviderContainedForCareTeam(
+//                                benefit,
+//                                ct,
+//                                NPI_SYSTEM,
+//                                RENDERING_EXT_URLS
+//                        ).stream())
+//                        .collect(Collectors.toList());
+        List<Resource> contained = new ArrayList<>();
+        List<Resource> npiContained =
+                newCars.stream()
+                        .flatMap(ct -> getProviderContainedForCareTeam(benefit, ct).stream())
+                        .filter(res -> extractIdentifiers(res).stream()
+                                .anyMatch(id -> NPI_SYSTEM.equals(id.getSystem())))
+                        .collect(Collectors.toList());
+
+        List<Resource> withRenderingExtensions =
+                newCars.stream()
+                        .flatMap(ct -> getProviderContainedForCareTeam(benefit, ct).stream())
+                        .filter(res -> res instanceof DomainResource)
+                        .map(res -> (DomainResource) res)
+                        .filter(dr -> dr.getExtension().stream()
+                                .filter(ext -> RENDERING_EXT_URLS.contains(ext.getUrl()))
+                                .anyMatch(ext -> ext.getValue() instanceof CodeableConcept cc &&
+                                        cc.getCoding().stream().anyMatch(Coding::hasCode)))
+                        .collect(Collectors.toList());
+        contained.addAll(npiContained);
+        contained.addAll(withRenderingExtensions);
+
+        copy.setContained(contained);
+
 
         List<ExplanationOfBenefit.DiagnosisComponent> newDiagnosis = new ArrayList<>();
         benefit.getDiagnosis().forEach(c -> newDiagnosis.add(c.copy()));
@@ -309,124 +339,50 @@ public class ExplanationOfBenefitTrimmerR4v3 {
         return result;
     }
 
-    public static List<ExplanationOfBenefit.CareTeamComponent> getCareTeamIdentifier(ExplanationOfBenefit eob,
-                                                         List<String> roleCodes, String identifierSystem) {
+    public static List<ExplanationOfBenefit.CareTeamComponent> getCareTeamsByRoleCodes(
+            ExplanationOfBenefit eob,
+            List<String> roleCodes
+    ) {
         List<ExplanationOfBenefit.CareTeamComponent> result = new ArrayList<>();
+        if (eob == null || eob.getCareTeam() == null || roleCodes == null || roleCodes.isEmpty()) {
+            return result;
+        }
 
         for (ExplanationOfBenefit.CareTeamComponent ct : eob.getCareTeam()) {
-            if (ct == null || ct.getRole() == null || !ct.hasProvider() || !ct.getProvider().hasReference()) {
+            if (ct == null || ct.getRole() == null) {
                 continue;
             }
-
-            // role.coding where system & code match
-//            boolean matchesRole = ct.getRole().getCoding().stream()
-//                    .anyMatch(c -> roleCode.equals(c.getCode())  //only roleCode = attending
-//                       //     roleSystem.equals(c.getSystem())
-//                       //             && roleCode.equals(c.getCode())
-//                    );
 
             boolean matchesRole = ct.getRole().getCoding().stream()
-                    .anyMatch(c ->
-                            c.hasCode() &&
-                                    roleCodes.contains(c.getCode())
-                    );
+                    .anyMatch(c -> c.hasCode() && roleCodes.contains(c.getCode()));
 
-            if (!matchesRole) {
-                continue;
-            }
-
-            // "#careteam-provider-3" -> "careteam-provider-3"
-            Reference providerRef = ct.getProvider();
-            String ref = providerRef.getReference();
-            String containedId = ref != null && ref.startsWith("#") ? ref.substring(1) : ref;
-
-            if (containedId == null) {
-                continue;
-            }
-
-            // Find contained resource with that id
-            Optional<Resource> containedOpt = eob.getContained().stream()
-                    .filter(r -> containedId.equals(r.getIdPart()))
-                    .findFirst();
-
-            if (containedOpt.isEmpty()) {
-                continue;
-            }
-
-            Resource contained = containedOpt.get();
-
-            List<Identifier> identifiers = extractIdentifiers(contained);
-
-            // Filter by NPI system and add full Identifier objects
-            boolean hasNpi = identifiers.stream()
-                    .anyMatch(id -> identifierSystem.equals(id.getSystem()));
-
-            if (hasNpi) {
+            if (matchesRole) {
                 result.add(ct);
             }
         }
         return result;
     }
 
-//    public static List<ExplanationOfBenefit.CareTeamComponent> getCareTeamIdentifier(
-//            ExplanationOfBenefit eob,
-//            Optional<String> system,
-//            Optional<String> url,
-//            String roleCode
-//    ) {
-//        List<ExplanationOfBenefit.CareTeamComponent> result = new ArrayList<>();
-//
-//        for (ExplanationOfBenefit.CareTeamComponent ct : eob.getCareTeam()) {
-//            // Filter by role code ("attending", etc.)
-//            boolean matchesRole = ct.getRole() != null &&
-//                    ct.getRole().getCoding().stream()
-//                            .anyMatch(c -> roleCode.equalsIgnoreCase(c.getCode()));
-//
-//            if (!matchesRole || !ct.hasProvider() || !ct.getProvider().hasReference()) {
-//                continue;
-//            }
-//
-//            // provider reference like "#pract-abc" → remove '#'
-//            String ref = ct.getProvider().getReference();
-//            String containedId = ref.startsWith("#") ? ref.substring(1) : ref;
-//
-//            // Find contained resource with that id
-//            Optional<Resource> containedOpt = eob.getContained().stream()
-//                    .filter(r -> containedId.equals(r.getIdPart()))
-//                    .findFirst();
-//
-//            if (containedOpt.isEmpty()) {
-//                continue;
-//            }
-//
-//            Resource contained = containedOpt.get();
-//
-//            // Extract identifiers from contained Practitioner/Organization
-//            List<Identifier> identifiers = extractIdentifiers(contained);
-//
-//            // Check identifier system (if system filter is present)
-//            boolean matchesSystem = system.map(s ->
-//                    identifiers.stream().anyMatch(id -> s.equals(id.getSystem()))
-//            ).orElse(false);
-//
-//            // Check extensions by URL (if url filter is present)
-//            boolean matchesExtensionUrl = url
-//                    .map(u -> {
-//                        if (!(contained instanceof DomainResource dr)) {
-//                            return false;
-//                        }
-//                        return dr.getExtension().stream()
-//                                .anyMatch(ext -> u.equals(ext.getUrl()) && extensionHasCodingCode(ext));
-//                    })
-//                    .orElse(false);
-//
-//            // Add careTeam if it matches either identifier system or extension url
-//            if (matchesSystem || matchesExtensionUrl) {
-//                result.add(ct);
-//            }
-//        }
-//        return result;
-//    }
+    public static Optional<Resource> getProviderContainedForCareTeam(
+            ExplanationOfBenefit eob,
+            ExplanationOfBenefit.CareTeamComponent careTeam
+    ) {
+        if (eob == null || careTeam == null || !careTeam.hasProvider() || !careTeam.getProvider().hasReference()) {
+            return Optional.empty();
+        }
+
+        // "#careteam-provider-3" -> "careteam-provider-3"
+        String ref = careTeam.getProvider().getReference();
+        String containedId = (ref != null && ref.startsWith("#")) ? ref.substring(1) : ref;
+        if (containedId == null) {
+            return Optional.empty();
+        }
+
+        // Find contained resource with that id
+        return eob.getContained().stream()
+                .filter(r -> containedId.equals(r.getIdPart()))
+                .findFirst();
+    }
 
 
     private static List<Identifier> extractIdentifiers(Resource resource) {
@@ -437,23 +393,6 @@ public class ExplanationOfBenefitTrimmerR4v3 {
             return o.getIdentifier();
         }
         return Collections.emptyList();
-    }
-
-    /**
-     * True if extension.value is a CodeableConcept with at least one Coding.code.
-     * This corresponds to the tail of the FHIRPath:
-     * ...extension.where(url='...').coding.code
-     */
-    private static boolean extensionHasCodingCode(Extension ext) {
-        if (!(ext.getValue() instanceof CodeableConcept cc)) {
-            return false;
-        }
-        for (Coding coding : cc.getCoding()) {
-            if (coding.hasCode()) {
-                return true;
-            }
-        }
-        return false;
     }
 
 
