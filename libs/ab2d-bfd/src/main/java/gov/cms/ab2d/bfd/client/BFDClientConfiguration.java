@@ -19,7 +19,12 @@ import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.KeyStoreException;
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.KeyManagementException;
+import java.security.UnrecoverableKeyException;
+
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
@@ -169,8 +174,8 @@ public class BFDClientConfiguration {
                     this.keystoreAlias
             );
 
-            if (keyStore == null) {
-                throw new BeanInstantiationException(HttpClient.class, "Keystore does not exist");
+            if (!keyStoreFile.exists()) {
+                throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
             }
 
             return buildMutualTlsClient(keyStore, keystorePassword.toCharArray());
@@ -192,10 +197,12 @@ public class BFDClientConfiguration {
 
         try {
             // BlueButton FHIR servers have a self-signed cert and require a client cert
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-            kmf.init(keyStore, keyStorePass);
-            sslContext.init(kmf.getKeyManagers(), null, null);
-        } catch (KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
+            sslContext = SSLContexts.custom()
+                    .loadKeyMaterial(keystoreFile, keyStorePass, keyStorePass)
+                    .loadTrustMaterial(keystoreFile, keyStorePass)
+                    .build();
+
+        } catch (IOException | CertificateException | KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
             log.error(ex.getMessage());
             throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
         }
