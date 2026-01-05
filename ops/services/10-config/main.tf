@@ -12,7 +12,7 @@ module "platform" {
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app
-  env         = local.env
+  env         = "test"
   root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-config"
   service     = local.service
 }
