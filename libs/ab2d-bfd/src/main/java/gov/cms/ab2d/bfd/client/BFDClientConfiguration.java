@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.KeyManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
@@ -28,6 +29,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
+
 
 /**
  * Credits: most of the code in this class has been copied over from https://github.com/CMSgov/dpc-app
