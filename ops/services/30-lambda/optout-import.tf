@@ -138,7 +138,7 @@ resource "aws_lambda_function" "import" {
   skip_destroy                   = false
 
   tags = {
-    code = "https://github.com/CMSgov/ab2d/tree/main/optout"
+    code = "https://github.com/CMSgov/ab2d/tree/main/lambdas/optout"
   }
   timeout = 900
 
