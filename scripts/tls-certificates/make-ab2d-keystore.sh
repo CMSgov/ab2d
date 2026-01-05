@@ -65,5 +65,5 @@ gen_keystore "cn=dev.ab2d.cms.gov.local" \
 
 echo
 echo "REMEMBER: "
-echo "* Store the contents of each <env>-keystore.pfx.b64 in SSM configuration under the /ab2d/<env>/server/sensitive/server_keystore_base64 path"
-echo "* Store the contents of each <env>-public-cert.pem in SSM configuration under the /ab2d/<env>/server/sensitive/server_keystore_public_cert path"
+echo "* Store the contents of each <env>-keystore.pfx.b64 in SSM configuration under the /ab2d/<env>/worker/sensitive/server_keystore_base64 path"
+echo "* Store the contents of each <env>-public-cert.pem in SSM configuration under the /ab2d/<env>/worker/sensitive/server_keystore_public_cert path"
