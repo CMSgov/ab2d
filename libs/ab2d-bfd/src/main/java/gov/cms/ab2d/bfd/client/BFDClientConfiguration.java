@@ -167,7 +167,7 @@ public class BFDClientConfiguration {
                     this.keystoreAlias
             );
 
-            if (keyStore) {
+            if (keyStore == null) {
                 throw new BeanInstantiationException(HttpClient.class, "Keystore does not exist");
             }
 
@@ -186,15 +186,14 @@ public class BFDClientConfiguration {
      * @return {@link HttpClient} compatible with HAPI FHIR TLS client
      */
     private HttpClient buildMutualTlsClient(KeyStore keyStore, char[] keyStorePass) {
-        final SSLContext sslContext;
+         SSLContext sslContext = SSLContext.getInstance("TLS");
 
         try {
             // BlueButton FHIR servers have a self-signed cert and require a client cert
-            SSLContext sslContext = SSLContext.getInstance("TLS");
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(keyStore, keyStorePass);
             sslContext.init(kmf.getKeyManagers(), null, null);
-        } catch (IOException | CertificateException | KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
+        } catch (KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
             log.error(ex.getMessage());
             throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
         }
