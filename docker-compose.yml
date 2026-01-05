@@ -179,5 +179,5 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ${HOME}/ab2dcha
+      device: /opt/ab2d
       o: bind
