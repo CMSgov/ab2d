@@ -18,7 +18,7 @@ module "platform" {
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
-  env          = "test"
+  env          = local.env
   root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/30-worker"
   service      = local.service
   ssm_root_map = local.ssm_root_map
