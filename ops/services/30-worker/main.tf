@@ -58,15 +58,15 @@ locals {
   }, local.parent_env)
 
 
-  ab2d_efs_mount            = "/mnt/efs"
-  aws_region                = module.platform.primary_region.name
-  bfd_keystore_location     = module.platform.ssm.worker.bfd_keystore_location.value
-  bfd_keystore_password_arn = module.platform.ssm.worker.bfd_keystore_password.arn
-  bfd_keystore_base64       = module.platform.ssm.worker.mtls_keystore_base64.arn
-  bfd_keystore_public_cert  = module.platform.ssm.worker.mtls_keystore_public_cert.arn
-  vpc_id                    = module.platform.vpc_id
-  rds_writer_az             = module.data_db_writer_instance.writer.availability_zone
-  writer_adjacent_subnets   = [for subnet in module.platform.private_subnets : subnet.id if subnet.availability_zone == local.rds_writer_az]
+  ab2d_efs_mount               = "/mnt/efs"
+  aws_region                   = module.platform.primary_region.name
+  bfd_keystore_location        = module.platform.ssm.worker.bfd_keystore_location.value
+  bfd_keystore_password_arn    = module.platform.ssm.worker.bfd_keystore_password.arn
+  bfd_keystore_base64_arn      = module.platform.ssm.worker.mtls_keystore_base64.arn
+  bfd_keystore_public_cert_arn = module.platform.ssm.worker.mtls_keystore_public_cert.arn
+  vpc_id                       = module.platform.vpc_id
+  rds_writer_az                = module.data_db_writer_instance.writer.availability_zone
+  writer_adjacent_subnets      = [for subnet in module.platform.private_subnets : subnet.id if subnet.availability_zone == local.rds_writer_az]
 
   ecs_task_def_cpu_worker    = module.platform.parent_env == "prod" ? 16384 : 4096
   ecs_task_def_memory_worker = module.platform.parent_env == "prod" ? 32768 : 8192
@@ -179,8 +179,8 @@ resource "aws_ecs_task_definition" "worker" {
     ],
     secrets : [
       { name : "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom : local.bfd_keystore_password_arn },
-      { name : "AB2D_BFD_KEYSTORE_BASE64", valueFrom : local.bfd_keystore_base64 },
-      { name : "AB2D_BFD_KEYSTORE_CERTIFICATE", valueFrom : local.bfd_keystore_public_cert },
+      { name : "AB2D_BFD_KEYSTORE_BASE64", valueFrom : local.bfd_keystore_base64_arn },
+      { name : "AB2D_BFD_KEYSTORE_CERTIFICATE", valueFrom : local.bfd_keystore_public_cert_arn },
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
       { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
       { name : "AB2D_DB_USER", valueFrom : local.db_username_arn },
