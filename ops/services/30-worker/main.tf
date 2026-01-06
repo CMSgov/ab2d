@@ -62,8 +62,8 @@ locals {
   aws_region                   = module.platform.primary_region.name
   bfd_keystore_location        = module.platform.ssm.worker.bfd_keystore_location.value
   bfd_keystore_password_arn    = module.platform.ssm.worker.bfd_keystore_password.arn
-  bfd_keystore_base64_arn      = module.platform.ssm.worker.mtls_keystore_base64.arn
-  bfd_keystore_public_cert_arn = module.platform.ssm.worker.mtls_keystore_public_cert.arn
+  bfd_keystore_base64_arn      = module.platform.ssm.worker.bfd_keystore_base64.arn
+  bfd_keystore_public_cert_arn = module.platform.ssm.worker.bfd_keystore_public_cert.arn
   vpc_id                       = module.platform.vpc_id
   rds_writer_az                = module.data_db_writer_instance.writer.availability_zone
   writer_adjacent_subnets      = [for subnet in module.platform.private_subnets : subnet.id if subnet.availability_zone == local.rds_writer_az]
