@@ -21,9 +21,9 @@ resource "aws_sns_topic_subscription" "events" {
 module "events_service" {
   source = "github.com/CMSgov/cdap//terraform/modules/service?ref=jscott/PLT-1445"
 
-  awslogs_group_override            = "ab2d_events"
+  # awslogs_group_override            = "ab2d_events"
   cluster_arn                       = module.cluster.this.id
-  container_name_override           = "events-service-container"
+  # container_name_override           = "events-service-container"
   cpu                               = 512
   desired_count                     = 1
   execution_role_arn                = data.aws_iam_role.task_execution_role.arn
