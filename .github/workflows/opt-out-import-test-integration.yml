@@ -1,3 +1,4 @@
+# TODO validate in greenfield
 name: opt-out-import test integration
 
 on:
@@ -6,8 +7,6 @@ on:
       - .github/workflows/opt-out-import-test-integration.yml
       - lambdas/optout/**
   workflow_dispatch:
-  schedule:
-      - cron: '25 14 * * *'  # 6:25 AM PST or 9:25 AM EST
 
 # Ensure we have only one integration test running at a time
 concurrency:
