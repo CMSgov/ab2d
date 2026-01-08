@@ -1,6 +1,28 @@
 name: tofu-plan
 
 on:
+  workflow_call:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: string
+      api_image_tag:
+        description: ECR image tag for api service
+        required: true
+        type: string
+      contracts_image_tag:
+        description: ECR image tag for contracts service
+        required: true
+        type: string
+      events_image_tag:
+        description: ECR image tag for events service
+        required: true
+        type: string
+      worker_image_tag:
+        description: ECR image tag for worker service
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       environment:
