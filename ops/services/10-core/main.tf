@@ -152,7 +152,7 @@ resource "aws_efs_access_point" "efs" {
   }
 
   root_directory {
-    path = "/mnt/"
+    path = "/mnt"
     creation_info {
       permissions = 777
       owner_uid   = 0
