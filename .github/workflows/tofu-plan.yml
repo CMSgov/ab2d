@@ -9,19 +9,19 @@ on:
         type: string
       api_image_tag:
         description: ECR image tag for api service
-        required: true
+        default: ""
         type: string
       contracts_image_tag:
         description: ECR image tag for contracts service
-        required: true
+        default: ""
         type: string
       events_image_tag:
         description: ECR image tag for events service
-        required: true
+        default: ""
         type: string
       worker_image_tag:
         description: ECR image tag for worker service
-        required: true
+        default: ""
         type: string
   workflow_dispatch:
     inputs:
@@ -36,19 +36,19 @@ on:
           - prod
       api_image_tag:
         description: ECR image tag for api service
-        required: true
+        default: ""
         type: string
       contracts_image_tag:
         description: ECR image tag for contracts service
-        required: true
+        default: ""
         type: string
       events_image_tag:
         description: ECR image tag for events service
-        required: true
+        default: ""
         type: string
       worker_image_tag:
         description: ECR image tag for worker service
-        required: true
+        default: ""
         type: string
 
 concurrency:
@@ -106,13 +106,13 @@ jobs:
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan -var=contracts_service_image_tag=${{ inputs.contracts_image_tag }} -var=events_service_image_tag=${{ inputs.events_image_tag }}
+          tofu plan ${{ inputs.contracts_image_tag != '' && format('{0}{1}', '-var=contracts_service_image_tag=', inputs.contracts_image_tag) || '' }} ${{ inputs.events_image_tag != '' && format('{0}{1}', '-var=events_service_image_tag=', inputs.events_image_tag) || '' }}
       - name: tofu plan - api
         working-directory: ops/services/30-api/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan -var=api_service_image_tag=${{ inputs.api_image_tag }}
+          tofu plan ${{ inputs.api_image_tag != '' && format('{0}{1}', '-var=api_service_image_tag=', inputs.api_image_tag) || '' }}
       - name: tofu plan - lambda
         working-directory: ops/services/30-lambda/
         run: |
@@ -124,4 +124,4 @@ jobs:
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan -var=worker_service_image_tag=${{ inputs.worker_image_tag }}
+          tofu plan ${{ inputs.worker_image_tag != '' && format('{0}{1}', '-var=worker_service_image_tag=', inputs.worker_image_tag) || '' }}
