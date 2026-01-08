@@ -86,7 +86,7 @@ jobs:
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan -var=contracts_cervice_image_tag=${{ inputs.contracts_image_tag }} -var=events_service_image_tag=${{ inputs.events_image_tag }}
+          tofu plan -var=contracts_service_image_tag=${{ inputs.contracts_image_tag }} -var=events_service_image_tag=${{ inputs.events_image_tag }}
       - name: tofu apply - api
         working-directory: ops/services/30-api/
         run: |
