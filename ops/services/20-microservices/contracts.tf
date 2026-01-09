@@ -82,9 +82,7 @@ resource "aws_lb_listener_rule" "contracts" {
 module "contracts_service" {
   source = "github.com/CMSgov/cdap//terraform/modules/service?ref=jscott/PLT-1445"
 
-  # awslogs_group_override            = "ab2d_contracts"
-  cluster_arn                       = module.cluster.this.id
-  # container_name_override           = "contracts-service-container"
+  cluster_arn = module.cluster.this.id
   cpu                               = 1024
   desired_count                     = 1
   execution_role_arn                = data.aws_iam_role.task_execution_role.arn
@@ -93,7 +91,6 @@ module "contracts_service" {
   image                             = local.contracts_image_uri
   memory                            = 2048
   platform                          = module.platform
-  platform_version                  = "1.4.0"
   security_groups                   = [data.aws_security_group.api.id]
   service_name_override             = "contracts"
   task_role_arn                     = data.aws_iam_role.task_execution_role.arn
