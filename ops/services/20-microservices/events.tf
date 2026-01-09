@@ -21,18 +21,14 @@ resource "aws_sns_topic_subscription" "events" {
 module "events_service" {
   source = "github.com/CMSgov/cdap//terraform/modules/service?ref=jscott/PLT-1445"
 
-  # awslogs_group_override            = "ab2d_events"
   cluster_arn                       = module.cluster.this.id
-  # container_name_override           = "events-service-container"
   cpu                               = 512
   desired_count                     = 1
   execution_role_arn                = data.aws_iam_role.task_execution_role.arn
   force_new_deployment              = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
-  health_check_grace_period_seconds = null
   image                             = local.events_image_uri
   memory                            = 1024
   platform                          = module.platform
-  platform_version                  = "1.4.0"
   security_groups                   = [data.aws_security_group.api.id]
   service_name_override             = "events"
   task_role_arn                     = data.aws_iam_role.task_execution_role.arn
@@ -78,7 +74,9 @@ module "events_service" {
 
   port_mappings = [
     {
-      containerPort = 8010 #FIXME is this even necessary?
+      hostPort      = 8010 #FIXME is this even necessary?
+      containerPort = 8010
+      protocol      = "tcp"
     }
   ]
 
