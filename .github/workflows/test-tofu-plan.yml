@@ -1,0 +1,22 @@
+name: test tofu-plan
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'ops/services/**'
+      - '.github/workflows/tofu-*'
+      - '.github/workflows/test-tofu-plan.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test-tofu-plan:
+    uses: ./.github/workflows/tofu-plan.yml
+    with:
+      environment: test
+    secrets: inherit
+
+
