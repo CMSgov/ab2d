@@ -12,16 +12,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 import javax.net.ssl.SSLContext;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.util.Base64;
+import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,14 +28,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class BFDClientConfiguration {
 
-    @Value("${bfd.keystore.location:}")
+    @Value("${bfd.keystore.location}")
     private String keystorePath;
-
-    @Value("${bfd.keystore.base64:}")
-    private String keystoreBase64;
-
-    @Value("${bfd.keystore.certificate:}")
-    private String trustCertificatePem;
 
     @Value("${bfd.keystore.password}")
     private String keystorePassword;
@@ -63,136 +53,55 @@ public class BFDClientConfiguration {
     private int connectionTTL;
 
     /**
-     * Get http client allowed to connect to BFD domain only. The domain is limited by Mutual TLS cert verification.
-     *
+     * Get http client alloweed to connect to BFD domain only. The domain is limited by Mutual TLS cert verification.
      * @return the HTTP client
      */
     @Bean
     public HttpClient bfdHttpClient() {
 
         try {
-            char[] pass = keystorePassword.toCharArray();
-
-            KeyStore keyStore = resolveClientKeyStore(pass);
-            KeyStore trustStore = resolveTrustStoreOrFallback(pass, keyStore);
-
-            return buildMutualTlsClient(keyStore, trustStore, pass);
-        } catch (Exception e) {
-            throw new BeanInstantiationException(
-                    HttpClient.class, "Failed to initialize BFD mTLS HttpClient: " + e.getMessage(), e);
-        }
-    }
-
-
-    private KeyStore resolveClientKeyStore(char[] password) throws Exception {
-        if (hasText(keystoreBase64)) {
-            return loadPkcs12FromBase64(keystoreBase64, password);
-        }
-
-        if (!hasText(keystorePath)) {
-            throw new IllegalStateException("Neither bfd.keystore.base64 nor bfd.keystore.location is set");
-        }
-
-        File keyStoreFile = new File(keystorePath);
-        if (!keyStoreFile.exists()) {
-            URL resource = BFDClientConfiguration.class.getResource(keystorePath);
-            if (resource != null) {
-                try {
+            File keyStoreFile = new File(keystorePath);
+            if (!keyStoreFile.exists()) {
+                URL resource = BFDClientConfiguration.class.getResource(keystorePath);
+                if (resource != null) {
                     keyStoreFile = new File(resource.toURI());
-                } catch (URISyntaxException e) {
-                    throw new IllegalStateException("Invalid keystore resource URI for path: " + keystorePath, e);
                 }
             }
+
+            if (!keyStoreFile.exists()) {
+                throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
+            }
+
+            return buildMutualTlsClient(keyStoreFile, keystorePassword.toCharArray());
+        } catch (URISyntaxException fnf) {
+            throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
         }
-
-        if (!keyStoreFile.exists()) {
-            throw new IllegalStateException("Keystore file does not exist at path: " + keystorePath);
-        }
-
-        return loadPkcs12FromFile(keyStoreFile, password);
-    }
-
-    /**
-     * If PEM trust cert(s) are provided, build a trust store from them.
-     * Otherwise, fall back to using the client keystore as trust material (old behavior).
-     */
-    private KeyStore resolveTrustStoreOrFallback(char[] password, KeyStore clientKeyStore) throws Exception {
-        if (hasText(trustCertificatePem)) {
-            return loadTrustStoreFromPem(trustCertificatePem);
-        }
-        // Backwards-compatible default: trust material comes from the same keystore
-        return clientKeyStore;
-    }
-
-    private KeyStore loadPkcs12FromBase64(String base64Pkcs12, char[] password) throws Exception {
-        // Secrets often contain newlines; remove whitespace safely
-        String cleaned = base64Pkcs12.replaceAll("\\s+", "");
-        byte[] pkcs12Bytes;
-        try {
-            pkcs12Bytes = Base64.getDecoder().decode(cleaned);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("bfd.keystore.base64 is not valid base64", e);
-        }
-
-        KeyStore ks = KeyStore.getInstance("PKCS12");
-        try (ByteArrayInputStream in = new ByteArrayInputStream(pkcs12Bytes)) {
-            ks.load(in, password);
-        }
-        return ks;
-    }
-
-    private KeyStore loadPkcs12FromFile(File keystoreFile, char[] password) throws Exception {
-        KeyStore ks = KeyStore.getInstance("PKCS12");
-        try (FileInputStream in = new FileInputStream(keystoreFile)) {
-            ks.load(in, password);
-        }
-        return ks;
-    }
-
-    /**
-     * Builds a KeyStore containing only trusted X.509 certificate parsed from PEM.
-     */
-    private KeyStore loadTrustStoreFromPem(String pem) throws Exception {
-        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-
-        byte[] pemBytes = pem.getBytes(StandardCharsets.UTF_8);
-        Certificate cert;
-        try (ByteArrayInputStream in = new ByteArrayInputStream(pemBytes)) {
-            cert = certFactory.generateCertificate(in);
-        }
-
-        if (cert == null) {
-            throw new IllegalStateException("bfd.keystore.certificate did not contain a valid X.509 certificate");
-        }
-
-        KeyStore trustStore = KeyStore.getInstance("PKCS12");
-        trustStore.load(null, null);
-        trustStore.setCertificateEntry("bfd-trust-cert", cert);
-
-        log.info("Loaded trusted certificate from bfd.keystore.certificate");
-        return trustStore;
     }
 
     /**
      * Helper function to build a special {@link HttpClient} capable of authenticating with the
-     * Blue Button server using a client TLS certificate.
+     * Blue Button server using a client TLS certificate
+     *
+     * @param keystoreFile file containing key and trust material
+     * @param keyStorePass password for keystore (default: "changeit")
+     * @return {@link HttpClient} compatible with HAPI FHIR TLS client
      */
-    private HttpClient buildMutualTlsClient(KeyStore clientKeyStore, KeyStore trustStore, char[] keyStorePass) {
+    private HttpClient buildMutualTlsClient(File keystoreFile, char[] keyStorePass) {
         final SSLContext sslContext;
 
         try {
-            // BlueButton FHIR servers require a client cert; trust material may come from PEM or same keystore.
+            // BlueButton FHIR servers have a self-signed cert and require a client cert
             sslContext = SSLContexts.custom()
-                    .loadKeyMaterial(clientKeyStore, keyStorePass)
-                    .loadTrustMaterial(trustStore, null)
+                    .loadKeyMaterial(keystoreFile, keyStorePass, keyStorePass)
+                    .loadTrustMaterial(keystoreFile, keyStorePass)
                     .build();
 
-        } catch (KeyManagementException | NoSuchAlgorithmException |
-                 UnrecoverableKeyException | KeyStoreException ex) {
-            log.error("Failed to build BFD mTLS SSLContext: {}", ex.getMessage(), ex);
-            throw new BeanInstantiationException(KeyStore.class, ex.getMessage(), ex);
+        } catch (IOException | CertificateException | KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
+            log.error(ex.getMessage());
+            throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
         }
 
+        // Configure the socket timeout for the connection, incl. ssl tunneling
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(connectionTimeout)
                 .setConnectionRequestTimeout(requestTimeout)
@@ -208,7 +117,4 @@ public class BFDClientConfiguration {
                 .build();
     }
 
-    private boolean hasText(String s) {
-        return s != null && !s.trim().isEmpty();
-    }
 }
