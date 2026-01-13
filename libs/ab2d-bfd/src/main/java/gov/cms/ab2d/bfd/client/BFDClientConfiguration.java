@@ -5,6 +5,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
+import org.apache.http.ssl.TrustStrategy;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -12,12 +13,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 import javax.net.ssl.SSLContext;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.*;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,8 +31,19 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class BFDClientConfiguration {
 
-    @Value("${bfd.keystore.location}")
+    /**
+     * Backward-compatible file-based keystore location (old approach).
+     * Still supported as a fallback.
+     */
+    @Value("${bfd.keystore.location:}")
     private String keystorePath;
+
+    /**
+     * New approach: base64-encoded PKCS12 (PFX) keystore content injected via ECS secrets:
+     * AB2D_BFD_KEYSTORE_BASE64 from SSM param /ab2d/${env}/worker/sensitive/bfd_keystore_base64
+     */
+    @Value("${bfd.keystore.base64:}")
+    private String keystoreBase64;
 
     @Value("${bfd.keystore.password}")
     private String keystorePassword;
@@ -52,69 +66,101 @@ public class BFDClientConfiguration {
     @Value("${bfd.http.connTTL}")
     private int connectionTTL;
 
-    /**
-     * Get http client alloweed to connect to BFD domain only. The domain is limited by Mutual TLS cert verification.
-     * @return the HTTP client
-     */
     @Bean
     public HttpClient bfdHttpClient() {
-
         try {
-            File keyStoreFile = new File(keystorePath);
-            if (!keyStoreFile.exists()) {
-                URL resource = BFDClientConfiguration.class.getResource(keystorePath);
-                if (resource != null) {
-                    keyStoreFile = new File(resource.toURI());
-                }
-            }
+            char[] pass = keystorePassword.toCharArray();
 
-            if (!keyStoreFile.exists()) {
-                throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
-            }
+            KeyStore clientKeyStore = resolveClientKeyStore(pass);
 
-            return buildMutualTlsClient(keyStoreFile, keystorePassword.toCharArray());
-        } catch (URISyntaxException fnf) {
-            throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
+            SSLContext sslContext = SSLContexts.custom()
+                    .loadKeyMaterial(clientKeyStore, pass)
+                    .loadTrustMaterial(null, (TrustStrategy) null)
+                    .build();
+
+            RequestConfig requestConfig = RequestConfig.custom()
+                    .setConnectTimeout(connectionTimeout)
+                    .setConnectionRequestTimeout(requestTimeout)
+                    .setSocketTimeout(socketTimeout)
+                    .build();
+
+            return HttpClients.custom()
+                    .setMaxConnPerRoute(maxConnPerRoute)
+                    .setMaxConnTotal(maxConnTotal)
+                    .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
+                    .setDefaultRequestConfig(requestConfig)
+                    .setSSLContext(sslContext)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to build BFD mTLS HttpClient", e);
+            throw new BeanInstantiationException(HttpClient.class, "Failed to create BFD HttpClient: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Helper function to build a special {@link HttpClient} capable of authenticating with the
-     * Blue Button server using a client TLS certificate
-     *
-     * @param keystoreFile file containing key and trust material
-     * @param keyStorePass password for keystore (default: "changeit")
-     * @return {@link HttpClient} compatible with HAPI FHIR TLS client
+     * Prefer base64 PKCS12 keystore if present; otherwise fall back to file location.
      */
-    private HttpClient buildMutualTlsClient(File keystoreFile, char[] keyStorePass) {
-        final SSLContext sslContext;
-
-        try {
-            // BlueButton FHIR servers have a self-signed cert and require a client cert
-            sslContext = SSLContexts.custom()
-                    .loadKeyMaterial(keystoreFile, keyStorePass, keyStorePass)
-                    .loadTrustMaterial(keystoreFile, keyStorePass)
-                    .build();
-
-        } catch (IOException | CertificateException | KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
-            log.error(ex.getMessage());
-            throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
+    private KeyStore resolveClientKeyStore(char[] password) throws Exception {
+        if (hasText(keystoreBase64)) {
+            log.info("Loading BFD client keystore from bfd.keystore.base64 (env/SSM injected)");
+            return loadPkcs12FromBase64(keystoreBase64, password);
         }
 
-        // Configure the socket timeout for the connection, incl. ssl tunneling
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(connectionTimeout)
-                .setConnectionRequestTimeout(requestTimeout)
-                .setSocketTimeout(socketTimeout)
-                .build();
+        if (!hasText(keystorePath)) {
+            throw new IllegalStateException("Neither bfd.keystore.base64 nor bfd.keystore.location is set");
+        }
 
-        return HttpClients.custom()
-                .setMaxConnPerRoute(maxConnPerRoute)
-                .setMaxConnTotal(maxConnTotal)
-                .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
-                .setDefaultRequestConfig(requestConfig)
-                .setSSLContext(sslContext)
-                .build();
+        File keyStoreFile = resolveFile(keystorePath);
+        log.info("Loading BFD client keystore from file path: {}", keyStoreFile.getAbsolutePath());
+        return loadPkcs12FromFile(keyStoreFile, password);
     }
 
+    private File resolveFile(String path) throws URISyntaxException {
+        File keyStoreFile = new File(path);
+        if (keyStoreFile.exists()) {
+            return keyStoreFile;
+        }
+
+        URL resource = BFDClientConfiguration.class.getResource(path);
+        if (resource != null) {
+            File fromResource = new File(resource.toURI());
+            if (fromResource.exists()) {
+                return fromResource;
+            }
+        }
+
+        throw new IllegalStateException("Keystore file does not exist at path: " + path);
+    }
+
+    private KeyStore loadPkcs12FromBase64(String base64, char[] password) throws Exception {
+        byte[] decoded;
+        try {
+            decoded = Base64.getDecoder().decode(base64.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("bfd.keystore.base64 is not valid base64", e);
+        }
+
+        try (InputStream in = new ByteArrayInputStream(decoded)) {
+            return loadPkcs12FromStream(in, password);
+        }
+    }
+
+    private KeyStore loadPkcs12FromFile(File file, char[] password) throws Exception {
+        try (InputStream in = new FileInputStream(file)) {
+            return loadPkcs12FromStream(in, password);
+        }
+    }
+
+    private KeyStore loadPkcs12FromStream(InputStream in, char[] password)
+            throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+
+        KeyStore ks = KeyStore.getInstance("PKCS12");
+        ks.load(in, password);
+        return ks;
+    }
+
+    private boolean hasText(String s) {
+        return s != null && !s.trim().isEmpty();
+    }
 }
