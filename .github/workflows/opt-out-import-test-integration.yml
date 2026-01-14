@@ -6,8 +6,6 @@ on:
       - .github/workflows/opt-out-import-test-integration.yml
       - lambdas/optout/**
   workflow_dispatch:
-  schedule:
-      - cron: '18 14 * * *'  # 6:18 AM PST or 9:18 AM EST because (workflow + lambda) takes 11 mins
 
 # Ensure we have only one integration test running at a time
 concurrency:
