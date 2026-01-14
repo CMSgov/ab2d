@@ -75,7 +75,7 @@ public class BFDClientConfiguration {
 
             SSLContext sslContext = SSLContexts.custom()
                     .loadKeyMaterial(clientKeyStore, pass)
-                    .loadTrustMaterial(null, (TrustStrategy) null)
+                    .loadTrustMaterial(clientKeyStore, null)
                     .build();
 
             RequestConfig requestConfig = RequestConfig.custom()
