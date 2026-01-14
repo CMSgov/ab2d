@@ -136,7 +136,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
         val query = (propertiesService.isToggleOn("OptOutOn", false))
                 ? sql2WithOptOut
-                : sql;
+                : sql2;
 
         final NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
