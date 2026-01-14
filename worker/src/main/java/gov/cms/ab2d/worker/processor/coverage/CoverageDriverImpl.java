@@ -10,12 +10,12 @@ import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.CoverageV3Service;
+import gov.cms.ab2d.coverage.util.CoverageV3Utils;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -537,29 +537,21 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Trace(metricName = "EnrollmentCountV3", dispatcher = true)
     @Override
     public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
-        ZonedDateTime time = getEndDateTime();
+        final ZonedDateTime endTime = getEndDateTime();
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
 
-        ZonedDateTime startDateTime = getStartDateTime(contract);
-
-        final List<YearMonthRecord> periodsToReport = new ArrayList<>();
-        while (startDateTime.isBefore(time)) {
-            val periodToReport = new YearMonthRecord(
-                startDateTime.getYear(),
-                startDateTime.getMonthValue()
-            );
-            periodsToReport.add(periodToReport);
-            startDateTime = startDateTime.plusMonths(1);
-        }
+        final ZonedDateTime startDateTime = getStartDateTime(contract);
+        final CoverageV3Periods coverageV3Periods = CoverageV3Utils.enumerateCoveragePeriods(startDateTime, endTime);
 
         log.info("counting number of beneficiaries for {} coverage periods for job {}",
-                periodsToReport.size(),
+                coverageV3Periods.getHistoricalCoverage().size() + coverageV3Periods.getRecentCoverage().size(),
                 job.getJobUuid()
         );
-        int count = coverageV3Service.countBeneficiariesByCoveragePeriod(periodsToReport, contract.getContractNumber());
+
+        int count = coverageV3Service.countBeneficiariesByCoveragePeriod(coverageV3Periods, contract.getContractNumber());
         log.info("number of beneficiaries for job {}: {}", job.getJobUuid(), count);
         return count;
     }

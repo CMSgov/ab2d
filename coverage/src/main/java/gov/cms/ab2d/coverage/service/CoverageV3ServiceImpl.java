@@ -1,12 +1,16 @@
 package gov.cms.ab2d.coverage.service;
 
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.coverage.model.CoverageV3Periods;
 import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import gov.cms.ab2d.coverage.repository.CoverageV3HistoricalRepository;
 import gov.cms.ab2d.coverage.repository.CoverageV3Repository;
+import gov.cms.ab2d.coverage.util.CoverageV3Utils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -14,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -27,18 +30,22 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     private final EntityManager entityManager;
     private final DataSource dataSource;
+    private final PropertiesService propertiesService;
     private final CoverageV3Repository coverageV3Repository;
     private final CoverageV3HistoricalRepository coverageV3HistoricalRepository;
 
     public CoverageV3ServiceImpl(
-            CoverageV3Repository coverageV3Repository,
-            CoverageV3HistoricalRepository coverageV3HistoricalRepository,
             EntityManager entityManager,
-            DataSource dataSource) {
-        this.coverageV3Repository = coverageV3Repository;
-        this.coverageV3HistoricalRepository = coverageV3HistoricalRepository;
+            DataSource dataSource,
+            PropertiesService propertiesService,
+            CoverageV3Repository coverageV3Repository,
+            CoverageV3HistoricalRepository coverageV3HistoricalRepository
+    ) {
         this.entityManager = entityManager;
         this.dataSource = dataSource;
+        this.propertiesService = propertiesService;
+        this.coverageV3Repository = coverageV3Repository;
+        this.coverageV3HistoricalRepository = coverageV3HistoricalRepository;
     }
 
     /**
@@ -86,7 +93,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
 
-    public int countBeneficiariesByCoveragePeriod(List<YearMonthRecord> yearMonthRecords, final String contract) {
+    public int countBeneficiariesByCoveragePeriod(CoverageV3Periods result, final String contract) {
         val sql = """
             select count(*) from v3.coverage_v3_historical
             where
@@ -98,10 +105,10 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         """
             select count(distinct patient_id) from (
                 select * from v3.coverage_v3
-                    where contract = :contract and (year,month) in (:yearMonthRecords)
+                    where contract = :contract and (year,month) in (:recentCoveragePeriods)
                 union
                 select * from  v3.coverage_v3_historical
-                    where contract = :contract and (year, month) in (:yearMonthRecords)
+                    where contract = :contract and (year, month) in (:historicalCoveragePeriods)
             )
         """;
 
@@ -110,39 +117,48 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
            select count(distinct patient_id) from
            (
                select * from v3.coverage_v3
-                   where contract = :contract and (year,month) in (:yearMonthRecords)
+                   where contract = :contract and (year,month) in (:recentCoveragePeriods)
                union
                select * from  v3.coverage_v3_historical
-                   where contract = :contract and (year, month) in (:yearMonthRecords)
+                   where contract = :contract and (year, month) in (:historicalCoveragePeriods)
            ) as union_results
            join current_mbi on union_results.current_mbi = current_mbi.mbi
            where current_mbi is not null
            and share_data is not false
         """;
 
-        List<Object[]> yearMonthRecordsObjects = new ArrayList<>();
-        for (YearMonthRecord yearMonthRecord : yearMonthRecords) {
-            yearMonthRecordsObjects.add(new Object[]{yearMonthRecord.getYear(), yearMonthRecord.getMonth()});
-        }
+
 
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("contract", contract)
-                .addValue("yearMonthRecords", yearMonthRecordsObjects);
+                .addValue("historicalCoveragePeriods", toSqlParameters(result.getHistoricalCoverage()))
+                .addValue("recentCoveragePeriods", toSqlParameters(result.getRecentCoverage()));
+
+        val query = (propertiesService.isToggleOn("OptOutOn", false))
+                ? sql2WithOptOut
+                : sql;
+
+        final NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
 
-        final NamedParameterJdbcTemplate template1 = new NamedParameterJdbcTemplate(dataSource);
+        return DataAccessUtils.intResult(template.queryForList(query, parameters, Integer.class));
 
-        int count1 = template1.queryForList(sql2, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
-                        "of the coverage periods provided"));
-        log.info("Count #1: {}", count1);
+//        val count = template.queryForList(query, parameters, Integer.class)
+//                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
+//                        "of the coverage periods provided"));
 
-        final NamedParameterJdbcTemplate template2 = new NamedParameterJdbcTemplate(dataSource);
-        int count2 = template2.queryForList(sql2WithOptOut, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
-                        "of the coverage periods provided"));
-        log.info("Count #2: {}", count2);
-        return count1;
+
+//        log.info("Count #1: {}", count1);
+//
+//        final NamedParameterJdbcTemplate template2 = new NamedParameterJdbcTemplate(dataSource);
+//        int count2 = template2.queryForList(sql2WithOptOut, parameters, Integer.class)
+//                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
+//                        "of the coverage periods provided"));
+//        log.info("Count #2: {}", count2);
+//        return count1;
+
+
+
 
         /*
         val sql1 = buildQueryWithPlaceholders(COVERAGE_V3_TABLE, yearMonthRecords.size());
@@ -218,6 +234,19 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         }
         */
         //return count1+ count2;
+
+
+        return count;
+
     }
-    
+
+    protected List<Object[]> toSqlParameters(List<YearMonthRecord> records) {
+        return records.stream()
+            .map(yearMonthRecord -> new Object[]{
+                yearMonthRecord.getYear(),
+                yearMonthRecord.getMonth()
+            })
+            .toList();
+    }
+
 }
