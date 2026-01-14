@@ -69,8 +69,8 @@ public class BFDClientConfiguration {
     @Bean
     public HttpClient bfdHttpClient() {
         try {
-            char[] pass = keystorePassword.toCharArray();
-
+        //    char[] pass = keystorePassword.toCharArray();
+            char[] pass = effectivePassword();
             KeyStore clientKeyStore = resolveClientKeyStore(pass);
 
             SSLContext sslContext = SSLContexts.custom()
@@ -158,6 +158,14 @@ public class BFDClientConfiguration {
         KeyStore ks = KeyStore.getInstance("PKCS12");
         ks.load(in, password);
         return ks;
+    }
+
+    private char[] effectivePassword() {
+        // Blank or missing means "no password"
+        if (keystorePassword == null || keystorePassword.trim().isEmpty()) {
+            return new char[0];
+        }
+        return keystorePassword.toCharArray();
     }
 
     private boolean hasText(String s) {
