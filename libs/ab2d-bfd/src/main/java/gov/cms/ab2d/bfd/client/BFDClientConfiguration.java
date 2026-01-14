@@ -89,28 +89,28 @@ public class BFDClientConfiguration {
             String keystorePassword,
             String keyAlias) throws Exception {
 
-            // Retrieve private key from container environment
-            String privateKeyData = System.getenv(privateKeyParam);
-            PrivateKey privateKey = parsePrivateKey(privateKeyData);
+        // Retrieve private key from container environment
+        String privateKeyData = System.getenv(privateKeyParam);
+        PrivateKey privateKey = parsePrivateKey(privateKeyData);
 
-            // Retrieve certificate from container environment
-            String certificateData = System.getenv(certificateParam);
-            Certificate certificate = parseCertificate(certificateData);
+        // Retrieve certificate from container environment
+        String certificateData = System.getenv(certificateParam);
+        Certificate certificate = parseCertificate(certificateData);
 
-            // Create KeyStore
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(null, null); // Initialize empty keystore
+        // Create KeyStore
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(null, null); // Initialize empty keystore
 
-            // Add private key and certificate chain to keystore
-            Certificate[] certChain = new Certificate[]{certificate};
-            keyStore.setKeyEntry(
-                    keyAlias,
-                    privateKey,
-                    keystorePassword.toCharArray(),
-                    certChain
-            );
+        // Add private key and certificate chain to keystore
+        Certificate[] certChain = new Certificate[]{certificate};
+        keyStore.setKeyEntry(
+                keyAlias,
+                privateKey,
+                keystorePassword.toCharArray(),
+                certChain
+        );
 
-            return keyStore;
+        return keyStore;
     }
 
     /**
@@ -193,7 +193,7 @@ public class BFDClientConfiguration {
      * @return {@link HttpClient} compatible with HAPI FHIR TLS client
      */
     private HttpClient buildMutualTlsClient(KeyStore keyStore, char[] keyStorePass) {
-         SSLContext sslContext = SSLContext.getInstance("TLS");
+        SSLContext sslContext = SSLContext.getInstance("TLS");
 
         try {
             // BlueButton FHIR servers have a self-signed cert and require a client cert
