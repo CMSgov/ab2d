@@ -3,7 +3,6 @@ package gov.cms.ab2d.bfd.client;
 import ca.uhn.fhir.rest.client.exceptions.FhirClientConnectionException;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
