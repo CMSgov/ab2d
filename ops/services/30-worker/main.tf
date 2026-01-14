@@ -140,7 +140,6 @@ module "service" {
   image                             = local.worker_image_uri
   memory                            = local.ecs_task_def_memory_worker
   platform                          = module.platform
-  platform_version                  = "LATEST"
   security_groups                   = [data.aws_security_group.worker.id]
   task_role_arn                     = data.aws_iam_role.worker.arn
 
@@ -165,6 +164,7 @@ module "service" {
   ]
 
   container_secrets = [
+    { name = "AB2D_BFD_KEYSTORE_BASE64", valueFrom = local.bfd_keystore_base64_arn },
     { name = "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom = local.bfd_keystore_password_arn },
     { name = "AB2D_DB_DATABASE", valueFrom = local.db_name_arn },
     { name = "AB2D_DB_PASSWORD", valueFrom = local.db_password_arn },
@@ -196,69 +196,6 @@ module "service" {
     }
   ]
 
-  container_definitions = nonsensitive(jsonencode([{
-    name : local.service,
-    image : local.worker_image_uri,
-    readonlyRootFilesystem = true
-    essential : true,
-    mountPoints : [
-      {
-        containerPath : local.ab2d_efs_mount,
-        sourceVolume : "efs"
-      },
-      {
-        "containerPath" : "/tmp",
-        "sourceVolume" : "tmp",
-        "readOnly" : false
-      },
-      {
-        "containerPath" : "/newrelic/logs",
-        "sourceVolume" : "newrelic_logs",
-        "readOnly" : false
-      },
-      {
-        "containerPath" : "/var/log",
-        "sourceVolume" : "var_logs",
-        "readOnly" : false
-      },
-    ],
-    secrets : [
-      { name : "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom : local.bfd_keystore_password_arn },
-      { name : "AB2D_BFD_KEYSTORE_BASE64", valueFrom : local.bfd_keystore_base64_arn },
-      { name : "AB2D_BFD_TRUSTSTORE_CERT", valueFrom : local.bfd_server_public_cert_arn },
-      { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
-      { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
-      { name : "AB2D_DB_USER", valueFrom : local.db_username_arn },
-      { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
-      { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
-      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn }     #FIXME: Is this even used?
-    ]
-    environment : [
-      { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
-      { name : "AB2D_BFD_KEYSTORE_LOCATION", value : local.bfd_keystore_location },
-      { name : "AB2D_BFD_URL", value : local.bfd_url },
-      { name : "AB2D_BFD_URL_V3", value : local.bfd_url_v3 },
-      { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
-      { name : "AB2D_DB_PORT", value : "5432" },
-      { name : "AB2D_DB_SSL_MODE", value : "require" },
-      { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount },
-      { name : "AB2D_EXECUTION_ENV", value : local.benv },
-      { name : "AB2D_JOB_POOL_CORE_SIZE", value : local.max_concurrent_eob_jobs },
-      { name : "AB2D_JOB_POOL_MAX_SIZE", value : local.max_concurrent_eob_jobs },
-      { name : "AWS_SQS_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
-      { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url },
-      { name : "AWS_SNS_TOPIC_PREFIX", value : "ab2d-${local.parent_env}" },
-      { name : "IMAGE_VERSION", value : local.worker_image_tag },
-      { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "MICROSERVICES_URL", value : local.microservices_url },
-    ],
-    logConfiguration : {
-      logDriver : "awslogs"
-      options : {
-        awslogs-group : "/aws/ecs/fargate/${local.service_prefix}/${local.service}",
-        awslogs-create-group : "true",
-        awslogs-region : local.aws_region,
-        awslogs-stream-prefix : local.service_prefix
   volumes = [
     {
       name = "efs"
