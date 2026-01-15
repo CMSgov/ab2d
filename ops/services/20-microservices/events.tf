@@ -19,7 +19,7 @@ resource "aws_sns_topic_subscription" "events" {
 }
 
 module "events_service" {
-  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=jscott/PLT-1445"
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=d9000475e6e2f315ed208f88935ea217ea044fc5"
 
   cluster_arn                       = module.cluster.this.id
   cpu                               = 512
