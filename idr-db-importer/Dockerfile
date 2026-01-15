@@ -5,3 +5,4 @@ ADD target/idr-db-importer-*-SNAPSHOT.jar /usr/src/ab2d-idr-db-importer/ab2d-idr
 CMD java \
     -XX:+UseContainerSupport \
     -jar ab2d-idr-db-importer.jar
+

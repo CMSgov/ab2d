@@ -30,6 +30,7 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	implementation 'org.springframework.retry:spring-retry'
 	implementation 'org.postgresql:postgresql:42.7.2'
 
