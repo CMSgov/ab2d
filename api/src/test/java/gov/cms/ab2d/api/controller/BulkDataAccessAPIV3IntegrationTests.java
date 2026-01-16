@@ -35,7 +35,7 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V3;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
-import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -88,6 +88,9 @@ public class BulkDataAccessAPIV3IntegrationTests {
         ApiCommon apiCommon = context.getBean(ApiCommon.class);
         ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
         propertiesService.createProperty(MAINTENANCE_MODE, "false");
+        propertiesService.createProperty(V3_ON, "true");
+        propertiesService.createProperty(V3_WHITELISTED_CONTRACTS, VALID_CONTRACT_NUMBER);
+
     }
 
     @AfterEach

@@ -7,7 +7,6 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import java.time.OffsetDateTime;
 import java.util.List;
 import javax.annotation.Nullable;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

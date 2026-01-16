@@ -190,8 +190,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
                 // TEMPORARY - TODO remove
                 eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getContractNum());
-            }
-            else {
+            } else {
                 eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getContractNum());
             }
             collector.filterAndAddEntries(eobBundle, patient);

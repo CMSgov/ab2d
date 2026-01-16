@@ -223,6 +223,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current;
         if (isV3Job) {
+            // TODO update for v3 - add summaries, cursor, and next request
             current = new CoveragePagingResult(
                 new ArrayList<>(),
                 new CoveragePagingRequest(
@@ -232,8 +233,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                         contractData.getJob().getCreatedAt()
                 )
         );
-        }
-        else {
+        } else {
             current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
                     null, mapping.map(contract), contractData.getJob().getCreatedAt()));
         }
@@ -242,6 +242,8 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         // Do not replace with for each, continue is meant to force patients to wait to be queued
         while (!contractData.getJob().hasJobBeenCancelled() && current.getNextRequest().isPresent()) {
+
+            // TODO update for v3
 
             if (eobClaimRequestsQueue.size(jobUuid) > eobJobPatientQueueMaxSize) {
                 // Wait for queue to empty out some before adding more
@@ -366,6 +368,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             if (job.isV3Job()) {
                 patientClaimsRequest.setV3Job(true);
             }
+            // TODO inspect for V3
             return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {

@@ -1,13 +1,13 @@
 package gov.cms.ab2d.coverage.service;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
+import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageV3Periods;
 import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import gov.cms.ab2d.coverage.repository.CoverageV3HistoricalRepository;
 import gov.cms.ab2d.coverage.repository.CoverageV3Repository;
-import gov.cms.ab2d.coverage.util.CoverageV3Utils;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.dao.support.DataAccessUtils;
@@ -62,35 +62,28 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
      */
 
 
-    static String buildQueryWithPlaceholders(final String table, final int yearMonthRecordsSize) {
-        val whereInTupleValues = "(?,?),"
-                .repeat(yearMonthRecordsSize-1)
-                .concat("(?,?)");
-        /**
-          TODO -- need to count beneficiaries, NOT coverage periods
-
-         SELECT COUNT(DISTINCT beneficiary_id) FROM coverage c...
-
-
-         */
-        val sql = String.format("""
-            select count(*) from %s
-            where 
-                contract = ? 
-                and (year, month) in (%s) 
-        """, table, whereInTupleValues);
-
-        return sql;
-    }
-
-    static void populateSqlParameter(Query query, String contract, List<YearMonthRecord> yearMonthRecords) {
-        var parameterIndex = 1;
-        query.setParameter(parameterIndex++, contract);
-        for (YearMonthRecord yearMonthRecord : yearMonthRecords) {
-            query.setParameter(parameterIndex++, yearMonthRecord.getYear());
-            query.setParameter(parameterIndex++, yearMonthRecord.getMonth());
-        }
-    }
+//    static String buildQueryWithPlaceholders(final String table, final int yearMonthRecordsSize) {
+//        val whereInTupleValues = "(?,?),"
+//                .repeat(yearMonthRecordsSize-1)
+//                .concat("(?,?)");
+//        val sql = String.format("""
+//            select count(*) from %s
+//            where
+//                contract = ?
+//                and (year, month) in (%s)
+//        """, table, whereInTupleValues);
+//
+//        return sql;
+//    }
+//
+//    static void populateSqlParameter(Query query, String contract, List<YearMonthRecord> yearMonthRecords) {
+//        var parameterIndex = 1;
+//        query.setParameter(parameterIndex++, contract);
+//        for (YearMonthRecord yearMonthRecord : yearMonthRecords) {
+//            query.setParameter(parameterIndex++, yearMonthRecord.getYear());
+//            query.setParameter(parameterIndex++, yearMonthRecord.getMonth());
+//        }
+//    }
 
 
     public int countBeneficiariesByCoveragePeriod(CoverageV3Periods result, final String contract) {
@@ -236,8 +229,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         //return count1+ count2;
 
 
-        return count;
 
+    }
+
+    @Override
+    public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
+        // TODO
+        return null;
     }
 
     protected List<Object[]> toSqlParameters(List<YearMonthRecord> records) {
