@@ -249,6 +249,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);
         int totalQueued = progressTracker.getPatientRequestQueuedCount();
         int totalExpected = progressTracker.getPatientsExpected();
+        //AB2D-6157 Update mismatch job failure to pass in slack alerts
         //AB2D-7080 Raise the null MBI threshold for job requests
         if ((totalQueued != totalExpected) && (Math.abs(totalQueued - totalExpected) > 4000)) {
             throw new ContractProcessingException("expected " + totalExpected +
