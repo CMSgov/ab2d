@@ -129,7 +129,7 @@ module "cluster" {
 }
 
 module "service" {
-  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=d9000475e6e2f315ed208f88935ea217ea044fc5"
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=jscott/PLT-1445"
 
   cluster_arn                       = module.cluster.this.arn
   cpu                               = local.ecs_task_def_cpu_worker
@@ -141,6 +141,7 @@ module "service" {
   memory                            = local.ecs_task_def_memory_worker
   platform                          = module.platform
   security_groups                   = [data.aws_security_group.worker.id]
+  subnets                           = local.writer_adjacent_subnets
   task_role_arn                     = data.aws_iam_role.worker.arn
 
   container_environment = [
