@@ -174,15 +174,15 @@ public class JobProcessorImpl implements JobProcessor {
         int processedPatients = progressTracker.getPatientRequestProcessedCount();
 
         //AB2D-6157 Update mismatch job failure to pass in slack alerts
-        //Magic 35 is the biggest difference (April 2024) and alert threshold.
-        if ((expectedPatients != queuedPatients) && (Math.abs(expectedPatients - queuedPatients) > 35)) {
+        // AB2D-7080 Raise the null MBI threshold for job requests
+        if ((expectedPatients != queuedPatients) && (Math.abs(expectedPatients - queuedPatients) > 4000)) {
             String alertMessage = String.format(EOB_JOB_QUEUE_MISMATCH + " [%s] expected beneficiaries (%d) does not match queued beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
             log.error(alertMessage);
             eventLogger.alert(alertMessage, PROD_LIST);
         }
 
-        if ((expectedPatients != processedPatients) && (Math.abs(expectedPatients - processedPatients) > 35)) {
+        if ((expectedPatients != processedPatients) && (Math.abs(expectedPatients - processedPatients) > 4000)) {
             String alertMessage = String.format(EOB_JOB_CALL_FAILURE + " [%s] expected beneficiaries (%d) does not match processed beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
             log.error(alertMessage);
