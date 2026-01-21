@@ -5,7 +5,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
-import org.apache.http.ssl.TrustStrategy;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,13 +18,12 @@ import java.net.URL;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Credits: most of the code in this class has been copied over from https://github.com/CMSgov/dpc-app
- */
 @Configuration
 @PropertySource("classpath:application.bfd.properties")
 @Slf4j
@@ -35,7 +33,7 @@ public class BFDClientConfiguration {
      * Backward-compatible file-based keystore location (old approach).
      * Still supported as a fallback.
      */
-    @Value("${bfd.keystore.location:}")
+    @Value("${bfd.keystore.location}")
     private String keystorePath;
 
     /**
@@ -44,6 +42,14 @@ public class BFDClientConfiguration {
      */
     @Value("${bfd.keystore.base64:}")
     private String keystoreBase64;
+
+    /**
+     * PEM certificate content for the BFD truststore.
+     * application.bfd.properties:
+     *   bfd.truststore.cert=${AB2D_BFD_TRUSTSTORE_CERT}
+     */
+    @Value("${bfd.truststore.cert:}")
+    private String trustStoreCertPem;
 
     @Value("${bfd.keystore.password}")
     private String keystorePassword;
@@ -73,9 +79,11 @@ public class BFDClientConfiguration {
 
             KeyStore clientKeyStore = resolveClientKeyStore(pass);
 
+            KeyStore trustStore = resolveTrustStore();
+
             SSLContext sslContext = SSLContexts.custom()
                     .loadKeyMaterial(clientKeyStore, pass)
-                    .loadTrustMaterial(clientKeyStore, null)
+                    .loadTrustMaterial(trustStore, null)
                     .build();
 
             RequestConfig requestConfig = RequestConfig.custom()
@@ -114,6 +122,45 @@ public class BFDClientConfiguration {
         File keyStoreFile = resolveFile(keystorePath);
         log.info("Loading BFD client keystore from file path: {}", keyStoreFile.getAbsolutePath());
         return loadPkcs12FromFile(keyStoreFile, password);
+    }
+
+    /**
+     * Build truststore from PEM cert string if provided; otherwise fall back to trusting the client keystore (legacy).
+     */
+    private KeyStore resolveTrustStore() throws Exception {
+        if (hasText(trustStoreCertPem)) {
+            log.info("Loading BFD truststore from bfd.truststore.cert (PEM provided)");
+            return buildTrustStoreFromPem(trustStoreCertPem);
+        }
+
+       // log.warn("bfd.truststore.cert is not set; falling back to using the client keystore as truststore (legacy behavior)");
+        return resolveClientKeyStore(keystorePassword.toCharArray());
+    }
+
+    private KeyStore buildTrustStoreFromPem(String pem) throws Exception {
+        Certificate cert = parseX509FromPem(pem);
+
+        KeyStore ts = KeyStore.getInstance(KeyStore.getDefaultType());
+        ts.load(null, null);
+        ts.setCertificateEntry("bfd-trust", cert);
+        return ts;
+    }
+
+    private Certificate parseX509FromPem(String pem) throws CertificateException {
+        // Strip PEM armor and whitespace -> decode base64 -> generate X509 certificate
+        String normalized = pem
+                .replace("-----BEGIN CERTIFICATE-----", "")
+                .replace("-----END CERTIFICATE-----", "")
+                .replaceAll("\\s+", "");
+
+        byte[] der = Base64.getDecoder().decode(normalized);
+
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        try (InputStream in = new ByteArrayInputStream(der)) {
+            return cf.generateCertificate(in);
+        } catch (IOException e) {
+            throw new CertificateException("Failed reading certificate bytes", e);
+        }
     }
 
     private File resolveFile(String path) throws URISyntaxException {
