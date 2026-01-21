@@ -1,3 +1,34 @@
+/ab2d/${env}/worker/nonsensitive/bfd_truststore_cert: |
+  -----BEGIN CERTIFICATE-----
+  MIIFLDCCAxSgAwIBAgIIOB/waE+MjNowDQYJKoZIhvcNAQEMBQAwJzElMCMGA1UE
+  AxMcdGVzdC5maGlyLmJmZC5jbXNjbG91ZC5sb2NhbDAeFw0yNTA1MjExOTQwNDha
+  Fw0yNzA1MjExOTQwNDhaMCcxJTAjBgNVBAMTHHRlc3QuZmhpci5iZmQuY21zY2xv
+  dWQubG9jYWwwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDC/fEjmK8u
+  eZPtS2JWABjtxYqMQHxpicyFRGpl48mitJlteY+9XaAkiZN8LIrE6rl025s/dC9i
+  WbTtXHOC1/Sik3Kdw5pILLfH82bzwryWnmGkmq7X9c0+yJL4j7sa2y/yZlfhpU+P
+  gEFoYVE/RqfM+KBwUfnqU4fQzvPwn6YRkRwJaj3M8HHxGFp/tnLHhy0akmhnzZ/b
+  vis5aBfGgAJC69RGJfzLdq8BRqNrO15HbMIoYxpVDUEuHTNe2yR8l7Fvwr4QxTB9
+  BmmDKgUS2U9/1BqRzUOoYJcS9wCFDmwa/EVnUykdy0OeP4fP/P759f/R+kWQxFxP
+  wCJMbPPaeEC2ZpS7MYgeCOepSycXFCi2jPFVDxadc5/Hhp/ID7sM++YTUg4M9zVY
+  BPl2gsYmlhfE+FELNBb3L8Y7BLLgadvOtUZ2I9zm4LvEY+Z8I7nfnJ7olbMPc8JO
+  8FhSLoirPTtiWXZ2yaVzcmQH0ptbAxeeT2Uc8AzRjN2n+dvOCtyIiHjJwe5df8rr
+  MNdrbhyRpmA2odtQ/mfiWxCv64fEYmm05PxE7Nh/5unrL1jihd82d1xRloDxLb5f
+  sCfJSgKYKusd2bmP0YUQKrJBzDyNK0VY3dN0XPOqD5RmIuGpslKvSupcW+ZvMFIs
+  d/Oi5ldHYUomS0ZqobUNT45QmRO1/qfv8QIDAQABo1wwWjAdBgNVHQ4EFgQUf1K2
+  Nct+O84ZTuYlT7tF3cPWEJkwOQYDVR0RBDIwMIIcdGVzdC5maGlyLmJmZC5jbXNj
+  bG91ZC5sb2NhbIIQdGVzdC5iZmQuY21zLmdvdjANBgkqhkiG9w0BAQwFAAOCAgEA
+  YAz+jhfXyNqu0UL+vxuewWLKlH6zMTHXuycigfZmxsrOpz2eJIT2BHWn14lDG2ew
+  qgFUul3CSoRxH3wbxVmH2hNe+GBKGUineoJLwgC13PQY1vRaU1VHJR4Whi065/tL
+  2NpLehcAH3TSmSRPtF+FDKGEC+gyjUJFoeCM7PP7fT2O3ixQdnoMA1KqpYZeUb1O
+  Ng13lj48AXySDAQNeYwUYeFY2RRNbWAN645dtc80kVJY7OY8hZemYsdlBx1SUHZp
+  X2GcjTuq7GaJO4ThUXT0/ufsP9jpAiYQmssFWkbJVIrlhg6M1jkdxtvX7RN/c0kd
+  OBlusgIADBDfrPI64mLuKQez97MiFpChqymxAZ6IubKJATwwDu0JNoD6E2FlAYIn
+  ZxfbR1R/MpO5fm3Nfqkwt8f1l9035ZC2rHtCdZ261WF617PqU3EUW+WXNojeP6qF
+  RpS98nUB82w6TP4fkBYYZGNCgK9N+2jCFP9sLNA+o/SBnGucCzJ0Mbx38vxUw5pg
+  DnXKWBL1lhcpmWX2bSrghERnuJnyUYC0qsY6tOJsEDV6UccMSGs03AEDjY/OohNH
+  LgtvQosnDqfawNHFTwJ4Dc5Od+KGbFVfUZmy8+sTLOFvPl5PHAAe+d6CvdU91V8D
+  +V4U8pQYig4O/L6oZ2D7h3muHmxUF0wmqfkS2qvkqGg=
+  -----END CERTIFICATE-----
 /ab2d/${env}/common/nonsensitive/new_relic_app_name: AB2D_Dev
 /ab2d/${env}/common/sensitive/new_relic_license_key: ENC[AES256_GCM,data:xbn/WEo4aSNPXC+OEVDYibE65oCZFArBKuVUQTkp+nE2Wl1he88xVg==,iv:11V+tFOmHXYVNPSQRmcZL03XMcj+5idvly9pPwTc6CU=,tag:BGS9nQucswWs3UBAXw0SQQ==,type:str]
 /ab2d/${env}/common/sensitive/slack_alert_webhooks: ENC[AES256_GCM,data:0JSzrMVitOuwxbb+uMktd7Y+aKmjxCwUUqtkQpS729KvIe1NiRTaKvMEObfbDfahsJPRGEzc4IsZs+qi1bXWq9teGueh4kPamsQmAti3OA==,iv:t8QDjtpc6wqOK7vz65E3ATT7/IdpCN/SqsNGvR3Z5Pg=,tag:cfN8OEPhqejmZGfuCkgdbA==,type:str]
