@@ -81,8 +81,8 @@ jobs:
       - name: tofu apply - bootstrap
         working-directory: ops/services/00-bootstrap/
         run: |
-          tofu init -var=parent_env=$ENV -reconfigure
-          tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
+          tofu init -var=parent_env=$BOOTSTRAP_ENV -reconfigure
+          tofu workspace select -var=parent_env=$BOOTSTRAP_ENV -or-create=true $ENV
           tofu plan
       - name: tofu apply - config
         working-directory: ops/services/10-config/
