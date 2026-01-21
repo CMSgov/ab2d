@@ -71,6 +71,8 @@ public class CoverageDriverStub implements CoverageDriver {
         return new CoveragePagingResult(results, nextRequest);
     }
 
+
+
     @Override
     public void verifyCoverage() {}
 
@@ -109,5 +111,17 @@ public class CoverageDriverStub implements CoverageDriver {
         }
 
         return summaries;
+    }
+
+    @Override
+    public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
+        // TODO determine what to do here - probably nothing
+        return -1;
+    }
+
+    @Override
+    public CoveragePagingResult pageCoverageV3(CoveragePagingRequest request) {
+        // TODO determine what to do here - probably nothing
+        return null;
     }
 }

@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.controller.common;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
+import gov.cms.ab2d.api.security.EndpointNotAvailableException;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.ContractService;
@@ -16,9 +17,11 @@ import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -27,6 +30,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_WHITELISTED_CONTRACTS;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -165,6 +170,26 @@ public class ApiCommon {
         checkUntilTime(since, until, version);
         return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,
                 getCurrentUrl(request), outputFormat, since, until, version);
+    }
+
+    // Validate v3.on is enabled and the contract is whitelisted for V3
+    public void checkValidCreateJobV3(final String contract) {
+        if (!"true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
+            log.info("{} is not enabled", V3_ON);
+            throw new EndpointNotAvailableException("Service unavailable");
+        }
+
+        if (contract.startsWith("Z")) {
+            return;
+        }
+
+        val whiteListedContracts = propertiesService.getProperty(V3_WHITELISTED_CONTRACTS, "");
+        val contractIsWhitelisted = Arrays.stream(whiteListedContracts.split(","))
+                .anyMatch(value -> value.trim().equalsIgnoreCase(contract));
+        if (!contractIsWhitelisted) {
+            log.info("Contract {} is not whitelisted", contract);
+            throw new EndpointNotAvailableException("Service unavailable");
+        }
     }
 
     protected String checkIfContractAttested(Contract contract, String contractNumber) {

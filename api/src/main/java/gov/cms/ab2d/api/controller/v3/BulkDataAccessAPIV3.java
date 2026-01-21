@@ -89,9 +89,9 @@ public class BulkDataAccessAPIV3 {
 
         StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, until, resourceTypes,
                 outputFormat, R4);
+        apiCommon.checkValidCreateJobV3(startJobDTO.getContractNumber());
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);
         return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V3, (String) request.getAttribute(REQUEST_ID), request);
     }
 }
-

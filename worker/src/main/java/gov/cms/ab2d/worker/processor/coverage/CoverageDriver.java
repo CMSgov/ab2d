@@ -59,6 +59,8 @@ public interface CoverageDriver {
      */
     int numberOfBeneficiariesToProcess(Job job, ContractDTO contract);
 
+    int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract);
+
     /**
      * Get first page worth of beneficiaries to run EOB searches on
      * @param job eob job to find first page for
@@ -73,6 +75,8 @@ public interface CoverageDriver {
      * @return result containing page of beneficiaries and request to get next page if more beneficiaries are present
      */
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
+
+    CoveragePagingResult pageCoverageV3(CoveragePagingRequest request);
 
     /**
      * Verify that the coverage information in the database meets all business requirements.

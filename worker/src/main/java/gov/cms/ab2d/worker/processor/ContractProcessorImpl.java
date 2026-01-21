@@ -11,8 +11,10 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.service.CoverageV3ServiceImpl;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ErrorEvent;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -34,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -131,7 +134,9 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(contractNumber);
-        int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
+        int numBenes = job.isV3Job()
+                ? coverageDriver.numberOfBeneficiariesToProcessV3(job, contract)
+                : coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
 
@@ -214,12 +219,10 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @throws InterruptedException if job is shut down during a busy wait for space in the queue
      */
     private void loadEobRequests(ContractData contractData) throws InterruptedException {
-        String jobUuid = contractData.getJob().getJobUuid();
-        ContractDTO contract = contractData.getContract();
+        final String jobUuid = contractData.getJob().getJobUuid();
 
         // Handle first page of beneficiaries and then enter loop
-        CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
-                null, mapping.map(contract), contractData.getJob().getCreatedAt()));
+        CoveragePagingResult current = createInitialPagingResult(contractData);
         loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
@@ -234,7 +237,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             }
 
             // Queue a batch of patients
-            current = coverageDriver.pageCoverage(current.getNextRequest().get());
+            current = nextPagingResult(current.getNextRequest().get());
             loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
             jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
@@ -256,6 +259,33 @@ public class ContractProcessorImpl implements ContractProcessor {
                     " patients from database but retrieved " + totalQueued);
         }
 
+    }
+
+    private CoveragePagingResult createInitialPagingResult(final ContractData contractData) {
+        val request = new CoveragePagingRequest(
+            eobJobPatientQueuePageSize,
+            null,
+            mapping.map(contractData.getContract()),
+            contractData.getJob().getCreatedAt()
+        );
+
+        if (contractData.getJob().isV3Job()) {
+            request.setV3Job(true);
+            return coverageDriver.pageCoverageV3(request);
+        }
+        else {
+            request.setV3Job(false);
+            return coverageDriver.pageCoverage(request);
+        }
+    }
+
+    private CoveragePagingResult nextPagingResult(CoveragePagingRequest request) {
+        if (request.isV3Job()) {
+            return coverageDriver.pageCoverageV3(request);
+        }
+        else {
+            return coverageDriver.pageCoverage(request);
+        }
     }
 
     /**
@@ -328,14 +358,20 @@ public class ContractProcessorImpl implements ContractProcessor {
     private Future<ProgressTrackerUpdate> queuePatientClaimsRequest(List<CoverageSummary> patient, ContractData contractData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
-        Job job = contractData.getJob();
+        val job = contractData.getJob();
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
         // could be viewed as a hack by many; but on the other hand it saves us from writing
         // tons of extra code.
-        var jobUuid = job.getJobUuid();
+        val jobUuid = job.getJobUuid();
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
-            var patientClaimsRequest = new PatientClaimsRequest(patient,
+            val isV3Job = job.isV3Job();
+            // TODO -- remove this logic after 'R4v3' is added to the job table
+            val fhirVersion = isV3Job
+                    ? FhirVersion.R4v3
+                    : job.getFhirVersion();
+
+            val patientClaimsRequest = new PatientClaimsRequest(patient,
                     contractData.getContract().getAttestedOn(),
                     job.getSince(),
                     job.getUntil(),
@@ -344,8 +380,11 @@ public class ContractProcessorImpl implements ContractProcessor {
                     job.getContractNumber(),
                     contractData.getContract().getContractType(),
                     token,
-                    job.getFhirVersion(),
+                    fhirVersion,
                     searchConfig.getEfsMount());
+
+            patientClaimsRequest.setV3Job(isV3Job);
+
             return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {

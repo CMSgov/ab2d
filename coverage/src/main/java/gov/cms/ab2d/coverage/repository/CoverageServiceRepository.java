@@ -60,7 +60,7 @@ public class CoverageServiceRepository {
     private static final int BATCH_INSERT_SIZE = 10000;
 
     // List of years from 2020 to current year
-    private static final List<Integer> YEARS = IntStream.rangeClosed(2020, Calendar.getInstance().get(Calendar.YEAR)).boxed().toList();
+    public static final List<Integer> YEARS = IntStream.rangeClosed(2020, Calendar.getInstance().get(Calendar.YEAR)).boxed().toList();
 
     /**
      * Assign a beneficiary as being a member of a contract during a year and month {@link CoveragePeriod}
@@ -625,11 +625,11 @@ public class CoverageServiceRepository {
      *
      * @return the maximum number of entries required from the database to a pageSize worth of beneficiaries
      */
-    private long getCoverageLimit(int pageSize, long expectedCoveragePeriods) {
+    public static long getCoverageLimit(int pageSize, long expectedCoveragePeriods) {
         return expectedCoveragePeriods * (pageSize + 1);
     }
 
-    private int getExpectedCoveragePeriods(CoveragePagingRequest pagingRequest) {
+    public static int getExpectedCoveragePeriods(CoveragePagingRequest pagingRequest) {
         OffsetDateTime jobStartTime = pagingRequest.getJobStartTime();
 
         ZonedDateTime startTime = pagingRequest.getContract().getESTAttestationTime();
@@ -647,7 +647,7 @@ public class CoverageServiceRepository {
         return (int) ChronoUnit.MONTHS.between(startTime, endTime);
     }
 
-    private Map<Long, List<CoverageMembership>> aggregateEnrollmentByPatient(int expectedCoveragePeriods, List<CoverageMembership> enrollment) {
+    public static Map<Long, List<CoverageMembership>> aggregateEnrollmentByPatient(int expectedCoveragePeriods, List<CoverageMembership> enrollment) {
         Map<Long, List<CoverageMembership>> enrollmentByBeneficiary = new LinkedHashMap<>();
 
         // Guarantee insertion order. Could use functional API in future.
@@ -697,7 +697,7 @@ public class CoverageServiceRepository {
     /**
      * Summarize the coverage of one beneficiary for
      */
-    private CoverageSummary summarizeCoverageMembership(ContractForCoverageDTO contract,
+    public static CoverageSummary summarizeCoverageMembership(ContractForCoverageDTO contract,
                                                         Map.Entry<Long, List<CoverageMembership>> membershipInfo) {
 
         List<CoverageMembership> membershipMonths = membershipInfo.getValue();
@@ -739,11 +739,11 @@ public class CoverageServiceRepository {
     /**
      * Convert raw array results into object
      */
-    private LocalDate fromRawResults(CoverageMembership result) {
+    private static LocalDate fromRawResults(CoverageMembership result) {
         return LocalDate.of(result.getYear(), result.getMonth(), 1);
     }
 
-    private FilterOutByDate.DateRange asDateRange(LocalDate localStartDate, LocalDate localEndDate)  {
+    private static FilterOutByDate.DateRange asDateRange(LocalDate localStartDate, LocalDate localEndDate)  {
         return FilterOutByDate.getDateRange(localStartDate.getMonthValue(), localStartDate.getYear(),
                 localEndDate.getMonthValue(), localEndDate.getYear());
     }

@@ -27,6 +27,8 @@ public class CoveragePagingRequest {
      */
     private final Long cursor;
 
+    private boolean isV3Job = false;
+
     public CoveragePagingRequest(int pageSize, Long cursor, ContractForCoverageDTO contract, OffsetDateTime jobStartTime) {
         this.contract = contract;
         this.pageSize = pageSize;
@@ -52,5 +54,13 @@ public class CoveragePagingRequest {
 
     public String getContractNumber() {
         return contract.getContractNumber();
+    }
+
+    public boolean isV3Job() {
+        return isV3Job;
+    }
+
+    public void setV3Job(boolean v3Job) {
+        isV3Job = v3Job;
     }
 }
