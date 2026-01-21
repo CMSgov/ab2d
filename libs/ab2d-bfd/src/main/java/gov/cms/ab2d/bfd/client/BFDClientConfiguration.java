@@ -140,6 +140,13 @@ public class BFDClientConfiguration {
     private KeyStore buildTrustStoreFromPem(String pem) throws Exception {
         Certificate cert = parseX509FromPem(pem);
 
+        // 🔍 LOG WHAT WE ACTUALLY TRUST
+        if (cert instanceof java.security.cert.X509Certificate x509) {
+            logCertInfo(x509);
+        } else {
+            log.warn("Loaded trust cert is not X509: {}", cert.getType());
+        }
+
         KeyStore ts = KeyStore.getInstance(KeyStore.getDefaultType());
         ts.load(null, null);
         ts.setCertificateEntry("bfd-trust", cert);
@@ -210,4 +217,15 @@ public class BFDClientConfiguration {
     private boolean hasText(String s) {
         return s != null && !s.trim().isEmpty();
     }
+
+    private void logCertInfo(java.security.cert.X509Certificate x) throws Exception {
+        byte[] der = x.getEncoded();
+        var md = java.security.MessageDigest.getInstance("SHA-256");
+        byte[] dig = md.digest(der);
+
+        String fp = java.util.HexFormat.of().formatHex(dig);
+        log.info("BFD trust cert loaded. Subject='{}' Issuer='{}' SHA256={}",
+                x.getSubjectX500Principal(), x.getIssuerX500Principal(), fp);
+    }
+
 }
