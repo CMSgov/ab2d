@@ -120,7 +120,7 @@ public class BFDClientConfiguration {
         }
 
         File keyStoreFile = resolveFile(keystorePath);
-        log.info("Loading BFD client keystore from file path: {}", keyStoreFile.getAbsolutePath());
+        log.warn("Loading BFD client keystore from file path: {}", keyStoreFile.getAbsolutePath());
         return loadPkcs12FromFile(keyStoreFile, password);
     }
 
@@ -128,12 +128,13 @@ public class BFDClientConfiguration {
      * Build truststore from PEM cert string if provided; otherwise fall back to trusting the client keystore (legacy).
      */
     private KeyStore resolveTrustStore() throws Exception {
+        log.warn("Loading BFD truststore");
         if (hasText(trustStoreCertPem)) {
-            log.info("Loading BFD truststore from bfd.truststore.cert (PEM provided)");
+            log.warn("Loading BFD truststore from bfd.truststore.cert (PEM provided) hasText(trustStoreCertPem");
             return buildTrustStoreFromPem(trustStoreCertPem);
         }
 
-       // log.warn("bfd.truststore.cert is not set; falling back to using the client keystore as truststore (legacy behavior)");
+        log.warn("bfd.truststore.cert is not set; falling back to using the client keystore as truststore (legacy behavior)");
         return resolveClientKeyStore(keystorePassword.toCharArray());
     }
 
@@ -155,6 +156,8 @@ public class BFDClientConfiguration {
 
     private Certificate parseX509FromPem(String pem) throws CertificateException {
         // Strip PEM armor and whitespace -> decode base64 -> generate X509 certificate
+
+        log.warn(pem);
         String normalized = pem
                 .replace("-----BEGIN CERTIFICATE-----", "")
                 .replace("-----END CERTIFICATE-----", "")
@@ -224,7 +227,7 @@ public class BFDClientConfiguration {
         byte[] dig = md.digest(der);
 
         String fp = java.util.HexFormat.of().formatHex(dig);
-        log.info("BFD trust cert loaded. Subject='{}' Issuer='{}' SHA256={}",
+        log.warn("BFD trust cert loaded. Subject='{}' Issuer='{}' SHA256={}",
                 x.getSubjectX500Principal(), x.getIssuerX500Principal(), fp);
     }
 
