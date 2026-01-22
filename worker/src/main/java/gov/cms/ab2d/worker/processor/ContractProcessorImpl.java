@@ -568,7 +568,6 @@ public class ContractProcessorImpl implements ContractProcessor {
             try {
                 Files.delete(Path.of(finishedDir.getAbsolutePath()));
             } catch (Exception ex) {
-                // TODO - remove logging 'ex' -- added because of new error 'Unable to delete finished dir'
                 log.error("Unable to delete finished dir", ex);
             }
         }
@@ -583,7 +582,6 @@ public class ContractProcessorImpl implements ContractProcessor {
             try {
                 Files.delete(Path.of(streamingDir.getAbsolutePath()));
             } catch (Exception ex) {
-                // TODO - remove logging 'ex' -- added because of new error 'Unable to delete finished dir'
                 log.error("Unable to delete streaming dir", ex);
             }
         }
