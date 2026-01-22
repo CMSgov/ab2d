@@ -78,7 +78,7 @@ jobs:
         run: ./gradlew clean test --info
 
       - name: Build and push Docker image
-        if: ${{ inputs.push_image == true }}
+        #  if: ${{ inputs.push_image == true }}
         id: build_image
         run: |
           ./gradlew -b build.gradle bootJar -Dset.root.project.build.filename=true
