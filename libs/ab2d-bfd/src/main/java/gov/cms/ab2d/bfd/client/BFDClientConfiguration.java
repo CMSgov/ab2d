@@ -36,18 +36,9 @@ public class BFDClientConfiguration {
     @Value("${bfd.keystore.location}")
     private String keystorePath;
 
-    /**
-     * New approach: base64-encoded PKCS12 (PFX) keystore content injected via ECS secrets:
-     * AB2D_BFD_KEYSTORE_BASE64 from SSM param /ab2d/${env}/worker/sensitive/bfd_keystore_base64
-     */
     @Value("${bfd.keystore.base64:}")
     private String keystoreBase64;
 
-    /**
-     * PEM certificate content for the BFD truststore.
-     * application.bfd.properties:
-     *   bfd.truststore.cert=${AB2D_BFD_TRUSTSTORE_CERT}
-     */
     @Value("${bfd.truststore.cert:}")
     private String trustStoreCertPem;
 
@@ -106,9 +97,8 @@ public class BFDClientConfiguration {
         }
     }
 
-    /**
-     * Prefer base64 PKCS12 keystore if present; otherwise fall back to file location.
-     */
+
+     // Prefer base64 PKCS12 keystore if present; otherwise fall back to file location.
     private KeyStore resolveClientKeyStore(char[] password) throws Exception {
         if (hasText(keystoreBase64)) {
             log.info("Loading BFD client keystore from bfd.keystore.base64 (env/SSM injected)");
@@ -124,9 +114,8 @@ public class BFDClientConfiguration {
         return loadPkcs12FromFile(keyStoreFile, password);
     }
 
-    /**
-     * Build truststore from PEM cert string if provided; otherwise fall back to trusting the client keystore (legacy).
-     */
+
+    // Build truststore from PEM cert string if provided; otherwise fall back to trusting the client keystore (legacy).
     private KeyStore resolveTrustStore() throws Exception {
         log.warn("Loading BFD truststore");
         if (hasText(trustStoreCertPem)) {
@@ -141,7 +130,6 @@ public class BFDClientConfiguration {
     private KeyStore buildTrustStoreFromPem(String pem) throws Exception {
         Certificate cert = parseX509FromPem(pem);
 
-        // 🔍 LOG WHAT WE ACTUALLY TRUST
         if (cert instanceof java.security.cert.X509Certificate x509) {
             logCertInfo(x509);
         } else {
@@ -155,8 +143,6 @@ public class BFDClientConfiguration {
     }
 
     private Certificate parseX509FromPem(String pem) throws CertificateException {
-        // Strip PEM armor and whitespace -> decode base64 -> generate X509 certificate
-
         log.warn(pem);
         String normalized = pem
                 .replace("-----BEGIN CERTIFICATE-----", "")
