@@ -2,9 +2,9 @@ name: IDR Query build
 run-name: idr-query-build
 
 on:
-  push:
-    branches:
-      - "jscott/PLT-1506"
+  # push:
+  #   branches:
+  #     - "jscott/PLT-1506"
   workflow_call:
     inputs:
       push_image:
@@ -31,9 +31,11 @@ on:
 permissions:
   contents: read
   id-token: write
+
 defaults:
   run:
-    working-directory: ./idr-query
+    working-directory: ./idr-db-importer
+
 env:
   ECR_REPO: ab2d-idr-query
   TAG_PREFIX: idr-query
