@@ -2,9 +2,6 @@ name: IDR Query build
 run-name: idr-query-build
 
 on:
-  # push:
-  #   branches:
-  #     - "jscott/PLT-1506"
   workflow_call:
     inputs:
       push_image:
@@ -77,13 +74,13 @@ jobs:
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
-        run: ./gradlew clean test --info
+        run: gradle clean test --info
 
       - name: Build and push Docker image
-        #  if: ${{ inputs.push_image == true }}
+        if: ${{ inputs.push_image == true }}
         id: build_image
         run: |
-          ./gradlew -b build.gradle bootJar -Dset.root.project.build.filename=true
+          gradle -b build.gradle bootJar -Dset.root.project.build.filename=true
           ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
           SHA_SHORT=$(git rev-parse --short HEAD)
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
