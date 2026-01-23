@@ -19,8 +19,6 @@ locals {
     "ab2d-contracts",
     "ab2d-events"
   ])
-
-
 }
 
 module "sops" {
