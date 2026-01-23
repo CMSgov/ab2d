@@ -12,7 +12,7 @@ on:
         default: false
     outputs:
       image_tag:
-        description: Image tag pushed to non-prod ECR
+        description: Image tag pushed to BCDA prod account ECR
         value: ${{ jobs.build.outputs.image_tag }}
   workflow_dispatch:
     inputs:
@@ -41,7 +41,7 @@ jobs:
   build:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
 
