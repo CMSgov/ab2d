@@ -249,7 +249,7 @@ class CoverageDriverUnitTest {
         when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO("Contract-0", contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
 
         assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
-        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - CoveragePagingRequest(jobStartTime=null, contract=ContractForCoverageDTO(contractNumber=Contract-0, attestedOn=2020-01-01T00:00-05:00, contractType=NORMAL), pageSize=10000, cursor=Optional.empty)"));
+        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - CoveragePagingRequest(jobStartTime=null, contract=ContractForCoverageDTO(contractNumber=Contract-0, attestedOn=2020-01-01T00:00-05:00, contractType=NORMAL), pageSize=10000, cursor=Optional.empty, isV3Job=false)"));
     }
 
     @DisplayName("Paging coverage fails when coverage periods are missing")
