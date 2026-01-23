@@ -81,6 +81,9 @@ jobs:
         id: build_image
         run: |
           gradle -b build.gradle bootJar -Dset.root.project.build.filename=true
+          mkdir target
+          cp ./build/libs/ab2d-idr-db-importer-*-SNAPSHOT.jar target/
+          
           ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
           SHA_SHORT=$(git rev-parse --short HEAD)
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
