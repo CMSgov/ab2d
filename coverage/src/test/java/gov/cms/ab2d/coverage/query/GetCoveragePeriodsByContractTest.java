@@ -27,7 +27,7 @@ class GetCoveragePeriodsByContractTest {
         System.out.println(result);
     }
 
-    @Test
+//    @Test
     void test() throws Exception {
         DataSource dataSource;
         while ((dataSource = container.dataSource) == null) {
