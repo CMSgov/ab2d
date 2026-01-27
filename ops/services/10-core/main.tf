@@ -355,10 +355,18 @@ resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
   ip_protocol                  = "tcp"
 }
 
-module "aurora_import_bucket" {
+module "idr_db_importer_bucket" {
   source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=9b6994c1e3cca96cc726feed66357dc6f7b42d29"
 
   app  = module.platform.app
   env  = module.platform.env
   name = "${module.platform.app}-${module.platform.env}-idr-db-importer"
+}
+
+# Shared cluster to be initially used by the idr-db-importer task with the remaining services potentially being migrated later.
+module "cluster" {
+  source = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+
+  cluster_name_override = "${local.app}-${local.env}"
+  platform              = module.platform
 }
