@@ -127,10 +127,11 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         try {
-            if (!coverageDriver.isCoverageAvailable(job, contract)) {
-                log.info("coverage metadata is not up to date so job will not be started");
-                return job;
-            }
+            // TODO uncomment this later; update for V3
+//            if (!coverageDriver.isCoverageAvailable(job, contract)) {
+//                log.info("coverage metadata is not up to date so job will not be started");
+//                return job;
+//            }
 
             eventLogger.logAndAlert(job.buildJobStatusChangeEvent(IN_PROGRESS, getStatusString(job)), PUBLIC_LIST);
 
@@ -147,7 +148,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             job.setStatusMessage("could not pull coverage information for contract");
 
             job = jobRepository.save(job);
-        } catch (InterruptedException ie) {
+        } catch (Exception ie) { // TODO revert this
             throw new RuntimeException("could not determine whether coverage metadata was up to date", ie);
         }
 
