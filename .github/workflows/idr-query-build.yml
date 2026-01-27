@@ -69,8 +69,8 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-            HPMS_AUTH_KEY_ID=/ab2d/prod/core/sensitive/hpms_auth_key_id
-            HPMS_AUTH_KEY_SECRET=/ab2d/prod/core/sensitive/hpms_auth_key_secret
+            HPMS_AUTH_KEY_ID=/ab2d/test/core/sensitive/hpms_auth_key_id
+            HPMS_AUTH_KEY_SECRET=/ab2d/test/core/sensitive/hpms_auth_key_secret
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
