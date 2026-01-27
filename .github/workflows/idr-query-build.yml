@@ -2,9 +2,6 @@ name: IDR DB Importer build
 run-name: idr-db-importer-build
 
 on:
-  push:
-    branches:
-      - "jscott/PLT-1546"
   workflow_call:
     inputs:
       push_image:
@@ -44,7 +41,7 @@ jobs:
   build:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
 
@@ -62,7 +59,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
       - uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
