@@ -174,6 +174,51 @@ resource "aws_iam_role_policy_attachment" "microservices" {
   policy_arn = each.value
 }
 
+# IDR-DB-IMPORTER
+resource "aws_iam_role" "idr-db-importer-execution" {
+  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
+  name                 = "${local.service_prefix}-idr-db-importer-execution"
+  path                 = "/delegatedadmin/developer/"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = [
+            "ecs-tasks.amazonaws.com"
+          ]
+        }
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role" "idr-db-importer" {
+  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
+  name                 = "${local.service_prefix}-idr-db-importer"
+  path                 = "/delegatedadmin/developer/"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = [
+            "ecs-tasks.amazonaws.com"
+          ]
+        }
+      },
+    ]
+  })
+}
+
 # Create KMS policy
 resource "aws_iam_policy" "kms" {
   name   = "${local.service_prefix}-kms"
