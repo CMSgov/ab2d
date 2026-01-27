@@ -41,7 +41,7 @@ jobs:
   build:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
 
@@ -59,7 +59,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
 
       - uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
@@ -69,8 +69,8 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-            HPMS_AUTH_KEY_ID=/ab2d/test/core/sensitive/hpms_auth_key_id
-            HPMS_AUTH_KEY_SECRET=/ab2d/test/core/sensitive/hpms_auth_key_secret
+            HPMS_AUTH_KEY_ID=/ab2d/prod/core/sensitive/hpms_auth_key_id
+            HPMS_AUTH_KEY_SECRET=/ab2d/prod/core/sensitive/hpms_auth_key_secret
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
