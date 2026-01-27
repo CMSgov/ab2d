@@ -1,7 +1,10 @@
-name: IDR Query build
-run-name: idr-query-build
+name: IDR DB Importer build
+run-name: idr-db-importer-build
 
 on:
+  push:
+    branches:
+      - "jscott/PLT-1546"
   workflow_call:
     inputs:
       push_image:
@@ -34,8 +37,8 @@ defaults:
     working-directory: ./idr-db-importer
 
 env:
-  ECR_REPO: ab2d-idr-query
-  TAG_PREFIX: idr-query
+  ECR_REPO: ab2d-idr-db-importer
+  TAG_PREFIX: idr-db-importer
 
 jobs:
   build:
