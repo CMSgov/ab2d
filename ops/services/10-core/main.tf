@@ -360,5 +360,5 @@ module "aurora_import_bucket" {
 
   app  = module.platform.app
   env  = module.platform.env
-  name = "${module.platform.app}-${module.platform.env}-aurora-import"
+  name = "${module.platform.app}-${module.platform.env}-idr-db-importer"
 }
