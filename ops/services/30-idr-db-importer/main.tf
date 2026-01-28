@@ -11,7 +11,6 @@ locals {
   default_tags   = module.platform.default_tags
   env            = terraform.workspace
   image_repo_uri = data.aws_ecr_repository.idr_db_importer.repository_url
-  image_tag      = "idr-query-jscott-PLT-1506-cb8193e"
   service        = "idr-db-importer"
 }
 
@@ -28,8 +27,8 @@ module "platform" {
 resource "aws_ecs_task_definition" "idr_db_importer" {
   family                   = "${local.service_prefix}-${local.service}"
   network_mode             = "awsvpc"
-  execution_role_arn       = data.aws_iam_role.idr_db_importer_execution
-  task_role_arn            = data.aws_iam_role.idr_db_importer
+  execution_role_arn       = data.aws_iam_role.idr_db_importer_execution.arn
+  task_role_arn            = data.aws_iam_role.idr_db_importer.arn
   requires_compatibilities = ["FARGATE"]
   cpu                      = 1024
   memory                   = 2048
@@ -37,7 +36,7 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
   container_definitions = nonsensitive(jsonencode([
     {
       name                   = local.service
-      image                  = "${local.image_repo_uri}:${local.image_tag}"
+      image                  = "${local.image_repo_uri}:${var.image_tag}"
       readonlyRootFilesystem = true
       logConfiguration = {
         logDriver = "awslogs"
