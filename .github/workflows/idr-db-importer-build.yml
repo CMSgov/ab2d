@@ -19,7 +19,7 @@ on:
       is_prod:
         description: AWS prod or non-prod account selector
         type: boolean
-        default: true
+        default: false
       push_image:
         description: Build and push Docker image to ECR
         type: boolean
