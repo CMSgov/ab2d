@@ -2,9 +2,6 @@ name: IDR DB Importer build
 run-name: idr-db-importer-build
 
 on:
-  push:
-    branches:
-      - "jscott/PLT-1546"
   workflow_call:
     inputs:
       push_image:
@@ -41,14 +38,13 @@ defaults:
     working-directory: ./idr-db-importer
 
 env:
+  AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
   ECR_REPO: ab2d-idr-db-importer
   TAG_PREFIX: idr-db-importer
 
 jobs:
   build:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
-    # env:
-    #   AWS_ACCOUNT: ${{ inputs.is_prod ? "env.PROD_ACCOUNT" : env.NON_PROD_ACCOUNT }}
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
 
@@ -62,30 +58,15 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
-      - name: Assume role in prod account
-        if: ${{ inputs.is_prod }}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
+      - name: Override AWS_ACCOUNT variable
+        if: ${{ inputs.is_prod == 'false' }}
+        run: echo "AWS_ACCOUNT=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_ENV
 
-      - name: Assume role in non-prod account
-        if: ${{ !inputs.is_prod }}
+      - name: Assume role
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
-  
-      # - uses: cmsgov/cdap/actions/aws-params-env-action@main
-      #   env:
-      #     AWS_REGION: ${{ vars.AWS_REGION }}
-      #   with:
-      #     params: |
-      #       ARTIFACTORY_URL=/artifactory/url
-      #       ARTIFACTORY_USER=/artifactory/user
-      #       ARTIFACTORY_PASSWORD=/artifactory/password
-      #       HPMS_AUTH_KEY_ID=/ab2d/prod/core/sensitive/hpms_auth_key_id
-      #       HPMS_AUTH_KEY_SECRET=/ab2d/prod/core/sensitive/hpms_auth_key_secret
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
