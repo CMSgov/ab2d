@@ -224,6 +224,7 @@ public class BFDClientConfiguration {
     }
 
     public static void main(String[] args) {
+        String bfd_url = "https://prod-sbx.fhir.bfd.cmscloud.local";
         String bfd_v3_url = "https://test.fhirv3.bfd.cmscloud.local";
         // Get these from parameter store
         String bfd_keystore_base64 = "";
@@ -236,7 +237,7 @@ public class BFDClientConfiguration {
         config.keystorePassword = bfd_keystore_password;
         HttpClient httpClient = config.bfdHttpClient();
 
-        BfdClientVersions versions = new BfdClientVersions("null", bfd_v3_url, httpClient);
+        BfdClientVersions versions = new BfdClientVersions(bfd_url, bfd_v3_url, httpClient);
 
         BFDClientImpl bfdClient = new BFDClientImpl(
                 new BFDSearchImpl(httpClient, new AbstractEnvironment(){}, versions),
