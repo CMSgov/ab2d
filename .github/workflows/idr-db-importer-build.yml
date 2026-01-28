@@ -16,6 +16,10 @@ on:
         value: ${{ jobs.build.outputs.image_tag }}
   workflow_dispatch:
     inputs:
+      is_prod:
+        description: AWS prod or non-prod account selector
+        type: boolean
+        default: true
       push_image:
         description: Build and push Docker image to ECR
         type: boolean
@@ -41,7 +45,7 @@ jobs:
   build:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+      AWS_ACCOUNT: ${{ inputs.is_prod ? "env.PROD_ACCOUNT" : env.NON_PROD_ACCOUNT }}
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
 
@@ -69,8 +73,8 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-            HPMS_AUTH_KEY_ID=/ab2d/prod/core/sensitive/hpms_auth_key_id
-            HPMS_AUTH_KEY_SECRET=/ab2d/prod/core/sensitive/hpms_auth_key_secret
+            HPMS_AUTH_KEY_ID=/ab2d/${{ inputs.is_prod ? prod : test }}prod/core/sensitive/hpms_auth_key_id
+            HPMS_AUTH_KEY_SECRET=/ab2d/${{ inputs.is_prod ? prod : test }}/core/sensitive/hpms_auth_key_secret
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
