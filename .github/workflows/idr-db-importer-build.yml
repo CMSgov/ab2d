@@ -19,7 +19,7 @@ on:
       is_prod:
         description: AWS prod or non-prod account selector
         type: boolean
-        default: false
+        default: true
       push_image:
         description: Build and push Docker image to ECR
         type: boolean
@@ -60,7 +60,7 @@ jobs:
           java-version: '17'
 
       - name: Override AWS_ACCOUNT variables
-        if: ${{ inputs.is_prod == 'false' }}
+        if: ${{ inputs.is_prod == false }}
         run: |
           echo "AWS_ACCOUNT_ID=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_ENV
           echo "AWS_ACCOUNT_NAME=test" >> $GITHUB_ENV
