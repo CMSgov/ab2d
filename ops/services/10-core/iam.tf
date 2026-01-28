@@ -174,6 +174,10 @@ resource "aws_iam_role_policy_attachment" "microservices" {
   policy_arn = each.value
 }
 
+
+
+
+
 # IDR-DB-IMPORTER
 resource "aws_iam_role" "idr-db-importer-execution" {
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
@@ -197,6 +201,34 @@ resource "aws_iam_role" "idr-db-importer-execution" {
   })
 }
 
+resource "aws_iam_policy" "idr-db-importer-execution" {
+  name        = "${local.app}-${local.parent_env}-idr-db-importer-execution"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "ssm:GetParameters",
+          "logs:PutLogEvents",
+          "logs:CreateLogStream",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "idr-db-importer-execution" {
+  role       = aws_iam_role.idr-db-importer-execution.name
+  policy_arn = aws_iam_policy.idr-db-importer-execution.arn
+}
+
 resource "aws_iam_role" "idr-db-importer" {
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
   name                 = "${local.service_prefix}-idr-db-importer"
@@ -218,6 +250,14 @@ resource "aws_iam_role" "idr-db-importer" {
     ]
   })
 }
+
+
+
+
+
+
+
+
 
 # Create KMS policy
 resource "aws_iam_policy" "kms" {
