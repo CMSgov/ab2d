@@ -38,7 +38,8 @@ defaults:
     working-directory: ./idr-db-importer
 
 env:
-  AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+  AWS_ACCOUNT_ID: ${{ secrets.PROD_ACCOUNT }}
+  AWS_ACCOUNT_NAME: prod
   ECR_REPO: ab2d-idr-db-importer
   TAG_PREFIX: idr-db-importer
 
@@ -58,15 +59,17 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
-      - name: Override AWS_ACCOUNT variable
+      - name: Override AWS_ACCOUNT variables
         if: ${{ inputs.is_prod == 'false' }}
-        run: echo "AWS_ACCOUNT=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_ENV
+        run: |
+          echo "AWS_ACCOUNT_ID=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_ENV
+          echo "AWS_ACCOUNT_NAME=test" >> $GITHUB_ENV
 
       - name: Assume role
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-${{ env.AWS_ACCOUNT_NAME }}-github-actions
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
@@ -77,7 +80,7 @@ jobs:
         id: build_image
         run: |
           gradle -b build.gradle bootJar -Dset.root.project.build.filename=true
-          ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
+          ECR_DOMAIN="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
           SHA_SHORT=$(git rev-parse --short HEAD)
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
           BRANCH_NAME_FORMATTED=${GITHUB_REF_NAME//\//-}
