@@ -1,15 +1,20 @@
 package gov.cms.ab2d.bfd.client;
 
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.AbstractEnvironment;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 import javax.net.ssl.SSLContext;
 import java.io.*;
@@ -21,6 +26,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
@@ -215,6 +221,35 @@ public class BFDClientConfiguration {
         String fp = java.util.HexFormat.of().formatHex(dig);
         log.warn("BFD trust cert loaded. Subject='{}' Issuer='{}' SHA256={}",
                 x.getSubjectX500Principal(), x.getIssuerX500Principal(), fp);
+    }
+
+    public static void main(String[] args) {
+        String bfd_v3_url = "https://test.fhirv3.bfd.cmscloud.local";
+        // Get these from parameter store
+        String bfd_keystore_base64 = "";
+        String bfd_keystore_password = "";
+        String bfd_truststore_cert = "";
+
+        BFDClientConfiguration config = new BFDClientConfiguration();
+        config.keystoreBase64 = bfd_keystore_base64;
+        config.trustStoreCertPem = bfd_truststore_cert;
+        config.keystorePassword = bfd_keystore_password;
+        HttpClient httpClient = config.bfdHttpClient();
+
+        BfdClientVersions versions = new BfdClientVersions("null", bfd_v3_url, httpClient);
+
+        BFDClientImpl bfdClient = new BFDClientImpl(
+                new BFDSearchImpl(httpClient, new AbstractEnvironment(){}, versions),
+                versions
+        );
+        BFDClient.BFD_BULK_JOB_ID.set("1234");
+
+        IBaseBundle result = bfdClient.requestEOBFromServer(
+                FhirVersion.R4v3,
+                -700000000205L,
+                OffsetDateTime.now().minusYears(4),
+                OffsetDateTime.now().minusMonths(2),
+                "Z0001");
     }
 
 }
