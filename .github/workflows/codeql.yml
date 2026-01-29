@@ -3,8 +3,6 @@ name: CodeQL
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   analyze:
@@ -13,6 +11,7 @@ jobs:
 
     permissions:
       contents: read
+      id-token: write
       security-events: write
 
     steps:
@@ -32,12 +31,22 @@ jobs:
           java-version: "17"
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: java
+          build-mode: none
 
-      - name: Build
-        run: mvn -U clean package -DskipTests
+      - name: Set env vars from AWS params in BCDA management account
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+
+      - name: Build package
+        run: mvn -U clean package -s settings.xml -Dcheckstyle.skip -DskipTests -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
+
 
       - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
