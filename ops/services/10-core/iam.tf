@@ -211,6 +211,7 @@ resource "aws_iam_policy" "idr-db-importer-execution" {
         Action = [
           "ssm:GetParameters",
           "logs:PutLogEvents",
+          "logs.CreateLogGroup",
           "logs:CreateLogStream",
           "ecr:GetDownloadUrlForLayer",
           "ecr:GetAuthorizationToken",
