@@ -1,7 +1,7 @@
 # AB2D
 
-[![Maintainability](https://api.codeclimate.com/v1/badges/322dab715b4324c33fee/maintainability)](https://qlty.sh/gh/CMSgov/projects/ab2d)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/322dab715b4324c33fee/test_coverage)](https://qlty.sh/gh/CMSgov/projects/ab2d)
+[![Maintainability](https://qlty.sh/gh/CMSgov/projects/ab2d/maintainability.svg)](https://qlty.sh/gh/CMSgov/projects/ab2d)
+[![Test Coverage](https://qlty.sh/gh/CMSgov/projects/ab2d/coverage)](https://qlty.sh/gh/CMSgov/projects/ab2d)
 [![CodeQL](https://github.com/CMSgov/ab2d/actions/workflows/codeql.yml/badge.svg)](https://github.com/CMSgov/ab2d/actions/workflows/codeql.yml)
 [![Automated Release Notes by gren](https://img.shields.io/badge/%F0%9F%A4%96-release%20notes-00B2EE.svg)](https://github-tools.github.io/github-release-notes/)
 
