@@ -1,6 +1,8 @@
 name: CodeQL
 
 on:
+  push:
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -34,6 +36,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: java
+          build-mode: manual
 
       - name: Build
         run: mvn -U clean package -DskipTests
