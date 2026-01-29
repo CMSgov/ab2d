@@ -33,13 +33,13 @@ jobs:
           java-version: "17"
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: java
-          build-mode: manual
+          build-mode: none
 
       - name: Build
         run: mvn -U clean package -DskipTests
 
       - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
