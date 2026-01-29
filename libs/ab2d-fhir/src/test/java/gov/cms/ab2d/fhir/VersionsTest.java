@@ -58,7 +58,7 @@ class VersionsTest {
     void executeInstantiateEnum() {
         Object obj1 = Versions.instantiateEnum(R4, "OperationOutcome", "IssueSeverity", "ERROR");
         assertEquals(org.hl7.fhir.r4.model.OperationOutcome.IssueSeverity.ERROR, obj1);
-        Object obj2 = Versions.instantiateEnum(R4v3, "OperationOutcome", "IssueSeverity", "ERROR");
+        Object obj2 = Versions.instantiateEnum(R4V3, "OperationOutcome", "IssueSeverity", "ERROR");
         assertEquals(org.hl7.fhir.r4.model.OperationOutcome.IssueSeverity.ERROR, obj2);
     }
 
@@ -66,7 +66,7 @@ class VersionsTest {
     void executeSubObject() {
         Object obj1 = Versions.instantiateClass(R4, "OperationOutcome", "OperationOutcomeIssueComponent");
         assertEquals(org.hl7.fhir.r4.model.OperationOutcome.OperationOutcomeIssueComponent.class, obj1.getClass());
-        Object obj2 = Versions.instantiateClass(R4v3, "OperationOutcome", "OperationOutcomeIssueComponent");
+        Object obj2 = Versions.instantiateClass(R4V3, "OperationOutcome", "OperationOutcomeIssueComponent");
         assertEquals(org.hl7.fhir.r4.model.OperationOutcome.OperationOutcomeIssueComponent.class, obj2.getClass());
     }
 
