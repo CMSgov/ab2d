@@ -1,8 +1,6 @@
 name: CodeQL
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -13,6 +11,7 @@ jobs:
 
     permissions:
       contents: read
+      id-token: write
       security-events: write
 
     steps:
