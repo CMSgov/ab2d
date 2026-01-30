@@ -144,6 +144,32 @@ class GetCoverageMembershipTest {
         assertEquals(0, result.size());
     }
 
+    @Test
+    void test_Z0000_with_invalid_cursor() {
+        val result = query.getCoverageMembership("Z0000", YEARS, false, 5, 4L);
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    void test_Z0000_with_2026_only() {
+        val result = query.getCoverageMembership("Z0000", List.of(2026), false, DEFAULT_LIMIT);
+        assertEquals("""
+        patientId=1, year=2026, month=1
+        patientId=1, year=2026, month=2
+        patientId=2, year=2026, month=1
+        patientId=2, year=2026, month=2
+        patientId=3, year=2026, month=1
+        patientId=3, year=2026, month=2
+        """,
+        toString(result));
+    }
+
+    @Test
+    void test_Z0000_with_nonexistent_years() {
+        val result = query.getCoverageMembership("Z0000", List.of(2020), false, DEFAULT_LIMIT);
+        assertEquals(0, result.size());
+    }
+
     String toString(List<CoverageMembership> list) {
         val sb = new StringBuilder();
         list.forEach(item -> sb.append(toString(item)).append("\n"));
