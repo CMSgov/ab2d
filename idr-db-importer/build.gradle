@@ -1,0 +1,43 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.7'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'gov.cms.ab2d'
+version = '0.0.1-SNAPSHOT'
+description = 'AB2D S3 to Database importer'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	awssdkVersion = '2.41.5'
+}
+
+dependencies {
+	implementation "software.amazon.awssdk:ecs:${awssdkVersion}"
+	implementation "software.amazon.awssdk:s3:${awssdkVersion}"
+	implementation "software.amazon.awssdk:sts:${awssdkVersion}"
+	implementation "software.amazon.awssdk:ssm:${awssdkVersion}"
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.retry:spring-retry'
+	implementation 'org.postgresql:postgresql:42.7.2'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
