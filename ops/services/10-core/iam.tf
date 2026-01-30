@@ -219,7 +219,6 @@ resource "aws_iam_policy" "kms_key_access" {
   policy      = data.aws_iam_policy_document.kms_key_access.json
 }
 
-
 data "aws_iam_policy" "rds_monitoring" {
   name = "AmazonRDSEnhancedMonitoringRole"
 }
@@ -252,4 +251,71 @@ resource "aws_iam_role_policy_attachment" "db_monitoring" {
 resource "aws_iam_role_policy_attachment" "db_monitoring_kms" {
   role       = aws_iam_role.db_monitoring.name
   policy_arn = aws_iam_policy.kms_key_access.arn
+}
+
+resource "aws_iam_policy" "aurora_s3_import" {
+  name        = "${module.platform.app}-${module.platform.env}-aurora-s3-import"
+  description = "Aurora import S3 bucket access."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid = "s3import"
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ]
+        Effect = "Allow"
+        Resource = [
+          "${module.aurora_import_bucket.arn}",
+          "${module.aurora_import_bucket.arn}/*"
+        ]
+      },
+      {
+        Sid = "sharedKeyAccess"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateKeyData"
+        ]
+        Effect   = "Allow"
+        Resource = "${module.platform.kms_alias_primary.target_key_arn}"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "aurora_s3_import" {
+  name = "${module.platform.app}-${module.platform.env}-aurora-s3-import"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = [
+            "rds.amazonaws.com"
+          ]
+        }
+        Condition = {
+          "StringLike" = {
+            "aws:SourceAccount" = "${local.aws_account_number}"
+          }
+        }
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "aurora_s3_import" {
+  role       = aws_iam_role.aurora_s3_import.name
+  policy_arn = aws_iam_policy.aurora_s3_import.arn
+}
+
+resource "aws_rds_cluster_role_association" "aurora_s3_import" {
+  db_cluster_identifier = module.db.aurora_cluster.id
+  feature_name          = "s3Import"
+  role_arn              = aws_iam_role.aurora_s3_import.arn
 }

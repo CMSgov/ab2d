@@ -1,0 +1,92 @@
+name: IDR DB Importer build
+run-name: idr-db-importer-build
+
+on:
+  workflow_call:
+    inputs:
+      push_image:
+        type: boolean
+        default: true
+      run_tests:
+        type: boolean
+        default: false
+    outputs:
+      image_tag:
+        description: Image tag pushed to BCDA prod account ECR
+        value: ${{ jobs.build.outputs.image_tag }}
+  workflow_dispatch:
+    inputs:
+      is_prod:
+        description: AWS prod or non-prod account selector
+        type: boolean
+        default: true
+      push_image:
+        description: Build and push Docker image to ECR
+        type: boolean
+        default: true
+      run_tests:
+        description: Run tests
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+defaults:
+  run:
+    working-directory: ./idr-db-importer
+
+env:
+  AWS_ACCOUNT_ID: ${{ secrets.PROD_ACCOUNT }}
+  AWS_ACCOUNT_NAME: prod
+  ECR_REPO: ab2d-idr-db-importer
+  TAG_PREFIX: idr-db-importer
+
+jobs:
+  build:
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    outputs:
+      image_tag: ${{ steps.build_image.outputs.image_tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 'AB2D-7037/S3_Postgres_import'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - name: Override AWS_ACCOUNT variables
+        if: ${{ inputs.is_prod == false }}
+        run: |
+          echo "AWS_ACCOUNT_ID=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_ENV
+          echo "AWS_ACCOUNT_NAME=test" >> $GITHUB_ENV
+
+      - name: Assume role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-${{ env.AWS_ACCOUNT_NAME }}-github-actions
+
+      - name: Run tests
+        if: ${{ inputs.run_tests == true }}
+        run: gradle clean test --info
+
+      - name: Build and push Docker image
+        if: ${{ inputs.push_image == true }}
+        id: build_image
+        run: |
+          gradle -b build.gradle bootJar -Dset.root.project.build.filename=true
+          ECR_DOMAIN="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          ECR_URI="$ECR_DOMAIN/$ECR_REPO"
+          BRANCH_NAME_FORMATTED=${GITHUB_REF_NAME//\//-}
+          TAG_SHORT="$TAG_PREFIX-$BRANCH_NAME_FORMATTED-$SHA_SHORT"
+          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_DOMAIN
+          docker build -t "$ECR_URI:$TAG_SHORT" .
+          docker push "$ECR_URI" --all-tags
+          echo "Published **$ECR_URI:$TAG_SHORT**" >> $GITHUB_STEP_SUMMARY
+          echo "image_tag=$TAG_SHORT" >> $GITHUB_OUTPUT

@@ -354,3 +354,11 @@ resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
   to_port                      = 443
   ip_protocol                  = "tcp"
 }
+
+module "aurora_import_bucket" {
+  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=9b6994c1e3cca96cc726feed66357dc6f7b42d29"
+
+  app  = module.platform.app
+  env  = module.platform.env
+  name = "${module.platform.app}-${module.platform.env}-idr-db-importer"
+}
