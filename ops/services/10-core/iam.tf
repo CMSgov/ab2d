@@ -174,10 +174,6 @@ resource "aws_iam_role_policy_attachment" "microservices" {
   policy_arn = each.value
 }
 
-
-
-
-
 # IDR-DB-IMPORTER
 resource "aws_iam_role" "idr-db-importer-execution" {
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
@@ -202,7 +198,7 @@ resource "aws_iam_role" "idr-db-importer-execution" {
 }
 
 resource "aws_iam_policy" "idr-db-importer-execution" {
-  name        = "${local.app}-${local.parent_env}-idr-db-importer-execution"
+  name = "${local.app}-${local.parent_env}-idr-db-importer-execution"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -211,7 +207,7 @@ resource "aws_iam_policy" "idr-db-importer-execution" {
         Action = [
           "ssm:GetParameters",
           "logs:PutLogEvents",
-          "logs.CreateLogGroup",
+          "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "ecr:GetDownloadUrlForLayer",
           "ecr:GetAuthorizationToken",
@@ -220,7 +216,7 @@ resource "aws_iam_policy" "idr-db-importer-execution" {
         ]
         Effect   = "Allow"
         Resource = "*"
-      },
+      }
     ]
   })
 }
@@ -252,13 +248,25 @@ resource "aws_iam_role" "idr-db-importer" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "idr-db-importer" {
+  for_each = {
+    a = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
+    b = "arn:aws:iam::aws:policy/AmazonECS_FullAccess",
+    c = "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess",
+    d = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    e = "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    f = "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
+    g = "arn:aws:iam::aws:policy/SecretsManagerReadWrite",
+    h = "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds",
+    i = "arn:aws:iam::aws:policy/AmazonSQSFullAccess",
+    j = "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+    k = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+    l = data.aws_iam_policy.cms_cloud_ssm_iam.arn
+  }
 
-
-
-
-
-
-
+  role       = aws_iam_role.idr-db-importer.name
+  policy_arn = each.value
+}
 
 # Create KMS policy
 resource "aws_iam_policy" "kms" {
@@ -339,8 +347,8 @@ resource "aws_iam_role_policy_attachment" "db_monitoring_kms" {
   policy_arn = aws_iam_policy.kms_key_access.arn
 }
 
-resource "aws_iam_policy" "aurora_s3_import" {
-  name        = "${module.platform.app}-${module.platform.env}-aurora-s3-import"
+resource "aws_iam_policy" "idr_db_importer" {
+  name        = "${module.platform.app}-${module.platform.env}-idr_db_importer"
   description = "Aurora import S3 bucket access."
 
   policy = jsonencode({
@@ -354,8 +362,8 @@ resource "aws_iam_policy" "aurora_s3_import" {
         ]
         Effect = "Allow"
         Resource = [
-          "${module.aurora_import_bucket.arn}",
-          "${module.aurora_import_bucket.arn}/*"
+          "${module.idr_db_importer_bucket.arn}",
+          "${module.idr_db_importer_bucket.arn}/*"
         ]
       },
       {
@@ -371,8 +379,8 @@ resource "aws_iam_policy" "aurora_s3_import" {
   })
 }
 
-resource "aws_iam_role" "aurora_s3_import" {
-  name = "${module.platform.app}-${module.platform.env}-aurora-s3-import"
+resource "aws_iam_role" "idr_db_importer" {
+  name = "${module.platform.app}-${module.platform.env}-idr_db_importer"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -395,13 +403,13 @@ resource "aws_iam_role" "aurora_s3_import" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "aurora_s3_import" {
-  role       = aws_iam_role.aurora_s3_import.name
-  policy_arn = aws_iam_policy.aurora_s3_import.arn
+resource "aws_iam_role_policy_attachment" "idr_db_importer" {
+  role       = aws_iam_role.idr_db_importer.name
+  policy_arn = aws_iam_policy.idr_db_importer.arn
 }
 
-resource "aws_rds_cluster_role_association" "aurora_s3_import" {
+resource "aws_rds_cluster_role_association" "idr_db_importer" {
   db_cluster_identifier = module.db.aurora_cluster.id
   feature_name          = "s3Import"
-  role_arn              = aws_iam_role.aurora_s3_import.arn
+  role_arn              = aws_iam_role.idr_db_importer.arn
 }
