@@ -55,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 'jscott/PLT-1522_docker_fix'
+          ref: 'AB2D-7037/S3_Postgres_import'
 
       - uses: actions/setup-java@v4
         with:
