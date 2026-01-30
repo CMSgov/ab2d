@@ -51,7 +51,7 @@ public class BFDSearchImpl implements BFDSearch {
         String urlLocation = bfdClientVersions.getUrl(version);
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
-        if (version == FhirVersion.R4v3) {
+        if (version == FhirVersion.R4V3) {
             url.append("&_tag=Adjudicated");
         }
 
