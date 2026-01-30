@@ -1,67 +1,76 @@
 package gov.cms.ab2d.coverage.query;
 
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import lombok.val;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.jdbc.DataSourceBuilder;
-import org.springframework.boot.test.json.GsonTester;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-
-import javax.sql.DataSource;
-import java.util.Collections;
-
-import static gov.cms.ab2d.coverage.query.TempTestUtils.devDataSource;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @Testcontainers
 class GetCoveragePeriodsByContractTest {
 
     @Container
-    private static final MyContainer container = new MyContainer();
+    private static final PostgresTestContainer container = new PostgresTestContainer();
 
-    //@Test
-    void _test() {
-        val result = new GetCoveragePeriodsByContract(devDataSource()).getCoveragePeriodsForContract("Z0000");
-        System.out.println(result);
+    GetCoveragePeriodsByContract query;
+
+    @BeforeEach
+    void setup() {
+        query = new GetCoveragePeriodsByContract(container.getDataSource());
     }
 
     @Test
-    void test() throws Exception {
-        DataSource dataSource;
-        while ((dataSource = container.dataSource) == null) {
-            System.out.println("Waiting...");
-            Thread.sleep(1000);
-        }
-        System.out.println("DataSource is ready");
-
-        System.out.println(new GetCoveragePeriodsByContract(dataSource).getCoveragePeriodsForContract("Z1234"));
+    void test_expected_periods_for_Z0000()  {
+        val periods = query.getCoveragePeriodsForContract("Z0000");
+        assertEquals(9, periods.size());
+        assertEquals("YearMonthRecord(year=2025, month=6)", periods.get(0).toString());
+        assertEquals("YearMonthRecord(year=2025, month=7)", periods.get(1).toString());
+        assertEquals("YearMonthRecord(year=2025, month=8)", periods.get(2).toString());
+        assertEquals("YearMonthRecord(year=2025, month=9)", periods.get(3).toString());
+        assertEquals("YearMonthRecord(year=2025, month=10)", periods.get(4).toString());
+        assertEquals("YearMonthRecord(year=2025, month=11)", periods.get(5).toString());
+        assertEquals("YearMonthRecord(year=2025, month=12)", periods.get(6).toString());
+        assertEquals("YearMonthRecord(year=2026, month=1)", periods.get(7).toString());
+        assertEquals("YearMonthRecord(year=2026, month=2)", periods.get(8).toString());
     }
 
-    public static class MyContainer extends PostgreSQLContainer<MyContainer> {
+    @Test
+    void test_expected_periods_for_Z7777()  {
+        val periods = query.getCoveragePeriodsForContract("Z7777");
+        assertEquals(3, periods.size());
+        assertEquals("YearMonthRecord(year=2025, month=12)", periods.get(0).toString());
+        assertEquals("YearMonthRecord(year=2026, month=1)", periods.get(1).toString());
+        assertEquals("YearMonthRecord(year=2026, month=2)", periods.get(2).toString());
+    }
 
-        DataSource dataSource;
+    @Test
+    void test_expected_periods_for_Z8888()  {
+        val periods = query.getCoveragePeriodsForContract("Z8888");
+        assertEquals(3, periods.size());
+        assertEquals("YearMonthRecord(year=2025, month=7)", periods.get(0).toString());
+        assertEquals("YearMonthRecord(year=2025, month=8)", periods.get(1).toString());
+        assertEquals("YearMonthRecord(year=2025, month=9)", periods.get(2).toString());
+    }
 
-        public MyContainer() {
-            super("postgres:16");
-        }
+    @Test
+    void test_expected_periods_for_Z9999()  {
+        val periods = query.getCoveragePeriodsForContract("Z9999");
+        assertEquals(6, periods.size());
+        assertEquals("YearMonthRecord(year=2025, month=9)", periods.get(0).toString());
+        assertEquals("YearMonthRecord(year=2025, month=10)", periods.get(1).toString());
+        assertEquals("YearMonthRecord(year=2025, month=11)", periods.get(2).toString());
+        assertEquals("YearMonthRecord(year=2025, month=12)", periods.get(3).toString());
+        assertEquals("YearMonthRecord(year=2026, month=1)", periods.get(4).toString());
+        assertEquals("YearMonthRecord(year=2026, month=2)", periods.get(5).toString());
+    }
 
-        @Override
-        public void start() {
-            super.withUsername("cmsadmin");
-            super.withTmpFs(Collections.singletonMap("/var/lib/postgresql/data", "rw"));
-            super.withInitScript("v3/init.sql");
-            super.start();
-
-            DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
-            dataSourceBuilder.driverClassName("org.postgresql.Driver");
-            dataSourceBuilder.url(getJdbcUrl());
-            dataSourceBuilder.username(getUsername());
-            dataSourceBuilder.password(getPassword());
-            dataSource = dataSourceBuilder.build();
-
-        }
+    @Test
+    void test_query_for_nonexistent_contract() {
+        val periods = query.getCoveragePeriodsForContract("ABC");
+        assertTrue(periods.isEmpty());
     }
 
 }

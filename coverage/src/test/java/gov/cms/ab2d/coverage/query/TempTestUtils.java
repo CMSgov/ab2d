@@ -2,12 +2,16 @@ package gov.cms.ab2d.coverage.query;
 
 import lombok.val;
 import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import javax.sql.DataSource;
 
+import java.util.Collections;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class TempTestUtils {
+// Temporary utility for testing queries against dev DB
+class TempTestUtils {
 
     static DataSource devDataSource() {
         DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
@@ -23,5 +27,4 @@ public class TempTestUtils {
         checkNotNull(result, "Environment variable not defined: " + variable);
         return result;
     }
-
 }

@@ -28,10 +28,12 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
         select * from v3.coverage_v3
            where contract = :contract
            and year in (:years)
+           and current_mbi is not null
         union
         select * from v3.coverage_v3_historical
            where contract = :contract
            and year in (:years)
+           and current_mbi is not null
         order by patient_id, year asc, month asc
         limit :limit
     )
@@ -43,11 +45,13 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
         select * from v3.coverage_v3
            where contract = :contract
            and year in (:years)
+           and current_mbi is not null
            and patient_id >= :patient_id
         union
         select * from v3.coverage_v3_historical
            where contract = :contract
            and year in (:years)
+           and current_mbi is not null
            and patient_id >= :patient_id
         order by patient_id, year asc, month asc
         limit :limit
@@ -61,10 +65,12 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
        select * from v3.coverage_v3
            where contract = :contract
            and year in (:years)
+           and current_mbi is not null
        union
        select * from  v3.coverage_v3_historical
            where contract = :contract
            and year in (:years)
+           and current_mbi is not null
     ) as union_results
     join current_mbi on union_results.current_mbi = current_mbi.mbi
     where current_mbi is not null
@@ -79,10 +85,12 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
        select * from v3.coverage_v3
            where contract = :contract
            and year in (:years)
+           and current_mbi is not null
            and patient_id >= :patient_id
        union
        select * from  v3.coverage_v3_historical
            where contract = :contract
+           and current_mbi is not null
            and year in (:years)
            and patient_id >= :patient_id
     ) as union_results

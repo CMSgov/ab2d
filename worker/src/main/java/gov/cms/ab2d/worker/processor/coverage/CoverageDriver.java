@@ -52,6 +52,8 @@ public interface CoverageDriver {
      */
     boolean isCoverageAvailable(Job job, ContractDTO contract) throws InterruptedException;
 
+    boolean isCoverageAvailableV3(Job job, ContractDTO contract) throws InterruptedException;
+
     /**
      * Calculate the number of beneficiaries to process for a given job
      * @param job an already submitted eob job

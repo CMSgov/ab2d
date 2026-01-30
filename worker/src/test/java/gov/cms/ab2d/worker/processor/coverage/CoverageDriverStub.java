@@ -115,13 +115,19 @@ public class CoverageDriverStub implements CoverageDriver {
 
     @Override
     public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
-        // TODO determine what to do here - probably nothing
+        // TODO determine what to do here - maybe nothing
         return -1;
     }
 
     @Override
     public CoveragePagingResult pageCoverageV3(CoveragePagingRequest request) {
-        // TODO determine what to do here - probably nothing
+        // TODO determine what to do here - maybe nothing
         return null;
+    }
+
+    @Override
+    public boolean isCoverageAvailableV3(Job job, ContractDTO contract) throws InterruptedException {
+        // TODO determine what to do here - maybe nothing
+        return false;
     }
 }

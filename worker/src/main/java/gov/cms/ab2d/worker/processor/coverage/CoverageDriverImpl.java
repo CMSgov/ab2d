@@ -467,7 +467,6 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Trace(metricName = "EnrollmentIsAvailable", dispatcher = true)
     @Override
     public boolean isCoverageAvailable(Job job, ContractDTO contract) throws InterruptedException {
-
         String contractNumber = job.getContractNumber();
         assert contractNumber.equals(contract.getContractNumber());
 
@@ -532,6 +531,13 @@ public class CoverageDriverImpl implements CoverageDriver {
                 coverageLock.unlock();
             }
         }
+    }
+
+    @Trace(metricName = "EnrollmentIsAvailableV3", dispatcher = true)
+    @Override
+    public boolean isCoverageAvailableV3(Job job, ContractDTO contract) {
+        // TODO - determine how to handle this - e.g. return false if coverage data is currently being imported from S3
+        return true;
     }
 
     @Trace(metricName = "EnrollmentCountV3", dispatcher = true)
