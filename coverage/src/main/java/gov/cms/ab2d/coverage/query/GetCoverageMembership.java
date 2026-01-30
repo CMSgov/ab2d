@@ -27,16 +27,16 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
     select patient_id, current_mbi, historic_mbis, year, month from (
         select * from v3.coverage_v3
            where contract = :contract
-           and year in (:years)
            and current_mbi is not null
         union
         select * from v3.coverage_v3_historical
            where contract = :contract
-           and year in (:years)
            and current_mbi is not null
         order by patient_id, year asc, month asc
         limit :limit
     )
+    where year in (:years)
+    order by patient_id asc, year asc, month asc
     """;
 
     private static final String SELECT_COVERAGE_WITHOUT_OPTOUT_WITH_CURSOR =
@@ -44,18 +44,18 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
     select patient_id, current_mbi, historic_mbis, year, month from (
         select * from v3.coverage_v3
            where contract = :contract
-           and year in (:years)
            and current_mbi is not null
            and patient_id >= :patient_id
         union
         select * from v3.coverage_v3_historical
            where contract = :contract
-           and year in (:years)
            and current_mbi is not null
            and patient_id >= :patient_id
         order by patient_id, year asc, month asc
         limit :limit
     )
+    where year in (:years)
+    order by patient_id asc, year asc, month asc
     """;
 
     private static final String SELECT_COVERAGE_WITH_OPTOUT_WITHOUT_CURSOR =
@@ -64,17 +64,17 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
     (
        select * from v3.coverage_v3
            where contract = :contract
-           and year in (:years)
            and current_mbi is not null
        union
        select * from  v3.coverage_v3_historical
            where contract = :contract
-           and year in (:years)
            and current_mbi is not null
     ) as union_results
     join current_mbi on union_results.current_mbi = current_mbi.mbi
-    where current_mbi is not null
+    where year in (:years)
+    and current_mbi is not null
     and share_data is not false
+    order by patient_id asc, year asc, month asc
     limit :limit
     """;
 
@@ -84,19 +84,19 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
     (
        select * from v3.coverage_v3
            where contract = :contract
-           and year in (:years)
            and current_mbi is not null
            and patient_id >= :patient_id
        union
        select * from  v3.coverage_v3_historical
            where contract = :contract
            and current_mbi is not null
-           and year in (:years)
            and patient_id >= :patient_id
     ) as union_results
     join current_mbi on union_results.current_mbi = current_mbi.mbi
-    where current_mbi is not null
+    where year in (:years)
+    and current_mbi is not null
     and share_data is not false
+    order by patient_id asc, year asc, month asc
     limit :limit
     """;
 

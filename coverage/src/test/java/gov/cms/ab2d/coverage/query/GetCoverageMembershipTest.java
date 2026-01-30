@@ -33,12 +33,11 @@ class GetCoverageMembershipTest {
     }
 
     @Test
-    void test_Z0000_without_optout() {
+    void test_Z0000_without_optout_without_cursor() {
         val result = query.getCoverageMembership("Z0000", YEARS, false, DEFAULT_LIMIT);
         assertEquals(18, result.size());
 
-        assertEquals(toString(result),
-        """
+        assertEquals("""
         patientId=1, year=2025, month=6
         patientId=1, year=2025, month=7
         patientId=1, year=2025, month=8
@@ -57,36 +56,92 @@ class GetCoverageMembershipTest {
         patientId=3, year=2025, month=12
         patientId=3, year=2026, month=1
         patientId=3, year=2026, month=2
-        """);
+        """,
+        toString(result));
     }
 
     @Test
-    void test_Z0000_with_optout() {
+    void test_Z0000_with_optout_without_cursor() {
         val result = query.getCoverageMembership("Z0000", YEARS, true, DEFAULT_LIMIT);
-
-        assertEquals(toString(result),
-        """
-        patientId=2, year=2026, month=2
-        patientId=2, year=2026, month=1
-        patientId=2, year=2025, month=12
-        patientId=2, year=2025, month=11
-        patientId=2, year=2025, month=10
+        assertEquals("""
         patientId=2, year=2025, month=9
-        """);
+        patientId=2, year=2025, month=10
+        patientId=2, year=2025, month=11
+        patientId=2, year=2025, month=12
+        patientId=2, year=2026, month=1
+        patientId=2, year=2026, month=2
+        """,
+        toString(result));
     }
 
     @Test
-    void test_Z0000_with_() {
+    void test_Z0000_without_optout_and_with_cursor() {
+        var result = query.getCoverageMembership("Z0000", YEARS, false, 5);
+        assertEquals(5, result.size());
+        assertEquals("""
+        patientId=1, year=2025, month=6
+        patientId=1, year=2025, month=7
+        patientId=1, year=2025, month=8
+        patientId=1, year=2025, month=9
+        patientId=1, year=2025, month=10
+        """,
+        toString(result));
 
-        val result = query.getCoverageMembership("Z0000", YEARS, false, 5);
+        // set cursor parent ID to 2L
+        result = query.getCoverageMembership("Z0000", YEARS, false, 5, 2L);
+        assertEquals(5, result.size());
+        assertEquals("""
+        patientId=2, year=2025, month=9
+        patientId=2, year=2025, month=10
+        patientId=2, year=2025, month=11
+        patientId=2, year=2025, month=12
+        patientId=2, year=2026, month=1
+        """,
+        toString(result));
 
-        System.out.println();
+        // set cursor parent ID to 3L
+        result = query.getCoverageMembership("Z0000", YEARS, false, 5, 3L);
+        assertEquals(3, result.size());
+        assertEquals("""
+        patientId=3, year=2025, month=12
+        patientId=3, year=2026, month=1
+        patientId=3, year=2026, month=2
+        """,
+        toString(result));
+    }
 
-        val result2 = query.getCoverageMembership("Z0000", YEARS, false, 5, 2L);
+    @Test
+    void test_Z0000_with_optout_with_and_with_cursor() {
+        var result = query.getCoverageMembership("Z0000", YEARS, true, 5);
+        assertEquals(5, result.size());
+        assertEquals("""
+        patientId=2, year=2025, month=9
+        patientId=2, year=2025, month=10
+        patientId=2, year=2025, month=11
+        patientId=2, year=2025, month=12
+        patientId=2, year=2026, month=1
+        """,
+        toString(result));
 
-        System.out.println();
+        // explicitly set cursor patient ID to 2
+        result = query.getCoverageMembership("Z0000", YEARS, true, 5, 2L);
+        assertEquals(5, result.size());
+        assertEquals("""
+        patientId=2, year=2025, month=9
+        patientId=2, year=2025, month=10
+        patientId=2, year=2025, month=11
+        patientId=2, year=2025, month=12
+        patientId=2, year=2026, month=1
+        """,
+        toString(result));
+    }
 
-
+    @Test
+    void test_nonexistent_contract() {
+        var result = query.getCoverageMembership("ABC", YEARS, false, DEFAULT_LIMIT);
+        assertEquals(0, result.size());
+        result = query.getCoverageMembership("ABC", YEARS, true, DEFAULT_LIMIT);
+        assertEquals(0, result.size());
     }
 
     String toString(List<CoverageMembership> list) {
@@ -102,29 +157,5 @@ class GetCoverageMembershipTest {
             membership.getYear(),
             membership.getMonth()
         );
-    }
-
-    //@Test
-    void _test() {
-        val years = CoverageServiceRepository.YEARS;
-        val pageLimit=1000;
-        val optOutOn=false;
-        val contract="Z0000";
-        boolean done = false;
-
-        Long cursor = null;
-        while (!done) {
-            val result = new GetCoverageMembership(devDataSource())
-                    .getCoverageMembership(contract, years, optOutOn, 1000, cursor);
-
-            if (result.size() < pageLimit) {
-                done=true;
-            }
-            else {
-                cursor = result.get(result.size()-1).getIdentifiers().getPatientIdV3();
-            }
-
-            System.out.println(result);
-        }
     }
 }
