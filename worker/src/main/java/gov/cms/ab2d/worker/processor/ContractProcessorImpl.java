@@ -368,7 +368,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             val isV3Job = job.isV3Job();
             // TODO -- remove this logic after 'R4v3' is added to the job table
             val fhirVersion = isV3Job
-                    ? FhirVersion.R4v3
+                    ? FhirVersion.R4V3
                     : job.getFhirVersion();
 
             val patientClaimsRequest = new PatientClaimsRequest(patient,
