@@ -355,6 +355,25 @@ resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
   ip_protocol                  = "tcp"
 }
 
+resource "aws_security_group" "idr_db_importer_eventbridge_scheduler" {
+  count = module.platform.parent_env == "test" ? 1 : 0
+
+  name        = "${local.service_prefix}-idr-db-importer-eventbridge-scheduler"
+  description = "For the EventBridge scheduler that runs the IDR DB Importer task."
+  vpc_id      = local.vpc_id
+  tags        = { Name = "${local.service_prefix}-idr-db-importer-eventbridge-scheduler" }
+}
+
+resource "aws_vpc_security_group_egress_rule" "idr_db_importer_eventbridge_scheduler_egress" {
+  count             = module.platform.parent_env == "test" ? 1 : 0
+  security_group_id = aws_security_group.idr_db_importer_eventbridge_scheduler[0].id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = -1
+  ip_protocol = "-1"
+  to_port     = -1
+}
+
 module "idr_db_importer_bucket" {
   source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=9b6994c1e3cca96cc726feed66357dc6f7b42d29"
 
