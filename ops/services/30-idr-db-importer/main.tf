@@ -25,19 +25,47 @@ module "platform" {
 }
 
 resource "aws_ecs_task_definition" "idr_db_importer" {
-  family                   = "${local.service_prefix}-${local.service}"
-  network_mode             = "awsvpc"
-  execution_role_arn       = data.aws_iam_role.idr_db_importer_task_execution.arn
-  task_role_arn            = data.aws_iam_role.idr_db_importer_task.arn
-  requires_compatibilities = ["FARGATE"]
   cpu                      = 1024
+  execution_role_arn       = data.aws_iam_role.idr_db_importer_task_execution.arn
+  family                   = "${local.service_prefix}-${local.service}"
   memory                   = 2048
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  task_role_arn            = data.aws_iam_role.idr_db_importer_task.arn
 
   container_definitions = nonsensitive(jsonencode([
     {
-      name                   = local.service
       image                  = "${local.image_repo_uri}:${var.image_tag}"
+      name                   = local.service
       readonlyRootFilesystem = true
+
+      environment = [
+        {
+          name  = "AB2D_DB_DATABASE"
+          value = data.aws_ssm_parameter.ab2d_db_database.value
+        },
+        {
+          name  = "AB2D_DB_HOST"
+          value = data.aws_ssm_parameter.ab2d_db_host.value
+        },
+        {
+          name  = "AB2D_DB_PASSWORD"
+          value = data.aws_ssm_parameter.ab2d_db_password.value
+        },
+        {
+          name  = "AB2D_DB_PORT"
+          value = "5432"
+        },
+        {
+          name  = "AB2D_DB_USER"
+          value = data.aws_ssm_parameter.ab2d_db_user.value
+        },
+        {
+          name  = "S3_BUCKET"
+          value = data.aws_ssm_parameter.idr_db_importer_bucket.value
+        }
+      ]
+
       logConfiguration = {
         logDriver = "awslogs"
         options = {
