@@ -380,6 +380,7 @@ module "idr_db_importer_bucket" {
   app  = module.platform.app
   env  = module.platform.env
   name = "${module.platform.app}-${module.platform.env}-idr-db-importer"
+  ssm_parameter = "/ab2d/test/core/nonsensitive/idr-db-importer-bucket"
 }
 
 # Shared cluster to be initially used by the idr-db-importer task with the remaining services potentially being migrated later.
