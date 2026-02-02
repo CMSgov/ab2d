@@ -106,13 +106,16 @@ resource "aws_iam_policy" "idr_db_importer_eventbridge_scheduler" {
         Effect = "Allow",
         Action = [
           "ecs:RunTask"
-        ]
+        ],
         Resource = [
-          trimsuffix(
-            aws_ecs_task_definition.idr_db_importer.arn,
-            ":${aws_ecs_task_definition.idr_db_importer.revision}"
-          )
-        ]
+          trimsuffix(aws_ecs_task_definition.idr_db_importer.arn, ":${aws_ecs_task_definition.idr_db_importer.revision}"),
+          "${trimsuffix(aws_ecs_task_definition.idr_db_importer.arn, ":${aws_ecs_task_definition.idr_db_importer.revision}")}:*"
+        ],
+        Condition = {
+          "ArnLike" = {
+            "ecs:cluster" = "${data.aws_ecs_cluster.shared.arn}"
+          }
+        }
       },
       {
         Effect = "Allow",
