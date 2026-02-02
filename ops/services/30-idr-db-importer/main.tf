@@ -80,25 +80,24 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
 }
 
 resource "aws_scheduler_schedule" "idr_db_importer" {
-  name       = "${local.service_prefix}-idr-db-importer-eventbridge-schedule"
-  group_name = "default"
+  group_name          = "default"
+  name                = "${local.service_prefix}-idr-db-importer-eventbridge-schedule"
+  schedule_expression = "cron(0 11 ? * MON-SAT *)" # Every day at 11am UTC except Sunday
 
   flexible_time_window {
     mode = "OFF"
   }
-
-  schedule_expression = "cron(0 11 ? * MON-SAT *)" # Every day at 11am UTC except Sunday
 
   target {
     arn      = data.aws_ecs_cluster.shared.arn
     role_arn = aws_iam_role.idr_db_importer_eventbridge_scheduler.arn
 
     ecs_parameters {
-      task_definition_arn = trimsuffix( # Always use latest
-        aws_ecs_task_definition.idr_db_importer.arn,
-        ":${aws_ecs_task_definition.idr_db_importer.revision}"
-      )
       launch_type = "FARGATE"
+
+      task_definition_arn = trimsuffix(
+        aws_ecs_task_definition.idr_db_importer.arn, ":${aws_ecs_task_definition.idr_db_importer.revision}"
+      )
 
       network_configuration {
         assign_public_ip = false
@@ -111,6 +110,7 @@ resource "aws_scheduler_schedule" "idr_db_importer" {
 
 resource "aws_iam_role" "idr_db_importer_eventbridge_scheduler" {
   name = "idr-db-importer-cron-scheduler-role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -127,6 +127,7 @@ resource "aws_iam_role" "idr_db_importer_eventbridge_scheduler" {
 
 resource "aws_iam_policy" "idr_db_importer_eventbridge_scheduler" {
   name = "idr-db-importer-cron-scheduler-policy"
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

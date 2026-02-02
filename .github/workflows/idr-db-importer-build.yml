@@ -2,9 +2,6 @@ name: IDR DB Importer build
 run-name: idr-db-importer-build
 
 on:
-  push:
-    branches:
-      - "jscott/PLT-1522"
   workflow_call:
     inputs:
       push_image:
