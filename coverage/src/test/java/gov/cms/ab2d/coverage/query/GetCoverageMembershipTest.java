@@ -170,6 +170,14 @@ class GetCoverageMembershipTest {
         assertEquals(0, result.size());
     }
 
+    @Test
+    void test_historic_MBIs() {
+        val result = query.getCoverageMembership("Z9999", YEARS, false, DEFAULT_LIMIT);
+        val historicMbis = result.get(0).getIdentifiers().getHistoricMbis().stream().toList();
+        assertEquals("M123", historicMbis.get(0));
+        assertEquals("M456", historicMbis.get(1));
+    }
+
     String toString(List<CoverageMembership> list) {
         val sb = new StringBuilder();
         list.forEach(item -> sb.append(toString(item)).append("\n"));

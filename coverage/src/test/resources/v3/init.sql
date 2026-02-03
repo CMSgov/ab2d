@@ -32,9 +32,9 @@ CREATE TABLE IF NOT EXISTS current_mbi
 -- 'M3' and 'M4' omitted
 INSERT INTO v3.coverage_v3_historical(patient_id, contract, "year", "month", current_mbi, historic_mbis)
 VALUES
-    (6, 'Z9999', 2025, 9,  'M6', null),
-    (6, 'Z9999', 2025, 10, 'M6', null),
-    (6, 'Z9999', 2025, 11, 'M6', null),
+    (6, 'Z9999', 2025, 9,  'M6', 'M123,M456'),
+    (6, 'Z9999', 2025, 10, 'M6', 'M123,M456'),
+    (6, 'Z9999', 2025, 11, 'M6', 'M123,M456'),
 
     (1, 'Z0000', 2025, 6,  'M1', null),
     (1, 'Z0000', 2025, 7,  'M1', null),
@@ -72,9 +72,9 @@ VALUES
     (4, 'Z7777', 2026, 1,  'M4', null),
     (4, 'Z7777', 2026, 2,  'M4', null),
 
-    (6, 'Z9999', 2025, 12, 'M6', 'M7,M8'),
-    (6, 'Z9999', 2026, 1,  'M6', 'M7,M8'),
-    (6, 'Z9999', 2026, 2,  'M6', 'M7,M8')
+    (6, 'Z9999', 2025, 12, 'M6', 'M123,M456'),
+    (6, 'Z9999', 2026, 1,  'M6', 'M123,M456'),
+    (6, 'Z9999', 2026, 2,  'M6', 'M123,M456')
  ;
 
 -- MBI 'M5' omitted intentionally
