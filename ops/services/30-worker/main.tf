@@ -143,7 +143,6 @@ resource "aws_ecs_task_definition" "worker" {
 
     efs_volume_configuration {
       file_system_id     = data.aws_efs_file_system.this.id
-      root_directory     = "/"
       transit_encryption = "ENABLED"
       authorization_config {
         access_point_id = data.aws_efs_access_point.this.id
