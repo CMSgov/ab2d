@@ -129,7 +129,7 @@ module "cluster" {
 }
 
 module "service" {
-  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=d9000475e6e2f315ed208f88935ea217ea044fc5"
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=5525d2439d724a24588412b3faaa2d2d6f4c2552"
 
   cluster_arn                       = module.cluster.this.arn
   cpu                               = local.ecs_task_def_cpu_worker
