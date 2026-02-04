@@ -262,26 +262,25 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     private CoveragePagingResult createInitialPagingResult(final ContractData contractData) {
+        val isV3Job = contractData.getJob().isV3Job();
         val request = new CoveragePagingRequest(
             eobJobPatientQueuePageSize,
             null,
             mapping.map(contractData.getContract()),
-            contractData.getJob().getCreatedAt()
+            contractData.getJob().getCreatedAt(),
+            isV3Job
         );
 
         if (contractData.getJob().isV3Job()) {
-            request.setV3Job(true);
             return coverageDriver.pageCoverageV3(request);
         }
         else {
-            request.setV3Job(false);
             return coverageDriver.pageCoverage(request);
         }
     }
 
     private CoveragePagingResult nextPagingResult(CoveragePagingRequest request) {
         if (request.isV3Job()) {
-            // TODO FIGURE OUT WHY TESTS AREN'T TRIGGERING THIS
             return coverageDriver.pageCoverageV3(request);
         }
         else {
@@ -382,7 +381,8 @@ public class ContractProcessorImpl implements ContractProcessor {
                     contractData.getContract().getContractType(),
                     token,
                     fhirVersion,
-                    searchConfig.getEfsMount());
+                    searchConfig.getEfsMount()
+            );
 
             patientClaimsRequest.setV3Job(isV3Job);
 

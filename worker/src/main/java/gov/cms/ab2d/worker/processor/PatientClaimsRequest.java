@@ -81,5 +81,4 @@ public class PatientClaimsRequest {
     @Setter
     @Getter
     private boolean isV3Job = false;
-
 }

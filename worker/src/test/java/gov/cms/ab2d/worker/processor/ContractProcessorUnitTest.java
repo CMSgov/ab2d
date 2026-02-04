@@ -111,6 +111,41 @@ class ContractProcessorUnitTest {
         Files.createDirectories(outputDirPath);
     }
 
+    private void initialize() {
+        initialize(false);
+    }
+
+    private void initialize(boolean isV3Job) {
+        val client = createClient();
+        job = createJob(client);
+        if (isV3Job) {
+            job.setRequestUrl(".../v3/...");
+        }
+        job.setContractNumber(contract.getContractNumber());
+        jobRepository = new StubJobRepository(job);
+        jobProgressImpl = new JobProgressServiceImpl(jobRepository);
+        jobProgressImpl.initJob(jobUuid);
+        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
+        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
+        this.jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
+
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.initialize();
+
+        ContractWorkerClient contractWorkerClient = new ContractWorkerClientMock();
+        this.cut = new ContractProcessorImpl(
+                contractWorkerClient,
+                jobRepository,
+                coverageDriver,
+                patientClaimsProcessor,
+                eventLogger,
+                requestQueue,
+                jobChannelService,
+                jobProgressImpl,
+                mapping,
+                pool,
+                searchConfig);
+    }
 
     @Test
     void testIsDone() throws IOException {
@@ -395,42 +430,6 @@ class ContractProcessorUnitTest {
         job.setOrganization(pdpClient.getOrganization());
         job.setFhirVersion(STU3);
         return job;
-    }
-
-    private void initialize() {
-        initialize(false);
-    }
-
-    private void initialize(boolean isV3Job) {
-        val client = createClient();
-        job = createJob(client);
-        if (isV3Job) {
-            job.setRequestUrl(".../v3/...");
-        }
-        job.setContractNumber(contract.getContractNumber());
-        jobRepository = new StubJobRepository(job);
-        jobProgressImpl = new JobProgressServiceImpl(jobRepository);
-        jobProgressImpl.initJob(jobUuid);
-        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
-        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
-        this.jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
-
-        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
-        pool.initialize();
-
-        ContractWorkerClient contractWorkerClient = new ContractWorkerClientMock();
-        this.cut = new ContractProcessorImpl(
-                contractWorkerClient,
-                jobRepository,
-                coverageDriver,
-                patientClaimsProcessor,
-                eventLogger,
-                requestQueue,
-                jobChannelService,
-                jobProgressImpl,
-                mapping,
-                pool,
-                searchConfig);
     }
 
     private static List<CoverageSummary> createPatientsByContractResponse(ContractForCoverageDTO contractcoverageContractForCoverageDTO, int num) {

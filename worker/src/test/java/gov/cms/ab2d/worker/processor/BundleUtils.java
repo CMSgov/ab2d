@@ -36,6 +36,13 @@ public class BundleUtils {
         return bundle;
     }
 
+    public static org.hl7.fhir.r4.model.Bundle createBundle_R4(org.hl7.fhir.r4.model.Bundle.BundleEntryComponent ... bundleEntries) {
+        var bundle = new org.hl7.fhir.r4.model.Bundle();
+        var entries = bundle.getEntry();
+        Collections.addAll(entries, bundleEntries);
+        return bundle;
+    }
+
     public static org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent createBundleEntry(long patientId, String mbi, int year) {
         var component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
         component.setResource(createPatient(patientId, mbi, year));

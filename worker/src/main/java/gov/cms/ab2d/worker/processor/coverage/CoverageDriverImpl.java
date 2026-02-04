@@ -609,6 +609,8 @@ public class CoverageDriverImpl implements CoverageDriver {
     /**
      * Pull an initial page of enrollment from the database with the requisites for the next page.
      *
+     * TODO Remove? Seems this method is only called from tests
+     *
      * @throws CoverageDriverException if coverage period or some other precondition necessary for paging is missing
      */
     @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
