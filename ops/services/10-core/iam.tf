@@ -335,6 +335,36 @@ resource "aws_rds_cluster_role_association" "idr_db_importer" {
   role_arn              = aws_iam_role.idr_db_importer.arn
 }
 
+data "aws_iam_policy_document" "idr_db_importer_additional_bucket_policy" {
+  statement {
+    sid    = "DenyReadAccess"
+    effect = "Deny"
+
+    actions = [
+      "s3:GetObject"
+    ]
+
+    condition {
+      test     = "StringNotEquals"
+      variable = "aws:PrincipalArn"
+      values = [
+        aws_iam_role.idr_db_importer.arn,
+        aws_iam_role.idr_db_importer_task.arn
+      ]
+    }
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = [
+      module.idr_db_importer_bucket.arn,
+      "${module.idr_db_importer_bucket.arn}/*",
+    ]
+  }
+}
+
 # Create KMS policy
 resource "aws_iam_policy" "kms" {
   name   = "${local.service_prefix}-kms"
