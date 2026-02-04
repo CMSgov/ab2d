@@ -281,6 +281,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
     private CoveragePagingResult nextPagingResult(CoveragePagingRequest request) {
         if (request.isV3Job()) {
+            // TODO FIGURE OUT WHY TESTS AREN'T TRIGGERING THIS
             return coverageDriver.pageCoverageV3(request);
         }
         else {

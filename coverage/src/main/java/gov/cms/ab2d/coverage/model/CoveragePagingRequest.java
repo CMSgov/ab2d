@@ -30,10 +30,15 @@ public class CoveragePagingRequest {
     private boolean isV3Job = false;
 
     public CoveragePagingRequest(int pageSize, Long cursor, ContractForCoverageDTO contract, OffsetDateTime jobStartTime) {
+        this(pageSize, cursor, contract, jobStartTime, false);
+    }
+
+    public CoveragePagingRequest(int pageSize, Long cursor, ContractForCoverageDTO contract, OffsetDateTime jobStartTime, boolean isV3Job) {
         this.contract = contract;
         this.pageSize = pageSize;
         this.cursor = cursor;
         this.jobStartTime = jobStartTime;
+        this.isV3Job = isV3Job;
     }
 
     public OffsetDateTime getJobStartTime() {
@@ -60,7 +65,8 @@ public class CoveragePagingRequest {
         return isV3Job;
     }
 
-    public void setV3Job(boolean v3Job) {
+    public CoveragePagingRequest setV3Job(boolean v3Job) {
         isV3Job = v3Job;
+        return this;
     }
 }

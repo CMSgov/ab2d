@@ -17,8 +17,16 @@ public class BundleUtils {
         return new Identifiers(beneficiaryId, null, new LinkedHashSet<>());
     }
 
+    public static Identifiers createIdentifierWithoutMbi_V3(long beneficiaryId) {
+        return Identifiers.ofV3(beneficiaryId, null, new LinkedHashSet<>());
+    }
+
     public static Identifiers createIdentifier(long beneficiaryId, String currentMbi, String... historicMbis) {
         return new Identifiers(beneficiaryId, currentMbi, new LinkedHashSet<>(Set.of(historicMbis)));
+    }
+
+    public static Identifiers createIdentifier_V3(long beneficiaryId, String currentMbi, String... historicMbis) {
+        return Identifiers.ofV3(beneficiaryId, currentMbi, new LinkedHashSet<>(Set.of(historicMbis)));
     }
 
     public static org.hl7.fhir.dstu3.model.Bundle createBundle(org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent ... bundleEntries) {
