@@ -23,16 +23,16 @@ import static org.mockito.Mockito.when;
 
 class BFDSearchImplTest {
 
-    private static final int patientId = 1;
-    private static final OffsetDateTime since = OffsetDateTime.now();
-    private static final OffsetDateTime until = OffsetDateTime.now();
-    private static final int pageSize = 10;
-    private static final String bulkJobId = "bulkJobId";
-    private static final FhirVersion version = FhirVersion.R4;
-    private static final String contractNum = "contractNum";
-    private static final String activeProfile = "test";
-    private static final String bfdUrl = "http://localhost:8080";
-    private static final String bfdUrlV3 = bfdUrl;
+    private static final int PATIENT_ID = 1;
+    private static final OffsetDateTime SINCE = OffsetDateTime.now();
+    private static final OffsetDateTime UNTIL = OffsetDateTime.now();
+    private static final int PAGE_SIZE = 10;
+    private static final String BULK_JOB_ID = "bulkJobId";
+    private static final FhirVersion VERSION = FhirVersion.R4;
+    private static final String CONTRACT_NUM = "contractNum";
+    private static final String ACTIVE_PROFILE = "test";
+    private static final String BFD_URL = "http://localhost:8080";
+    private static final String BFD_URL_V3 = BFD_URL;
 
     HttpClient httpClient100() throws IOException {
         HttpClient httpClient = mock(HttpClient.class);
@@ -79,16 +79,16 @@ class BFDSearchImplTest {
         // Setup mocks
         HttpClient httpClient = httpClient100();
         Environment environment = mock(Environment.class);
-        when(environment.getActiveProfiles()).thenReturn(new String[]{activeProfile});
+        when(environment.getActiveProfiles()).thenReturn(new String[]{ACTIVE_PROFILE});
 
         // Setup classes
-        BfdClientVersions bfdClientVersions = new BfdClientVersions(bfdUrl, bfdUrlV3, httpClient);
+        BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
 
         // Business logic & assertion(s)
         assertThrows(
                 RuntimeException.class,
-                () -> bfdSearchImpl.searchEOB(patientId, since, until, pageSize, bulkJobId, version, contractNum)
+                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
         );
     }
 
@@ -97,14 +97,14 @@ class BFDSearchImplTest {
         // Setup mocks
         HttpClient httpClient = httpClient200();
         Environment environment = mock(Environment.class);
-        when(environment.getActiveProfiles()).thenReturn(new String[]{activeProfile});
+        when(environment.getActiveProfiles()).thenReturn(new String[]{ACTIVE_PROFILE});
 
         // Setup classes
-        BfdClientVersions bfdClientVersions = new BfdClientVersions(bfdUrl, bfdUrlV3, httpClient);
+        BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
 
         // Business logic & assertion(s)
-        IBaseBundle result = bfdSearchImpl.searchEOB(patientId, since, until, pageSize, bulkJobId, version, contractNum);
+        IBaseBundle result = bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM);
         assertNotNull(result);
     }
 
@@ -116,11 +116,11 @@ class BFDSearchImplTest {
         when(environment.getActiveProfiles()).thenReturn(new String[]{""});
 
         // Setup classes
-        BfdClientVersions bfdClientVersions = new BfdClientVersions(bfdUrl, bfdUrlV3, httpClient);
+        BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
 
         // Business logic & assertion(s)
-        IBaseBundle result = bfdSearchImpl.searchEOB(patientId, null, null, 0, bulkJobId, version, contractNum);
+        IBaseBundle result = bfdSearchImpl.searchEOB(PATIENT_ID, null, null, 0, BULK_JOB_ID, VERSION, CONTRACT_NUM);
         assertNotNull(result);
     }
 
@@ -129,16 +129,16 @@ class BFDSearchImplTest {
         // Setup mocks
         HttpClient httpClient = httpClient404();
         Environment environment = mock(Environment.class);
-        when(environment.getActiveProfiles()).thenReturn(new String[]{activeProfile});
+        when(environment.getActiveProfiles()).thenReturn(new String[]{ACTIVE_PROFILE});
 
         // Setup classes
-        BfdClientVersions bfdClientVersions = new BfdClientVersions(bfdUrl, bfdUrlV3, httpClient);
+        BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
 
         // Business logic & assertion(s)
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> bfdSearchImpl.searchEOB(patientId, since, until, pageSize, bulkJobId, version, contractNum)
+                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
         );
     }
 
@@ -147,16 +147,16 @@ class BFDSearchImplTest {
         // Setup mocks
         HttpClient httpClient = httpClient500();
         Environment environment = mock(Environment.class);
-        when(environment.getActiveProfiles()).thenReturn(new String[]{activeProfile});
+        when(environment.getActiveProfiles()).thenReturn(new String[]{ACTIVE_PROFILE});
 
         // Setup classes
-        BfdClientVersions bfdClientVersions = new BfdClientVersions(bfdUrl, bfdUrlV3, httpClient);
+        BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
 
         // Business logic & assertion(s)
         assertThrows(
                 RuntimeException.class,
-                () -> bfdSearchImpl.searchEOB(patientId, since, until, pageSize, bulkJobId, version, contractNum)
+                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
         );
     }
 
