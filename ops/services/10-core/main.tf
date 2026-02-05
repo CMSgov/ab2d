@@ -375,7 +375,7 @@ resource "aws_vpc_security_group_egress_rule" "idr_db_importer_eventbridge_sched
 }
 
 module "idr_db_importer_bucket" {
-  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=jscott/PLT-1507"
+  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=787224b7527d796b7a7706b9b8412d02a065d945"
 
   additional_bucket_policies = [data.aws_iam_policy_document.idr_db_importer_additional_bucket_policy.json]
   app                        = module.platform.app
