@@ -117,7 +117,7 @@ import java.util.stream.Collectors;
  * . modifierExtension
  */
 @UtilityClass
-public class ExplanationOfBenefitTrimmerR4v3 {
+public class ExplanationOfBenefitTrimmerR4V3 {
     // 8   public static final String ANESTHESIA_UNIT_COUNT = "https://bluebutton.cms.gov/resources/variables/carr_line_ansthsa_unit_cnt";
     public static final String ANESTHESIA_UNIT_COUNT = "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-LINE-ANSTHSA-UNIT-CNT";
 
@@ -260,7 +260,7 @@ public class ExplanationOfBenefitTrimmerR4v3 {
         // Remove items in Item Component data
         if (benefit.getItem() != null) {
             benefit.setItem(benefit.getItem().stream()
-                    .map(ExplanationOfBenefitTrimmerR4v3::cleanOutItemComponent)
+                    .map(ExplanationOfBenefitTrimmerR4V3::cleanOutItemComponent)
                     .collect(Collectors.toList()));
         }
     }

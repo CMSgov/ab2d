@@ -17,8 +17,8 @@ public class ExplanationOfBenefitTrimmer {
             return null;
         }
 
-        if (fhirVersion == FhirVersion.R4v3) {
-            return ExplanationOfBenefitTrimmerR4v3.getBenefit(resource);
+        if (fhirVersion == FhirVersion.R4V3) {
+            return ExplanationOfBenefitTrimmerR4V3.getBenefit(resource);
         }
 
         return switch (resource.getStructureFhirVersionEnum()) {

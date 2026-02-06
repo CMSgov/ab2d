@@ -13,7 +13,7 @@ import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.*;
 import static org.hl7.fhir.r4.model.ExplanationOfBenefit.RemittanceOutcome.COMPLETE;
 import static org.junit.jupiter.api.Assertions.*;
 
-class ExplanationOfBenefitTrimmerR4v3Test {
+class ExplanationOfBenefitTrimmerR4V3Test {
     private static final ExplanationOfBenefit EOB = new ExplanationOfBenefit();
     private static final Date SAMPLE_DATE = new Date();
     private static final String DUMMY_REF = "1234";
@@ -267,7 +267,7 @@ class ExplanationOfBenefitTrimmerR4v3Test {
      */
     @Test
     void testFilterIt() {
-        ExplanationOfBenefit eobtrim = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4v3.getBenefit(EOB);
+        ExplanationOfBenefit eobtrim = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(EOB);
 
         assertEquals(Narrative.NarrativeStatus.ADDITIONAL, eobtrim.getText().getStatus());
         assertEquals(0, eobtrim.getExtension().size());
@@ -416,7 +416,7 @@ class ExplanationOfBenefitTrimmerR4v3Test {
 
     @Test
     void testNullEOB() {
-        ExplanationOfBenefit eob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4v3.getBenefit((ExplanationOfBenefit) null);
+        ExplanationOfBenefit eob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit((ExplanationOfBenefit) null);
         assertNull(eob);
     }
 
@@ -424,7 +424,7 @@ class ExplanationOfBenefitTrimmerR4v3Test {
     void extensionCleanupTestCarrier() {
         IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Carrier-R4.json");
         giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4v3.getBenefit(eob);
+        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
         validateEOB(ab2dEob);
     }
 
@@ -432,7 +432,7 @@ class ExplanationOfBenefitTrimmerR4v3Test {
     void extensionCleanupTestDME() {
         IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-DME-R4.json");
         giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4v3.getBenefit(eob);
+        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
         validateEOB(ab2dEob);
     }
 
@@ -440,7 +440,7 @@ class ExplanationOfBenefitTrimmerR4v3Test {
     void extensionCleanupTestHHA() {
         IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-HHA-R4.json");
         giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4v3.getBenefit(eob);
+        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
         validateEOB(ab2dEob);
     }
 
@@ -448,7 +448,7 @@ class ExplanationOfBenefitTrimmerR4v3Test {
     void extensionCleanupTestHospice() {
         IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Hospice-R4.json");
         giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4v3.getBenefit(eob);
+        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
         validateEOB(ab2dEob);
     }
 
@@ -456,7 +456,7 @@ class ExplanationOfBenefitTrimmerR4v3Test {
     void extensionCleanupTestInpatient() {
         IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Inpatient-R4V3.json");
         giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4v3.getBenefit(eob);
+        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
         validateEOB(ab2dEob);
     }
 
@@ -464,7 +464,7 @@ class ExplanationOfBenefitTrimmerR4v3Test {
     void extensionCleanupTestOutpatient() {
         IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Outpatient-R4.json");
         giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4v3.getBenefit(eob);
+        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
         validateEOB(ab2dEob);
     }
 
@@ -472,7 +472,7 @@ class ExplanationOfBenefitTrimmerR4v3Test {
     void extensionCleanupTestSNF() {
         IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-SNF-R4.json");
         giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4v3.getBenefit(eob);
+        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
         validateEOB(ab2dEob);
     }
 
