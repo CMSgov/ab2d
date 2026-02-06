@@ -150,7 +150,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
 
         @Override
         public CoverageMembership mapRow(ResultSet rs, int rowNum) throws SQLException {
-            val patientId = rs.getInt(1);
+            val patientId = rs.getLong(1);
             val currentMbi = rs.getString(2);
             val historicMbis = historicMbisToSet(rs.getString(3));
             val year = rs.getInt(4);
