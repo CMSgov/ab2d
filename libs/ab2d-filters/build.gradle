@@ -5,6 +5,8 @@ configurations {
 version "$filtersVersion"
 
 dependencies {
+    implementation project(':ab2d-fhir')
+    implementation "gov.cms.ab2d:ab2d-fhir:$fhirVersion"
     // Move these dependencies to the individual libraries that need them if adding
     // other modules to this project
     implementation "ca.uhn.hapi.fhir:hapi-fhir-base:${hapiVersion}"
