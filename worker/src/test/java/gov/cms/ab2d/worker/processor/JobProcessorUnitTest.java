@@ -225,7 +225,7 @@ class JobProcessorUnitTest {
     @DisplayName("When verifying that progress tracker numbers do not match, then alert")
     void whenProgressTrackerVerificationFails_thenAlerts() {
 
-        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, 60);
+        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, 4060);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUEST_QUEUED, 9);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUESTS_PROCESSED, 9);
 

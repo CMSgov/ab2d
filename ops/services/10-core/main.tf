@@ -34,6 +34,7 @@ locals {
   region_name        = module.platform.primary_region.name
   vpc_id             = module.platform.vpc_id
   splunk_alert_email = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
+  slack_queue_env    = local.env == "test" || local.env == "dev" ? "test" : "prod"
 }
 
 resource "aws_s3_bucket" "main_bucket" {
@@ -224,6 +225,17 @@ resource "aws_sns_topic_subscription" "splunk" {
   endpoint  = local.splunk_alert_email
 }
 
+# CDAP-managed alarm-to-slack service queue
+data "aws_sqs_queue" "alarm_to_slack" {
+  name = "bcda-${local.slack_queue_env}-alarm-to-slack"
+}
+
+resource "aws_sns_topic_subscription" "slack" {
+  topic_arn = aws_sns_topic.alarms.arn
+  protocol  = "sqs"
+  endpoint  = data.aws_sqs_queue.alarm_to_slack.arn
+}
+
 resource "aws_sns_topic" "alarms" {
   name              = "${local.service_prefix}-cloudwatch-alarms"
   kms_master_key_id = local.env_key_alias.target_key_id
@@ -341,4 +353,12 @@ resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
   from_port                    = 443
   to_port                      = 443
   ip_protocol                  = "tcp"
+}
+
+module "aurora_import_bucket" {
+  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=9b6994c1e3cca96cc726feed66357dc6f7b42d29"
+
+  app  = module.platform.app
+  env  = module.platform.env
+  name = "${module.platform.app}-${module.platform.env}-idr-db-importer"
 }
