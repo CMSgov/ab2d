@@ -64,6 +64,7 @@ jobs:
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
             AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_password
+            AB2D_BFD_KEYSTORE_BASE64=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_base64
             OKTA_CLIENT_ID=/ab2d/mgmt/okta/sensitive/test-pdp-100-id
             OKTA_CLIENT_PASSWORD=/ab2d/mgmt/okta/sensitive/test-pdp-100-secret
             SECONDARY_USER_OKTA_CLIENT_ID=/ab2d/mgmt/okta/sensitive/test-pdp-1000-id
