@@ -29,7 +29,7 @@ jobs:
       id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-#      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
@@ -64,13 +64,13 @@ jobs:
             AB2D_BFD_KEYSTORE_BASE64=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_base64
             MAIN_BUCKET=/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name
 
-#      - name: Create opt/ab2d directory and download keystore
-#        run: |
-#          mkdir -p opt/ab2d
-#
-#          KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
-#          aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
-#          test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
+      - name: Create opt/ab2d directory and download keystore
+        run: |
+          mkdir -p opt/ab2d
+
+          KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
+          aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+          test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
         env:
