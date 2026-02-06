@@ -29,10 +29,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class BFDClientConfiguration {
 
-    /**
-     * Backward-compatible file-based keystore location (old approach).
-     * Still supported as a fallback.
-     */
     @Value("${bfd.keystore.location}")
     private String keystorePath;
 
@@ -41,6 +37,9 @@ public class BFDClientConfiguration {
 
     @Value("${bfd.truststore.cert:}")
     private String trustStoreCertPem;
+
+    @Value("${bfd.v3.truststore.cert:}")
+    private String trustStoreCertPemV3;
 
     @Value("${bfd.keystore.password}")
     private String keystorePassword;
@@ -70,7 +69,7 @@ public class BFDClientConfiguration {
 
             KeyStore clientKeyStore = resolveClientKeyStore(pass);
 
-            KeyStore trustStore = resolveTrustStore();
+            KeyStore trustStore = resolveTrustStoreCombined();
 
             SSLContext sslContext = SSLContexts.custom()
                     .loadKeyMaterial(clientKeyStore, pass)
@@ -93,12 +92,11 @@ public class BFDClientConfiguration {
 
         } catch (Exception e) {
             log.error("Failed to build BFD mTLS HttpClient", e);
-            throw new BeanInstantiationException(HttpClient.class, "Failed to create BFD HttpClient: " + e.getMessage(), e);
+            throw new BeanInstantiationException(HttpClient.class,
+                    "Failed to create BFD HttpClient: " + e.getMessage(), e);
         }
     }
 
-
-     // Prefer base64 PKCS12 keystore if present; otherwise fall back to file location.
     private KeyStore resolveClientKeyStore(char[] password) throws Exception {
         if (hasText(keystoreBase64)) {
             log.info("Loading BFD client keystore from bfd.keystore.base64 (env/SSM injected)");
@@ -110,40 +108,66 @@ public class BFDClientConfiguration {
         }
 
         File keyStoreFile = resolveFile(keystorePath);
-        log.warn("Loading BFD client keystore from file path: {}", keyStoreFile.getAbsolutePath());
+        log.info("Loading BFD client keystore from file path: {}", keyStoreFile.getAbsolutePath());
         return loadPkcs12FromFile(keyStoreFile, password);
     }
 
+    private KeyStore resolveTrustStoreCombined() throws Exception {
+        log.info("Loading BFD truststore (combined)");
 
-    // Build truststore from PEM cert string if provided; otherwise fall back to trusting the client keystore (legacy).
-    private KeyStore resolveTrustStore() throws Exception {
-        log.warn("Loading BFD truststore");
-        if (hasText(trustStoreCertPem)) {
-            log.warn("Loading BFD truststore from bfd.truststore.cert (PEM provided) hasText(trustStoreCertPem");
-            return buildTrustStoreFromPem(trustStoreCertPem);
-        }
+        boolean hasV1V2 = hasText(trustStoreCertPem);
+        boolean hasV3 = hasText(trustStoreCertPemV3);
 
-        log.warn("bfd.truststore.cert is not set; falling back to using the client keystore as truststore (legacy behavior)");
-        return resolveClientKeyStore(keystorePassword.toCharArray());
-    }
-
-    private KeyStore buildTrustStoreFromPem(String pem) throws Exception {
-        Certificate cert = parseX509FromPem(pem);
-
-        if (cert instanceof java.security.cert.X509Certificate x509) {
-            logCertInfo(x509);
-        } else {
-            log.warn("Loaded trust cert is not X509: {}", cert.getType());
+        if (!hasV1V2 && !hasV3) {
+            return resolveClientKeyStore(keystorePassword.toCharArray());
         }
 
         KeyStore ts = KeyStore.getInstance(KeyStore.getDefaultType());
         ts.load(null, null);
-        ts.setCertificateEntry("bfd-trust", cert);
+
+        if (hasV1V2) {
+            addAllCertificatesFromPem(ts, trustStoreCertPem, "bfd-default");
+        }
+
+        if (hasV3) {
+            addAllCertificatesFromPem(ts, trustStoreCertPemV3, "bfd-v3");
+        }
+
         return ts;
     }
 
+    private void addAllCertificatesFromPem(KeyStore ts, String pem, String aliasPrefix) throws Exception {
+        if (!hasText(pem)) {
+            return;
+        }
+
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+
+        try (InputStream in = new ByteArrayInputStream(pem.getBytes())) {
+            int i = 0;
+            for (Certificate cert : cf.generateCertificates(in)) {
+                String alias = aliasPrefix + "-" + i++;
+                ts.setCertificateEntry(alias, cert);
+
+                if (cert instanceof java.security.cert.X509Certificate x509) {
+                    logCertInfo(x509);
+                } else {
+                    log.warn("Loaded trust cert alias={} is not X509: {}", alias, cert.getType());
+                }
+            }
+
+            if (i == 0) {
+                Certificate cert = parseX509FromPem(pem);
+                String alias = aliasPrefix + "-0";
+                ts.setCertificateEntry(alias, cert);
+                if (cert instanceof java.security.cert.X509Certificate x509) {
+                    logCertInfo(x509);
+                }
+            }
+        }
+    }
+
     private Certificate parseX509FromPem(String pem) throws CertificateException {
-        log.warn(pem);
         String normalized = pem
                 .replace("-----BEGIN CERTIFICATE-----", "")
                 .replace("-----END CERTIFICATE-----", "")
