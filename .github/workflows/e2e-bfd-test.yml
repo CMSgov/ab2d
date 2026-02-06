@@ -62,8 +62,8 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
             AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_password
             AB2D_BFD_KEYSTORE_BASE64=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_base64
-            AB2D_BFD_TRUSTSTORE_CERT=/ab2d/${{ env.AB2D_ENV }}worker/nonsensitive/bfd_truststore_cert
-            AB2D_BFD_V3_TRUSTSTORE_CERT=/ab2d/${{ env.AB2D_ENV }}worker/nonsensitive/bfd_v3_truststore_cert
+            AB2D_BFD_TRUSTSTORE_CERT=/ab2d/${{ env.AB2D_ENV }}/worker/nonsensitive/bfd_truststore_cert
+            AB2D_BFD_V3_TRUSTSTORE_CERT=/ab2d/${{ env.AB2D_ENV }}/worker/nonsensitive/bfd_v3_truststore_cert
             MAIN_BUCKET=/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name
 
       - name: Create opt/ab2d directory and download keystore
