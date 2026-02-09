@@ -82,8 +82,6 @@ public class BFDSearchImpl implements BFDSearch {
         request.addHeader(BFDClient.BFD_HDR_BULK_CLIENTID, contractNum);
         request.addHeader(BFDClient.BFD_HDR_BULK_JOBID, bulkJobId);
 
-        log.info("Executing searchEOB request to BFD: " + request);
-
         byte[] responseBytes = getEOBSFromBFD(patientId, request);
 
         return parseBundle(version, responseBytes);
