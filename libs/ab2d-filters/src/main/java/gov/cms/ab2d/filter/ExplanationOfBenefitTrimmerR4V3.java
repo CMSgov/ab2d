@@ -199,16 +199,6 @@ public class ExplanationOfBenefitTrimmerR4V3 {
 
         copy.setCareTeam(newCars);
 
-        //For each careTeam, find its contained provider with NPI
-//        List<Resource> newContainedProviders =
-//                newCars.stream()
-//                        .flatMap(ct -> getProviderContainedForCareTeam(
-//                                benefit,
-//                                ct,
-//                                NPI_SYSTEM,
-//                                RENDERING_EXT_URLS
-//                        ).stream())
-//                        .collect(Collectors.toList());
         List<Resource> contained = new ArrayList<>();
         List<Resource> npiContained =
                 newCars.stream()

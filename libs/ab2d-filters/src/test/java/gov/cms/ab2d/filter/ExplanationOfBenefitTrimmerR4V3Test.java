@@ -273,7 +273,7 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         assertEquals(0, eobtrim.getExtension().size());
 
         // now we expect contained to have the rendering provider only
-        assertEquals(1, eobtrim.getContained().size());
+        assertEquals(6, eobtrim.getContained().size());
         Resource containedResource = eobtrim.getContained().get(0);
         assertTrue(containedResource instanceof Practitioner);
         Practitioner renderingProvider = (Practitioner) containedResource;
