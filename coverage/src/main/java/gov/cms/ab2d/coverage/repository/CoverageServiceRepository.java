@@ -655,8 +655,8 @@ public class CoverageServiceRepository {
         for (CoverageMembership coverageMembership : enrollment) {
             // If not present add to mapping
             final long patientId = coverageMembership.getIdentifiers().isV3()
-                    ? coverageMembership.getIdentifiers().getPatientIdV3()
-                    : coverageMembership.getIdentifiers().getBeneficiaryId();
+                ? coverageMembership.getIdentifiers().getPatientIdV3()
+                : coverageMembership.getIdentifiers().getBeneficiaryId();
 
             enrollmentByBeneficiary.putIfAbsent(patientId,
                     new ArrayList<>(expectedCoveragePeriods));

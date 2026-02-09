@@ -169,8 +169,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
 
         final long patientIdentifier = request.isV3Job()
-                ? patient.getIdentifiers().getPatientIdV3()
-                : patient.getIdentifiers().getBeneficiaryId();
+            ? patient.getIdentifiers().getPatientIdV3()
+            : patient.getIdentifiers().getBeneficiaryId();
 
         IBaseBundle eobBundle;
 
