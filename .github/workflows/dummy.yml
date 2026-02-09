@@ -1,0 +1,18 @@
+name: Dummy Workflow
+
+on:
+  push:
+    branches: [ "kg-sandbox" ]
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'name'
+        required: true
+        default: 'world'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Echo a message
+      run: echo "Hello, ${{ github.event.inputs.name }}!"
