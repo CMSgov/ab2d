@@ -654,10 +654,13 @@ public class CoverageServiceRepository {
         // Guarantee insertion order. Could use functional API in future.
         for (CoverageMembership coverageMembership : enrollment) {
             // If not present add to mapping
-            long beneficiaryId = coverageMembership.getIdentifiers().getBeneficiaryId();
-            enrollmentByBeneficiary.putIfAbsent(beneficiaryId,
+            final long patientId = coverageMembership.getIdentifiers().isV3()
+                    ? coverageMembership.getIdentifiers().getPatientIdV3()
+                    : coverageMembership.getIdentifiers().getBeneficiaryId();
+
+            enrollmentByBeneficiary.putIfAbsent(patientId,
                     new ArrayList<>(expectedCoveragePeriods));
-            enrollmentByBeneficiary.get(beneficiaryId).add(coverageMembership);
+            enrollmentByBeneficiary.get(patientId).add(coverageMembership);
         }
 
         return enrollmentByBeneficiary;

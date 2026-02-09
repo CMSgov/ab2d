@@ -223,6 +223,8 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current = createInitialPagingResult(contractData);
+
+
         loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
