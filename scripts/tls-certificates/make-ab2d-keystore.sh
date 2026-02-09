@@ -1,19 +1,8 @@
 #!/opt/homebrew/bin/bash
 #above, shell location for BASH version 4+
-
 # Environment Password Prompt Script
-# Securely prompts for passwords for multiple environments
 
 set -euo pipefail  # Exit on error, undefined vars, pipe failures
-
-# Color codes for output
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly NC='\033[0m'
-
-# Environments
-readonly ENVIRONMENTS=("dev" "test" "sandbox" "prod")
 
 # Declare associative array to store passwords
 declare -A PASSWORDS
@@ -21,17 +10,49 @@ declare -A PASSWORDS
 # Display header
 print_header() {
     echo "================================================"
-    echo "  Environment Password Configuration"
+    echo "  MTLS Key/Cert Generation by Environment"
     echo "================================================"
     echo ""
 }
 
+# Prompt for environment
+prompt_environment() {
+PS3="Select an environment: "
+options=("dev" "test" "sandbox" "prod")
+
+select opt in "${options[@]}"
+do
+    case $opt in
+        "dev")
+            env="dev"
+            break
+            ;;
+        "test")
+            env="test"
+            break
+            ;;
+        "prod")
+            env="prod"
+            break
+            ;;
+        "sandbox")
+            env="sandbox"
+            break
+            ;;
+        *)
+            echo "Invalid option $REPLY"
+            ;;
+    esac
+done
+
+echo "You selected: $env"
+}
+
 # Prompt for password with validation
 prompt_password() {
-    local env="$1"
     local password password_confirm
 
-    echo -e "${YELLOW}Enter password for ${env^^} environment:${NC}"
+    echo -e "Enter password for ${env^^} environment:"
     read -rs -p "Password: " password
     echo ""
 
@@ -40,18 +61,18 @@ prompt_password() {
 
     # Validate passwords match
     if [[ "$password" != "$password_confirm" ]]; then
-        echo -e "${RED}Error: Passwords do not match for ${env}. Exiting.${NC}" >&2
+        echo -e "Error: Passwords do not match for ${env}. Exiting." >&2
         exit 1
     fi
 
     # Validate password is not empty
     if [[ -z "$password" ]]; then
-        echo -e "${RED}Error: Password cannot be empty for ${env}. Exiting.${NC}" >&2
+        echo -e "Error: Password cannot be empty for ${env}. Exiting." >&2
         exit 1
     fi
 
     PASSWORDS[$env]="$password"
-    echo -e "${GREEN}✓ Password for ${env} set successfully${NC}"
+    echo -e "✓ Password for ${env} set successfully"
     echo ""
 }
 
@@ -73,7 +94,7 @@ verify_encoded_p12() {
         echo "-------------------------------"
         echo ""
     else
-        echo -e "${RED}Error: Failed to verify keystore for $env${NC}" >&2
+        echo -e "Error: Failed to verify keystore for $env" >&2
         return 1
     fi
 }
@@ -120,27 +141,36 @@ gen_keystore() {
 main() {
     print_header
 
-    # Prompt for all passwords
-    for env in "${ENVIRONMENTS[@]}"; do
-        prompt_password "$env"
-    done
 
-    # Generate keystores for each environment
-    gen_keystore "cn=ab2d.cms.gov.local" \
-        "san=dns:ab2d.cms.gov.local,dns:ab2d.cms.gov" \
-        "prod"
+    prompt_environment
+    prompt_password "$env"
 
-    gen_keystore "cn=sandbox.ab2d.cms.gov.local" \
-        "san=dns:sandbox.ab2d.cms.gov.local,dns:sandbox.ab2d.cms.gov" \
-        "sandbox"
-
-    gen_keystore "cn=test.ab2d.cms.gov.local" \
-        "san=dns:test.ab2d.cms.gov.local,dns:test.ab2d.cms.gov" \
-        "test"
-
-    gen_keystore "cn=dev.ab2d.cms.gov.local" \
-        "san=dns:dev.ab2d.cms.gov.local,dns:dev.ab2d.cms.gov" \
-        "dev"
+    case $env in
+        "dev")
+            gen_keystore "cn=dev.ab2d.cms.gov.local" \
+                "san=dns:dev.ab2d.cms.gov.local,dns:dev.ab2d.cms.gov" \
+                "dev"
+            return
+            ;;
+        "test")
+            gen_keystore "cn=test.ab2d.cms.gov.local" \
+                "san=dns:test.ab2d.cms.gov.local,dns:test.ab2d.cms.gov" \
+                "test"
+            return
+            ;;
+        "prod")
+            gen_keystore "cn=ab2d.cms.gov.local" \
+                "san=dns:ab2d.cms.gov.local,dns:ab2d.cms.gov" \
+                "prod"
+            return
+            ;;
+        "sandbox")
+            gen_keystore "cn=sandbox.ab2d.cms.gov.local" \
+                "san=dns:sandbox.ab2d.cms.gov.local,dns:sandbox.ab2d.cms.gov" \
+                "sandbox"
+            return
+            ;;
+    esac
 
     # Display instructions
     cat <<EOF
