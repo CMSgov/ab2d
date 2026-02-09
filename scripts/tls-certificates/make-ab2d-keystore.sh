@@ -126,7 +126,7 @@ gen_keystore() {
     echo "Extracting public cert..."
     keytool -export \
         -keystore "${env}-keystore.pfx" \
-        -alias server \
+        -alias worker \
         -storepass "$password" \
         -file "${env}-public-cert.pem" \
         -rfc
