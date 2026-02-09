@@ -175,7 +175,7 @@ class ContractProcessorInvalidPatientTest {
         assertFalse(actual1.contains("Patient/3") || actual1.contains("Patient/4"));
     }
 
-    @Disabled("Wait for V3 trimmer")
+//    @Disabled("Wait for V3 trimmer")
     @Test
     @DisplayName("V3 - Test invalid benes")
     void testInvalidBenes_V3() throws IOException {
@@ -204,7 +204,6 @@ class ContractProcessorInvalidPatientTest {
         List<JobOutput> outputs = cut.process(job);
 
         assertNotNull(outputs);
-        // TODO Re-evaluate when V3 trimmer is complete -- outputs is currently empty
         assertEquals(1, outputs.size());
 
         String fileName1AfterCompressing = contractId + "_0001.ndjson.gz";
