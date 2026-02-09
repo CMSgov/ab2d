@@ -113,7 +113,7 @@ gen_keystore() {
 
     echo "Generating $env keystore..."
     keytool -genkeypair \
-        -alias server \
+        -alias worker \
         -keyalg RSA \
         -keysize 4096 \
         -dname "$dname" \
