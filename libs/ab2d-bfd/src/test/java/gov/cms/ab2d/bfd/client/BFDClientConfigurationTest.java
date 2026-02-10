@@ -108,17 +108,16 @@ class BFDClientConfigurationTest {
                 .getMessage().contains("unable to find valid certification path to requested target"));
     }
 
-//    @DisplayName("Certs with public authority are not trusted unless they are explicitly listed in the truststore")
-//    @Test
-//    void doNotTrustPublicCerts() throws IOException {
-//        HttpGet httpget = new HttpGet("https://www.verisign.com/");
-//        try {
-//            var resp = httpClient.execute(httpget);
-//            assertTrue(resp.getStatusLine().getStatusCode() < 500);
-//        } finally {
-//            httpget.releaseConnection();
-//        }
-//    }
+    @DisplayName("Certs with public authority are not trusted unless they are explicitly listed in the truststore")
+    @Test
+    void doNotTrustPublicCerts() {
+        HttpGet httpget = new HttpGet("https://www.verisign.com/");
+        try {
+            assertThrows(javax.net.ssl.SSLHandshakeException.class, () -> httpClient.execute(httpget));
+        } finally {
+            httpget.releaseConnection();
+        }
+    }
 
 
     @DisplayName("Missing keystore file throws bean instantiation exception")
