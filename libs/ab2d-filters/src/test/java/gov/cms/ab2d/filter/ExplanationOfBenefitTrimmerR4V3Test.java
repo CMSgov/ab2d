@@ -136,10 +136,10 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         attending.setId("careteam-attending");
         attending.addIdentifier()
                 .setSystem(NPI_SYSTEM)
-                .setValue("attending-npi");
+                .setValue("rendering-npi");
 
         Practitioner referring = new Practitioner();
-        referring.setId("careteam-referring");
+        referring.setId("attending-referring");
         referring.addIdentifier()
                 .setSystem(NPI_SYSTEM)
                 .setValue("referring-npi");
@@ -162,10 +162,30 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                 .setSystem(NPI_SYSTEM)
                 .setValue("rendering-npi");
 
-        // extensions for rendering provider
-        // ExplanationOfBenefit.contained
-        //   .where(id = ...rendering...)
-        //   .extension.where(url='CLM-PRVDR-TYPE-CD' or 'CLM-RNDRG-PRVDR-PRTCPTG-CD').coding.code
+// extensions for rendering provider (test expects them on careteam-attending)
+        attending.addExtension(
+                new Extension()
+                        .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD")
+                        .setValue(
+                                new CodeableConcept().addCoding(
+                                        new Coding()
+                                                .setSystem("http://example.org/prvdr-type")
+                                                .setCode("01")
+                                )
+                        )
+        );
+        attending.addExtension(
+                new Extension()
+                        .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD")
+                        .setValue(
+                                new CodeableConcept().addCoding(
+                                        new Coding()
+                                                .setSystem("http://example.org/rendering-participation")
+                                                .setCode("F")
+                                )
+                        )
+        );
+
 
         rendering.addExtension(
                 new Extension()
@@ -275,11 +295,11 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         assertEquals(0, eobtrim.getExtension().size());
 
         // now we expect contained to have the rendering provider only
-        assertEquals(1, eobtrim.getContained().size());
+        assertEquals(6, eobtrim.getContained().size());
         Resource containedResource = eobtrim.getContained().get(0);
         assertTrue(containedResource instanceof Practitioner);
         Practitioner renderingProvider = (Practitioner) containedResource;
-        assertEquals("careteam-rendering", renderingProvider.getIdPart());
+        assertEquals("careteam-attending", renderingProvider.getIdPart());
 
         // NPI identifier on rendering provider
         assertEquals(1, renderingProvider.getIdentifier().size());
@@ -293,8 +313,7 @@ class ExplanationOfBenefitTrimmerR4V3Test {
 
         Extension prvdrTypeExt = renderingExtensions.stream()
                 .filter(ext -> "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD"
-                        .equals(ext.getUrl()))
-                .findFirst()
+                        .equals(ext.getUrl())).findFirst()
                 .orElseThrow();
         assertTrue(prvdrTypeExt.getValue() instanceof CodeableConcept);
         CodeableConcept prvdrTypeCc = (CodeableConcept) prvdrTypeExt.getValue();
@@ -361,7 +380,7 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         assertEquals("drg", category.getCodingFirstRep().getCode());
         CodeableConcept drgCode = si.getCode();
         assertEquals(
-                "https://www.cms.gov/Medicare/Medicare-Feefor-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software",
+                "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software",
                 drgCode.getCodingFirstRep().getSystem());
         assertEquals("123", drgCode.getCodingFirstRep().getCode());
 

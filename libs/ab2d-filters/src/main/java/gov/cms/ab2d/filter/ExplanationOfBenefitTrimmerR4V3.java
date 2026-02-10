@@ -118,24 +118,16 @@ import java.util.stream.Collectors;
  */
 @UtilityClass
 public class ExplanationOfBenefitTrimmerR4V3 {
-    // 8   public static final String ANESTHESIA_UNIT_COUNT = "https://bluebutton.cms.gov/resources/variables/carr_line_ansthsa_unit_cnt";
     public static final String ANESTHESIA_UNIT_COUNT = "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-LINE-ANSTHSA-UNIT-CNT";
 
-    //13   public static final String RELATED_DIAGNOSIS_GROUP = "https://bluebutton.cms.gov/resources/variables/clm_drg_cd";
-
-    //21   public static final String PRICING_STATE = "https://bluebutton.cms.gov/resources/variables/dmerc_line_prcng_state_cd";
     public static final String PRICING_STATE = "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRCNG-LCLTY-CD";
 
-    //22   public static final String SUPPLIER_TYPE = "https://bluebutton.cms.gov/resources/variables/dmerc_line_supplr_type_cd";
     public static final String SUPPLIER_TYPE = "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD";
 
-    //40   public static final String NL_RECORD_IDENTIFICATION = "https://bluebutton.cms.gov/resources/variables/nch_near_line_rec_ident_cd";
     public static final String NL_RECORD_IDENTIFICATION = "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-NRLN-RIC-CD";
 
     public static final String C4BB_SUPPORTING_INFO_TYPE_SYSTEM = "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType";
     public static final String MS_DRG_SYSTEM = "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software";
-
-// 7    private static final String CARETEAM_ROLE_SYSTEM = "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole";
 
     private static final String NPI_SYSTEM = "http://hl7.org/fhir/sid/us-npi";
     private static final List<String> roleCodes = List.of("attending", "referring", "operating", "otheroperating", "rendering");
@@ -199,16 +191,6 @@ public class ExplanationOfBenefitTrimmerR4V3 {
 
         copy.setCareTeam(newCars);
 
-        //For each careTeam, find its contained provider with NPI
-//        List<Resource> newContainedProviders =
-//                newCars.stream()
-//                        .flatMap(ct -> getProviderContainedForCareTeam(
-//                                benefit,
-//                                ct,
-//                                NPI_SYSTEM,
-//                                RENDERING_EXT_URLS
-//                        ).stream())
-//                        .collect(Collectors.toList());
         List<Resource> contained = new ArrayList<>();
         List<Resource> npiContained =
                 newCars.stream()

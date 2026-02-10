@@ -3,22 +3,17 @@ package gov.cms.ab2d.filter;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.model.api.IFhirVersion;
-import ca.uhn.fhir.parser.IParser;
 import gov.cms.ab2d.fhir.FhirVersion;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.Bundle;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -237,58 +232,8 @@ class EOBLoadUtilitiesTest {
         // not null tests
         var jsonParser = FhirContext.forR4().newJsonParser();
         org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Carrier-R4.json");
-        org.hl7.fhir.r4.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.r4.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmer.getBenefit(eob, FhirVersion.R4);
+        org.hl7.fhir.r4.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.r4.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmer.getBenefit((IBaseResource) eob, FhirVersion.R4);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);
     }
-
-    @Test
-    void testGetR4v3EOB() throws IOException {
-//        List<String> eobs = extractEobsFromFile(Path.of("/Users/annasmirnova/ab2d-workplace/ab2d/libs/ab2d-filters/src/test/resources/eobdata/fullBundle.json"));
-   //     List<String> eobs = extractEobsFromFile(Path.of("/Users/annasmirnova/ab2d-workplace/ab2d/libs/ab2d-filters/src/test/resources/eobdata/EOB-for-Inpatient-R4V3.json"));
- //       List<String> eobs = extractEobsFromFile(Path.of("/Users/annasmirnova/ab2d-workplace/ab2d/libs/ab2d-filters/src/test/resources/eobdata/EOB-for-Carrier-R4v3.json"));
-        // null tests
-        assertNull(EOBLoadUtilities.getR4EOBFromFileInClassPath(""));
-        assertNull(EOBLoadUtilities.getR4EOBFromFileInClassPath("does-not-exist.json"));
-
-        // not null tests
-        var jsonParser = FhirContext.forR4().newJsonParser();
- //       org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Carrier-R4v3.json");
-//        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-HHA-R4v3.json");
-//        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Inpatient-R4v3.json");
-//        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Outpatient-R4v3.json");
-//        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Hospice-R4v3.json");
-        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-SNF-R4v3.json");
-        org.hl7.fhir.r4.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.r4.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmer.getBenefit(eob, FhirVersion.R4V3);
-        String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
-        assertNotNull(payload);
-    }
-
-    public static List<String> extractEobsFromFile(Path bundlePath) throws IOException {
-// Create R4 context and JSON parser
-        String bundleJson = Files.readString(bundlePath, StandardCharsets.UTF_8);
-
-        // 2. Create FHIR R4 context and JSON parser
-        FhirContext ctx = FhirContext.forR4();
-        IParser parser = ctx.newJsonParser();
-
-        // 3. Parse JSON into a Bundle
-        Bundle bundle = parser.parseResource(Bundle.class, bundleJson);
-        IParser jsonWriter = ctx.newJsonParser().setPrettyPrint(true);
-        // 4. Collect all ExplanationOfBenefit resources
-        List<String> result = new ArrayList<>();
-        if (bundle.getEntry() != null) {
-            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-                if (entry.getResource() instanceof org.hl7.fhir.r4.model.ExplanationOfBenefit eob) {
-                    String eobJson = jsonWriter.encodeResourceToString(eob);
-                    result.add(eobJson);
-                }
-            }
-        }
-
-        return result;
-    }
-
-
 }
-
