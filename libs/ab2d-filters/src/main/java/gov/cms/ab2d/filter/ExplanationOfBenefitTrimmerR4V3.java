@@ -245,7 +245,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         if (benefit.getItem() != null) {
             benefit.setItem(benefit.getItem().stream()
                     .map(ExplanationOfBenefitTrimmerR4V3::cleanOutItemComponent)
-                    .collect(Collectors.toList()));
+                    .toList());
         }
     }
 

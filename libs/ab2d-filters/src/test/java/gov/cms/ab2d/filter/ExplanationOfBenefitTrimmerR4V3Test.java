@@ -473,15 +473,6 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         assertEquals((numExtensions + 1), eob.getExtension().size());
     }
 
-    private static <T extends Resource> T containedById(ExplanationOfBenefit eob, Class<T> type, String idPart) {
-        return eob.getContained().stream()
-                .filter(type::isInstance)
-                .map(type::cast)
-                .filter(r -> idPart.equals(r.getIdPart()))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Missing contained " + type.getSimpleName() + " with id " + idPart));
-    }
-
     private static Extension extByUrl(List<Extension> exts, String url) {
         return exts.stream()
                 .filter(e -> url.equals(e.getUrl()))
