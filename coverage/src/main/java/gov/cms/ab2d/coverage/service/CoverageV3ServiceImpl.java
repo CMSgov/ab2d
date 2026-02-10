@@ -64,7 +64,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         //List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllByContractNumber(contract.getContractNumber());
         final List<YearMonthRecord> coveragePeriods = new GetCoveragePeriodsByContract(dataSource).getCoveragePeriodsForContract(contract.getContractNumber());
         if (coveragePeriods.size() != expectedCoveragePeriods) {
-            // TODO uncomment this exception later -- currently, test data does not have coverage periods for 2026 and this will throw an exception
+            // TODO uncomment this exception later
             log.warn("Expected coverage periods = {}; Actual coverage periods = {}", expectedCoveragePeriods, coveragePeriods.size());
             /*
             throw new IllegalArgumentException(
