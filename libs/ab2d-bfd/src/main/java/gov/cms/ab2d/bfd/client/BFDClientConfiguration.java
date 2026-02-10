@@ -1,15 +1,18 @@
 package gov.cms.ab2d.bfd.client;
 
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.AbstractEnvironment;
 
 import javax.net.ssl.SSLContext;
 import java.io.*;
@@ -21,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
@@ -200,7 +204,7 @@ public class BFDClientConfiguration {
         throw new IllegalStateException("Keystore file does not exist at path: " + path);
     }
 
-    private KeyStore loadPkcs12FromBase64(String base64, char[] password) throws Exception {
+    private KeyStore loadPkcs12FromBase64(String base64, char[] password) throws IOException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
         byte[] decoded;
         try {
             decoded = Base64.getDecoder().decode(base64.trim());
@@ -213,7 +217,7 @@ public class BFDClientConfiguration {
         }
     }
 
-    private KeyStore loadPkcs12FromFile(File file, char[] password) throws Exception {
+    private KeyStore loadPkcs12FromFile(File file, char[] password) throws IOException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
         try (InputStream in = new FileInputStream(file)) {
             return loadPkcs12FromStream(in, password);
         }
