@@ -92,7 +92,6 @@ public class OpenAPIConfig {
      * Limit to R4 aspects of the API V3
      */
     @Bean
-    @ConditionalOnProperty(name = "v3.controller.enabled", havingValue = "true")
     public GroupedOpenApi apiV3() {
         return GroupedOpenApi.builder()
                 .group("V3 - FHIR R4")

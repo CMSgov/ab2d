@@ -9,6 +9,7 @@ import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -112,15 +113,12 @@ class ContractProcessorUnitTest {
     }
 
     private void initialize() {
-        initialize(false);
+        initialize(STU3);
     }
 
-    private void initialize(boolean isV3Job) {
+    private void initialize(final FhirVersion fhirVersion) {
         val client = createClient();
-        job = createJob(client);
-        if (isV3Job) {
-            job.setRequestUrl(".../v3/...");
-        }
+        job = createJob(client, fhirVersion);
         job.setContractNumber(contract.getContractNumber());
         jobRepository = new StubJobRepository(job);
         jobProgressImpl = new JobProgressServiceImpl(jobRepository);
@@ -134,17 +132,17 @@ class ContractProcessorUnitTest {
 
         ContractWorkerClient contractWorkerClient = new ContractWorkerClientMock();
         this.cut = new ContractProcessorImpl(
-                contractWorkerClient,
-                jobRepository,
-                coverageDriver,
-                patientClaimsProcessor,
-                eventLogger,
-                requestQueue,
-                jobChannelService,
-                jobProgressImpl,
-                mapping,
-                pool,
-                searchConfig);
+            contractWorkerClient,
+            jobRepository,
+            coverageDriver,
+            patientClaimsProcessor,
+            eventLogger,
+            requestQueue,
+            jobChannelService,
+            jobProgressImpl,
+            mapping,
+            pool,
+            searchConfig);
     }
 
     @Test
@@ -196,8 +194,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("V3 - When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob_V3() {
-        // Initialize V3 job
-        initialize(true);
+        initialize(FhirVersion.R4V3);
 
         // Calls pageCoverageV3
         when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
@@ -253,27 +250,27 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("V3 - When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes_V3() {
-        initialize(true);
+        initialize(FhirVersion.R4V3);
         // Note: numberOfBeneficiariesToProcessV3
         when(coverageDriver.numberOfBeneficiariesToProcessV3(any(Job.class), any(ContractDTO.class))).thenReturn(18);
         // Note: pageCoverageV3 and createPatientsByContractResponse_V3
         when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
-                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now(), true)))
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
-                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now(), true)))
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
-                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now(), true)))
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
-                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now(), true)))
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
-                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now(), true)))
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
-                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now(), true)))
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
-                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now(), true)))
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
-                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now(), true)))
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2), null));
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
@@ -300,7 +297,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("V3 - When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenExpectedPatientsNotMatchActualPatientsFail_V3() {
-        initialize(true);
+        initialize(FhirVersion.R4V3);
         // Note: pageCoverageV3 and createPatientsByContractResponse_V3
         when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1), null));
@@ -386,10 +383,11 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("V3 - When round robin blocking queue is full, patients should not be skipped")
     void whenBlockingQueueFullPatientsNotSkipped_V3() throws InterruptedException {
-        initialize(true);
+        initialize(FhirVersion.R4V3);
         // Note: pageCoverageV3 and createPatientsByContractResponse_V3
         when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1), new CoveragePagingRequest(1, null, contractForCoverageDTO, OffsetDateTime.now(), true)))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1),
+                        CoveragePagingRequest.ofV3(1, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1), null));
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 2);
@@ -422,13 +420,13 @@ class ContractProcessorUnitTest {
         return new ContractDTO(1000L,  "CONTRACT_NM_00000", "CONTRACT_00000", OffsetDateTime.now().minusDays(10), Contract.ContractType.NORMAL, 0, 0);
     }
 
-    private Job createJob(PdpClient pdpClient) {
+    private Job createJob(PdpClient pdpClient, FhirVersion fhirVersion) {
         Job job = new Job();
         job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setOrganization(pdpClient.getOrganization());
-        job.setFhirVersion(STU3);
+        job.setFhirVersion(fhirVersion);
         return job;
     }
 

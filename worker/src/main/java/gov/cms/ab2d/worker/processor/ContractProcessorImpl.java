@@ -11,7 +11,6 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.coverage.service.CoverageV3ServiceImpl;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -134,7 +133,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(contractNumber);
-        int numBenes = job.isV3Job()
+        int numBenes = (job.getFhirVersion() == FhirVersion.R4V3)
                 ? coverageDriver.numberOfBeneficiariesToProcessV3(job, contract)
                 : coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
@@ -264,25 +263,30 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     private CoveragePagingResult createInitialPagingResult(final ContractData contractData) {
-        val isV3Job = contractData.getJob().isV3Job();
-        val request = new CoveragePagingRequest(
-            eobJobPatientQueuePageSize,
-            null,
-            mapping.map(contractData.getContract()),
-            contractData.getJob().getCreatedAt(),
-            isV3Job
-        );
+        if (contractData.getJob().getFhirVersion() == FhirVersion.R4V3) {
+            val request = CoveragePagingRequest.ofV3(
+                eobJobPatientQueuePageSize,
+                null,
+                mapping.map(contractData.getContract()),
+                contractData.getJob().getCreatedAt()
+            );
 
-        if (contractData.getJob().isV3Job()) {
             return coverageDriver.pageCoverageV3(request);
         }
         else {
+            val request = new CoveragePagingRequest(
+                eobJobPatientQueuePageSize,
+                null,
+                mapping.map(contractData.getContract()),
+                contractData.getJob().getCreatedAt()
+            );
+
             return coverageDriver.pageCoverage(request);
         }
     }
 
     private CoveragePagingResult nextPagingResult(CoveragePagingRequest request) {
-        if (request.isV3Job()) {
+        if (request.isV3()) {
             return coverageDriver.pageCoverageV3(request);
         }
         else {
@@ -367,12 +371,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         val jobUuid = job.getJobUuid();
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
-            val isV3Job = job.isV3Job();
-            // TODO -- remove this logic after 'R4v3' is added to the job table
-            val fhirVersion = isV3Job
-                    ? FhirVersion.R4V3
-                    : job.getFhirVersion();
-
             val patientClaimsRequest = new PatientClaimsRequest(patient,
                     contractData.getContract().getAttestedOn(),
                     job.getSince(),
@@ -382,11 +380,9 @@ public class ContractProcessorImpl implements ContractProcessor {
                     job.getContractNumber(),
                     contractData.getContract().getContractType(),
                     token,
-                    fhirVersion,
+                    job.getFhirVersion(),
                     searchConfig.getEfsMount()
             );
-
-            patientClaimsRequest.setV3Job(isV3Job);
 
             return patientClaimsProcessor.process(patientClaimsRequest);
 

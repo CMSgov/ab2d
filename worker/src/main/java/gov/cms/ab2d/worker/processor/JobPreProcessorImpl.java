@@ -127,7 +127,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         try {
-            final boolean isCoverageAvailable = job.isV3Job()
+            final boolean isCoverageAvailable = (job.getFhirVersion() == FhirVersion.R4V3)
                 ? coverageDriver.isCoverageAvailableV3(job, contract)
                 : coverageDriver.isCoverageAvailable(job, contract);
 

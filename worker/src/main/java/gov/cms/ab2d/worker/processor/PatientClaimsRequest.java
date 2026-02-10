@@ -77,8 +77,4 @@ public class PatientClaimsRequest {
      * The starting point for all job files
      */
     private final String efsMount;
-
-    @Setter
-    @Getter
-    private boolean isV3Job = false;
 }

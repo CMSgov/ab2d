@@ -172,7 +172,7 @@ public class ApiCommon {
                 getCurrentUrl(request), outputFormat, since, until, version);
     }
 
-    // Validate v3.on is enabled and the contract is whitelisted for V3
+    // Validate v3.on is enabled, and contract either starts with 'Z' or is whitelisted for V3
     public void checkValidCreateJobV3(final String contract) {
         if (!"true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
             log.info("{} is not enabled", V3_ON);

@@ -16,6 +16,7 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -168,7 +169,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Aggregate claims into a single list
         PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
 
-        final long patientIdentifier = request.isV3Job()
+        final long patientIdentifier = (request.getVersion() == FhirVersion.R4V3)
             ? patient.getIdentifiers().getPatientIdV3()
             : patient.getIdentifiers().getBeneficiaryId();
 
@@ -184,11 +185,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            if (request.isV3Job()) {
-                eobBundle = bfdClient.requestEOBFromServer(FhirVersion.R4V3, patientIdentifier, sinceTime, untilTime, request.getContractNum());
-            } else {
-                eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getContractNum());
-            }
+            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {

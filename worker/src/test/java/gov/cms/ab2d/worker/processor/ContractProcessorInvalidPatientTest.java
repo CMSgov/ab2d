@@ -8,6 +8,7 @@ import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
@@ -99,14 +100,12 @@ class ContractProcessorInvalidPatientTest {
     }
 
     private void initialize() {
-        initialize(false);
+        initialize(STU3);
     }
 
-    private void initialize(boolean isV3Job) {
+    private void initialize(final FhirVersion fhirVersion) {
         job = new Job();
-        if (isV3Job) {
-            job.setRequestUrl(".../v3/...");
-        }
+        job.setFhirVersion(fhirVersion);
         job.setJobUuid(jobId);
         job.setContractNumber(contract.getContractNumber());
         JobRepository jobRepository = new StubJobRepository(job);
@@ -175,11 +174,10 @@ class ContractProcessorInvalidPatientTest {
         assertFalse(actual1.contains("Patient/3") || actual1.contains("Patient/4"));
     }
 
-//    @Disabled("Wait for V3 trimmer")
     @Test
     @DisplayName("V3 - Test invalid benes")
     void testInvalidBenes_V3() throws IOException {
-        initialize(true);
+        initialize(R4V3);
         when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
         org.hl7.fhir.r4.model.Bundle b1 = BundleUtils.createBundle_R4(createBundleEntry_R4("1"));
         org.hl7.fhir.r4.model.Bundle b2 = BundleUtils.createBundle_R4(createBundleEntry_R4("2"));

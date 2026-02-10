@@ -126,8 +126,4 @@ public class Job {
     public FileEvent buildFileEvent(File file, FileEvent.FileStatus status) {
         return new FileEvent(organization, jobUuid, file, status);
     }
-
-    public boolean isV3Job() {
-        return fhirVersion == FhirVersion.R4V3;
-    }
 }

@@ -27,18 +27,22 @@ public class CoveragePagingRequest {
      */
     private final Long cursor;
 
-    private boolean isV3Job = false;
+    private final boolean isV3;
 
     public CoveragePagingRequest(int pageSize, Long cursor, ContractForCoverageDTO contract, OffsetDateTime jobStartTime) {
         this(pageSize, cursor, contract, jobStartTime, false);
     }
 
-    public CoveragePagingRequest(int pageSize, Long cursor, ContractForCoverageDTO contract, OffsetDateTime jobStartTime, boolean isV3Job) {
+    private CoveragePagingRequest(int pageSize, Long cursor, ContractForCoverageDTO contract, OffsetDateTime jobStartTime, boolean isV3) {
         this.contract = contract;
         this.pageSize = pageSize;
         this.cursor = cursor;
         this.jobStartTime = jobStartTime;
-        this.isV3Job = isV3Job;
+        this.isV3 = isV3;
+    }
+
+    public static CoveragePagingRequest ofV3(int pageSize, Long cursor, ContractForCoverageDTO contract, OffsetDateTime jobStartTime) {
+        return new CoveragePagingRequest(pageSize, cursor, contract, jobStartTime, true);
     }
 
     public OffsetDateTime getJobStartTime() {
@@ -61,12 +65,7 @@ public class CoveragePagingRequest {
         return contract.getContractNumber();
     }
 
-    public boolean isV3Job() {
-        return isV3Job;
-    }
-
-    public CoveragePagingRequest setV3Job(boolean v3Job) {
-        isV3Job = v3Job;
-        return this;
+    public boolean isV3() {
+        return isV3;
     }
 }
