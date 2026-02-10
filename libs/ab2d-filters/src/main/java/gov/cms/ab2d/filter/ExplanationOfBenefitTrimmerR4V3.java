@@ -132,9 +132,11 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     private static final String NPI_SYSTEM = "http://hl7.org/fhir/sid/us-npi";
     private static final List<String> roleCodes = List.of("attending", "referring", "operating", "otheroperating", "rendering");
 
+    private static final String RENDERING_EXT = "https://bluebutton.cms.gov/fhir/StructureDefinition/";
+
     private static final List<String> RENDERING_EXT_URLS = List.of(
-            "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD",
-            "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD"
+            RENDERING_EXT + "CLM-PRVDR-TYPE-CD",
+            RENDERING_EXT + "CLM-RNDRG-PRVDR-PRTCPTG-CD"
     );
 
     /**
@@ -197,13 +199,13 @@ public class ExplanationOfBenefitTrimmerR4V3 {
                         .flatMap(ct -> getProviderContainedForCareTeam(benefit, ct).stream())
                         .filter(res -> extractIdentifiers(res).stream()
                                 .anyMatch(id -> NPI_SYSTEM.equals(id.getSystem())))
-                        .collect(Collectors.toList());
+                        .toList();
 
         List<Resource> withRenderingExtensions =
                 newCars.stream()
                         .flatMap(ct -> getProviderContainedForCareTeam(benefit, ct).stream())
-                        .filter(res -> res instanceof DomainResource)
-                        .map(res -> (DomainResource) res)
+                        .filter(DomainResource.class::isInstance)
+                        .map(DomainResource.class::cast)
                         .filter(dr -> dr.getExtension().stream()
                                 .filter(ext -> RENDERING_EXT_URLS.contains(ext.getUrl()))
                                 .anyMatch(ext -> ext.getValue() instanceof CodeableConcept cc &&
