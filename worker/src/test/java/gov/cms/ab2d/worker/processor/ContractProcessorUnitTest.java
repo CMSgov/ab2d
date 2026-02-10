@@ -251,9 +251,7 @@ class ContractProcessorUnitTest {
     @DisplayName("V3 - When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes_V3() {
         initialize(FhirVersion.R4V3);
-        // Note: numberOfBeneficiariesToProcessV3
         when(coverageDriver.numberOfBeneficiariesToProcessV3(any(Job.class), any(ContractDTO.class))).thenReturn(18);
-        // Note: pageCoverageV3 and createPatientsByContractResponse_V3
         when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
                         CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
@@ -298,10 +296,8 @@ class ContractProcessorUnitTest {
     @DisplayName("V3 - When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenExpectedPatientsNotMatchActualPatientsFail_V3() {
         initialize(FhirVersion.R4V3);
-        // Note: pageCoverageV3 and createPatientsByContractResponse_V3
         when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1), null));
-        // Note: numberOfBeneficiariesToProcessV3
         when(coverageDriver.numberOfBeneficiariesToProcessV3(any(Job.class), any(ContractDTO.class))).thenReturn(4002);
 
         ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(job));
@@ -384,7 +380,6 @@ class ContractProcessorUnitTest {
     @DisplayName("V3 - When round robin blocking queue is full, patients should not be skipped")
     void whenBlockingQueueFullPatientsNotSkipped_V3() throws InterruptedException {
         initialize(FhirVersion.R4V3);
-        // Note: pageCoverageV3 and createPatientsByContractResponse_V3
         when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1),
                         CoveragePagingRequest.ofV3(1, null, contractForCoverageDTO, OffsetDateTime.now())))
