@@ -71,30 +71,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final ContractToContractCoverageMapping mapping;
     private final CoverageSnapshotService coverageSnapshotService;
 
-
     //CHECKSTYLE.OFF
-    public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
-                              PdpClientService pdpClientService,
-                              CoverageService coverageService,
-                              PropertiesService propertiesService,
-                              CoverageProcessor coverageProcessor,
-                              CoverageLockWrapper coverageLockWrapper,
-                              ContractToContractCoverageMapping mapping,
-                              CoverageSnapshotService coverageSnapshotService) {
-        this.coverageSearchRepository = coverageSearchRepository;
-        this.pdpClientService = pdpClientService;
-        this.coverageService = coverageService;
-        this.coverageProcessor = coverageProcessor;
-        this.coverageLockWrapper = coverageLockWrapper;
-        this.propertiesService = propertiesService;
-        this.mapping = mapping;
-        this.coverageSnapshotService = coverageSnapshotService;
-        this.coverageV3Service = null;
-    }
-    //CHECKSTYLE.ON
-
-    //CHECKSTYLE.OFF
-    @Autowired // TODO Remove later -- for now, tell Spring which constructor to use
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
                               PdpClientService pdpClientService,
                               CoverageService coverageService,

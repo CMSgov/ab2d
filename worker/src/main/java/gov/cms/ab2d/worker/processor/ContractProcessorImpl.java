@@ -581,7 +581,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             try {
                 Files.delete(Path.of(streamingDir.getAbsolutePath()));
             } catch (Exception ex) {
-                log.error("Unable to delete streaming dir", ex);
+                log.error("Unable to delete streaming dir");
             }
         }
         // We're done, all the directories are empty, let's kill the thread
