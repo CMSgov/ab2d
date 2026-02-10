@@ -249,23 +249,8 @@ resource "aws_iam_role" "idr_db_importer_task" {
 }
 
 resource "aws_iam_role_policy_attachment" "idr_db_importer_task" {
-  for_each = {
-    a = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
-    b = "arn:aws:iam::aws:policy/AmazonECS_FullAccess",
-    c = "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess",
-    d = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
-    e = "arn:aws:iam::aws:policy/AmazonS3FullAccess",
-    f = "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
-    g = "arn:aws:iam::aws:policy/SecretsManagerReadWrite",
-    h = "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds",
-    i = "arn:aws:iam::aws:policy/AmazonSQSFullAccess",
-    j = "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
-    k = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
-    l = data.aws_iam_policy.cms_cloud_ssm_iam.arn
-  }
-
   role       = aws_iam_role.idr_db_importer_task.name
-  policy_arn = each.value
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_role" "idr_db_importer" {
