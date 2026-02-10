@@ -287,7 +287,6 @@ class ExplanationOfBenefitTrimmerR4V3Test {
      * Verify that all the data that is not available to the PDP is not in the filtered object
      */
     @Test
-    @Disabled("Ignored for now")
     void testFilterIt() {
         ExplanationOfBenefit eobtrim = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(EOB);
 
