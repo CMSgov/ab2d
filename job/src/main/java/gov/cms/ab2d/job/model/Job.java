@@ -128,6 +128,6 @@ public class Job {
     }
 
     public boolean isV3Job() {
-        return (requestUrl != null && requestUrl.contains("/v3")) || jobUuid.startsWith("33333333");
+        return fhirVersion == FhirVersion.R4V3;
     }
 }
