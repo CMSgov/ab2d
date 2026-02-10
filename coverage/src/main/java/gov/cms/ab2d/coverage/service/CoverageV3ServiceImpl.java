@@ -2,13 +2,13 @@ package gov.cms.ab2d.coverage.service;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.*;
+import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.query.CountBeneficiariesByCoveragePeriods;
 import gov.cms.ab2d.coverage.query.GetCoverageMembership;
 import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
-import gov.cms.ab2d.coverage.repository.CoverageV3HistoricalRepository;
-import gov.cms.ab2d.coverage.repository.CoverageV3Repository;
-import jakarta.persistence.EntityManager;
+import gov.cms.ab2d.coverage.repository.v3.CoverageV3HistoricalRepository;
+import gov.cms.ab2d.coverage.repository.v3.CoverageV3Repository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,26 +25,28 @@ import static java.util.stream.Collectors.toList;
 @Transactional
 public class CoverageV3ServiceImpl implements CoverageV3Service {
 
-    private final EntityManager entityManager;
+    /**
+     * If true, throw exception if number of expected coverage period is not equal to actual number.
+     * In production, this should be set to true.
+     */
+    public static final boolean THROW_EXCEPTION_FOR_COVERAGE_PERIOD_MISMATCH = false;
+
     private final DataSource dataSource;
     private final PropertiesService propertiesService;
     private final CoverageV3Repository coverageV3Repository;
     private final CoverageV3HistoricalRepository coverageV3HistoricalRepository;
 
     public CoverageV3ServiceImpl(
-            EntityManager entityManager,
             DataSource dataSource,
             PropertiesService propertiesService,
             CoverageV3Repository coverageV3Repository,
             CoverageV3HistoricalRepository coverageV3HistoricalRepository
     ) {
-        this.entityManager = entityManager;
         this.dataSource = dataSource;
         this.propertiesService = propertiesService;
         this.coverageV3Repository = coverageV3Repository;
         this.coverageV3HistoricalRepository = coverageV3HistoricalRepository;
     }
-
 
     public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {
         return new CountBeneficiariesByCoveragePeriods(dataSource).countBeneficiaries(contract, periods, isOptOutOn());
@@ -60,18 +62,17 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         // Do not remove this check because it is a fail safe to guarantee that there isn't something majorly
         // wrong with the enrollment data.
         // A missing period = one month of enrollment missing for the contract
-
-        //List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllByContractNumber(contract.getContractNumber());
         final List<YearMonthRecord> coveragePeriods = new GetCoveragePeriodsByContract(dataSource).getCoveragePeriodsForContract(contract.getContractNumber());
         if (coveragePeriods.size() != expectedCoveragePeriods) {
-            // TODO uncomment this exception later
-            log.warn("Expected coverage periods = {}; Actual coverage periods = {}", expectedCoveragePeriods, coveragePeriods.size());
-            /*
-            throw new IllegalArgumentException(
-                    "at least one coverage period missing from enrollment table for contract "
-                    + page.getContract().getContractNumber()
-            );
-            */
+            if (THROW_EXCEPTION_FOR_COVERAGE_PERIOD_MISMATCH) {
+                throw new IllegalArgumentException(
+                        "at least one coverage period missing from enrollment table for contract "
+                                + page.getContract().getContractNumber()
+                );
+            } else {
+                log.warn("Expected coverage periods = {}; Actual coverage periods = {}", expectedCoveragePeriods, coveragePeriods.size());
+
+            }
         }
 
         // Determine how many records to pull back
@@ -119,4 +120,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return propertiesService.isToggleOn("OptOutOn", false);
     }
 
+    protected boolean throwExceptionForCoveragePeriodMismatch() {
+        return propertiesService.isToggleOn("OptOutOn", false);
+    }
 }

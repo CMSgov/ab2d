@@ -1,4 +1,4 @@
-package gov.cms.ab2d.coverage.query;
+package gov.cms.ab2d.coverage;
 
 import lombok.Getter;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -8,11 +8,11 @@ import javax.sql.DataSource;
 import java.util.Collections;
 
 @Getter
-class PostgresTestContainer extends PostgreSQLContainer<PostgresTestContainer> {
+public class CoverageV3PostgresContainer extends PostgreSQLContainer<CoverageV3PostgresContainer> {
 
     private DataSource dataSource;
 
-    PostgresTestContainer() {
+    public CoverageV3PostgresContainer() {
         super("postgres:16");
     }
 

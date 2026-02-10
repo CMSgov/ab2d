@@ -1,6 +1,6 @@
 package gov.cms.ab2d.coverage.util;
 
-import gov.cms.ab2d.coverage.model.CoverageV3Periods;
+import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import lombok.experimental.UtilityClass;
 import lombok.val;

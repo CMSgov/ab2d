@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
+import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.CoverageV3Service;
@@ -16,7 +17,6 @@ import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -513,7 +513,11 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Trace(metricName = "EnrollmentIsAvailableV3", dispatcher = true)
     @Override
     public boolean isCoverageAvailableV3(Job job, ContractDTO contract) {
-        // TODO - determine how to handle this - e.g. return false if coverage data is currently being imported from S3
+        /**
+         * Return true unconditionally.
+         * The intent of {@link #isCoverageAvailable} seems to only apply for V1/V2.
+         * Leaving this method as a placeholder in case we need V3-specific logic.
+         */
         return true;
     }
 

@@ -1,6 +1,6 @@
-package gov.cms.ab2d.coverage.repository;
+package gov.cms.ab2d.coverage.repository.v3;
 
-import gov.cms.ab2d.coverage.model.CoverageV3;
+import gov.cms.ab2d.coverage.model.v3.CoverageV3;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

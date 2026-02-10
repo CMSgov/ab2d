@@ -1,17 +1,15 @@
 package gov.cms.ab2d.coverage.query;
 
+import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static gov.cms.ab2d.coverage.query.TempTestUtils.devDataSource;
 import static gov.cms.ab2d.coverage.util.CoverageV3Utils.*;
 import static org.junit.Assert.assertEquals;
 
@@ -19,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 class CountBeneficiariesByCoveragePeriodsTest {
 
     @Container
-    private static final PostgresTestContainer container = new PostgresTestContainer();
+    private static final CoverageV3PostgresContainer container = new CoverageV3PostgresContainer();
 
     static final ZonedDateTime START_TIME = ZonedDateTime.parse("2025-01-01T00:00Z[UTC]");
     static final ZonedDateTime END_TIME =   ZonedDateTime.parse("2026-12-31T00:00Z[UTC]");

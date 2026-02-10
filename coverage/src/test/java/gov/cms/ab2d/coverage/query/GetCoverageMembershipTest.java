@@ -1,8 +1,7 @@
 package gov.cms.ab2d.coverage.query;
 
+import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import gov.cms.ab2d.coverage.model.CoverageMembership;
-import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
-import gov.cms.ab2d.coverage.util.Coverage;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,14 +11,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.Arrays;
 import java.util.List;
 
-import static gov.cms.ab2d.coverage.query.TempTestUtils.devDataSource;
 import static org.junit.Assert.assertEquals;
 
 @Testcontainers
 class GetCoverageMembershipTest {
 
     @Container
-    private static final PostgresTestContainer container = new PostgresTestContainer();
+    private static final CoverageV3PostgresContainer container = new CoverageV3PostgresContainer();
 
     static final List<Integer> YEARS = Arrays.asList(2025,2026);
 

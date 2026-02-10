@@ -1,6 +1,6 @@
 package gov.cms.ab2d.coverage.query;
 
-import gov.cms.ab2d.coverage.model.CoverageV3Periods;
+import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import lombok.val;
 import org.springframework.dao.support.DataAccessUtils;

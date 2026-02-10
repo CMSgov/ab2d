@@ -1,5 +1,6 @@
 package gov.cms.ab2d.coverage.query;
 
+import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,7 @@ import static org.junit.Assert.assertTrue;
 class GetCoveragePeriodsByContractTest {
 
     @Container
-    private static final PostgresTestContainer container = new PostgresTestContainer();
+    private static final CoverageV3PostgresContainer container = new CoverageV3PostgresContainer();
 
     GetCoveragePeriodsByContract query;
 

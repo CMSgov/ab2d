@@ -20,6 +20,7 @@ import org.springframework.retry.annotation.EnableRetry;
         "gov.cms.ab2d.common.service",
         "gov.cms.ab2d.common.util",
         "gov.cms.ab2d.coverage.repository",
+        "gov.cms.ab2d.coverage.repository.v3",
         "gov.cms.ab2d.coverage.service",
         "gov.cms.ab2d.job.service",
         "gov.cms.ab2d.worker.config",
@@ -27,7 +28,7 @@ import org.springframework.retry.annotation.EnableRetry;
         "gov.cms.ab2d.worker.service"
 })
 @EnableJpaRepositories(basePackages = {"gov.cms.ab2d.common.repository", "gov.cms.ab2d.job.repository",
-        "gov.cms.ab2d.coverage.repository"})
+        "gov.cms.ab2d.coverage.repository", "gov.cms.ab2d.coverage.repository.v3"})
 @EnableFeignClients(clients = {ContractFeignClient.class})
 @EnableRetry
 @ImportAutoConfiguration({FeignAutoConfiguration.class})
