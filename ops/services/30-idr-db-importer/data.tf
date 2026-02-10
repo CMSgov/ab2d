@@ -15,7 +15,8 @@ data "aws_iam_role" "idr_db_importer_task_execution" {
 }
 
 data "aws_security_group" "idr_db_importer_eventbridge_scheduler" {
-  name = "${local.service_prefix}-idr-db-importer-eventbridge-scheduler"
+  name   = "internet"
+  vpc_id = module.platform.vpc_id
 }
 
 ### SSM parameters
