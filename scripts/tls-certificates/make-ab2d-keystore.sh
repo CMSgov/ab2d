@@ -102,8 +102,7 @@ verify_encoded_p12() {
 # Generate a keystore and a public key pem file
 gen_keystore() {
     local dname="$1"
-    local san="$2"
-    local env="$3"
+    local env="$2"
     local password="${PASSWORDS[$env]}"
 
     echo "Begin processing of $env environment..."
@@ -117,7 +116,6 @@ gen_keystore() {
         -keyalg RSA \
         -keysize 4096 \
         -dname "$dname" \
-        -ext "$san" \
         -validity 730 \
         -keypass "$password" \
         -keystore "${env}-keystore.pfx" \
@@ -147,26 +145,22 @@ main() {
 
     case $env in
         "dev")
-            gen_keystore "cn=dev.ab2d.cms.gov.local" \
-                "san=dns:dev.ab2d.cms.gov.local,dns:dev.ab2d.cms.gov" \
+            gen_keystore "cn=ab2d-dev" \
                 "dev"
             return
             ;;
         "test")
-            gen_keystore "cn=test.ab2d.cms.gov.local" \
-                "san=dns:test.ab2d.cms.gov.local,dns:test.ab2d.cms.gov" \
+            gen_keystore "cn=ab2d-test" \
                 "test"
             return
             ;;
         "prod")
-            gen_keystore "cn=ab2d.cms.gov.local" \
-                "san=dns:ab2d.cms.gov.local,dns:ab2d.cms.gov" \
+            gen_keystore "cn=ab2d-prod" \
                 "prod"
             return
             ;;
         "sandbox")
-            gen_keystore "cn=sandbox.ab2d.cms.gov.local" \
-                "san=dns:sandbox.ab2d.cms.gov.local,dns:sandbox.ab2d.cms.gov" \
+            gen_keystore "cn=ab2d-sandbox" \
                 "sandbox"
             return
             ;;
