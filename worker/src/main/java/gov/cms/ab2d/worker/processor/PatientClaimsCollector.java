@@ -79,7 +79,6 @@ public class PatientClaimsCollector {
         if (bundle == null) {
             return;
         }
-
         bundles += 1;
 
         // Returns null if bundle is null
@@ -98,7 +97,7 @@ public class PatientClaimsCollector {
                 .filter(resource -> FilterEob.filter(resource, patient.getDateRanges(), earliestDate,
                         attestationDate, claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST).isPresent())
                 // Filter out unnecessary fields
-                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource))
+                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource, claimsRequest.getVersion()))
                 // Make sure patients are the same
                 .filter(resource -> matchingPatient(resource, patient))
                 // Make sure update date is after since date
