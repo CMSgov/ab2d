@@ -54,9 +54,6 @@ jobs:
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
 
-      - name: Generate SBOM
-        run: ./gradlew cyclonedxBom
-
       - name: Publish to artifactory - BFD only
         run: |
           ./gradlew ab2d-bfd:artifactoryPublish -x test -b build.gradle 
