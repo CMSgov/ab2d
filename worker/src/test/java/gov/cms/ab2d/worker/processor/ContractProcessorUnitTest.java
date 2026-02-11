@@ -9,6 +9,7 @@ import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -34,6 +35,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+
+import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +52,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi_V3;
 import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -79,6 +83,8 @@ class ContractProcessorUnitTest {
     @Mock private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
     private PatientClaimsProcessor patientClaimsProcessor;
     private JobChannelService jobChannelService;
+    private JobProgressServiceImpl jobProgressImpl;
+    private SearchConfig searchConfig;
 
     private ContractDTO contract;
     private ContractForCoverageDTO contractForCoverageDTO;
@@ -91,45 +97,52 @@ class ContractProcessorUnitTest {
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
-
         mapping = new ContractToContractCoverageMapping();
         contract = createContractDTO();
         contractForCoverageDTO = mapping.map(contract);
-        PdpClient pdpClient = createClient();
-        job = createJob(pdpClient);
-        job.setContractNumber(contract.getContractNumber());
-        jobRepository = new StubJobRepository(job);
-        JobProgressServiceImpl jobProgressImpl = new JobProgressServiceImpl(jobRepository);
-        jobProgressImpl.initJob(jobUuid);
-        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
-        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
-        jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
-        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
-        pool.initialize();
-
-        SearchConfig searchConfig = new SearchConfig(efsMountTmpDir.toFile().getAbsolutePath(),
+        searchConfig = new SearchConfig(efsMountTmpDir.toFile().getAbsolutePath(),
                 STREAMING, FINISHED, 0, 0, 2, 1);
 
-        ContractWorkerClient contractWorkerClient = new ContractWorkerClientMock();
-        cut = new ContractProcessorImpl(
-                contractWorkerClient,
-                jobRepository,
-                coverageDriver,
-                patientClaimsProcessor,
-                eventLogger,
-                requestQueue,
-                jobChannelService,
-                jobProgressImpl,
-                mapping,
-                pool,
-                searchConfig);
+        initialize();
 
         //ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
 
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         Files.createDirectories(outputDirPath);
+    }
+
+    private void initialize() {
+        initialize(STU3);
+    }
+
+    private void initialize(final FhirVersion fhirVersion) {
+        val client = createClient();
+        job = createJob(client, fhirVersion);
+        job.setContractNumber(contract.getContractNumber());
+        jobRepository = new StubJobRepository(job);
+        jobProgressImpl = new JobProgressServiceImpl(jobRepository);
+        jobProgressImpl.initJob(jobUuid);
+        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
+        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
+        this.jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
+
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.initialize();
+
+        ContractWorkerClient contractWorkerClient = new ContractWorkerClientMock();
+        this.cut = new ContractProcessorImpl(
+            contractWorkerClient,
+            jobRepository,
+            coverageDriver,
+            patientClaimsProcessor,
+            eventLogger,
+            requestQueue,
+            jobChannelService,
+            jobProgressImpl,
+            mapping,
+            pool,
+            searchConfig);
     }
 
     @Test
@@ -179,6 +192,30 @@ class ContractProcessorUnitTest {
     }
 
     @Test
+    @DisplayName("V3 - When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
+    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob_V3() {
+        initialize(FhirVersion.R4V3);
+
+        // Calls pageCoverageV3
+        when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2), null));
+
+        // Calls numberOfBeneficiariesToProcessV3
+        when(coverageDriver.numberOfBeneficiariesToProcessV3(any(Job.class), any(ContractDTO.class))).thenReturn(3);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
+
+        job.setStatus(JobStatus.CANCELLED);
+
+        var exceptionThrown = assertThrows(JobCancelledException.class,
+                () -> cut.process(job));
+
+        assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
+        verify(patientClaimsProcessor, atLeast(1)).process(any());
+    }
+
+    @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(18);
@@ -211,6 +248,39 @@ class ContractProcessorUnitTest {
     }
 
     @Test
+    @DisplayName("V3 - When many patientId are present, 'PercentageCompleted' should be updated many times")
+    void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes_V3() {
+        initialize(FhirVersion.R4V3);
+        when(coverageDriver.numberOfBeneficiariesToProcessV3(any(Job.class), any(ContractDTO.class))).thenReturn(18);
+        when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2),
+                        CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2), null));
+
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
+
+        var jobOutputs = cut.process(job);
+
+        assertEquals(6, jobRepository.getUpdatePercentageCompletedCount());
+        verify(patientClaimsProcessor, atLeast(1)).process(any());
+    }
+
+    @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenExpectedPatientsNotMatchActualPatientsFail() {
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
@@ -221,6 +291,20 @@ class ContractProcessorUnitTest {
 
         assertTrue(exception.getMessage().contains("from database but retrieved"));
     }
+
+    @Test
+    @DisplayName("V3 - When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
+    void whenExpectedPatientsNotMatchActualPatientsFail_V3() {
+        initialize(FhirVersion.R4V3);
+        when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1), null));
+        when(coverageDriver.numberOfBeneficiariesToProcessV3(any(Job.class), any(ContractDTO.class))).thenReturn(4002);
+
+        ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(job));
+
+        assertTrue(exception.getMessage().contains("from database but retrieved"));
+    }
+
 
     @Test
     @DisplayName("When a job has remaining requests, those remaining requests are waited on before finishing")
@@ -292,6 +376,33 @@ class ContractProcessorUnitTest {
         future.cancel(true);
     }
 
+    @Test
+    @DisplayName("V3 - When round robin blocking queue is full, patients should not be skipped")
+    void whenBlockingQueueFullPatientsNotSkipped_V3() throws InterruptedException {
+        initialize(FhirVersion.R4V3);
+        when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1),
+                        CoveragePagingRequest.ofV3(1, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1), null));
+
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 2);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 1);
+
+        when(requestQueue.size(anyString())).thenReturn(1_0000_000);
+
+        ExecutorService singleThreadedExecutor = Executors.newSingleThreadExecutor();
+
+        Runnable testRunnable = () -> cut.process(job);
+
+        Future<?> future = singleThreadedExecutor.submit(testRunnable);
+
+        Thread.sleep(5000);
+
+        assertFalse(future.isDone());
+
+        future.cancel(true);
+    }
+
     private PdpClient createClient() {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
@@ -304,13 +415,13 @@ class ContractProcessorUnitTest {
         return new ContractDTO(1000L,  "CONTRACT_NM_00000", "CONTRACT_00000", OffsetDateTime.now().minusDays(10), Contract.ContractType.NORMAL, 0, 0);
     }
 
-    private Job createJob(PdpClient pdpClient) {
+    private Job createJob(PdpClient pdpClient, FhirVersion fhirVersion) {
         Job job = new Job();
         job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setOrganization(pdpClient.getOrganization());
-        job.setFhirVersion(STU3);
+        job.setFhirVersion(fhirVersion);
         return job;
     }
 
@@ -318,6 +429,14 @@ class ContractProcessorUnitTest {
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
         return IntStream.range(0, num).mapToObj(n -> new CoverageSummary(
                 createIdentifierWithoutMbi(n),
+                contractcoverageContractForCoverageDTO, List.of(dateRange)
+        )).collect(toList());
+    }
+
+    private static List<CoverageSummary> createPatientsByContractResponse_V3(ContractForCoverageDTO contractcoverageContractForCoverageDTO, int num) {
+        FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
+        return IntStream.range(0, num).mapToObj(n -> new CoverageSummary(
+                createIdentifierWithoutMbi_V3(n),
                 contractcoverageContractForCoverageDTO, List.of(dateRange)
         )).collect(toList());
     }

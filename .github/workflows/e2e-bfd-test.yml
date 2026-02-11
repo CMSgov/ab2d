@@ -61,19 +61,22 @@ jobs:
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
             AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_password
+            AB2D_BFD_KEYSTORE_BASE64=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_base64
+            AB2D_BFD_TRUSTSTORE_CERT=/ab2d/${{ env.AB2D_ENV }}/worker/nonsensitive/bfd_truststore_cert
+            AB2D_BFD_V3_TRUSTSTORE_CERT=/ab2d/${{ env.AB2D_ENV }}/worker/nonsensitive/bfd_v3_truststore_cert
             MAIN_BUCKET=/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name
 
       - name: Create opt/ab2d directory and download keystore
         run: |
           mkdir -p opt/ab2d
-      
+
           KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
           aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
         env:
-          AB2D_BFD_URL: 'https://prod-sbx.fhir.bfd.cmscloud.local'
-          AB2D_BFD_URL_V3: ${{ inputs.environment == 'sandbox' && 'https://sandbox.fhirv3.bfd.cmscloud.local' || 'https://test.fhirv3.bfd.cmscloud.local'}}
+          AB2D_BFD_URL:     ${{ inputs.environment == 'sandbox' && 'https://sandbox.fhir.bfd.cmscloud.local'   || 'https://test.fhir.bfd.cmscloud.local'}}
+          AB2D_BFD_URL_V3:  ${{ inputs.environment == 'sandbox' && 'https://sandbox.fhirv3.bfd.cmscloud.local' || 'https://test.fhirv3.bfd.cmscloud.local'}}
         run: |
-          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
+          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -Dcheckstyle.skip -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress

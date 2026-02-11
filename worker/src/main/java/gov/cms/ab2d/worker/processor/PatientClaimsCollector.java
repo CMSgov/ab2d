@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.hl7.fhir.instance.model.api.IBaseBackboneElement;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -137,13 +138,17 @@ public class PatientClaimsCollector {
      * @return true if this patient is a member of the correct contract
      */
     private boolean matchingPatient(IBaseResource benefit, CoverageSummary patient) {
+        final Long patientId = EobUtils.getPatientId(benefit);
+        if (patientId != null) {
+            val patientIdentifier = patient.getIdentifiers().isV3()
+                ? patient.getIdentifiers().getPatientIdV3()
+                : patient.getIdentifiers().getBeneficiaryId();
 
-        Long patientId = EobUtils.getPatientId(benefit);
-        if (patientId == null || patient.getIdentifiers().getBeneficiaryId() != patientId) {
-            log.error(patientId + " returned in EOB object, but does not match beneficiary id passed to the search");
-            return false;
+            return (patientIdentifier == patientId);
         }
-        return true;
+
+        log.error(patientId + " returned in EOB object, but does not match beneficiary id passed to the search");
+        return false;
     }
 
     /**

@@ -52,12 +52,16 @@ public interface CoverageDriver {
      */
     boolean isCoverageAvailable(Job job, ContractDTO contract) throws InterruptedException;
 
+    boolean isCoverageAvailableV3(Job job, ContractDTO contract) throws InterruptedException;
+
     /**
      * Calculate the number of beneficiaries to process for a given job
      * @param job an already submitted eob job
      * @return the total number of beneficiaries to search for the job which equals the number of eob searches necessary
      */
     int numberOfBeneficiariesToProcess(Job job, ContractDTO contract);
+
+    int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract);
 
     /**
      * Get first page worth of beneficiaries to run EOB searches on
@@ -73,6 +77,8 @@ public interface CoverageDriver {
      * @return result containing page of beneficiaries and request to get next page if more beneficiaries are present
      */
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
+
+    CoveragePagingResult pageCoverageV3(CoveragePagingRequest request);
 
     /**
      * Verify that the coverage information in the database meets all business requirements.

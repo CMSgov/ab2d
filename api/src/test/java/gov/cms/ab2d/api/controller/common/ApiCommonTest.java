@@ -1,6 +1,8 @@
 package gov.cms.ab2d.api.controller.common;
 
+import gov.cms.ab2d.api.security.EndpointNotAvailableException;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidContractException;
@@ -11,10 +13,11 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 
-import java.time.OffsetDateTime;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_WHITELISTED_CONTRACTS;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +30,10 @@ class ApiCommonTest {
 
     final ApiCommon apiCommon;
 
+    ContractService contractService;
+    PropertiesService propertiesService;
+    PdpClientService pdpService;
+
     ApiCommonTest() {
         Contract contract = new Contract();
         contract.setContractNumber(CONTRACT_NUMBER);
@@ -34,10 +41,15 @@ class ApiCommonTest {
         PdpClient pdpClientTmp = new PdpClient();
         pdpClientTmp.setContractId(contract.getId());
         pdpClient = pdpClientTmp;
-        ContractService contractService = mock(ContractService.class);
+        contractService = mock(ContractService.class);
+        propertiesService = mock(PropertiesService.class);
+        pdpService = mock(PdpClientService.class);
+
         when(contractService.getContractByContractId(anyLong())).thenReturn(contract);
 
-        apiCommon = buildApiCommon(contractService);
+        when(pdpService.getCurrentClient()).thenReturn(pdpClient);
+
+        apiCommon = new ApiCommon(null, null, propertiesService, pdpService, contractService);
     }
 
     @Test
@@ -100,13 +112,32 @@ class ApiCommonTest {
         });
     }
 
-    private ApiCommon buildApiCommon(ContractService contractService) {
-        return new ApiCommon(null, null, null, buildPdpClientService(), contractService);
+    @Test
+    void v3TestContractAllowed() {
+        when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
+        when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn(null);
+        assertDoesNotThrow(() -> apiCommon.checkValidCreateJobV3("Z1234"));
     }
 
-    private PdpClientService buildPdpClientService() {
-        PdpClientService retPdpService = mock(PdpClientService.class);
-        when(retPdpService.getCurrentClient()).thenReturn(pdpClient);
-        return retPdpService;
+    @Test
+    void v3ContractIsWhiteListed() {
+        when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
+        when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
+        assertDoesNotThrow(() -> apiCommon.checkValidCreateJobV3("S1234"));
+        assertDoesNotThrow(() -> apiCommon.checkValidCreateJobV3("S5555"));
     }
+
+    @Test
+    void v3ContractNotWhiteListed() {
+        when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("false");
+        when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
+        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkValidCreateJobV3("S9999"));
+    }
+
+    @Test
+    void v3NotEnabled() {
+        when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("false");
+        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkValidCreateJobV3("Z1234"));
+    }
+
 }

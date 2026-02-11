@@ -11,6 +11,7 @@ import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.coverage.service.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
@@ -67,6 +68,9 @@ class CoverageDriverUnitTest {
 
     @Mock
     private CoverageService coverageService;
+
+    @Mock
+    private CoverageV3Service coverageV3Service;
 
     @Mock
     private CoverageLockWrapper lockWrapper;
@@ -152,12 +156,12 @@ class CoverageDriverUnitTest {
 
     @BeforeEach
     void before() {
-        driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,mapping, snapshotService);
+        driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, null, null, null,mapping, snapshotService);
     }
 
     @AfterEach
     void after() {
-        reset(coverageService, lockWrapper, coverageProcessor);
+        reset(coverageService, coverageV3Service, lockWrapper, coverageProcessor);
         ((PropertyServiceStub) propertiesService).reset();
     }
 
@@ -249,7 +253,7 @@ class CoverageDriverUnitTest {
         when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO("Contract-0", contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
 
         assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
-        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - CoveragePagingRequest(jobStartTime=null, contract=ContractForCoverageDTO(contractNumber=Contract-0, attestedOn=2020-01-01T00:00-05:00, contractType=NORMAL), pageSize=10000, cursor=Optional.empty)"));
+        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - CoveragePagingRequest(jobStartTime=null, contract=ContractForCoverageDTO(contractNumber=Contract-0, attestedOn=2020-01-01T00:00-05:00, contractType=NORMAL), pageSize=10000, cursor=Optional.empty, isV3=false)"));
     }
 
     @DisplayName("Paging coverage fails when coverage periods are missing")
@@ -328,7 +332,7 @@ class CoverageDriverUnitTest {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockFalse);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null, snapshotService);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, propertiesService, null, lockWrapper,null, snapshotService);
 
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, driver::discoverCoveragePeriods);
         assertTrue(exception.getMessage().contains("could not retrieve lock"));
@@ -348,7 +352,7 @@ class CoverageDriverUnitTest {
         Job job = new Job();
         job.setContractNumber(contract.getContractNumber());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null, snapshotService);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, propertiesService, null, lockWrapper,null, snapshotService);
 
         assertThrows(InterruptedException.class, driver::discoverCoveragePeriods);
         assertThrows(InterruptedException.class, driver::queueStaleCoveragePeriods);
@@ -363,7 +367,7 @@ class CoverageDriverUnitTest {
         when(coverageService.coveragePeriodStuckJobs(any())).thenReturn(Collections.emptyList());
         when(coverageService.coveragePeriodNotUpdatedSince(anyInt(), anyInt(), any())).thenReturn(Collections.emptyList());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, lockWrapper,null, snapshotService);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, null, null, lockWrapper,null, snapshotService);
 
         ContractDTO contract = new ContractDTO(null, "contractNum", null, null, null, 0, 0);
         Job job = new Job();
@@ -381,7 +385,7 @@ class CoverageDriverUnitTest {
     void failureToPageCausesExceptions(CapturedOutput output) {
         when(coverageService.pageCoverage(any())).thenThrow(RuntimeException.class);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,null, snapshotService);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, null, null, null,null, snapshotService);
 
         ContractForCoverageDTO contract = new ContractForCoverageDTO();
         contract.setContractNumber("contractNum");
@@ -396,7 +400,7 @@ class CoverageDriverUnitTest {
     @Test
     void loadMappingFailsQuietly() {
         CoverageDriverImpl driver = spy(new CoverageDriverImpl(null, null,
-                coverageService, propertiesService, coverageProcessor, lockWrapper,null, snapshotService)
+                coverageService, coverageV3Service, propertiesService, coverageProcessor, lockWrapper,null, snapshotService)
         );
 
         propertiesService.updateProperty(MAINTENANCE_MODE, "true");

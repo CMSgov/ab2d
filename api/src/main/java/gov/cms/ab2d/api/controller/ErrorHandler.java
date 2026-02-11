@@ -6,6 +6,7 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.security.BadJWTTokenException;
 import gov.cms.ab2d.api.security.ClientNotEnabledException;
+import gov.cms.ab2d.api.security.EndpointNotAvailableException;
 import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
@@ -75,6 +76,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             RESPONSE_MAP.put(JwtVerificationException.class, HttpStatus.FORBIDDEN);
             RESPONSE_MAP.put(InvalidContractException.class, HttpStatus.FORBIDDEN);
             RESPONSE_MAP.put(InvalidJobAccessException.class, HttpStatus.FORBIDDEN);
+            RESPONSE_MAP.put(EndpointNotAvailableException.class, HttpStatus.FORBIDDEN);
             RESPONSE_MAP.put(gov.cms.ab2d.common.service.ResourceNotFoundException.class, HttpStatus.NOT_FOUND);
             RESPONSE_MAP.put(TooManyRequestsException.class, HttpStatus.TOO_MANY_REQUESTS);
             RESPONSE_MAP.put(InMaintenanceModeException.class, HttpStatus.SERVICE_UNAVAILABLE);
@@ -139,7 +141,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             UsernameNotFoundException.class,
             ClientNotEnabledException.class,
             JwtVerificationException.class,
-            InvalidJobAccessException.class
+            InvalidJobAccessException.class,
+            EndpointNotAvailableException.class
     })
     public ResponseEntity<Void> handleAuthorizationErrors(Exception ex, HttpServletRequest request) {
         HttpStatus status = getErrorResponse(ex.getClass());

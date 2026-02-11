@@ -15,6 +15,7 @@ import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.coverage.service.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -147,6 +148,8 @@ public class EndToEndBfdTests {
     @Autowired
     private CoverageService coverageService;
     @Autowired
+    private CoverageV3Service coverageV3Service;
+    @Autowired
     private CoverageProcessor coverageProcessor;
     @Autowired
     private CoverageLockWrapper coverageLockWrapper;
@@ -185,7 +188,7 @@ public class EndToEndBfdTests {
         propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "30");
         propertiesService.updateProperty(PCP_SCALE_TO_MAX_TIME, "10");
 
-        coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
+        coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService, coverageV3Service,
                 propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping, snapshotService);
 
         // Instantiate the job processors
