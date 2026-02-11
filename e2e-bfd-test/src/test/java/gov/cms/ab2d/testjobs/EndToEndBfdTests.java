@@ -102,7 +102,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
         "gov.cms.ab2d.common.service",
         "gov.cms.ab2d.common.util",
         "gov.cms.ab2d.coverage.repository",
-        "gov.cms.ab2d.coverage.repository.v3",
         "gov.cms.ab2d.coverage.service",
         "gov.cms.ab2d.job.service",
         "gov.cms.ab2d.worker.config",
