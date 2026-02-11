@@ -13,7 +13,7 @@ permissions:
   id-token: write
 defaults:
   run:
-    working-directory: ./ab2d-idr-db-importer
+    working-directory: ./idr-db-importer
 
 env:
   SONAR_PROJECT_KEY: ab2d-idr-db-importer
