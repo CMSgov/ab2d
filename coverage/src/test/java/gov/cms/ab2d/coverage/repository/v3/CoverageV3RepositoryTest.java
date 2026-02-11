@@ -9,9 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 @ExtendWith(SpringExtension.class)
 @EnableJpaRepositories(basePackages = {"gov.cms.ab2d.coverage.repository.v3"})
@@ -21,25 +19,21 @@ class CoverageV3RepositoryTest {
     @Autowired
     CoverageV3Repository coverageV3Repository;
 
-
-    /*
     @Test
     void findAllByMonthAndYear() {
-        coverageV3Repository.findAllByMonthAndYear();
+        val periods = coverageV3Repository.findAllByMonthAndYear(1, 2026);
+        assertEquals(5, periods.size());
     }
 
     @Test
     void findByContractAndMonthAndYear() {
-        coverageV3Repository.findByContractAndMonthAndYear();
+        val periods = coverageV3Repository.findByContractAndMonthAndYear("Z0000", 1, 2026);
+        assertEquals(3, periods.size());
     }
-     */
 
     @Test
     void findAllByContract() {
         val periods = coverageV3Repository.findAllByContract("Z0000");
         assertEquals(9, periods.size());
-
-
     }
-
 }
