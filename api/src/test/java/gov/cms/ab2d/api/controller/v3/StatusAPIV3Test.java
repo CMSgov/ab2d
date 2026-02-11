@@ -29,7 +29,8 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
+import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -78,6 +79,8 @@ class StatusAPIV3Test {
     ApiCommon apiCommon = context.getBean(ApiCommon.class);
     ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
     propertiesService.createProperty(MAINTENANCE_MODE, "false");
+    propertiesService.createProperty(V3_ON, "true");
+    propertiesService.createProperty(V3_WHITELISTED_CONTRACTS, VALID_CONTRACT_NUMBER);
   }
 
   @AfterEach

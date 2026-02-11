@@ -127,7 +127,11 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         try {
-            if (!coverageDriver.isCoverageAvailable(job, contract)) {
+            final boolean isCoverageAvailable = (job.getFhirVersion() == FhirVersion.R4V3)
+                ? coverageDriver.isCoverageAvailableV3(job, contract)
+                : coverageDriver.isCoverageAvailable(job, contract);
+
+            if (!isCoverageAvailable) {
                 log.info("coverage metadata is not up to date so job will not be started");
                 return job;
             }

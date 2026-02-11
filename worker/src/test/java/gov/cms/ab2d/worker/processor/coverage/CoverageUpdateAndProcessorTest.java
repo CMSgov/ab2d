@@ -15,6 +15,7 @@ import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.coverage.service.CoverageV3Service;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
@@ -102,6 +103,9 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private CoverageService coverageService;
 
+    @Autowired
+    private CoverageV3Service coverageV3Service;
+
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @Autowired
@@ -157,7 +161,7 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient, snapshotService);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping, snapshotService);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, coverageV3Service, propertiesService, processor, searchLock, mapping, snapshotService);
     }
 
     @AfterEach

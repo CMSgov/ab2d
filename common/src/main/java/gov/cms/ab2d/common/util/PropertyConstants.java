@@ -38,4 +38,6 @@ public final class PropertyConstants {
 
     public static final String V3_ON = "v3.on";
 
+    public static final String V3_WHITELISTED_CONTRACTS = "v3.whitelisted.contracts";
+
 }
