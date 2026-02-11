@@ -57,34 +57,6 @@ jobs:
       - name: Generate SBOM
         run: ./gradlew cyclonedxBom
 
-      - name: Publish to artifactory
-        if: ${{ env.FORCE_PUBLISH != 'true' }}
+      - name: Publish to artifactory - BFD only
         run: |
-          # Check for artifacts to deploy
-          versionPublishedList=$(SUPPRESS_LOGGING_BRANCH_CLASSIFIER=true ./gradlew -q lookForArtifacts)
-
-          deployScript=""
-          for entry in $(echo "$versionPublishedList" | tr "'''" "\n"); do
-            buildName=$(echo "$entry" | cut -d":" -f1)
-            isPublished=$(echo "$entry" | cut -d":" -f2)
-
-            if [ "$isPublished" == "false" ]; then
-              echo "Deploying $buildName"
-              deployScript+="$buildName:artifactoryPublish "
-            fi
-          done
-
-          if [ "$deployScript" != "" ]; then
-            echo "Publishing artifacts: $deployScript, avoiding overwriting existing ones"
-            ./gradlew ${deployScript} -b build.gradle
-          else
-            echo "No artifacts to publish."
-          fi
-
-      - name: Force publish to Artifactory
-        if: ${{ env.FORCE_PUBLISH == 'true' }}
-        run: |
-            echo "Force publishing (overwriting) all artifacts to Artifactory"
-            ./gradlew artifactoryPublish -b build.gradle
-
-
+          ./gradlew ab2d-bfd:artifactoryPublish -b build.gradle

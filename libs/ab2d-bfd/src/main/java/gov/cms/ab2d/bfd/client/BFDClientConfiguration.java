@@ -80,10 +80,18 @@ public class BFDClientConfiguration {
                     .loadTrustMaterial(trustStore, null)
                     .build();
 
+            /**
+              Defaults:
+
+                 bfd.connectionTimeout=${AB2D_BFD_CONNECTION_TIMEOUT:5000}
+                 bfd.socketTimeout=${AB2D_BFD_SOCKET_TIMEOUT:30000}
+                 bfd.requestTimeout=${AB2D_BFD_REQUEST_TIMEOUT:5000}
+             */
+
             RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(connectionTimeout)
-                    .setConnectionRequestTimeout(requestTimeout)
-                    .setSocketTimeout(socketTimeout)
+                    .setConnectTimeout(60_000)
+                    .setConnectionRequestTimeout(15_000)
+                    .setSocketTimeout(60_000)
                     .build();
 
             return HttpClients.custom()
