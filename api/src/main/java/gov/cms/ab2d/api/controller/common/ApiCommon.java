@@ -48,6 +48,8 @@ public class ApiCommon {
     public static final String ALLOWABLE_OUTPUT_FORMATS = "application/fhir+ndjson,application/ndjson,ndjson";
     public static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
     public static final String JOB_CANCELLED_MSG = "Job canceled";
+    public static final String AB2D_V3_CURRENTLY_DISABLED = "V3 access is currently disabled";
+    public static final String AB2D_V3_CONTRACT_NOT_WHITELISTED = "V3 access not enabled for this ACO";
 
     private static final String HTTPS_STRING = "https";
 
@@ -176,7 +178,7 @@ public class ApiCommon {
     public void checkValidCreateJobV3(final String contract) {
         if (!"true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
             log.info("{} is not enabled", V3_ON);
-            throw new EndpointNotAvailableException("Service unavailable");
+            throw new EndpointNotAvailableException(AB2D_V3_CURRENTLY_DISABLED);
         }
 
         if (contract.startsWith("Z")) {
@@ -188,7 +190,7 @@ public class ApiCommon {
                 .anyMatch(value -> value.trim().equalsIgnoreCase(contract));
         if (!contractIsWhitelisted) {
             log.info("Contract {} is not whitelisted", contract);
-            throw new EndpointNotAvailableException("Service unavailable");
+            throw new EndpointNotAvailableException(AB2D_V3_CONTRACT_NOT_WHITELISTED);
         }
     }
 
