@@ -1,6 +1,6 @@
-# AB2D Microservices Root Module
+# AB2D Contracts Module
 
-This module is responsible for creating the so-called `services` resources for AB2D, mainly comprised of ECS Cluster/Task definitions, AWS Security Group Rules, and related resources supporting the events and contracts microservices.
+This module is responsible for creating the so-called `services` resources for AB2D, mainly comprised of ECS Cluster/Task definitions, AWS Security Group Rules, and related resources supporting the contracts microservice.
 
 ## Dependencies and Dependents
 
@@ -8,7 +8,7 @@ This module is responsible for creating the so-called `services` resources for A
 - 00-bootstrap
 - 10-config
 - 10-core
-- container images supporting events and contracts microservices
+- container images supporting contracts microservices
 
 ### Dependents
 Notably: 
@@ -48,9 +48,7 @@ Notably:
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_contracts_service_image_tag"></a> [contracts\_service\_image\_tag](#input\_contracts\_service\_image\_tag) | Desired image tag for the contracts service stored in ECR | `string` | `null` | no |
-| <a name="input_events_service_image_tag"></a> [events\_service\_image\_tag](#input\_events\_service\_image\_tag) | Desired image tag for the events service stored in ECR | `string` | `null` | no |
 | <a name="input_force_contracts_deployment"></a> [force\_contracts\_deployment](#input\_force\_contracts\_deployment) | Override to force a contracts deployment. Contracts deployments are automatic when `var.contracts_service_image_tag` is specified. | `bool` | `false` | no |
-| <a name="input_force_events_deployment"></a> [force\_events\_deployment](#input\_force\_events\_deployment) | Override to force a events deployment. Events deployments are automatic when `var.events_service_image_tag` is specified. | `bool` | `false` | no |
 | <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br/>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br/>will be divined from `terraform.workspace`. | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-east-1"` | no |
 | <a name="input_secondary_region"></a> [secondary\_region](#input\_secondary\_region) | n/a | `string` | `"us-west-2"` | no |
@@ -65,6 +63,7 @@ Notably:
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_cluster"></a> [cluster](#module\_cluster) | github.com/CMSgov/cdap//terraform/modules/cluster | e06f4acfea302df22c210549effa2e91bc3eff0d |
+| <a name="module_contracts_service"></a> [contracts\_service](#module\_contracts\_service) | github.com/CMSgov/cdap//terraform/modules/service | 5525d2439d724a24588412b3faaa2d2d6f4c2552 |
 | <a name="module_platform"></a> [platform](#module\_platform) | github.com/CMSgov/cdap//terraform/modules/platform | ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -78,10 +77,6 @@ Notably:
 |------|------|
 | [aws_cloudwatch_event_rule.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
 | [aws_cloudwatch_event_target.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
-| [aws_ecs_service.contracts](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
-| [aws_ecs_service.events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
-| [aws_ecs_task_definition.contracts](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
-| [aws_ecs_task_definition.events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 | [aws_iam_policy.chatbot_guardrail_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_lb.internal_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
 | [aws_lb_listener.internal_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
@@ -97,10 +92,8 @@ Notably:
 | [aws_security_group_rule.worker_sg_ingress_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_sns_topic.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
 | [aws_sns_topic_policy.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_policy) | resource |
-| [aws_sns_topic_subscription.events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_ssm_parameter.internal_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [aws_ecr_image.contracts](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecr_image) | data source |
-| [aws_ecr_image.events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecr_image) | data source |
 | [aws_iam_policy_document.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_role.task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role) | data source |
 | [aws_rds_cluster.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/rds_cluster) | data source |
