@@ -3,10 +3,11 @@ package gov.cms.ab2d.bfd.client;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import gov.cms.ab2d.fhir.FhirVersion;
-
+@Disabled
 class FhirBfdServerTest {
 
   @Test

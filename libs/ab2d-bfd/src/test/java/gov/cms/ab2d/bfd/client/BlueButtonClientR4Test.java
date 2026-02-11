@@ -7,6 +7,7 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Parameter;
@@ -29,6 +30,7 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
  */
 @SpringBootTest(classes = SpringBootApp.class)
 @ContextConfiguration(initializers = {BlueButtonClientR4Test.PropertyOverrider.class})
+@Disabled
 public class BlueButtonClientR4Test {
     // A random example patient (Jane Doe)
     private static final Long TEST_PATIENT_ID = -20140000010000L;

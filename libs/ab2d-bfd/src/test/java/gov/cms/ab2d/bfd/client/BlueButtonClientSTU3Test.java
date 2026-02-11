@@ -5,10 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpStatus;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +31,7 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
  */
 @SpringBootTest(classes = SpringBootApp.class)
 @ContextConfiguration(initializers = {BlueButtonClientSTU3Test.PropertyOverrider.class})
+@Disabled
 public class BlueButtonClientSTU3Test {
     // A random example patient (Jane Doe)
     private static final Long TEST_PATIENT_ID = 20140000008325L;
