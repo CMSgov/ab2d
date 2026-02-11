@@ -27,11 +27,11 @@ defaults:
     working-directory: ./libs
 
 jobs:
-  build:
-    uses: ./.github/workflows/libs-build.yml
-    secrets: inherit
+#  build:
+#    uses: ./.github/workflows/libs-build.yml
+#    secrets: inherit
   publish:
-    needs: build
+#    needs: build
     runs-on: codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
