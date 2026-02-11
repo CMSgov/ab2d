@@ -15,6 +15,7 @@ locals {
 
   ecr_container_repositories = toset([
     "ab2d-api",
+    "ab2d-idr-db-importer",
     "ab2d-worker",
     "ab2d-contracts",
     "ab2d-events"
