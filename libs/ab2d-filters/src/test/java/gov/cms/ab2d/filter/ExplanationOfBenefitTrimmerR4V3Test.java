@@ -3,12 +3,12 @@ package gov.cms.ab2d.filter;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.*;
 import static org.hl7.fhir.r4.model.ExplanationOfBenefit.RemittanceOutcome.COMPLETE;
@@ -290,141 +290,117 @@ class ExplanationOfBenefitTrimmerR4V3Test {
     void testFilterIt() {
         ExplanationOfBenefit eobtrim = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(EOB);
 
-        assertEquals(Narrative.NarrativeStatus.ADDITIONAL, eobtrim.getText().getStatus());
-        assertEquals(0, eobtrim.getExtension().size());
+        assertAll("top level",
+                () -> assertEquals(Narrative.NarrativeStatus.ADDITIONAL, eobtrim.getText().getStatus()),
+                () -> assertEquals(0, eobtrim.getExtension().size()),
+                () -> assertEquals(6, eobtrim.getContained().size()),
+                () -> assertEquals(SAMPLE_DATE, eobtrim.getMeta().getLastUpdated()),
+                () -> assertEquals("Patient/1234", eobtrim.getPatient().getReference())
+        );
 
-        // now we expect contained to have the rendering provider only
-        assertEquals(6, eobtrim.getContained().size());
-        Resource containedResource = eobtrim.getContained().get(0);
-        assertTrue(containedResource instanceof Practitioner);
-        Practitioner renderingProvider = (Practitioner) containedResource;
-        assertEquals("careteam-attending", renderingProvider.getIdPart());
+        Practitioner renderingProvider = (Practitioner) eobtrim.getContained().get(0);
+        assertAll("rendering provider",
+                () -> assertEquals("careteam-attending", renderingProvider.getIdPart()),
+                () -> assertEquals(1, renderingProvider.getIdentifier().size()),
+                () -> assertEquals(NPI_SYSTEM, renderingProvider.getIdentifierFirstRep().getSystem()),
+                () -> assertEquals("rendering-npi", renderingProvider.getIdentifierFirstRep().getValue()),
+                () -> assertEquals(2, renderingProvider.getExtension().size())
+        );
 
-        // NPI identifier on rendering provider
-        assertEquals(1, renderingProvider.getIdentifier().size());
-        Identifier renderingNpi = renderingProvider.getIdentifierFirstRep();
-        assertEquals(NPI_SYSTEM, renderingNpi.getSystem());
-        assertEquals("rendering-npi", renderingNpi.getValue());
-
-        // extensions on rendering provider
         List<Extension> renderingExtensions = renderingProvider.getExtension();
-        assertEquals(2, renderingExtensions.size());
+        Extension prvdrTypeExt = extByUrl(renderingExtensions,
+                "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD");
+        Extension renderingPrtcptgExt = extByUrl(renderingExtensions,
+                "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD");
 
-        Extension prvdrTypeExt = renderingExtensions.stream()
-                .filter(ext -> "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD"
-                        .equals(ext.getUrl())).findFirst()
-                .orElseThrow();
-        assertTrue(prvdrTypeExt.getValue() instanceof CodeableConcept);
-        CodeableConcept prvdrTypeCc = (CodeableConcept) prvdrTypeExt.getValue();
-        assertEquals("01", prvdrTypeCc.getCodingFirstRep().getCode());
+        assertAll("rendering extensions",
+                () -> assertEquals("01", ((CodeableConcept) prvdrTypeExt.getValue()).getCodingFirstRep().getCode()),
+                () -> assertEquals("F", ((CodeableConcept) renderingPrtcptgExt.getValue()).getCodingFirstRep().getCode())
+        );
 
-        Extension renderingPrtcptgExt = renderingExtensions.stream()
-                .filter(ext -> "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD"
-                        .equals(ext.getUrl()))
-                .findFirst()
-                .orElseThrow();
-        assertTrue(renderingPrtcptgExt.getValue() instanceof CodeableConcept);
-        CodeableConcept renderingPrtcptgCc = (CodeableConcept) renderingPrtcptgExt.getValue();
-        assertEquals("F", renderingPrtcptgCc.getCodingFirstRep().getCode());
+        assertAll("trimmed null/empty fields",
+                () -> assertNulls(
+                        eobtrim.getPatientTarget().getBirthDate(),
+                        eobtrim.getCreated(),
+                        eobtrim.getEnterer().getReference(),
+                        eobtrim.getEntererTarget(),
+                        eobtrim.getInsurer().getReference(),
+                        eobtrim.getInsurerTarget().getName(),
+                        eobtrim.getReferral().getReference(),
+                        eobtrim.getReferralTarget().getId(),
+                        eobtrim.getFacilityTarget().getName(),
+                        eobtrim.getClaim().getReference(),
+                        eobtrim.getClaimTarget().getCreated(),
+                        eobtrim.getClaimResponse().getReference(),
+                        eobtrim.getClaimResponseTarget().getCreated(),
+                        eobtrim.getDisposition(),
+                        eobtrim.getPrescription().getReference(),
+                        eobtrim.getPrescriptionTarget(),
+                        eobtrim.getOriginalPrescription().getReference(),
+                        eobtrim.getOriginalPrescriptionTarget().getAuthoredOn(),
+                        eobtrim.getPriority().getText(),
+                        eobtrim.getFundsReserveRequested().getText(),
+                        eobtrim.getFundsReserve().getText(),
+                        eobtrim.getFormCode().getText(),
+                        eobtrim.getBenefitPeriod().getStart(),
+                        eobtrim.getBenefitPeriod().getEnd(),
+                        eobtrim.getOutcome(),
+                        eobtrim.getPayee().getParty().getReference(),
+                        eobtrim.getAccident().getDate(),
+                        eobtrim.getPayment().getDate(),
+                        eobtrim.getForm().getCreation(),
+                        eobtrim.getUse()
+                ),
+                () -> assertEquals(DUMMY_REF, eobtrim.getFacility().getReference()),
+                () -> assertEquals(0, eobtrim.getPrecedence()),
+                () -> assertZeros(
+                        eobtrim.getPreAuthRef().size(),
+                        eobtrim.getPreAuthRefPeriod().size(),
+                        eobtrim.getRelated().size(),
+                        eobtrim.getInsurance().size(),
+                        eobtrim.getAddItem().size(),
+                        eobtrim.getProcessNote().size(),
+                        eobtrim.getBenefitBalance().size(),
+                        eobtrim.getAdjudication().size()
+                )
+        );
 
-        assertEquals(SAMPLE_DATE, eobtrim.getMeta().getLastUpdated());
-        assertEquals("Patient/1234", eobtrim.getPatient().getReference());
-        assertNull(eobtrim.getPatientTarget().getBirthDate());
-        assertNull(eobtrim.getCreated());
-        assertNull(eobtrim.getEnterer().getReference());
-        assertNull(eobtrim.getEntererTarget());
-        assertNull(eobtrim.getInsurer().getReference());
-        assertNull(eobtrim.getInsurerTarget().getName());
-        assertNull(eobtrim.getReferral().getReference());
-        assertNull(eobtrim.getReferralTarget().getId());
-        assertEquals(DUMMY_REF, eobtrim.getFacility().getReference());
-        assertNull(eobtrim.getFacilityTarget().getName());
-        assertNull(eobtrim.getClaim().getReference());
-        assertNull(eobtrim.getClaimTarget().getCreated());
-        assertNull(eobtrim.getClaimResponse().getReference());
-        assertNull(eobtrim.getClaimResponseTarget().getCreated());
-        assertNull(eobtrim.getDisposition());
-        assertNull(eobtrim.getPrescription().getReference());
-        assertNull(eobtrim.getPrescriptionTarget());
-        assertNull(eobtrim.getOriginalPrescription().getReference());
-        assertNull(eobtrim.getOriginalPrescriptionTarget().getAuthoredOn());
-        assertEquals(0, eobtrim.getPrecedence());
-        assertNull(eobtrim.getPriority().getText());
-        assertNull(eobtrim.getFundsReserveRequested().getText());
-        assertNull(eobtrim.getFundsReserve().getText());
-        assertEquals(0, eobtrim.getPreAuthRef().size());
-        assertEquals(0, eobtrim.getPreAuthRefPeriod().size());
-        assertNull(eobtrim.getFormCode().getText());
-        assertNull(eobtrim.getBenefitPeriod().getStart());
-        assertNull(eobtrim.getBenefitPeriod().getEnd());
-        assertNull(eobtrim.getOutcome());
-        assertEquals(0, eobtrim.getRelated().size());
-        assertNull(eobtrim.getPayee().getParty().getReference());
-        assertEquals(0, eobtrim.getInsurance().size());
-        assertNull(eobtrim.getAccident().getDate());
-        assertEquals(0, eobtrim.getAddItem().size());
-        assertNull(eobtrim.getPayment().getDate());
-        assertNull(eobtrim.getForm().getCreation());
-        assertEquals(0, eobtrim.getProcessNote().size());
-        assertEquals(0, eobtrim.getBenefitBalance().size());
-        assertNull(eobtrim.getUse());
-        assertEquals(0, eobtrim.getAdjudication().size());
-
-        // supportingInfo DRG assertion stays
-        assertEquals(1, eobtrim.getSupportingInfo().size());
         ExplanationOfBenefit.SupportingInformationComponent si = eobtrim.getSupportingInfoFirstRep();
-        CodeableConcept category = si.getCategory();
-        assertEquals("http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
-                category.getCodingFirstRep().getSystem());
-        assertEquals("drg", category.getCodingFirstRep().getCode());
-        CodeableConcept drgCode = si.getCode();
-        assertEquals(
-                "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software",
-                drgCode.getCodingFirstRep().getSystem());
-        assertEquals("123", drgCode.getCodingFirstRep().getCode());
+        assertAll("supportingInfo DRG",
+                () -> assertEquals(1, eobtrim.getSupportingInfo().size()),
+                () -> assertEquals("http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+                        si.getCategory().getCodingFirstRep().getSystem()),
+                () -> assertEquals("drg", si.getCategory().getCodingFirstRep().getCode()),
+                () -> assertEquals("https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software",
+                        si.getCode().getCodingFirstRep().getSystem()),
+                () -> assertEquals("123", si.getCode().getCodingFirstRep().getCode())
+        );
 
-        assertEquals(1, eobtrim.getItem().size());
         ExplanationOfBenefit.ItemComponent component = eobtrim.getItem().get(0);
-        assertNull(component.getCategory().getText());
-        assertEquals(3, component.getSequence());
-        assertEquals(1, eobtrim.getIdentifier().size());
-        assertEquals(1, component.getCareTeamSequence().get(0).getValue());
-        assertEquals(1, component.getDiagnosisSequence().get(0).getValue());
-        assertEquals(3, component.getProcedureSequence().get(0).getValue());
-
-        Identifier id = eobtrim.getIdentifier().get(0);
-        assertEquals("value", id.getValue());
-        assertEquals("one", id.getType().getText());
-        assertEquals(ExplanationOfBenefit.ExplanationOfBenefitStatus.CANCELLED, eobtrim.getStatus());
-        assertEquals(DUMMY_TYPE, eobtrim.getType().getText());
-        assertEquals("subtype", eobtrim.getSubType().getText());
-        assertTrue(Math.abs(SAMPLE_DATE.getTime() - eobtrim.getBillablePeriod().getStart().getTime()) < 1000);
-        assertTrue(Math.abs(SAMPLE_DATE.getTime() - eobtrim.getBillablePeriod().getEnd().getTime()) < 1000);
-
-        // careTeam: 5 entries with coded roles
-        assertEquals(5, eobtrim.getCareTeam().size());
-        ExplanationOfBenefit.CareTeamComponent careTeamComponent = eobtrim.getCareTeamFirstRep();
-        assertTrue(careTeamComponent.getResponsible());
-        Coding careTeamCoding = careTeamComponent.getRole().getCodingFirstRep();
-        assertEquals("http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole",
-                careTeamCoding.getSystem());
-        assertEquals("attending", careTeamCoding.getCode());
-        assertEquals("#careteam-attending", careTeamComponent.getProvider().getReference());
-
-        assertEquals(1, eobtrim.getDiagnosis().size());
-        ExplanationOfBenefit.DiagnosisComponent diagnosisComponent = eobtrim.getDiagnosisFirstRep();
-        assertEquals(1, diagnosisComponent.getSequence());
-        assertNotNull(diagnosisComponent.getOnAdmission().getText());
-        assertEquals(DUMMY_TYPE, diagnosisComponent.getType().get(0).getText());
-
-        assertEquals(1, eobtrim.getProcedure().size());
-        ExplanationOfBenefit.ProcedureComponent procedureComponent = eobtrim.getProcedureFirstRep();
-        assertTrue(Math.abs(SAMPLE_DATE.getTime() - procedureComponent.getDate().getTime()) < 1000);
-        assertNotEquals(0, procedureComponent.getType().size());
-        assertNotEquals(0, procedureComponent.getUdi().size());
-        assertEquals("procedure", ((CodeableConcept) procedureComponent.getProcedure()).getText());
+        assertAll("item + ids + careTeam/diagnosis/procedure",
+                () -> assertEquals(1, eobtrim.getItem().size()),
+                () -> assertNull(component.getCategory().getText()),
+                () -> assertEquals(3, component.getSequence()),
+                () -> assertEquals(1, eobtrim.getIdentifier().size()),
+                () -> assertEquals(1, component.getCareTeamSequence().get(0).getValue()),
+                () -> assertEquals(1, component.getDiagnosisSequence().get(0).getValue()),
+                () -> assertEquals(3, component.getProcedureSequence().get(0).getValue()),
+                () -> assertEquals("value", eobtrim.getIdentifierFirstRep().getValue()),
+                () -> assertEquals("one", eobtrim.getIdentifierFirstRep().getType().getText()),
+                () -> assertEquals(ExplanationOfBenefit.ExplanationOfBenefitStatus.CANCELLED, eobtrim.getStatus()),
+                () -> assertEquals(DUMMY_TYPE, eobtrim.getType().getText()),
+                () -> assertEquals("subtype", eobtrim.getSubType().getText()),
+                () -> assertTrue(Math.abs(SAMPLE_DATE.getTime() - eobtrim.getBillablePeriod().getStart().getTime()) < 1000),
+                () -> assertTrue(Math.abs(SAMPLE_DATE.getTime() - eobtrim.getBillablePeriod().getEnd().getTime()) < 1000),
+                () -> assertEquals(5, eobtrim.getCareTeam().size()),
+                () -> assertEquals("attending", eobtrim.getCareTeamFirstRep().getRole().getCodingFirstRep().getCode()),
+                () -> assertEquals("#careteam-attending", eobtrim.getCareTeamFirstRep().getProvider().getReference()),
+                () -> assertEquals(1, eobtrim.getDiagnosis().size()),
+                () -> assertNotNull(eobtrim.getDiagnosisFirstRep().getOnAdmission().getText()),
+                () -> assertEquals(1, eobtrim.getProcedure().size()),
+                () -> assertEquals("procedure", ((CodeableConcept) eobtrim.getProcedureFirstRep().getProcedure()).getText())
+        );
     }
-
 
 
     void giveStats(IBaseResource resource) {
@@ -440,61 +416,23 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         assertNull(eob);
     }
 
-    @Test
-    void extensionCleanupTestCarrier() {
-        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Carrier-R4.json");
+    @ParameterizedTest(name = "extensionCleanup: {0}")
+    @ValueSource(strings = {
+            "eobdata/EOB-for-Carrier-R4.json",
+            "eobdata/EOB-for-DME-R4.json",
+            "eobdata/EOB-for-HHA-R4.json",
+            "eobdata/EOB-for-Hospice-R4.json",
+            "eobdata/EOB-for-Inpatient-R4V3.json",
+            "eobdata/EOB-for-Outpatient-R4.json",
+            "eobdata/EOB-for-SNF-R4.json"
+    })
+    void extensionCleanupParameterized(String resourcePath) {
+        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath(resourcePath);
         giveStats(eob);
         ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
         validateEOB(ab2dEob);
     }
 
-    @Test
-    void extensionCleanupTestDME() {
-        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-DME-R4.json");
-        giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
-        validateEOB(ab2dEob);
-    }
-
-    @Test
-    void extensionCleanupTestHHA() {
-        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-HHA-R4.json");
-        giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
-        validateEOB(ab2dEob);
-    }
-
-    @Test
-    void extensionCleanupTestHospice() {
-        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Hospice-R4.json");
-        giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
-        validateEOB(ab2dEob);
-    }
-
-    @Test
-    void extensionCleanupTestInpatient() {
-        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Inpatient-R4V3.json");
-        giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
-        validateEOB(ab2dEob);
-    }
-
-    @Test
-    void extensionCleanupTestOutpatient() {
-        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Outpatient-R4.json");
-        giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
-        validateEOB(ab2dEob);
-    }
-
-    @Test
-    void extensionCleanupTestSNF() {
-        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-SNF-R4.json");
-        giveStats(eob);
-        ExplanationOfBenefit ab2dEob = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
-        validateEOB(ab2dEob);
-    }
 
     void validateEOB(ExplanationOfBenefit eob) {
         assertNotNull(eob);
@@ -503,7 +441,7 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         assertNotNull(itemExtensions);
 
         assertTrue(itemExtensions.size() <= 3);
-        List<String> urls = itemExtensions.stream().map(Extension::getUrl).collect(Collectors.toList());
+        List<String> urls = itemExtensions.stream().map(Extension::getUrl).toList();
         List<String> validUrls = List.of(PRICING_STATE, ANESTHESIA_UNIT_COUNT, SUPPLIER_TYPE);
         for (String url : urls) {
             assertTrue(validUrls.contains(url));
@@ -534,4 +472,24 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         eob.addExtension(newExtension);
         assertEquals((numExtensions + 1), eob.getExtension().size());
     }
+
+    private static Extension extByUrl(List<Extension> exts, String url) {
+        return exts.stream()
+                .filter(e -> url.equals(e.getUrl()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Missing extension " + url));
+    }
+
+    private static void assertNulls(Object... values) {
+        for (Object v : values) {
+            assertNull(v);
+        }
+    }
+
+    private static void assertZeros(int... values) {
+        for (int v : values) {
+            assertEquals(0, v);
+        }
+    }
+
 }
