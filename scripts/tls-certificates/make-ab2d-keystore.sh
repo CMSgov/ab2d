@@ -149,7 +149,7 @@ main() {
     cat <<EOF
 
 REMEMBER:
-* Store the contents of each <env>-keystore.pfx.b64 in SSM configuration under the /ab2d/${env}/worker/sensitive/mtls_keystore_base64 path
+* Store the contents of each <env>-keystore.pfx.b64 in SSM configuration under the /ab2d/${env}/worker/sensitive/bfd_keystore_base64 path
 * Store the contents of each <env>-public-cert.pem in SSM configuration under the /ab2d/${env}/common/nonsensitive/bfd-client/mtls-public-cert path
 EOF
 }
