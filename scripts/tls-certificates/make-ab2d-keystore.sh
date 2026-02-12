@@ -139,32 +139,11 @@ gen_keystore() {
 main() {
     print_header
 
-
     prompt_environment
     prompt_password "$env"
 
-    case $env in
-        "dev")
-            gen_keystore "cn=ab2d-dev" \
-                "dev"
-            return
-            ;;
-        "test")
-            gen_keystore "cn=ab2d-test" \
-                "test"
-            return
-            ;;
-        "prod")
-            gen_keystore "cn=ab2d-prod" \
-                "prod"
-            return
-            ;;
-        "sandbox")
-            gen_keystore "cn=ab2d-sandbox" \
-                "sandbox"
-            return
-            ;;
-    esac
+    gen_keystore "cn=ab2d-$env" \
+        "$env"
 
     # Display instructions
     cat <<EOF
