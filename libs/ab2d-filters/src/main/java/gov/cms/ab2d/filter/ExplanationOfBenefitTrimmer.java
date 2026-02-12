@@ -1,8 +1,8 @@
 package gov.cms.ab2d.filter;
 
-import org.hl7.fhir.instance.model.api.IBaseResource;
-
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.experimental.UtilityClass;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 
 @UtilityClass
 public class ExplanationOfBenefitTrimmer {
@@ -12,25 +12,23 @@ public class ExplanationOfBenefitTrimmer {
      * @param resource - the resource
      * @return - the trimmed resource
      */
-    public static IBaseResource getBenefit(IBaseResource resource) {
+    public static IBaseResource getBenefit(IBaseResource resource, FhirVersion fhirVersion) {
         if (resource == null) {
             return null;
         }
-        switch (resource.getStructureFhirVersionEnum()) {
-            case R4:
-                return ExplanationOfBenefitTrimmerR4.getBenefit(resource);
-            case DSTU2:
-                return null;
-            case DSTU2_HL7ORG:
-                return null;
-            case DSTU2_1:
-                return null;
-            case DSTU3:
-                return ExplanationOfBenefitTrimmerSTU3.getBenefit(resource);
-            case R5:
-                return null;
-            default:
-                return null;
+
+        if (fhirVersion == FhirVersion.R4V3) {
+            return ExplanationOfBenefitTrimmerR4V3.getBenefit(resource);
         }
+
+        return switch (resource.getStructureFhirVersionEnum()) {
+            case R4 -> ExplanationOfBenefitTrimmerR4.getBenefit(resource);
+            case DSTU2 -> null;
+            case DSTU2_HL7ORG -> null;
+            case DSTU2_1 -> null;
+            case DSTU3 -> ExplanationOfBenefitTrimmerSTU3.getBenefit(resource);
+            case R5 -> null;
+            default -> null;
+        };
     }
 }
