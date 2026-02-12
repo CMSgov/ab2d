@@ -10,9 +10,9 @@ import software.amazon.awssdk.services.s3.S3Client;
 public class AwsClientConfig {
 
     @Bean
-    public S3Client s3Client(@Value("${app.awsRegion:us-east-1}") Region region) {
+    public S3Client s3Client(@Value("${app.awsRegion:us-east-1}") String region) {
         return S3Client.builder()
-                .region(region)
+                .region(Region.of(region))
                 .build();
     }
 }

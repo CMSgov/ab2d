@@ -70,7 +70,8 @@ public class CoverageV3ImportService {
     }
 
     private long queryCount(Connection conn, String fqtn) throws Exception {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM " + fqtn);
+        String sqlStatement = "SELECT COUNT(*) FROM " + fqtn;
+        try (PreparedStatement ps = conn.prepareStatement(sqlStatement);
              ResultSet rs = ps.executeQuery()) {
             rs.next();
             return rs.getLong(1);
