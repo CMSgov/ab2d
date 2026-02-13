@@ -32,6 +32,9 @@ env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   AWS_REGION: ${{ vars.AWS_REGION }}
 
+concurrency:
+  group: build-deploy-${{ inputs.environment }}
+
 jobs:
   # Determine actions to take
   setup:
