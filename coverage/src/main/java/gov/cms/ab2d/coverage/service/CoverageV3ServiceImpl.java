@@ -33,8 +33,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     private final DataSource dataSource;
     private final PropertiesService propertiesService;
-    private final CoverageV3Repository coverageV3Repository;
-    private final CoverageV3HistoricalRepository coverageV3HistoricalRepository;
 
     public CoverageV3ServiceImpl(
             DataSource dataSource,
@@ -44,8 +42,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     ) {
         this.dataSource = dataSource;
         this.propertiesService = propertiesService;
-        this.coverageV3Repository = coverageV3Repository;
-        this.coverageV3HistoricalRepository = coverageV3HistoricalRepository;
     }
 
     public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {
