@@ -64,9 +64,9 @@ public class FileDownloadAPIV3 {
             @PathVariable @NotBlank String jobUuid,
             @PathVariable @NotBlank String filename) throws IOException {
 
-        apiCommon.checkContractHasV3Access();
 
         try {
+            apiCommon.checkContractHasV3Access();
             return fileDownloadCommon.downloadFile(sanitizeJobUuid(jobUuid), sanitizeFilename(filename), request, response);
         } catch (Exception e) {
             errorHandler.generateFHIRError(e, request, response);

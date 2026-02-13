@@ -175,9 +175,14 @@ public class ApiCommon {
     }
 
     public void checkContractHasV3Access() {
+        String contractNumber = null;
         val pdpClient = pdpClientService.getCurrentClient();
-        val contract = contractService.getContractByContractId(pdpClient.getContractId());
-        checkContractHasV3Access(contract.getContractNumber());
+        if (pdpClient != null && pdpClient.getContractId() != null) {
+            val contract = contractService.getContractByContractId(pdpClient.getContractId());
+            contractNumber = contract.getContractNumber();
+        }
+
+        checkContractHasV3Access(contractNumber);
     }
 
     // Validate v3.on is enabled, and contract either starts with 'Z' or is whitelisted for V3
