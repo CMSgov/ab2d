@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller.v3;
 
 import gov.cms.ab2d.api.controller.JobCompletedResponse;
+import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.controller.common.StatusCommon;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,6 +41,7 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 public class StatusAPIV3 {
 
     private final StatusCommon statusCommon;
+    private final ApiCommon apiCommon;
 
     @Operation(summary = STATUS_DES)
     @Parameters(value = @Parameter(name = "jobUuid", description = JOB_ID, required = true, in = ParameterIn.PATH))
@@ -61,6 +63,7 @@ public class StatusAPIV3 {
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JobCompletedResponse> getJobStatus(HttpServletRequest request,
             @PathVariable @NotBlank String jobUuid) {
+        apiCommon.checkContractHasV3Access();
         return statusCommon.doStatus(jobUuid, request, API_PREFIX_V3);
     }
 
@@ -75,6 +78,8 @@ public class StatusAPIV3 {
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     public ResponseEntity deleteRequest(HttpServletRequest request,
             @PathVariable @NotBlank String jobUuid) {
+
+        apiCommon.checkContractHasV3Access();
         return statusCommon.cancelJob(jobUuid, request);
     }
 }

@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller.v3;
 
 import gov.cms.ab2d.api.controller.ErrorHandler;
+import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.controller.common.FileDownloadCommon;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,6 +38,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 @ConditionalOnExpression("${v3.controller.enabled:true}")
 @RequestMapping(path = API_PREFIX_V3 + FHIR_PREFIX, produces = {FHIR_NDJSON_CONTENT_TYPE, FHIR_JSON_CONTENT_TYPE})
 public class FileDownloadAPIV3 {
+    private final ApiCommon apiCommon;
     private FileDownloadCommon fileDownloadCommon;
     private ErrorHandler errorHandler;
 
@@ -61,6 +63,9 @@ public class FileDownloadAPIV3 {
             HttpServletResponse response,
             @PathVariable @NotBlank String jobUuid,
             @PathVariable @NotBlank String filename) throws IOException {
+
+        apiCommon.checkContractHasV3Access();
+
         try {
             return fileDownloadCommon.downloadFile(sanitizeJobUuid(jobUuid), sanitizeFilename(filename), request, response);
         } catch (Exception e) {

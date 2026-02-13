@@ -116,28 +116,28 @@ class ApiCommonTest {
     void v3TestContractAllowed() {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
         when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn(null);
-        assertDoesNotThrow(() -> apiCommon.checkValidCreateJobV3("Z1234"));
+        assertDoesNotThrow(() -> apiCommon.checkContractHasV3Access("Z1234"));
     }
 
     @Test
     void v3ContractIsWhiteListed() {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
         when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
-        assertDoesNotThrow(() -> apiCommon.checkValidCreateJobV3("S1234"));
-        assertDoesNotThrow(() -> apiCommon.checkValidCreateJobV3("S5555"));
+        assertDoesNotThrow(() -> apiCommon.checkContractHasV3Access("S1234"));
+        assertDoesNotThrow(() -> apiCommon.checkContractHasV3Access("S5555"));
     }
 
     @Test
     void v3ContractNotWhiteListed() {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("false");
         when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
-        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkValidCreateJobV3("S9999"));
+        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkContractHasV3Access("S9999"));
     }
 
     @Test
     void v3NotEnabled() {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("false");
-        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkValidCreateJobV3("Z1234"));
+        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkContractHasV3Access("Z1234"));
     }
 
 }
