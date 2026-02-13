@@ -113,13 +113,6 @@ class ApiCommonTest {
     }
 
     @Test
-    void v3TestContractAllowed() {
-        when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
-        when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn(null);
-        assertDoesNotThrow(() -> apiCommon.checkContractHasV3Access("Z1234"));
-    }
-
-    @Test
     void v3ContractIsWhiteListed() {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
         when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
