@@ -33,7 +33,7 @@ locals {
     core          = "/ab2d/${local.env}/core"
     eft           = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
     microservices = "/ab2d/${local.env}/microservices"
-    webhooks      = "/ab2d/lambda"
+    webhooks      = "/ab2d/mgmt/slack-webhooks"
   }
 
   benv = lookup({
@@ -59,7 +59,7 @@ locals {
   db_name                         = module.platform.ssm.core.database_name.value
   db_password                     = module.platform.ssm.core.database_password.value
   db_username                     = module.platform.ssm.core.database_user.value
-  slack_webhook_ab2d_slack_alerts = module.platform.ssm.webhooks.slack_webhook_url.value
+  slack_webhook_ab2d_slack_alerts = module.platform.ssm.webhooks.ab2d-slack-alerts.value
   contracts_service_url           = module.platform.ssm.microservices.url.value
 
   microservices_lb = data.aws_security_group.microservices_lb.id
