@@ -45,8 +45,6 @@ public class CapabilityAPIV3 {
     @GetMapping(value = "/metadata")
     public ResponseEntity<String> capabilityStatement(HttpServletRequest request) {
 
-        common.checkContractHasV3Access();
-
         IParser parser = R4.getJsonParser();
 
         eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), null, HttpStatus.OK,
