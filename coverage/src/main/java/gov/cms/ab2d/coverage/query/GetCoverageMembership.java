@@ -24,7 +24,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
 
     private static final String SELECT_COVERAGE_WITHOUT_OPTOUT_WITHOUT_CURSOR =
     """
-    select patient_id, current_mbi, historic_mbis, year, month from (
+    select patient_id, current_mbi, year, month from (
         select * from v3.coverage_v3
            where contract = :contract
            and current_mbi is not null
@@ -41,7 +41,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
 
     private static final String SELECT_COVERAGE_WITHOUT_OPTOUT_WITH_CURSOR =
     """
-    select patient_id, current_mbi, historic_mbis, year, month from (
+    select patient_id, current_mbi, year, month from (
         select * from v3.coverage_v3
            where contract = :contract
            and current_mbi is not null
@@ -60,7 +60,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
 
     private static final String SELECT_COVERAGE_WITH_OPTOUT_WITHOUT_CURSOR =
     """
-    select patient_id, current_mbi, historic_mbis, year, month from
+    select patient_id, current_mbi, year, month from
     (
        select * from v3.coverage_v3
            where contract = :contract
@@ -80,7 +80,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
 
     private static final String SELECT_COVERAGE_WITH_OPTOUT_WITH_CURSOR =
     """
-    select patient_id, current_mbi, historic_mbis, year, month from
+    select patient_id, current_mbi, year, month from
     (
        select * from v3.coverage_v3
            where contract = :contract
@@ -147,28 +147,14 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
     }
 
     private static class CoverageMembershipRowMapper implements RowMapper<CoverageMembership> {
-
         @Override
         public CoverageMembership mapRow(ResultSet rs, int rowNum) throws SQLException {
             val patientId = rs.getLong(1);
             val currentMbi = rs.getString(2);
-            val historicMbis = historicMbisToSet(rs.getString(3));
-            val year = rs.getInt(4);
-            val month = rs.getInt(5);
-            val identifiers = Identifiers.ofV3(patientId, currentMbi, historicMbis);
+            val year = rs.getInt(3);
+            val month = rs.getInt(4);
+            val identifiers = Identifiers.ofV3(patientId, currentMbi);
             return new CoverageMembership(identifiers, year, month);
-        }
-
-        private LinkedHashSet<String> historicMbisToSet(String value) {
-            if (StringUtils.isNotBlank(value) && !value.equalsIgnoreCase("NULL")) {
-                val mbis = value.split(",");
-                val result = new LinkedHashSet<String>(mbis.length);
-                for (String mbi : mbis) {
-                    result.add(mbi);
-                }
-                return result;
-            }
-            return new LinkedHashSet<>(0);
         }
     }
 }

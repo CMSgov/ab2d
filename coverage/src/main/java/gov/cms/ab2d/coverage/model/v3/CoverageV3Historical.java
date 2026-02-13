@@ -41,8 +41,4 @@ public class CoverageV3Historical {
     @EqualsAndHashCode.Include
     @Id
     private String currentMbi;
-
-    @Column(name="historic_mbis")
-    @EqualsAndHashCode.Include
-    private String historicMbis;
 }
