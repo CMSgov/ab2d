@@ -50,8 +50,9 @@ public class OptOutProcessor {
         updateOptOut();
         var name = optOutS3.createResponseOptOutFile(createResponseContent());
         logger.log("File with name " + name + " was uploaded to bucket: " + bfdBucket);
-        if (!isRejected)
-            optOutS3.deleteFileFromS3();
+        // AB2D-7119 Update AB2D Lambda to Stop Deleting BFD Preference Files After Consumption
+//        if (!isRejected)
+//            optOutS3.deleteFileFromS3();
         return getOptOutResults();
     }
 
