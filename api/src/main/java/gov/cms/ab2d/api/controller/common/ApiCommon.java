@@ -175,21 +175,14 @@ public class ApiCommon {
     }
 
     public void checkContractHasV3Access() {
-        String contractNumber = null;
         val pdpClient = pdpClientService.getCurrentClient();
-        if (pdpClient != null && pdpClient.getContractId() != null) {
-            val contract = contractService.getContractByContractId(pdpClient.getContractId());
-            contractNumber = contract.getContractNumber();
-        }
+        val contract = contractService.getContractByContractId(pdpClient.getContractId());
+        val contractNumber = contract.getContractNumber();
         checkContractHasV3Access(contractNumber);
     }
 
     // Validate v3.on is enabled, and contract either starts with 'Z' or is whitelisted for V3
     public void checkContractHasV3Access(final String contract) {
-        if (contract == null) {
-            throw new EndpointNotAvailableException("Unauthorized"); // TODO remove if not necessary
-        }
-
         if (!"true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
             log.info("{} is not enabled", V3_ON);
             throw new EndpointNotAvailableException(AB2D_V3_CURRENTLY_DISABLED);
