@@ -106,12 +106,18 @@ jobs:
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           tofu plan -out=tfplan
           tofu apply -input=false tfplan 
-      - name: tofu apply - microservices
-        working-directory: ops/services/20-microservices/
+      - name: tofu apply - contracts
+        working-directory: ops/services/20-contracts/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan ${{ inputs.contracts_image_tag != '' && format('{0}{1}', '-var=contracts_service_image_tag=', inputs.contracts_image_tag) || '' }} ${{ inputs.events_image_tag != '' && format('{0}{1}', '-var=events_service_image_tag=', inputs.events_image_tag) || '' }} -out=tfplan
+          tofu plan ${{ inputs.contracts_image_tag != '' && format('{0}{1}', '-var=contracts_service_image_tag=', inputs.contracts_image_tag) || '' }} -out=tfplan
+      - name: tofu apply - events
+        working-directory: ops/services/20-events/
+        run: |
+          tofu init -var=parent_env=$ENV -reconfigure
+          tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
+          tofu plan ${{ inputs.events_image_tag != '' && format('{0}{1}', '-var=events_service_image_tag=', inputs.events_image_tag) || '' }} -out=tfplan
       - name: tofu apply - api
         working-directory: ops/services/30-api/
         run: |

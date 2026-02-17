@@ -2,6 +2,7 @@ name: pull request jobs
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - libs/**
       - lambdas/**
@@ -15,18 +16,21 @@ jobs:
     uses: ./.github/workflows/unit-integration-test.yml
     secrets: inherit
   build-deploy-api:
+    if: github.event.pull_request.draft == false
     uses: ./.github/workflows/build-deploy.yml
     with:
       environment: test
       module: api
     secrets: inherit
   build-deploy-worker:
+    if: github.event.pull_request.draft == false
     uses: ./.github/workflows/build-deploy.yml
     with:
       environment: test
       module: worker
     secrets: inherit
   e2e-test:
+    if: github.event.pull_request.draft == false
     needs: [build-deploy-api, build-deploy-worker]
     uses: ./.github/workflows/e2e-test.yml
     with:

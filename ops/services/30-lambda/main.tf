@@ -33,7 +33,7 @@ locals {
     core          = "/ab2d/${local.env}/core"
     eft           = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
     microservices = "/ab2d/${local.env}/microservices"
-    webhooks      = "/ab2d/mgmt/slack-webhooks" #FIXME: Standardize this
+    webhooks      = "/ab2d/mgmt/slack-webhooks"
   }
 
   benv = lookup({

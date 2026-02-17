@@ -102,12 +102,18 @@ jobs:
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           tofu plan
-      - name: tofu plan - microservices
-        working-directory: ops/services/20-microservices/
+      - name: tofu plan - contracts
+        working-directory: ops/services/20-contracts/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan ${{ inputs.contracts_image_tag != '' && format('{0}{1}', '-var=contracts_service_image_tag=', inputs.contracts_image_tag) || '' }} ${{ inputs.events_image_tag != '' && format('{0}{1}', '-var=events_service_image_tag=', inputs.events_image_tag) || '' }}
+          tofu plan ${{ inputs.contracts_image_tag != '' && format('{0}{1}', '-var=contracts_service_image_tag=', inputs.contracts_image_tag) || '' }}
+      - name: tofu plan - events
+        working-directory: ops/services/20-events/
+        run: |
+          tofu init -var=parent_env=$ENV -reconfigure
+          tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
+          tofu plan ${{ inputs.events_image_tag != '' && format('{0}{1}', '-var=events_service_image_tag=', inputs.events_image_tag) || '' }}
       - name: tofu plan - api
         working-directory: ops/services/30-api/
         run: |

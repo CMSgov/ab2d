@@ -3,7 +3,7 @@ package gov.cms.ab2d.filter;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.model.api.IFhirVersion;
-
+import gov.cms.ab2d.fhir.FhirVersion;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.Test;
@@ -18,9 +18,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class EOBLoadUtilitiesTest {
     private static IBaseResource eobC;
@@ -36,11 +34,12 @@ class EOBLoadUtilitiesTest {
     // We then override the getVersion method to return a version that is not supported by the switch case statement.
     // Choosing `FhirVersionEnum.R5` as the version to return here was an arbitrary choice. If we ever add support
     // for R5, this test will need to be updated.
-    class MockFhirVersion extends org.hl7.fhir.r4.hapi.ctx.FhirR4{
+    class MockFhirVersion extends org.hl7.fhir.r4.hapi.ctx.FhirR4 {
         public FhirVersionEnum getVersion() {
             return FhirVersionEnum.R5;
         }
     }
+
     class MockFhirContext extends FhirContext {
         @Override
         public IFhirVersion getVersion() {
@@ -219,7 +218,7 @@ class EOBLoadUtilitiesTest {
         // not null tests
         var jsonParser = FhirContext.forDstu3().newJsonParser();
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json");
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmer.getBenefit((IBaseResource) eob);
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmer.getBenefit(eob, FhirVersion.STU3);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);
     }
@@ -233,7 +232,7 @@ class EOBLoadUtilitiesTest {
         // not null tests
         var jsonParser = FhirContext.forR4().newJsonParser();
         org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Carrier-R4.json");
-        org.hl7.fhir.r4.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.r4.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmer.getBenefit((IBaseResource) eob);
+        org.hl7.fhir.r4.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.r4.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmer.getBenefit((IBaseResource) eob, FhirVersion.R4);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);
     }

@@ -1,0 +1,4670 @@
+{
+  "resourceType": "ExplanationOfBenefit",
+  "id": "-9322784674137",
+  "meta": {
+    "lastUpdated": "2025-11-24T18:41:16.800+00:00",
+    "source": "NationalClaimsHistory",
+    "profile": [ "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Inpatient-Institutional|2.1.0" ],
+    "tag": [ {
+      "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication-Status",
+      "code": "Adjudicated"
+    } ]
+  },
+  "contained": [ {
+    "resourceType": "Organization",
+    "id": "insurer-org",
+    "meta": {
+      "profile": [ "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-Organization|2.1.0", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|6.1.0" ]
+    },
+    "active": true,
+    "name": "Centers for Medicare and Medicaid Services"
+  }, {
+    "resourceType": "Practitioner",
+    "id": "careteam-provider-1",
+    "meta": {
+      "profile": [ "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-Practitioner|2.1.0", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner|6.1.0" ]
+    },
+    "identifier": [ {
+      "type": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+          "code": "NPI",
+          "display": "National provider identifier"
+        } ]
+      },
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1942945159"
+    } ]
+  }, {
+    "resourceType": "Practitioner",
+    "id": "careteam-provider-2",
+    "meta": {
+      "profile": [ "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-Practitioner|2.1.0", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner|6.1.0" ]
+    },
+    "identifier": [ {
+      "type": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+          "code": "NPI",
+          "display": "National provider identifier"
+        } ]
+      },
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1447692959"
+    } ]
+  }, {
+    "resourceType": "Practitioner",
+    "id": "careteam-provider-3",
+    "meta": {
+      "profile": [ "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-Practitioner|2.1.0", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner|6.1.0" ]
+    },
+    "identifier": [ {
+      "type": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+          "code": "NPI",
+          "display": "National provider identifier"
+        } ]
+      },
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1437702123"
+    } ]
+  }, {
+    "resourceType": "Practitioner",
+    "id": "careteam-provider-4",
+    "meta": {
+      "profile": [ "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-Practitioner|2.1.0", "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner|6.1.0" ]
+    },
+    "identifier": [ {
+      "type": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+          "code": "NPI",
+          "display": "National provider identifier"
+        } ]
+      },
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1003488552"
+    } ]
+  } ],
+  "extension": [ {
+    "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-CARR-PMT-DNL-CD",
+    "valueCoding": {
+      "system": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-CARR-PMT-DNL-CD",
+      "code": "0",
+      "display": "DENIED"
+    }
+  }, {
+    "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-CLNCL-TRIL-NUM",
+    "valueString": "8780"
+  }, {
+    "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-CMS-PROC-DT",
+    "valueDate": "2022-08-13"
+  }, {
+    "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-CNTRCTR-NUM",
+    "valueCoding": {
+      "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-CNTRCTR-NUM",
+      "code": "05302"
+    }
+  }, {
+    "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-DISP-CD",
+    "valueCoding": {
+      "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DISP-CD",
+      "code": "55"
+    }
+  }, {
+    "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-FI-ACTN-CD",
+    "valueCoding": {
+      "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-FI-ACTN-CD",
+      "code": "8"
+    }
+  }, {
+    "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-MDCR-PRFNL-PRVDR-ASGNMT-SW",
+    "valueCoding": {
+      "system": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-MDCR-PRFNL-PRVDR-ASGNMT-SW",
+      "code": "L",
+      "display": "Assigned Claim"
+    }
+  } ],
+  "identifier": [ {
+    "type": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBIdentifierType",
+        "code": "uc",
+        "display": "Unique Claim ID"
+      } ]
+    },
+    "value": "-9322784674137"
+  }, {
+    "system": "https://bluebutton.cms.gov/identifiers/CLM-CNTL-NUM",
+    "value": "97500579086776SHU"
+  } ],
+  "status": "active",
+  "type": {
+    "coding": [ {
+      "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-TYPE-CD",
+      "code": "60",
+      "display": "MEDICARE INPATIENT CLAIM"
+    }, {
+      "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+      "code": "institutional"
+    } ]
+  },
+  "subType": {
+    "coding": [ {
+      "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBInstitutionalClaimSubType",
+      "code": "inpatient"
+    } ]
+  },
+  "use": "claim",
+  "patient": {
+    "reference": "Patient/-40622727"
+  },
+  "billablePeriod": {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-QUERY-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-QUERY-CD",
+        "code": "C"
+      }
+    } ],
+    "start": "2022-07-27",
+    "end": "2022-08-13"
+  },
+  "created": "2025-11-18T00:00:00+00:00",
+  "insurer": {
+    "reference": "#insurer-org"
+  },
+  "outcome": "complete",
+  "careTeam": [ {
+    "sequence": 1,
+    "provider": {
+      "reference": "#careteam-provider-1"
+    },
+    "role": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole",
+        "code": "attending",
+        "display": "Attending"
+      } ]
+    }
+  }, {
+    "sequence": 2,
+    "provider": {
+      "reference": "#careteam-provider-2"
+    },
+    "role": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole",
+        "code": "operating",
+        "display": "Operating"
+      } ]
+    }
+  }, {
+    "sequence": 3,
+    "provider": {
+      "reference": "#careteam-provider-3"
+    },
+    "role": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole",
+        "code": "otheroperating",
+        "display": "Other Operating"
+      } ]
+    }
+  }, {
+    "sequence": 4,
+    "provider": {
+      "reference": "#careteam-provider-4"
+    },
+    "role": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole",
+        "code": "rendering",
+        "display": "Rendering provider"
+      } ]
+    }
+  } ],
+  "supportingInfo": [ {
+    "sequence": 1,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_BLOOD_PT_FRNSH_QTY",
+        "display": "Blood Pints Furnished Quantity"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "valueQuantity": {
+      "value": 11,
+      "unit": "pint",
+      "system": "http://unitsofmeasure.org",
+      "code": "[pt_us]"
+    }
+  }, {
+    "sequence": 2,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_NCH_PRMRY_PYR_CD",
+        "display": "NCH Primary Payer Code"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-NCH-PRMRY-PYR-CD",
+        "code": "L"
+      } ]
+    }
+  }, {
+    "sequence": 3,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "typeofbill"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://www.nubc.org/CodeSystem/TypeOfBill",
+        "code": "024M"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-BILL-FAC-TYPE-CD",
+        "code": "2"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-BILL-CLSFCTN-CD",
+        "code": "24"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-BILL-FREQ-CD",
+        "code": "24M"
+      } ]
+    }
+  }, {
+    "sequence": 4,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_NRLN_RIC_CD",
+        "display": "Near Line Record Identification Code"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-NRLN-RIC-CD",
+        "code": "V",
+        "display": "Part A institutional claim record (inpatient [IP], skilled nursing facility [SNF], hospice [HOS], or home health agency [HHA])."
+      } ]
+    }
+  }, {
+    "sequence": 5,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "admissionperiod"
+      } ]
+    },
+    "timingPeriod": {
+      "start": "2022-07-27",
+      "end": "2022-08-13"
+    }
+  }, {
+    "sequence": 6,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "clmrecvddate"
+      } ]
+    },
+    "timingDate": "2022-08-13"
+  }, {
+    "sequence": 7,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_NCH_WKLY_PROC_DT",
+        "display": "Weekly Process Date"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "timingDate": "2022-08-13"
+  }, {
+    "sequence": 8,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_ACTV_CARE_THRU_DT",
+        "display": "Covered Care Through Date"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "timingDate": "2022-08-13"
+  }, {
+    "sequence": 9,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_NCVRD_FROM_DT",
+        "display": "Noncovered Stay From Date"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "timingDate": "0999-12-27"
+  }, {
+    "sequence": 10,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_NCVRD_THRU_DT",
+        "display": "Noncovered Stay Through Date"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "timingDate": "0999-12-27"
+  }, {
+    "sequence": 11,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_MDCR_EXHSTD_DT",
+        "display": "Medicare Benefits Exhausted Date"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "timingDate": "2022-08-13"
+  }, {
+    "sequence": 12,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "pointoforigin"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://www.nubc.org/CodeSystem/PointOfOrigin",
+        "code": "6"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-ADMSN-SRC-CD",
+        "code": "6",
+        "display": "TRANSFER FROM ANOTHER HEALTH CARE FACILITY (NON-NEWBORN)/NEWBORN - BORN OUTSIDE OF THIS HOSPITAL (NEWBORN)"
+      } ]
+    }
+  }, {
+    "sequence": 13,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "discharge-status"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://www.nubc.org/CodeSystem/PatDischargeStatus",
+        "code": "08"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/BENE-PTNT-STUS-CD",
+        "code": "08",
+        "display": "RESERVED FOR NATIONAL ASSIGNMENT"
+      } ]
+    }
+  }, {
+    "sequence": 14,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "admtype"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://www.nubc.org/CodeSystem/PriorityTypeOfAdmitOrVisit",
+        "code": "9"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-ADMSN-TYPE-CD",
+        "code": "9"
+      } ]
+    }
+  }, {
+    "sequence": 15,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_MDCR_INSTNL_MCO_PD_SW",
+        "display": "MCO Paid Switch"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-MDCR-INSTNL-MCO-PD-SW",
+        "code": "0",
+        "display": "No managed care organization (MCO) payment"
+      } ]
+    }
+  }, {
+    "sequence": 16,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "drg"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software",
+        "code": "42"
+      } ]
+    }
+  } ],
+  "diagnosis": [ {
+    "sequence": 1,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "W30.3XXA"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "externalcauseofinjury"
+      } ]
+    } ]
+  }, {
+    "sequence": 2,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "R46.1"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/ex-diagnosistype",
+        "code": "admitting"
+      } ]
+    } ]
+  }, {
+    "sequence": 3,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "Z63.1"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "N"
+      } ]
+    }
+  }, {
+    "sequence": 4,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "W58.13XD"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "U"
+      } ]
+    }
+  }, {
+    "sequence": 5,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "W21.3"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "W"
+      } ]
+    }
+  }, {
+    "sequence": 6,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "V97.0"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "Y"
+      } ]
+    }
+  }, {
+    "sequence": 7,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "R46.5"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "1"
+      } ]
+    }
+  }, {
+    "sequence": 8,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "Y93.1"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "W"
+      } ]
+    }
+  }, {
+    "sequence": 9,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "R46.1"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "W"
+      } ]
+    }
+  }, {
+    "sequence": 10,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "E02.90"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "W"
+      } ]
+    }
+  }, {
+    "sequence": 11,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "R46.5"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "U"
+      } ]
+    }
+  }, {
+    "sequence": 12,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "W21.3"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "U"
+      } ]
+    }
+  }, {
+    "sequence": 13,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "E01.70"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "1"
+      } ]
+    }
+  }, {
+    "sequence": 14,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "W58.13XD"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "W"
+      } ]
+    }
+  }, {
+    "sequence": 15,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "E11.69"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "W"
+      } ]
+    }
+  }, {
+    "sequence": 16,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "Y92.311"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "other"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "1"
+      } ]
+    }
+  }, {
+    "sequence": 17,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "W30.3XXA"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+        "code": "externalcauseofinjury"
+      } ]
+    } ],
+    "onAdmission": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalAcqCond/Coding",
+        "code": "W"
+      } ]
+    }
+  }, {
+    "sequence": 18,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "Z63.1"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/ex-diagnosistype",
+        "code": "principal"
+      } ]
+    } ]
+  } ],
+  "insurance": [ {
+    "focal": true,
+    "coverage": {
+      "display": "Part A"
+    }
+  } ],
+  "item": [ {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "Y"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "4"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "16"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "Q3"
+      }
+    } ],
+    "sequence": 1,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0656",
+        "display": "HOSPICE SERVICE - GENERAL INPATIENT CARE NON-RESPITE"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0656"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "N",
+        "display": "Override code; non-EGHP services involved"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "J2270"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "22"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "U6"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "28"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 2.82
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 909.61,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.62,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1351.43,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.88,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 3.44,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.7,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.02,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1128.4,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 17.58,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.36,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.39,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 8.51,
+        "currency": "USD"
+      }
+    } ],
+    "detail": [ {
+      "sequence": 1,
+      "productOrService": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/sid/ndc",
+          "code": "00264180031"
+        } ]
+      },
+      "quantity": {
+        "value": 790.92,
+        "unit": "ML",
+        "system": "http://unitsofmeasure.org",
+        "code": "mL"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "N"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "1"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "15"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "W"
+      }
+    } ],
+    "sequence": 2,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0974",
+        "display": "PROFESSIONAL FEES (EXTENSION OF 096X) - RADIOLOGY - NUCLEAR"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0974"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "0",
+        "display": "Charges are subject to deductible and coinsurance"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "99213"
+      } ]
+    },
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 4.17
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 14.99,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.7,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 793.34,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.57,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 3.28,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.41,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 2.23,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1254.92,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1118.75,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 12.04,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.34,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 9.53,
+        "currency": "USD"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "3"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "Y"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "4"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "6"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "R"
+      }
+    } ],
+    "sequence": 3,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0760",
+        "display": "SPECIALTY SERVICES - GENERAL CLASSIFICATION"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0760"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "1",
+        "display": "Charges are not subject to deductible"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "J2270"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "PC"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "PC"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "22"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "1P"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "28"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 2.33
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 433.01,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.18,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1413.54,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.92,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 0.57,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 2.46,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.97,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 240.94,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 978.3,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 13.01,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.17,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 8.63,
+        "currency": "USD"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "7"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "N"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "1"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "7"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "F"
+      }
+    } ],
+    "sequence": 4,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0272",
+        "display": "MEDICAL/SURGICAL SUPPLIES AND DEVICES (ALSO SEE 062X, AN EXTENSION OF 027X) - STERILE SUPPLY"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0272"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "3",
+        "display": "Charges are not subject to deductible or coinsurance"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "99453"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "1P"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "1P"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "US"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "US"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 1.82
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 969.15,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 2.61,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 883.25,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.86,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 1.18,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 2.85,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.63,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 785.98,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1410.08,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 12.5,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.76,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 8.39,
+        "currency": "USD"
+      }
+    } ],
+    "detail": [ {
+      "sequence": 1,
+      "productOrService": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/sid/ndc",
+          "code": "00338004904"
+        } ]
+      },
+      "quantity": {
+        "value": 344.91,
+        "unit": "ML",
+        "system": "http://unitsofmeasure.org",
+        "code": "mL"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "1"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "2"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "3"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "Q3"
+      }
+    } ],
+    "sequence": 5,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0981",
+        "display": "PROFESSIONAL FEES (EXTENSION OF 096X AND 097X) - EMERGENCY ROOM SERVICES"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0981"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "N",
+        "display": "Override code; non-EGHP services involved"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "J2270"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "22"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "32"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "PC"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 1.86
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 839.26,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.4,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 126.03,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.79,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 2.63,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.98,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.04,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 403.33,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 578.22,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 6.56,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.59,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 13.74,
+        "currency": "USD"
+      }
+    } ],
+    "detail": [ {
+      "sequence": 1,
+      "productOrService": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/sid/ndc",
+          "code": "00264180031"
+        } ]
+      },
+      "quantity": {
+        "value": 259.81,
+        "unit": "ML",
+        "system": "http://unitsofmeasure.org",
+        "code": "mL"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "3"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "Y"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "15"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "X"
+      }
+    } ],
+    "sequence": 6,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0250",
+        "display": "PHARMACY (ALSO SEE 063X, AN EXTENSION OF 025X) - GENERAL CLASSIFICATION"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0250"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "4",
+        "display": "No charge or units associated with this revenue center code. (For multiple HCPCS per single revenue center code) For revenue center code 0001, the following MSP override values may be present:"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "J2270"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "US"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "23"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "32"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "22"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "32"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 2.85
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 769.15,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.86,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 822.64,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.71,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 0.02,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.91,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.31,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 252.42,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 87.76,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.78,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.52,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 7.87,
+        "currency": "USD"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "8"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "1"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "15"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "B"
+      }
+    } ],
+    "sequence": 7,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0636",
+        "display": "PHARMACY - EXTENSION OF 025X - DRUGS REQUIRING DETAILED CODING"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0636"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "M",
+        "display": "Override code; EGHP (employer group health plan) services involved"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "99213"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "PC"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "PD"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "32"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "23"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 0.32
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 900.64,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.87,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1363.98,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 2.38,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 3.14,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.54,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.1,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 960.03,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 245.41,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 13.93,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.68,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 11.95,
+        "currency": "USD"
+      }
+    } ],
+    "detail": [ {
+      "sequence": 1,
+      "productOrService": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/sid/ndc",
+          "code": "00264180032"
+        } ]
+      },
+      "quantity": {
+        "value": 397.61,
+        "unit": "ML",
+        "system": "http://unitsofmeasure.org",
+        "code": "mL"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "1"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "N"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "3"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "4"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "L"
+      }
+    } ],
+    "sequence": 8,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0180",
+        "display": "LEAVE OF ABSENCE - GENERAL CLASSIFICATION"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0180"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "N",
+        "display": "Override code; non-EGHP services involved"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "J2270"
+      } ]
+    },
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 2.9
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 730.95,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.86,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1490.51,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.01,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 3.94,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.87,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.99,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1059.19,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1250.86,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 9.5,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.6,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 8.95,
+        "currency": "USD"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "5"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "N"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "1"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "13"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "V"
+      }
+    } ],
+    "sequence": 9,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0824",
+        "display": "HEMODIALYSIS - OUTPATIENT OR HOME - MAINTENANCE - 100%"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0824"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "2",
+        "display": "Charges are not subject to coinsurance"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "99213"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "28"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "U6"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "23"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 3.92
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 79.56,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.18,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1148.66,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 2.86,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 1.91,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 2.56,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.54,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 999.42,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1498.63,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 9.27,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.26,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 8.4,
+        "currency": "USD"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "7"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "N"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "3"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "1"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "Q1"
+      }
+    } ],
+    "sequence": 10,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0603",
+        "display": "HOME HEALTH (HH) - OXYGEN - OXYGEN - STAT EQUIP/SUPPLY > 4 LPM"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0603"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "2",
+        "display": "Charges are not subject to coinsurance"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "J2270"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "US"
+      }, {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "PD"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "23"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "22"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "28"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 1.99
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1253.24,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.19,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1406.37,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 2.9,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 3.05,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.06,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.1,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 17.18,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 134.11,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 11.1,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.82,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 6.83,
+        "currency": "USD"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "8"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "Y"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "1"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "13"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "Q"
+      }
+    } ],
+    "sequence": 11,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0669",
+        "display": "RESPITE CARE - OTHER RESPITE CARE"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0669"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "2",
+        "display": "Charges are not subject to coinsurance"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "99213"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "1P"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 1.16
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 614.19,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.62,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 697.02,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.86,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 0.59,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.33,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.9,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 27.42,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1010.9,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 13.75,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.83,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 9.72,
+        "currency": "USD"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "2"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "Y"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "4"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "W"
+      }
+    } ],
+    "sequence": 12,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0171",
+        "display": "NURSERY - NEWBORN - LEVEL I"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0171"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "3",
+        "display": "Charges are not subject to deductible or coinsurance"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "J2270"
+      } ]
+    },
+    "modifier": [ {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "1P"
+      }, {
+        "system": "http://www.ama-assn.org/go/cpt",
+        "code": "28"
+      } ]
+    } ],
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 4.4
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 711.27,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.19,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 742.61,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.85,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 2.96,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.45,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 3.72,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 260.9,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 750.73,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 12.29,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.44,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 10.4,
+        "currency": "USD"
+      }
+    } ]
+  }, {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-DSCNT-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-DSCNT-IND-CD",
+        "code": "7"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-OTAF-ONE-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-OTAF-ONE-IND-CD",
+        "code": "N"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PACKG-IND-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PACKG-IND-CD",
+        "code": "4"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-PMT-MTHD-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-PMT-MTHD-CD",
+        "code": "1"
+      }
+    }, {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-REV-CNTR-STUS-CD",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-STUS-CD",
+        "code": "X"
+      }
+    } ],
+    "sequence": 13,
+    "revenue": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-REV-CNTR-CD",
+        "code": "0525",
+        "display": "FREESTANDING CLINIC - VISIT BY RHC/FQHC PRACTITIONER TO A MEMBER IN A SNF (NOT IN A COVERED PART A STAY) OR NF OR ICF MR OR OTHER RESIDENTIAL FACILITY"
+      }, {
+        "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+        "code": "0525"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DDCTBL-COINSRNC-CD",
+        "code": "N",
+        "display": "Override code; non-EGHP services involved"
+      } ]
+    },
+    "productOrService": {
+      "coding": [ {
+        "system": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+        "code": "J2270"
+      } ]
+    },
+    "servicedDate": "2022-07-27",
+    "quantity": {
+      "value": 4.2
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "noncovered",
+          "display": "Noncovered"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_NCVRD_CHRG_AMT",
+          "display": "Revenue Center Non-Covered Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 270.4,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "eligible",
+          "display": "Eligible Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_ALOWD_CHRG_AMT",
+          "display": "Line Allowed Charge Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.02,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtoprovider",
+          "display": "Paid to provider"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PRVDR_PMT_AMT",
+          "display": "Line Provider Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 668.0,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidbypatient",
+          "display": "Paid by patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PMT_AMT",
+          "display": "Revenue Center Patient Responsibility Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.25,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "paidtopatient",
+          "display": "Paid to patient"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_BENE_PD_AMT",
+          "display": "Revenue Center Payment Amount to Beneficiary"
+        } ]
+      },
+      "amount": {
+        "value": 1.16,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "benefit",
+          "display": "Benefit Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_CVRD_PD_AMT",
+          "display": "Revenue Center Payment Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.61,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "deductible",
+          "display": "Deductible"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_MDCR_DDCTBL_AMT",
+          "display": "Revenue Center Cash Deductible Amount"
+        } ]
+      },
+      "amount": {
+        "value": 4.4,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_ADJSTD_AMT",
+          "display": "Revenue Center Coinsurance/Wage Adjusted Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1209.11,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "coinsurance",
+          "display": "Co-insurance"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RDCD_AMT",
+          "display": "Revenue Center Reduced Coinsurance Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1022.12,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP1_PD_AMT",
+          "display": "Revenue Center 1st MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 0.39,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+          "code": "priorpayerpaid",
+          "display": "Prior payer paid"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_MSP2_PD_AMT",
+          "display": "Revenue Center 2nd MSP Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 1.93,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_INSTNL_RATE_AMT",
+          "display": "Revenue Center Rate Amount"
+        } ]
+      },
+      "amount": {
+        "value": 13.04,
+        "currency": "USD"
+      }
+    } ]
+  } ],
+  "adjudication": [ {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-MDCR-IP-PPS-DRG-WT-NUM",
+      "valueDecimal": 0.65
+    } ],
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator",
+        "code": "benefitpaymentstatus",
+        "display": "Benefit Payment Status"
+      } ]
+    },
+    "reason": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus",
+        "code": "other",
+        "display": "Other"
+      } ]
+    }
+  } ],
+  "total": [ {
+    "category": {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+        "code": "eligible",
+        "display": "Allowed Amount"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+        "code": "CLM_ALOWD_CHRG_AMT",
+        "display": "Total Allowed Charge Amount"
+      } ]
+    },
+    "amount": {
+      "value": 0.0,
+      "currency": "USD"
+    }
+  }, {
+    "category": {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+        "code": "submitted",
+        "display": "Submitted Amount"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+        "code": "CLM_SBMT_CHRG_AMT",
+        "display": "Total Submitted Charge Amount"
+      } ]
+    },
+    "amount": {
+      "value": 828008.75,
+      "currency": "USD"
+    }
+  }, {
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+        "code": "paidbypatient",
+        "display": "Paid by patient"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+        "code": "CLM_BENE_PMT_AMT",
+        "display": "Revenue Center Patient Responsibility Payment Amount"
+      } ]
+    },
+    "amount": {
+      "value": 0.0,
+      "currency": "USD"
+    }
+  }, {
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+        "code": "paidtoprovider",
+        "display": "Paid to provider"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+        "code": "CLM_PRVDR_PMT_AMT",
+        "display": "Provider Payment Amount"
+      } ]
+    },
+    "amount": {
+      "value": 0.0,
+      "currency": "USD"
+    }
+  }, {
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+        "code": "paidtoprovider",
+        "display": "Paid to provider"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+        "code": "CLM_MDCR_PRFNL_PRMRY_PYR_AMT",
+        "display": "Primary Payer Paid Amount"
+      } ]
+    },
+    "amount": {
+      "value": 928.26,
+      "currency": "USD"
+    }
+  } ],
+  "payment": {
+    "amount": {
+      "value": 14837.65,
+      "currency": "USD"
+    }
+  },
+  "benefitBalance": [ {
+    "category": {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/ex-benefitcategory",
+        "code": "1",
+        "display": "Medical Care"
+      } ]
+    },
+    "financial": [ {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_DDCTBL_AMT",
+          "display": "Beneficiary Part B Deductible Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 942.15,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_COINSRNC_AMT",
+          "display": "Beneficiary Part A Coinsurance Liability Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 6.61,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_BLOOD_LBLTY_AMT",
+          "display": "Beneficiary Blood Deductible Liability Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 19.69,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_NCVRD_CHRG_AMT",
+          "display": "Inpatient(or other Part A) Non-covered Charge Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 813171.07,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_IP_LRD_USE_CNT",
+          "display": "Beneficiary Medicare Lifetime Reserve Days (LRD) Used Count"
+        } ]
+      },
+      "usedUnsignedInt": 3
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_HHA_TOT_VISIT_CNT",
+          "display": "Claim HHA Total Visit Count."
+        } ]
+      },
+      "usedUnsignedInt": 0
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_HOSPC_PRD_CNT",
+          "display": "Beneficiary's Hospice Period Count."
+        } ]
+      },
+      "usedUnsignedInt": 0
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_INSTNL_MDCR_COINS_DAY_CNT",
+          "display": "Beneficiary Total Coinsurance Days Count"
+        } ]
+      },
+      "usedUnsignedInt": 4
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_INSTNL_CVRD_DAY_CNT",
+          "display": "Claim Medicare Utilization Day Count"
+        } ]
+      },
+      "usedUnsignedInt": 3
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_INSTNL_PER_DIEM_AMT",
+          "display": "Claim Pass Thru Per Diem Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 176.32,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_INSTNL_BENE_PD_AMT",
+          "display": "The amount paid, from the Medicare trust fund, to the beneficiary for the services reported on the claim."
+        } ]
+      },
+      "usedMoney": {
+        "value": 0.0,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_IP_PPS_DSPRPRTNT_AMT",
+          "display": "Claim PPS Capital Disproportionate Share Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 2807.54,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_IP_PPS_EXCPTN_AMT",
+          "display": "Claim PPS Capital Exception Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 7.03,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_IP_PPS_CPTL_FSP_AMT",
+          "display": "Claim PPS Capital Federal Specific Portion (FSP) Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 23.7,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_IP_PPS_CPTL_IME_AMT",
+          "display": "Claim PPS Capital Indirect Medical Education (IME) Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 2.57,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_IP_PPS_OUTLIER_AMT",
+          "display": "Claim PPS Capital Outlier Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 14.06,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_IP_PPS_CPTL_HRMLS_AMT",
+          "display": "Claim PPS Old Capital Hold Harmless Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 7.03,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_IP_PPS_CPTL_TOT_AMT",
+          "display": "Claim Total PPS Capital Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 2.49,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_INSTNL_PRMRY_PYR_AMT",
+          "display": "Primary Payer (if not Medicare) Claim Paid Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 1495.2,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_INSTNL_PRFNL_AMT",
+          "display": "Professional Component Charge Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 0.0,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_INSTNL_DRG_OUTLIER_AMT",
+          "display": "DRG Outlier Approved Payment Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 1991.37,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_IP_BENE_DDCTBL_AMT",
+          "display": "Beneficiary Inpatient (or other Part A) Deductible Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 10.33,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_HIPPS_UNCOMPD_CARE_AMT",
+          "display": "Claim Uncompensated Care Payment Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 274.71,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_OPRTNL_DSPRTNT_AMT",
+          "display": "Operating Disproportionate Share Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 11654.12,
+        "currency": "USD"
+      }
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_OPRTNL_IME_AMT",
+          "display": "Operating Indirect Medical Education Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 2773.26,
+        "currency": "USD"
+      }
+    } ]
+  }, {
+    "category": {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/ex-benefitcategory",
+        "code": "1",
+        "display": "Medical Care"
+      } ]
+    },
+    "financial": [ {
+      "type": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Benefit-Balance",
+          "code": "CLM_MDCR_DDCTBL_AMT",
+          "display": "Beneficiary Part B Deductible Amount"
+        } ]
+      },
+      "usedMoney": {
+        "value": 942.15,
+        "currency": "USD"
+      }
+    } ]
+  } ]
+}
