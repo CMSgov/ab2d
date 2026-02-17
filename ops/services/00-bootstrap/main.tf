@@ -22,10 +22,16 @@ locals {
   ])
 }
 
-module "sops" {
-  source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+variable "create_local_sops_wrapper" {
+  default = false
+  type    = bool
+}
 
-  platform = module.platform
+module "sops" {
+  source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=38711d86419b9d91a003f4eea4931287d546b55b"
+
+  create_local_sops_wrapper = var.create_local_sops_wrapper
+  platform                  = module.platform
 }
 
 resource "aws_kms_key" "this" {
@@ -47,7 +53,7 @@ resource "aws_ecr_repository" "this" {
 
   encryption_configuration {
     encryption_type = "KMS"
-    kms_key = aws_kms_key.this.arn
+    kms_key         = aws_kms_key.this.arn
   }
 
   tags = {

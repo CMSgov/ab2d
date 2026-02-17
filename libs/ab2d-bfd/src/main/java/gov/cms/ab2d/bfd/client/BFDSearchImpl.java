@@ -49,10 +49,13 @@ public class BFDSearchImpl implements BFDSearch {
     @Override
     public IBaseBundle searchEOB(long patientId, OffsetDateTime since, OffsetDateTime until, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException {
         String urlLocation = bfdClientVersions.getUrl(version);
-        StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
+        StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId);
 
-        if (version == FhirVersion.R4v3) {
-            url.append("&_tag=Adjudicated");
+        if (version == FhirVersion.R4V3) {
+            url.append("&_source=NCH");
+        }
+        else {
+            url.append("&excludeSAMHSA=true");
         }
 
         if (since != null) {
