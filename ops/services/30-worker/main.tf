@@ -48,7 +48,7 @@ locals {
 
   bfd_url = lookup({
     prod = "https://prod.fhir.bfd.cmscloud.local"
-  }, local.parent_env, "https://sandbox.fhir.bfd.cmscloud.local")
+  }, local.parent_env, "https://prod-sbx.fhir.bfd.cmscloud.local")
 
   bfd_url_v3 = lookup({
     prod = "https://prod.fhirv3.bfd.cmscloud.local"
