@@ -4,6 +4,7 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -16,7 +17,10 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Component
 @Slf4j
@@ -83,10 +87,15 @@ public class BFDSearchImpl implements BFDSearch {
         request.addHeader(BFDClient.BFD_HDR_BULK_JOBID, bulkJobId);
 
 
-        log.info("Executing searchEOB request to BFD: {}", request.getRequestLine());
+        val start = LocalDateTime.now();
         byte[] responseBytes = getEOBSFromBFD(patientId, request);
-
+        log.info("searchEOB request to BFD completed in {} seconds: {}", duration(start), request.getRequestLine());
         return parseBundle(version, responseBytes);
+    }
+
+    public static double duration(LocalDateTime start) {
+        val duration = ChronoUnit.MILLIS.between(start, LocalDateTime.now());
+        return duration / 1000.0;
     }
 
     /**
