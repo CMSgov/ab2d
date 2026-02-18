@@ -25,7 +25,7 @@ public class CoverageV3ImportService {
     @Value("${spring.datasource.password}")
     private String dbPassword;
 
-    private static final String COLUMNS = "patient_id,contract,year,month,current_mbi,historic_mbis";
+    private static final String COLUMNS = "patient_id,contract,year,month,current_mbi";
     private static final String COPY_OPTIONS = "(format csv, header true, null 'NULL')";
     private static final String IMPORT_SQL =
             "SELECT aws_s3.table_import_from_s3(?, ?, ?, aws_commons.create_s3_uri(?, ?, ?))";
@@ -37,6 +37,7 @@ public class CoverageV3ImportService {
     )
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws Exception {
         try (Connection conn = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
+            log.info("------ Connected to postgres");
             long before = queryCount(conn, fqtn);
 
             int imported = executeImport(conn, fqtn, bucket, key, region);
