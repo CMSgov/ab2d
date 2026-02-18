@@ -34,7 +34,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     private final DataSource dataSource;
     private final PropertiesService propertiesService;
 
-    public CoverageV3ServiceImpl(\DataSource dataSource, PropertiesService propertiesService) {
+    public CoverageV3ServiceImpl(DataSource dataSource, PropertiesService propertiesService) {
         this.dataSource = dataSource;
         this.propertiesService = propertiesService;
     }
