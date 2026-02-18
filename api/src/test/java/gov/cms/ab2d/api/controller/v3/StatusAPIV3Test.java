@@ -73,7 +73,7 @@ class StatusAPIV3Test {
   private String token;
 
   @BeforeEach
-  public void setup() throws Exception {
+  void setup() throws Exception {
     token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     testUtil.turnMaintenanceModeOff();
     ApiCommon apiCommon = context.getBean(ApiCommon.class);
@@ -84,7 +84,7 @@ class StatusAPIV3Test {
   }
 
   @AfterEach
-  public void cleanup() {
+  void cleanup() {
     dataSetup.cleanup();
     jobClientMock.cleanupAll();
   }

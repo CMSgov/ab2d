@@ -82,7 +82,7 @@ public class BulkDataAccessAPIV3IntegrationTests {
     public static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
     @BeforeEach
-    public void setup() throws JwtVerificationException {
+    void setup() throws JwtVerificationException {
         testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
         ApiCommon apiCommon = context.getBean(ApiCommon.class);
@@ -94,7 +94,7 @@ public class BulkDataAccessAPIV3IntegrationTests {
     }
 
     @AfterEach
-    public void cleanup() {
+    void cleanup() {
         dataSetup.cleanup();
         jobClientMock.cleanupAll();
     }
