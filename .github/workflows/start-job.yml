@@ -125,7 +125,7 @@ jobs:
           fi
 
           # V2 and V3 support the 'until' parameter
-          if [[ "$FHIR_VERSION" == "R4" || "$FHIR_VERSION" == "R4V3" ]]; then
+          if [[ ("$FHIR_VERSION" == "R4" || "$FHIR_VERSION" == "R4V3") && -n "$UNTIL" ]]; then
             export UNTIL="'${UNTIL}'"
           else
             export UNTIL="null"
