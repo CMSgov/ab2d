@@ -89,7 +89,7 @@ public class BFDSearchImpl implements BFDSearch {
 
         val start = LocalDateTime.now();
         byte[] responseBytes = getEOBSFromBFD(patientId, request);
-        log.info("searchEOB request to BFD completed in {} seconds: {}", duration(start), request.getRequestLine());
+        log.info("searchEOB request completed in {} seconds: {}", duration(start), request.getRequestLine());
         return parseBundle(version, responseBytes);
     }
 
