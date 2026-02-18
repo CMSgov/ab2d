@@ -71,13 +71,13 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         if (job.getFhirVersion() == FhirVersion.STU3 && job.getUntil() != null) {
-            log.warn("JobPreProcessorImpl > preprocess: job FAILED because the _until parameter is only available with version 2 (FHIR R4).");
+            log.warn("JobPreProcessorImpl > preprocess: job FAILED because the _until parameter is only available with version 2 and version 3 (FHIR R4).");
 
             eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
-                    + "failed because the _until parameter is only available with version 2 (FHIR R4)"), PUBLIC_LIST);
+                    + "failed because the _until parameter is only available with version 2 and version 3 (FHIR R4)"), PUBLIC_LIST);
 
             job.setStatus(FAILED);
-            job.setStatusMessage("failed because the _until parameter is only available with version 2 (FHIR R4).");
+            job.setStatusMessage("failed because the _until parameter is only available with version 2 and version 3 (FHIR R4).");
 
             jobRepository.save(job);
             return job;

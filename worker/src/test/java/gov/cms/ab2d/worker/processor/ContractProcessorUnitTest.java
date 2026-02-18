@@ -55,6 +55,7 @@ import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutM
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi_V3;
 import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -241,7 +242,7 @@ class ContractProcessorUnitTest {
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
-        var jobOutputs = cut.process(job);
+        cut.process(job);
 
         assertEquals(6, jobRepository.getUpdatePercentageCompletedCount());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
@@ -274,7 +275,7 @@ class ContractProcessorUnitTest {
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
-        var jobOutputs = cut.process(job);
+        cut.process(job);
 
         assertEquals(6, jobRepository.getUpdatePercentageCompletedCount());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
@@ -353,6 +354,7 @@ class ContractProcessorUnitTest {
 
     @Test
     @DisplayName("When round robin blocking queue is full, patients should not be skipped")
+    @SuppressWarnings("java:S2925") // Suppress warning for `Thread.sleep(5000)`
     void whenBlockingQueueFullPatientsNotSkipped() throws InterruptedException {
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1), new CoveragePagingRequest(1, null, contractForCoverageDTO, OffsetDateTime.now())))
@@ -430,7 +432,7 @@ class ContractProcessorUnitTest {
         return IntStream.range(0, num).mapToObj(n -> new CoverageSummary(
                 createIdentifierWithoutMbi(n),
                 contractcoverageContractForCoverageDTO, List.of(dateRange)
-        )).collect(toList());
+        )).toList();
     }
 
     private static List<CoverageSummary> createPatientsByContractResponse_V3(ContractForCoverageDTO contractcoverageContractForCoverageDTO, int num) {
@@ -438,6 +440,6 @@ class ContractProcessorUnitTest {
         return IntStream.range(0, num).mapToObj(n -> new CoverageSummary(
                 createIdentifierWithoutMbi_V3(n),
                 contractcoverageContractForCoverageDTO, List.of(dateRange)
-        )).collect(toList());
+        )).toList();
     }
 }

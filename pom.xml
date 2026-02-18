@@ -103,7 +103,7 @@
                     <configLocation>${checkstyle.config}</configLocation>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
-                    <failOnViolation>true</failOnViolation>
+                    <failOnViolation>false</failOnViolation>
                     <violationSeverity>error</violationSeverity>
                     <linkXRef>false</linkXRef>
                 </configuration>

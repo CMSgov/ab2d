@@ -19,7 +19,7 @@ public class CoverageV3 {
     @NotNull
     @EqualsAndHashCode.Include
     @Id
-    @Column(name="patient_id")
+    @Column(name = "patient_id")
     private long patientId;
 
     @NotNull
@@ -37,7 +37,7 @@ public class CoverageV3 {
     @Id
     private int year;
 
-    @Column(name="current_mbi")
+    @Column(name = "current_mbi")
     @EqualsAndHashCode.Include
     @Id
     private String currentMbi;

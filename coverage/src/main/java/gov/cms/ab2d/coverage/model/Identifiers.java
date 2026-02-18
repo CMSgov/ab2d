@@ -3,7 +3,6 @@ package gov.cms.ab2d.coverage.model;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-import java.util.Collections;
 import java.util.LinkedHashSet;
 
 @Getter
