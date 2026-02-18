@@ -7,8 +7,6 @@ import gov.cms.ab2d.coverage.query.CountBeneficiariesByCoveragePeriods;
 import gov.cms.ab2d.coverage.query.GetCoverageMembership;
 import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
-import gov.cms.ab2d.coverage.repository.v3.CoverageV3HistoricalRepository;
-import gov.cms.ab2d.coverage.repository.v3.CoverageV3Repository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
