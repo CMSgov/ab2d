@@ -204,9 +204,6 @@ class CoverageDriverTest extends JobCleanup {
         jobCleanup();
         processor.shutdown();
 
-        coverageDataSetup.cleanup();
-        dataSetup.cleanup();
-
         propertiesService.updateProperty(WORKER_ENGAGEMENT, IN_GEAR.getSerialValue());
         propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
         contractServiceStub.reset();
@@ -624,7 +621,6 @@ class CoverageDriverTest extends JobCleanup {
     @DisplayName("Do not start an eob job if any relevant coverage period is queued for an update")
     @Test
     void availableCoverageWhenPeriodSubmitted() {
-
         Job job = new Job();
         job.setContractNumber(contractForCoverageDTO.getContractNumber());
         job.setCreatedAt(OffsetDateTime.now());
@@ -745,7 +741,6 @@ class CoverageDriverTest extends JobCleanup {
     @DisplayName("Number of beneficiaries to process calculation works")
     @Test
     void numberOfBeneficiariesToProcess() {
-
         // Override BeforeEach method settings to make this test work for a smaller period of time
         contract.setAttestedOn(OffsetDateTime.now().minus(1, ChronoUnit.SECONDS));
         contractServiceStub.updateContract(contract);
