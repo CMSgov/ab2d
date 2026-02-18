@@ -3,6 +3,11 @@ run-name: Libs-pull-request
 
 on:
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - 'libs/**'
+    branches:
+      - main
 
 permissions:
   contents: read

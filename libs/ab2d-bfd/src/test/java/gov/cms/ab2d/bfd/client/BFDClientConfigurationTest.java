@@ -62,11 +62,11 @@ class BFDClientConfigurationTest {
     static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(MOCK_PORT_V1);
         MockUtils.createMockServerExpectation(
-            "/v1/fhir/metadata",
-            HttpStatus.SC_OK,
-            getRawJson(METADATA_PATH),
-            List.of(),
-            MOCK_PORT_V1
+                "/v1/fhir/metadata",
+                HttpStatus.SC_OK,
+                getRawJson(METADATA_PATH),
+                List.of(),
+                MOCK_PORT_V1
         );
 
         URL keyUrl = BFDClientConfigurationTest.class.getResource("/mitm_bfd_cert.key");
@@ -113,19 +113,13 @@ class BFDClientConfigurationTest {
     @Test
     void doNotTrustPublicCerts() {
         HttpGet httpget = new HttpGet("https://www.verisign.com/");
-
         try {
-            assertThrows(SSLHandshakeException.class, () -> httpClient.execute(httpget),
-                    "Call to verisign should fail with certificate request target exception. Cert is not in truststore.");
+            assertThrows(javax.net.ssl.SSLHandshakeException.class, () -> httpClient.execute(httpget));
         } finally {
-            try {
-                httpget.releaseConnection();
-            } catch (Exception ex) {
-                // ignore
-            }
+            httpget.releaseConnection();
         }
-
     }
+
 
     @DisplayName("Missing keystore file throws bean instantiation exception")
     @Test
@@ -148,10 +142,10 @@ class BFDClientConfigurationTest {
         BFDClientConfiguration clientConfiguration = new BFDClientConfiguration();
 
         assertThrows(
-            Exception.class,
-            () -> ReflectionTestUtils.invokeMethod(
-                clientConfiguration, "buildMutualTlsClient", new File("/dne"), "dne".toCharArray()
-            )
+                Exception.class,
+                () -> ReflectionTestUtils.invokeMethod(
+                        clientConfiguration, "buildMutualTlsClient", new File("/dne"), "dne".toCharArray()
+                )
         );
 
     }

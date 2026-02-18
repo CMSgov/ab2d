@@ -27,9 +27,10 @@ public class BfdClientVersions {
      * @param httpClient the http client
      */
     public BfdClientVersions(@Value("${bfd.url}") String bfdUrl, @Value("${bfd.url.v3}") String bfdUrlV3, HttpClient httpClient) {
-        clientUrls.put(STU3, bfdUrl + STU3.getBfdVersionString() + "fhir/");
-        clientUrls.put(R4, bfdUrl + R4.getBfdVersionString() + "fhir/");
-        clientUrls.put(R4v3, bfdUrlV3 + R4v3.getBfdVersionString() + "fhir/");
+        String fhir = "fhir/";
+        clientUrls.put(STU3, bfdUrl + STU3.getBfdVersionString() + fhir);
+        clientUrls.put(R4, bfdUrl + R4.getBfdVersionString() + fhir);
+        clientUrls.put(R4V3, bfdUrlV3 + R4V3.getBfdVersionString() + fhir);
         this.httpClient = httpClient;
     }
 

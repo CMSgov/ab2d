@@ -19,7 +19,7 @@ public enum FhirVersion {
             org.hl7.fhir.dstu3.model.ResourceType.Patient, false),
     R4("org.hl7.fhir.r4.model", FhirContext.forR4(), FhirVersionEnum.R4, "/v2/", "/v2/",
             org.hl7.fhir.r4.model.ResourceType.Patient, true),
-    R4v3("org.hl7.fhir.r4.model", FhirContext.forR4(), FhirVersionEnum.R4, "/v3/", "/v3/",
+    R4V3("org.hl7.fhir.r4.model", FhirContext.forR4(), FhirVersionEnum.R4, "/v3/", "/v3/",
             org.hl7.fhir.r4.model.ResourceType.Patient, true);
 
     private final String classLocation;
