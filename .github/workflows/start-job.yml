@@ -6,7 +6,12 @@ on:
     inputs:
       environment:
         description: 'AB2D environment'
-        type: string
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+          - prod
         required: true
         default: 'test'
       contractNumber:
@@ -57,10 +62,11 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          PARENT_ENV="${AB2D_ENV##*-}"
+          # AB2D_ENV is now strictly one of: dev, test, sandbox, prod
+          PARENT_ENV="${AB2D_ENV}"
           echo "PARENT_ENV=${PARENT_ENV}" >> $GITHUB_ENV
           
-          # Do not allow V3 jobs in sandbox or prod
+          # do not allow V3 jobs in sandbox or prod
           if [[ "$PARENT_ENV" == "sandbox" || "$PARENT_ENV" == "prod" ]]; then
             if [[ "$FHIR_VERSION" == "R4V3" ]]; then
               echo "Error: V3 jobs are not allowed in the $PARENT_ENV environment."
@@ -81,9 +87,6 @@ jobs:
             DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
           elif [[ "$PARENT_ENV" == "prod" ]]; then
             DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
-          else
-            echo "Invalid environment: $PARENT_ENV"
-            exit 1
           fi
    
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
@@ -108,9 +111,7 @@ jobs:
         run: |
           set -e
           BASE_ID=$(uuidgen)
-          
           if [[ "$FHIR_VERSION" == "R4V3" ]]; then
-            # replace first 8 chars with 3s to maintain standard uuid length
             export JOB_ID="33333333${BASE_ID:8}"
           else
             export JOB_ID="${BASE_ID}"
