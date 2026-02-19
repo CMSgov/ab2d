@@ -31,11 +31,12 @@ public class CoverageV3S3Importer {
 
 
     private final CoverageV3ImportService importService;
-    private final SnowflakeCoverageQueryService snowflake;
+ //   private final SnowflakeCoverageQueryService snowflake;
     private final S3CsvWriter s3Writer;
 
-    public CoverageV3S3Importer(SnowflakeCoverageQueryService snowflake, S3CsvWriter s3Writer, CoverageV3ImportService importService) {
-        this.snowflake = snowflake;
+    public CoverageV3S3Importer(S3CsvWriter s3Writer, CoverageV3ImportService importService) {
+      //  public CoverageV3S3Importer(SnowflakeCoverageQueryService snowflake, S3CsvWriter s3Writer, CoverageV3ImportService importService) {
+   //     this.snowflake = snowflake;
         this.s3Writer = s3Writer;
         this.importService = importService;
     }
