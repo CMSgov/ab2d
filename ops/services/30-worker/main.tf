@@ -46,23 +46,6 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.env)
 
-/*
-  bfd_url = lookup({
-    dev     = "https://test.fhir.bfd.cmscloud.local"
-    test    = "https://test.fhir.bfd.cmscloud.local"
-    sandbox = "https://sandbox.fhir.bfd.cmscloud.local"
-    prod    = "https://prod.fhir.bfd.cmscloud.local"
-  }, local.parent_env)
-
-  bfd_url_v3 = lookup({
-    dev     = "https://test.fhirv3.bfd.cmscloud.local"
-    test    = "https://test.fhirv3.bfd.cmscloud.local"
-    sandbox = "https://sandbox.fhirv3.bfd.cmscloud.local"
-    prod    = "https://prod.fhirv3.bfd.cmscloud.local"
-  }, local.parent_env)
-*/
-
-
   bfd_url = lookup({
     prod = "https://prod.fhir.bfd.cmscloud.local"
   }, local.parent_env, "https://prod-sbx.fhir.bfd.cmscloud.local")
