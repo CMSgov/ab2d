@@ -16,8 +16,12 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.dto.StartJobDTO;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +56,16 @@ public class ApiCommon {
     public static final String AB2D_V3_CONTRACT_NOT_WHITELISTED = "V3 access not enabled for this PDP";
 
     private static final String HTTPS_STRING = "https";
+
+    // regex for matching a FHIR DateTime:
+    // (eq|gt|ge|lt|le|sa|eb)?: An optional group matching one of the specific two-letter operator codes (equal, greater than, less than, etc.).
+    // \\d{4}: Matches 4 digit year (YYYY)
+    // (-(0[1-9]|1[0-2]) ... )?: Optional month (MM).
+    // (-(0[1-9]|[1-2]\\d|3[0-1]) ... )?: Optional day (DD).
+    // (T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?: Optional time component (T + hours, minutes, seconds).
+    // \\.\\d+: Optional decimal fraction for seconds.
+    // (Z|[+-]\\d{2}:\\d{2})?: Optional time zone (UTC or offset).
+    private static final String SERVICE_DATE_PARAM_REGEX = "^(eq|gt|ge|lt|le|sa|eb|)?(\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2]\\d|3[0-1])(T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?)?)?)$";
 
     private ContractService contractService;
 
@@ -109,6 +123,55 @@ public class ApiCommon {
             log.error("Invalid _until time received {}", until);
             throw new InvalidClientInputException("_until must be after " + SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME));
         }
+    }
+
+    public ArrayList<String> getServiceDates(String typeFilter) {
+        if (typeFilter == null) {
+            return null;
+        }
+
+        ArrayList<String> serviceDates = new ArrayList<>();
+
+        String decoded = URLDecoder.decode(typeFilter, StandardCharsets.UTF_8);
+        String[] typeFilterParts = decoded.split("\\?");
+        if (typeFilterParts.length != 2) {
+            throw new InvalidClientInputException("Invalid _typeFilter parameter");
+        }
+
+        String resourceType = typeFilterParts[0];
+        String subquery = typeFilterParts [1];
+        if (!resourceType.equals("ExplanationOfBenefit")) {
+            throw new InvalidClientInputException("The _typeFilter parameter must be for the ExplanationOfBenefit resource");
+        }
+
+        String[] paramList = subquery.split("&");
+        for ( String paramPair : paramList ) {
+            String[] keyValue = paramPair.split("=");
+            String paramName = keyValue[0];
+            String paramValue = keyValue[1];
+
+            if (!paramName.equals("service-date")) {
+                throw new InvalidClientInputException("The _typeFilter subquery must be for the service-type parameter");
+            }
+
+            serviceDates.add(paramValue);
+        }
+        return serviceDates;
+    }
+
+    public void checkServiceDates(ArrayList<String> serviceDates) {
+        if (serviceDates == null) {
+            return;
+        }
+
+        for (String serviceDateParam : serviceDates) {
+            if (!serviceDateParam.matches(SERVICE_DATE_PARAM_REGEX)) {
+                log.error("Invalid service-date received {}", serviceDateParam);
+                throw new InvalidClientInputException("invalid service-date parameter: " + serviceDateParam);
+            }
+        }
+
+
     }
 
     public void checkIfInMaintenanceMode() {

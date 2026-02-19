@@ -18,6 +18,7 @@ public class ApiText {
   //  public static final String BULK_UNTIL = "The _until parameter is only available with version 2 and version 3 (FHIR R4) of the API.";
     public static final String BULK_SINCE_DEFAULT = " If no value is provided, it will default to the last time a successful job was requested if it exists. The earliest accepted date is 2020-02-13T00:00:00.000-05:00";
     public static final String BULK_UNTIL_DEFAULT = " If no value is provided, it will default to the current date.";
+    public static final String BULK_TYPEFILTER = "Provide service-date to further refine results";
     public static final String BULK_RESPONSE_LONG = "Absolute URL of an endpoint for subsequent status requests (polling location)";
     public static final String EXPORT_STARTED = "Export request has started";
     public static final String MAX_JOBS = "Too many jobs are currently running. Either wait for currently running jobs to finish or cancel some/all of those jobs.";
@@ -49,6 +50,7 @@ public class ApiText {
     public static final String SINCE = "_since";
     public static final String UNTIL = "_until";
     public static final String TYPE_PARAM = "_type";
+    public static final String TYPEFILTER = "_typeFilter";
     public static final String PREFER = "Prefer";
     public static final String X_PROG = "X-Progress";
 }
