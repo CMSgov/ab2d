@@ -36,7 +36,8 @@ public class CoverageV3ImportService {
             backoff = @Backoff(delay = 1000, multiplier = 2.0)
     )
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws Exception {
-        try (Connection conn = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
+        var dbHost = System.getenv("AB2D_DB_HOST");
+        try (Connection conn = DriverManager.getConnection(dbHost, dbUser, dbPassword)) {
             log.info("------ Connected to postgres");
             long before = queryCount(conn, fqtn);
 
