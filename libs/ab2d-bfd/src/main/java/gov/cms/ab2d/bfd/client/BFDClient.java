@@ -4,8 +4,6 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 
 public interface BFDClient {
@@ -30,7 +28,4 @@ public interface BFDClient {
     IBaseConformance capabilityStatement(FhirVersion version);
 
     ThreadLocal<String> BFD_BULK_JOB_ID = new ThreadLocal<>();
-
-    ThreadLocal<List<Double>> REQUEST_TIMES = new ThreadLocal<>();
-
 }

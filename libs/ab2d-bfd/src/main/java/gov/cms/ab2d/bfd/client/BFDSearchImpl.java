@@ -96,10 +96,12 @@ public class BFDSearchImpl implements BFDSearch {
         return parseBundle(version, responseBytes);
     }
 
+    public static final ThreadLocal<List<Double>> REQUEST_TIMES = new ThreadLocal<>();
+
     double duration(LocalDateTime start, LocalDateTime end) {
         val duration = ChronoUnit.MILLIS.between(start, end);
         val durationSeconds = duration / 1000.0;
-        addDuration(durationSeconds, BFDClient.REQUEST_TIMES);
+        addDuration(durationSeconds, REQUEST_TIMES);
         return durationSeconds;
     }
 
@@ -114,12 +116,12 @@ public class BFDSearchImpl implements BFDSearch {
 
     public static void summarizeRequestTimes() {
         val jobUuid = BFDClient.BFD_BULK_JOB_ID.get();
-        if (BFDClient.REQUEST_TIMES.get() == null) {
+        if (REQUEST_TIMES.get() == null) {
             log.info("BFD request times not set");
             return;
         }
 
-        val stats = BFDClient.REQUEST_TIMES.get().stream().collect(Collectors.summarizingDouble(Double::doubleValue));
+        val stats = REQUEST_TIMES.get().stream().collect(Collectors.summarizingDouble(Double::doubleValue));
         log.info("BFD request statistics for {};", jobUuid);
         log.info("Average request time: {}", stats.getAverage());
         log.info("Min request time: {}", stats.getMin());
