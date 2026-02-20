@@ -93,9 +93,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
-            // TODO Remove these
-            BFDSearchImpl.summarizeRequestTimes();
-            BFDSearchImpl.REQUEST_TIMES.remove();
         }
         return anyErrors;
     }

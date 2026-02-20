@@ -122,7 +122,8 @@ public class BFDSearchImpl implements BFDSearch {
         }
 
         val stats = REQUEST_TIMES.get().stream().collect(Collectors.summarizingDouble(Double::doubleValue));
-        log.info("BFD request statistics for {};", jobUuid);
+        log.info("BFD request statistics for {} in batch", jobUuid);
+        log.info("Number of requests in batch: {}", stats.getCount());
         log.info("Average request time: {}", stats.getAverage());
         log.info("Min request time: {}", stats.getMin());
         log.info("Max request time: {}", stats.getMax());
