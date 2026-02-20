@@ -37,6 +37,8 @@ public class CoverageV3ImportService {
     )
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws Exception {
         var dbHost = System.getenv("AB2D_DB_HOST");
+        log.info("------ AB2D_DB_HOST" + dbHost);
+
         try (Connection conn = DriverManager.getConnection(dbHost, dbUser, dbPassword)) {
             log.info("------ Connected to postgres");
             long before = queryCount(conn, fqtn);
