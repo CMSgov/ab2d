@@ -92,6 +92,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
+            // TODO Remove these
+            BFDSearchImpl.summarizeRequestTimes();
+            BFDSearchImpl.REQUEST_TIMES.remove();
         }
         return anyErrors;
     }
@@ -212,9 +215,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             logError(request, patientIdentifier, requestStartTime, ex);
             throw ex;
         } finally {
-            // TODO remove temporary code
-            BFDSearchImpl.summarizeRequestTimes();
-            BFDSearchImpl.REQUEST_TIMES.remove();
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
     }
