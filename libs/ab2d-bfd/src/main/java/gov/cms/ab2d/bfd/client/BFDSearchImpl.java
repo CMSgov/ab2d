@@ -17,10 +17,12 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -89,13 +91,41 @@ public class BFDSearchImpl implements BFDSearch {
 
         val start = LocalDateTime.now();
         byte[] responseBytes = getEOBSFromBFD(patientId, request);
-        log.info("searchEOB request completed in {} seconds: {}", duration(start), request.getRequestLine());
+        val duration = duration(start, LocalDateTime.now());
+        log.info("searchEOB request completed in {} seconds: {}", duration, request.getRequestLine());
         return parseBundle(version, responseBytes);
     }
 
-    public static double duration(LocalDateTime start) {
-        val duration = ChronoUnit.MILLIS.between(start, LocalDateTime.now());
-        return duration / 1000.0;
+    private static final ThreadLocal<List<Double>> REQUEST_TIMES = new ThreadLocal<>();
+
+    double duration(LocalDateTime start, LocalDateTime end) {
+        val duration = ChronoUnit.MILLIS.between(start, end);
+        val durationSeconds = duration / 1000.0;
+        addDuration(durationSeconds, REQUEST_TIMES);
+        return durationSeconds;
+    }
+
+    void addDuration(double duration, ThreadLocal<List<Double>> t) {
+        List<Double> list = t.get();
+        if (list == null) {
+            list = new ArrayList<>();
+            t.set(list);
+        }
+        list.add(duration);
+    }
+
+    public static void summarizeRequestTimes() {
+        val jobUuid = BFDClient.BFD_BULK_JOB_ID.get();
+        if (REQUEST_TIMES.get() == null) {
+            log.info("BFD request times not set");
+            return;
+        }
+
+        val stats = REQUEST_TIMES.get().stream().collect(Collectors.summarizingDouble(Double::doubleValue));
+        log.info("BFD request statistics for {};", jobUuid);
+        log.info("Average request time: {}", stats.getAverage());
+        log.info("Min request time: {}", stats.getMin());
+        log.info("Max request time: {}", stats.getMax());
     }
 
     /**
