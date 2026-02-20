@@ -26,9 +26,6 @@
                     <url>${repository_url}/ab2d-maven-virtual</url>
                 </repository>
                 <repository>
-                    <snapshots>
-                        <updatePolicy>always</updatePolicy>
-                    </snapshots>
                     <id>snapshots</id>
                     <name>ab2d-maven-virtual</name>
                     <url>${repository_url}/ab2d-maven-virtual</url>
