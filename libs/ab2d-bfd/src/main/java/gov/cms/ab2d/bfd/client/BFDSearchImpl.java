@@ -114,15 +114,14 @@ public class BFDSearchImpl implements BFDSearch {
         list.add(duration);
     }
 
-    public static void summarizeRequestTimes() {
-        val jobUuid = BFDClient.BFD_BULK_JOB_ID.get();
+    public static void summarizeRequestTimes(String jobUuid) {
         if (REQUEST_TIMES.get() == null) {
             log.info("BFD request times not set");
             return;
         }
 
         val stats = REQUEST_TIMES.get().stream().collect(Collectors.summarizingDouble(Double::doubleValue));
-        log.info("BFD request statistics for {} in batch", jobUuid);
+        log.info("BFD request statistics for {} in batch...", jobUuid);
         log.info("Number of requests in batch: {}", stats.getCount());
         log.info("Average request time: {}", stats.getAverage());
         log.info("Min request time: {}", stats.getMin());
