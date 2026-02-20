@@ -26,6 +26,7 @@
                     <url>${repository_url}/ab2d-maven-virtual</url>
                 </repository>
                 <repository>
+                    <snapshots/>
                     <id>snapshots</id>
                     <name>ab2d-maven-virtual</name>
                     <url>${repository_url}/ab2d-maven-virtual</url>
@@ -41,6 +42,7 @@
                     <url>${repository_url}/ab2d-maven-virtual</url>
                 </pluginRepository>
                 <pluginRepository>
+                    <snapshots/>
                     <id>snapshots</id>
                     <name>ab2d-maven-virtual</name>
                     <url>${repository_url}/ab2d-maven-virtual</url>
