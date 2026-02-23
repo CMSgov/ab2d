@@ -29,7 +29,6 @@ class JobTest {
         job.addJobOutput(new JobOutput());
         job.setSince(job.getSince());
         job.setUntil(job.getUntil());
-        job.setServiceDates(job.getServiceDates());
         job.setSinceSource(job.getSinceSource());
         assertFalse(job.hasJobBeenCancelled());
         job.setStatus(JobStatus.CANCELLED);

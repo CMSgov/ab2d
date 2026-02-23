@@ -11,7 +11,6 @@ import jakarta.validation.constraints.Pattern;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import software.amazon.awssdk.services.sqs.endpoints.internal.Value;
 
 import java.io.File;
 import java.time.OffsetDateTime;
@@ -77,9 +76,6 @@ public class Job {
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime until;
-
-    @Column(columnDefinition = "SERVICE DATETIMES")
-    private List<String> serviceDates;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime expiresAt;

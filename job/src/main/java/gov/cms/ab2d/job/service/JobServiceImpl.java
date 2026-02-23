@@ -63,7 +63,6 @@ public class JobServiceImpl implements JobService {
         job.setProgress(0);
         job.setSince(startJobDTO.getSince());
         job.setUntil(startJobDTO.getUntil());
-        job.setServiceDates(startJobDTO.getServiceDates());
         job.setFhirVersion(startJobDTO.getVersion());
         job.setOrganization(startJobDTO.getOrganization());
 
