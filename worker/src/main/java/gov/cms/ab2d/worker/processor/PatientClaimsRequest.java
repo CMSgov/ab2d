@@ -44,7 +44,7 @@ public class PatientClaimsRequest {
     private final OffsetDateTime untilTime;
 
     /**
-     * Optional datetime that PDP wants data to.
+     * Optional date range related to date of service for a claim.
      */
     @Nullable
     private final List<String> serviceDates;
