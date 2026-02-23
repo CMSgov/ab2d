@@ -51,11 +51,8 @@ locals {
   }, local.parent_env, "https://prod-sbx.fhir.bfd.cmscloud.local")
 
   bfd_url_v3 = lookup({
-    dev     = "https://test.fhirv3.bfd.cmscloud.local"
-    test    = "https://test.fhirv3.bfd.cmscloud.local"
-    sandbox = "https://sandbox.fhirv3.bfd.cmscloud.local"
-    prod    = "https://prod.fhirv3.bfd.cmscloud.local"
-  }, local.parent_env)
+    prod = "https://prod.fhirv3.bfd.cmscloud.local"
+  }, local.parent_env, "https://sandbox.fhirv3.bfd.cmscloud.local")
 
   ab2d_efs_mount                = "/mnt/efs"
   aws_region                    = module.platform.primary_region.name
