@@ -37,11 +37,7 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import javax.annotation.Nullable;
 
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
@@ -202,8 +198,9 @@ class CoverageDriverTest extends JobCleanup {
     @AfterEach
     void cleanup() {
         jobCleanup();
+        coverageDataSetup.cleanup();
+        dataSetup.cleanup();
         processor.shutdown();
-
         propertiesService.updateProperty(WORKER_ENGAGEMENT, IN_GEAR.getSerialValue());
         propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
         contractServiceStub.reset();
@@ -706,7 +703,14 @@ class CoverageDriverTest extends JobCleanup {
 
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
-
+        System.out.println("losoa");
+        System.out.println(contractForCoverageDTO.getContractNumber());
+        Iterator<Contract> it = contractServiceStub.getAllAttestedContracts()
+                .stream()
+                .iterator();
+        while(it.hasNext()){
+            System.out.println(it.next().getContractNumber());
+        }
         Contract temp = contractServiceStub.getContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
         job.setContractNumber(temp.getContractNumber());
 
