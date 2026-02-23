@@ -185,7 +185,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getContractNum());
+            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getServiceDates(), request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {

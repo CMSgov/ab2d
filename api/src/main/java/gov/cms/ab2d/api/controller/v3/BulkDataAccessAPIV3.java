@@ -4,10 +4,6 @@ import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.job.dto.StartJobDTO;
-import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.service.ContractService;
-import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.fhir.FhirVersion;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -27,14 +23,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
+import java.util.List;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.*;
-import static gov.cms.ab2d.api.controller.common.Common.getCurrentUrl;
 import static gov.cms.ab2d.api.util.SwaggerConstants.*;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
-import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.R4V3;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 
@@ -49,14 +43,10 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 public class BulkDataAccessAPIV3 {
     private final JobClient jobClient;
     private final ApiCommon apiCommon;
-    private final PdpClientService pdpClientService;
-    private final ContractService contractService;
 
-    public BulkDataAccessAPIV3(JobClient jobClient, ApiCommon apiCommon, PdpClientService pdpClientService, ContractService contractService) {
+    public BulkDataAccessAPIV3(JobClient jobClient, ApiCommon apiCommon) {
         this.jobClient = jobClient;
         this.apiCommon = apiCommon;
-        this.pdpClientService = pdpClientService;
-        this.contractService = contractService;
     }
 
     @Operation(summary = BULK_EXPORT)
@@ -101,30 +91,12 @@ public class BulkDataAccessAPIV3 {
                     String typeFilter) {
         log.info("Received request to export");
 
-        ArrayList<String> serviceDates = apiCommon.getServiceDates(typeFilter);
-        checkValidCreateJob(request, since, until, resourceTypes, outputFormat, serviceDates);
+        List<String> serviceDates = apiCommon.getServiceDates(typeFilter);
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, until, resourceTypes,
+                outputFormat, R4V3, serviceDates);
 
-        PdpClient pdpClient = pdpClientService.getCurrentClient();
-        String contractNumber = contractService.getContractByContractId(pdpClient.getContractId()).getContractNumber();
-
-        StartJobDTO startJobDTO = createJob(request, contractNumber, since, until, resourceTypes, outputFormat, R4);
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);
         return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V3, (String) request.getAttribute(REQUEST_ID), request);
-    }
-
-    public void checkValidCreateJob(HttpServletRequest request, OffsetDateTime since, OffsetDateTime until, String resourceTypes, String outputFormat, ArrayList<String> serviceDates) {
-        apiCommon.checkIfInMaintenanceMode();
-        apiCommon.checkIfCurrentClientCanAddJob();
-        apiCommon.checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
-        apiCommon.checkSinceTime(since);
-        apiCommon.checkUntilTime(since, until, R4);
-        apiCommon.checkServiceDates(serviceDates);
-    }
-
-    public StartJobDTO createJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
-                                 OffsetDateTime until, String resourceTypes, String outputFormat, FhirVersion version) {
-        PdpClient pdpClient = pdpClientService.getCurrentClient();
-        return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes, getCurrentUrl(request), outputFormat, since, until, version);
     }
 }

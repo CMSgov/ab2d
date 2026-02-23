@@ -44,6 +44,12 @@ public class PatientClaimsRequest {
     private final OffsetDateTime untilTime;
 
     /**
+     * Optional datetime that PDP wants data to.
+     */
+    @Nullable
+    private final List<String> serviceDates;
+
+    /**
      * Organization name of contract that is not case sensitive
      */
     private final String organization;

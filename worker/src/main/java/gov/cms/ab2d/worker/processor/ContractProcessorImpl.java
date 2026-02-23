@@ -375,6 +375,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                     contractData.getContract().getAttestedOn(),
                     job.getSince(),
                     job.getUntil(),
+                    job.getServiceDates(),
                     job.getOrganization(),
                     jobUuid,
                     job.getContractNumber(),

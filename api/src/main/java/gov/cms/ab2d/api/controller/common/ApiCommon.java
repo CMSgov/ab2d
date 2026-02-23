@@ -67,7 +67,7 @@ public class ApiCommon {
     // (Z|[+-]\\d{2}:\\d{2})?: Optional time zone (UTC or offset).
     private static final String SERVICE_DATE_PARAM_REGEX = "^(eq|gt|ge|lt|le|sa|eb|)?(\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2]\\d|3[0-1])(T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?)?)?)$";
 
-    private ContractService contractService;
+    private final ContractService contractService;
 
     public ApiCommon(SQSEventClient eventLogger, JobClient jobClient, PropertiesService propertiesService,
                      PdpClientService pdpClientService, ContractService contractService) {
@@ -125,12 +125,12 @@ public class ApiCommon {
         }
     }
 
-    public ArrayList<String> getServiceDates(String typeFilter) {
-        if (typeFilter == null) {
-            return null;
-        }
-
+    public List<String> getServiceDates(String typeFilter) {
         ArrayList<String> serviceDates = new ArrayList<>();
+
+        if (typeFilter == null) {
+            return serviceDates;
+        }
 
         String decoded = URLDecoder.decode(typeFilter, StandardCharsets.UTF_8);
         String[] typeFilterParts = decoded.split("\\?");
@@ -159,7 +159,7 @@ public class ApiCommon {
         return serviceDates;
     }
 
-    public void checkServiceDates(ArrayList<String> serviceDates) {
+    public void checkServiceDates(List<String> serviceDates) {
         if (serviceDates == null) {
             return;
         }
@@ -226,6 +226,12 @@ public class ApiCommon {
 
     public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
                                            OffsetDateTime until, String resourceTypes, String outputFormat, FhirVersion version) {
+        return checkValidCreateJob(request, contractNumber, since,
+                until, resourceTypes, outputFormat, version, null);
+    }
+
+    public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
+                                           OffsetDateTime until, String resourceTypes, String outputFormat, FhirVersion version, List<String> serviceDates) {
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         contractNumber = checkIfContractAttested(contractService.getContractByContractId(pdpClient.getContractId()), contractNumber);
         checkIfInMaintenanceMode();
@@ -233,8 +239,9 @@ public class ApiCommon {
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
         checkUntilTime(since, until, version);
+        checkServiceDates(serviceDates);
         return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,
-                getCurrentUrl(request), outputFormat, since, until, version);
+                getCurrentUrl(request), outputFormat, since, until, version, serviceDates);
     }
 
     // Validate v3.on is enabled, and contract either starts with 'Z' or is whitelisted for V3
