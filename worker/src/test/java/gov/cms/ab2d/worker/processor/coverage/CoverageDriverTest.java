@@ -703,14 +703,6 @@ class CoverageDriverTest extends JobCleanup {
 
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
-        System.out.println("losoa");
-        System.out.println(contractForCoverageDTO.getContractNumber());
-        Iterator<Contract> it = contractServiceStub.getAllAttestedContracts()
-                .stream()
-                .iterator();
-        while(it.hasNext()){
-            System.out.println(it.next().getContractNumber());
-        }
         Contract temp = contractServiceStub.getContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
         job.setContractNumber(temp.getContractNumber());
 
