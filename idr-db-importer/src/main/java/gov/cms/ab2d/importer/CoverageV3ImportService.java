@@ -58,6 +58,11 @@ public class CoverageV3ImportService {
     }
 
     private int executeImport(Connection conn, String fqtn, String bucket, String key, String region) throws Exception {
+        log.info("------ fqtn " + fqtn);
+        log.info("------ bucket " + bucket);
+        log.info("------ key " + key);
+        log.info("------ region " + region);
+
         try (PreparedStatement ps = conn.prepareStatement(IMPORT_SQL)) {
             ps.setString(1, fqtn);
             ps.setString(2, COLUMNS);
