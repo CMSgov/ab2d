@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller.v3;
 
 import gov.cms.ab2d.api.controller.common.ApiCommon;
+import gov.cms.ab2d.api.controller.common.CheckValidParametersDTO;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.job.dto.StartJobDTO;
@@ -91,9 +92,8 @@ public class BulkDataAccessAPIV3 {
                     String typeFilter) {
         log.info("Received request to export");
 
-        List<String> serviceDates = apiCommon.getServiceDates(typeFilter);
-        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, until, resourceTypes,
-                outputFormat, R4V3, serviceDates);
+        CheckValidParametersDTO params = new CheckValidParametersDTO(resourceTypes, outputFormat, since, until, apiCommon.getServiceDates(typeFilter));
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, R4V3, params);
 
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);

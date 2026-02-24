@@ -226,14 +226,19 @@ public class ApiCommon {
 
     public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
                                            OffsetDateTime until, String resourceTypes, String outputFormat, FhirVersion version) {
-        return checkValidCreateJob(request, contractNumber, since,
-                until, resourceTypes, outputFormat, version, null);
+        CheckValidParametersDTO parameters = new CheckValidParametersDTO( resourceTypes, outputFormat, since, until, null );
+        return checkValidCreateJob( request, contractNumber, version, parameters);
     }
 
-    public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
-                                           OffsetDateTime until, String resourceTypes, String outputFormat, FhirVersion version, List<String> serviceDates) {
+    public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, FhirVersion version, CheckValidParametersDTO parameters) {
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         contractNumber = checkIfContractAttested(contractService.getContractByContractId(pdpClient.getContractId()), contractNumber);
+        OffsetDateTime since = parameters.getSince();
+        OffsetDateTime until = parameters.getUntil();
+        String resourceTypes = parameters.getResourceTypes();
+        String outputFormat = parameters.getOutputFormat();
+        List<String> serviceDates = parameters.getServiceDates();
+
         checkIfInMaintenanceMode();
         checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
