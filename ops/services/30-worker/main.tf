@@ -54,7 +54,6 @@ locals {
     prod = "https://prod.fhirv3.bfd.cmscloud.local"
   }, local.parent_env, "https://sandbox.fhirv3.bfd.cmscloud.local")
 
-
   ab2d_efs_mount                = "/mnt/efs"
   aws_region                    = module.platform.primary_region.name
   bfd_keystore_location         = module.platform.ssm.worker.bfd_keystore_location.value
