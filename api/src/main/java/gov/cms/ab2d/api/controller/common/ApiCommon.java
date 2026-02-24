@@ -65,7 +65,7 @@ public class ApiCommon {
     // (T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?: Optional time component (T + hours, minutes, seconds).
     // \\.\\d+: Optional decimal fraction for seconds.
     // (Z|[+-]\\d{2}:\\d{2})?: Optional time zone (UTC or offset).
-    private static final String SERVICE_DATE_PARAM_REGEX = "^(eq|gt|ge|lt|le|sa|eb|)?(\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2]\\d|3[0-1])(T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?)?)?)$";
+    private static final String SERVICE_DATE_PARAM_REGEX = "^(eq|gt|ge|lt|le|sa|eb)?(\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2]\\d|3[0-1])(T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?)?)?)$";
 
     private final ContractService contractService;
 
