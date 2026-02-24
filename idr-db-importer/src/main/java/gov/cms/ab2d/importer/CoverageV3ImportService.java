@@ -112,10 +112,13 @@ public class CoverageV3ImportService {
             ps.setString(4, bucket);
             ps.setString(5, key);
             ps.setString(6, region);
-
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
-                return rs.getInt(1);
+                String result = rs.getString(1);
+                int spaceIndex = result.indexOf(' ');
+                int rows = Integer.parseInt(result.substring(0, spaceIndex));
+                log.info("Import result: {}", result);
+                return rows;
             }
         }
     }
