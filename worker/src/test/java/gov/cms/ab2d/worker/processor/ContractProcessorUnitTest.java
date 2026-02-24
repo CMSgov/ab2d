@@ -154,7 +154,6 @@ class ContractProcessorUnitTest {
 
         ContractProcessorImpl impl = (ContractProcessorImpl) cut;
         assertFalse(impl.isDone(aggThread, job, false));
-        System.out.println("osloa");
         Path testFinishedDir = Path.of(efsMountTmpDir.toFile().getAbsolutePath(), job, FINISHED);
         Files.createDirectories(testFinishedDir);
         Path testFile = Path.of(testFinishedDir.toString(), "tst.ndjson");
