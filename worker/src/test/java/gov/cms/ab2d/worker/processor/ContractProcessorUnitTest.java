@@ -54,8 +54,6 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi_V3;
 import static java.lang.Boolean.TRUE;
-import static java.util.stream.Collectors.toList;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
