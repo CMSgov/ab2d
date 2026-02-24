@@ -25,10 +25,27 @@ public class CoverageV3ImportService {
     @Value("${spring.datasource.password}")
     private String dbPassword;
 
-    private static final String COLUMNS = "patient_id,contract,year,month,current_mbi";
-    private static final String COPY_OPTIONS = "(format csv, header true, null 'NULL')";
+    private static final String COLUMNS =
+            "patient_id,contract,year,month,current_mbi";
+
+    private static final String COPY_OPTIONS =
+            "(format csv, header true, null 'NULL')";
+
     private static final String IMPORT_SQL =
             "SELECT aws_s3.table_import_from_s3(?, ?, ?, aws_commons.create_s3_uri(?, ?, ?))";
+
+    private static final String CREATE_STAGING_SQL =
+            "CREATE TABLE IF NOT EXISTS %s (LIKE %s INCLUDING DEFAULTS INCLUDING IDENTITY INCLUDING GENERATED)";
+
+    private static final String TRUNCATE_SQL =
+            "TRUNCATE TABLE %s";
+
+    private static final String UPSERT_SQL =
+            "INSERT INTO %s (patient_id, contract, year, month, current_mbi)\n" +
+                    "SELECT patient_id, contract, year, month, current_mbi\n" +
+                    "FROM %s\n" +
+                    "ON CONFLICT (patient_id, contract, year, month, current_mbi)\n" +
+                    "DO NOTHING";
 
     @Retryable(
             retryFor = Exception.class,
@@ -36,33 +53,58 @@ public class CoverageV3ImportService {
             backoff = @Backoff(delay = 1000, multiplier = 2.0)
     )
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws Exception {
-        var dbHost = System.getenv("AB2D_DB_HOST");
-        log.info("------ AB2D_DB_HOST" + dbHost);
-
-        try (Connection conn = DriverManager.getConnection(dbHost, dbUser, dbPassword)) {
-            log.info("------ Connected to postgres");
-            long before = queryCount(conn, fqtn);
-
-            int imported = executeImport(conn, fqtn, bucket, key, region);
-
-            long after = queryCount(conn, fqtn);
-
-            log.info("Import completed: importedRows={}, before={}, after={}", imported, before, after);
+        String stagingFqtn = fqtn + "_staging";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
+            conn.setAutoCommit(false);
+            try {
+                ensureStagingTable(conn, stagingFqtn, fqtn);
+                truncate(conn, stagingFqtn);
+                long before = queryCount(conn, fqtn);
+                int stagedRows = executeImport(conn, stagingFqtn, bucket, key, region);
+                int upsertRows = upsert(conn, fqtn, stagingFqtn);
+                truncate(conn, stagingFqtn);
+                long after = queryCount(conn, fqtn);
+                conn.commit();
+                log.info(
+                        "CoverageV3 import success: stagedRows={}, upsertRows={}, before={}, after={}, source=s3://{}/{}",
+                        stagedRows, upsertRows, before, after, bucket, key
+                );
+            } catch (Exception e) {
+                rollback(conn);
+                log.error(
+                        "CoverageV3 import failed: source=s3://{}/{}, target={}",
+                        bucket, key, fqtn, e
+                );
+                throw e;
+            }
+            conn.setAutoCommit(true);
         }
     }
 
     @Recover
     public void recover(Exception e, String fqtn, String bucket, String key, String region) throws Exception {
-        log.error("Import failed after retries for s3://{}/{} into {}", bucket, key, fqtn, e);
+        log.error(
+                "CoverageV3 import permanently failed after retries: s3://{}/{} → {}",
+                bucket, key, fqtn, e
+        );
         throw e;
     }
 
-    private int executeImport(Connection conn, String fqtn, String bucket, String key, String region) throws Exception {
-        log.info("------ fqtn " + fqtn);
-        log.info("------ bucket " + bucket);
-        log.info("------ key " + key);
-        log.info("------ region " + region);
+    private void ensureStagingTable(Connection conn, String stagingFqtn, String targetFqtn) throws Exception {
+        String sql = String.format(CREATE_STAGING_SQL, stagingFqtn, targetFqtn);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.execute();
+        }
+    }
 
+    private void truncate(Connection conn, String fqtn) throws Exception {
+        String sql = String.format(TRUNCATE_SQL, fqtn);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.execute();
+        }
+    }
+
+    private int executeImport(Connection conn, String fqtn, String bucket, String key, String region) throws Exception {
         try (PreparedStatement ps = conn.prepareStatement(IMPORT_SQL)) {
             ps.setString(1, fqtn);
             ps.setString(2, COLUMNS);
@@ -78,13 +120,27 @@ public class CoverageV3ImportService {
         }
     }
 
+    private int upsert(Connection conn, String targetFqtn, String stagingFqtn) throws Exception {
+        String sql = String.format(UPSERT_SQL, targetFqtn, stagingFqtn);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            return ps.executeUpdate();
+        }
+    }
+
     private long queryCount(Connection conn, String fqtn) throws Exception {
-        String sqlStatement = "SELECT COUNT(*) FROM " + fqtn;
-        try (PreparedStatement ps = conn.prepareStatement(sqlStatement);
+        String sql = "SELECT COUNT(*) FROM " + fqtn;
+        try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             rs.next();
             return rs.getLong(1);
         }
     }
-}
 
+    private void rollback(Connection conn) {
+        try {
+            conn.rollback();
+        } catch (Exception ex) {
+            log.warn("Rollback failed", ex);
+        }
+    }
+}
