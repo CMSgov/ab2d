@@ -35,7 +35,7 @@ import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
-import static gov.cms.ab2d.common.util.PropertyConstants.V3_WHITELISTED_CONTRACTS;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ALLOWLISTED_CONTRACTS;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -89,7 +89,7 @@ public class BulkDataAccessAPIV3IntegrationTests {
         ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
         propertiesService.createProperty(MAINTENANCE_MODE, "false");
         propertiesService.createProperty(V3_ON, "true");
-        propertiesService.createProperty(V3_WHITELISTED_CONTRACTS, VALID_CONTRACT_NUMBER);
+        propertiesService.createProperty(V3_ALLOWLISTED_CONTRACTS, VALID_CONTRACT_NUMBER);
 
     }
 

@@ -86,7 +86,7 @@ public class BulkDataAccessAPIV3 {
             @RequestParam(required = false, name = UNTIL) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             OffsetDateTime until) {
 
-        apiCommon.checkContractHasV3Access();
+        apiCommon.checkContractIsAllowListedForV3();
 
         log.info("Received request to export");
 

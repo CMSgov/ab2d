@@ -63,7 +63,7 @@ public class StatusAPIV3 {
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JobCompletedResponse> getJobStatus(HttpServletRequest request,
             @PathVariable @NotBlank String jobUuid) {
-        apiCommon.checkContractHasV3Access();
+        apiCommon.checkContractIsAllowListedForV3();
         return statusCommon.doStatus(jobUuid, request, API_PREFIX_V3);
     }
 
@@ -79,7 +79,7 @@ public class StatusAPIV3 {
     public ResponseEntity deleteRequest(HttpServletRequest request,
             @PathVariable @NotBlank String jobUuid) {
 
-        apiCommon.checkContractHasV3Access();
+        apiCommon.checkContractIsAllowListedForV3();
         return statusCommon.cancelJob(jobUuid, request);
     }
 }

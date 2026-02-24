@@ -80,7 +80,7 @@ class StatusAPIV3Test {
     ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
     propertiesService.createProperty(MAINTENANCE_MODE, "false");
     propertiesService.createProperty(V3_ON, "true");
-    propertiesService.createProperty(V3_WHITELISTED_CONTRACTS, VALID_CONTRACT_NUMBER);
+    propertiesService.createProperty(V3_ALLOWLISTED_CONTRACTS, VALID_CONTRACT_NUMBER);
   }
 
   @AfterEach

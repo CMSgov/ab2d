@@ -66,7 +66,7 @@ public class FileDownloadAPIV3 {
 
 
         try {
-            apiCommon.checkContractHasV3Access();
+            apiCommon.checkContractIsAllowListedForV3();
             return fileDownloadCommon.downloadFile(sanitizeJobUuid(jobUuid), sanitizeFilename(filename), request, response);
         } catch (Exception e) {
             errorHandler.generateFHIRError(e, request, response);
