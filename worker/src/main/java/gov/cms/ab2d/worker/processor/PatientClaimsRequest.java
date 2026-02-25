@@ -44,12 +44,6 @@ public class PatientClaimsRequest {
     private final OffsetDateTime untilTime;
 
     /**
-     * Optional date range related to date of service for a claim.
-     */
-    @Nullable
-    private final List<String> serviceDates;
-
-    /**
      * Organization name of contract that is not case sensitive
      */
     private final String organization;

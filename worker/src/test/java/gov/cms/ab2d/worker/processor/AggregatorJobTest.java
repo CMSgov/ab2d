@@ -99,7 +99,7 @@ class AggregatorJobTest {
         PatientClaimsRequest request = new PatientClaimsRequest(createCoverageSummaries(10, contract),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
-                null, null, org, job, contract.getContractNumber(), Contract.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
+                null, org, job, contract.getContractNumber(), Contract.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
         ReflectionTestUtils.setField(processor, "earliestDataDate", "01/01/2020");
 
         Future<ProgressTrackerUpdate> future = processor.process(request);

@@ -47,7 +47,7 @@ public class BFDSearchImpl implements BFDSearch {
      */
     @Trace
     @Override
-    public IBaseBundle searchEOB(long patientId, OffsetDateTime since, OffsetDateTime until, List<String> serviceDates, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException {
+    public IBaseBundle searchEOB(long patientId, OffsetDateTime since, OffsetDateTime until, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException {
         String urlLocation = bfdClientVersions.getUrl(version);
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId);
 
@@ -66,11 +66,12 @@ public class BFDSearchImpl implements BFDSearch {
             url.append("&_lastUpdated=le").append(until);
         }
 
-        if (serviceDates != null) {
-            for (String serviceDate : serviceDates) {
-                url.append("&service-date=").append(serviceDate);
-            }
-        }
+        // TODO: uncomment service-date filter
+//        if (serviceDates != null) {
+//            for (String serviceDate : serviceDates) {
+//                url.append("&service-date=").append(serviceDate);
+//            }
+//        }
 
         if (pageSize > 0) {
             url.append("&_count=").append(pageSize);

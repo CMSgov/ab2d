@@ -161,7 +161,6 @@ public class PatientClaimsCollector {
         event.put("contract", claimsRequest.getContractNum());
         event.put("since", since);
         event.put("until", until);
-        event.put("serviceDates", claimsRequest.getServiceDates());
         event.put("jobid", claimsRequest.getJob());
         event.put("bundles", bundles);
         event.put("raweobs", rawEobs);
