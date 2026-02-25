@@ -35,7 +35,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
-import static gov.cms.ab2d.common.util.PropertyConstants.V3_WHITELISTED_CONTRACTS;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ALLOWLISTED_CONTRACTS;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -53,7 +53,7 @@ public class ApiCommon {
     public static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
     public static final String JOB_CANCELLED_MSG = "Job canceled";
     public static final String AB2D_V3_CURRENTLY_DISABLED = "The V3 API is currently unavailable";
-    public static final String AB2D_V3_CONTRACT_NOT_WHITELISTED = "V3 access not enabled for this PDP";
+    public static final String AB2D_V3_CONTRACT_NOT_ALLOWED = "V3 access not enabled for this PDP";
 
     private static final String HTTPS_STRING = "https";
 
@@ -113,7 +113,7 @@ public class ApiCommon {
         }
         if (version.equals(FhirVersion.STU3)) {
             log.error("_until is not available for V1");
-            throw new InvalidClientInputException("The _until parameter is only available with version 2 (FHIR R4) of the API");
+            throw new InvalidClientInputException("The _until parameter is only available with version 2 and version 3 of the API");
         }
         if (since != null && until.isBefore(since)) {
             log.error("Invalid _until time received {}", until);
@@ -249,23 +249,26 @@ public class ApiCommon {
                 getCurrentUrl(request), outputFormat, since, until, version, serviceDates);
     }
 
-    // Validate v3.on is enabled, and contract either starts with 'Z' or is whitelisted for V3
-    public void checkValidCreateJobV3(final String contract) {
+    public void checkContractIsAllowListedForV3() {
+        val pdpClient = pdpClientService.getCurrentClient();
+        val contract = contractService.getContractByContractId(pdpClient.getContractId());
+        val contractNumber = contract.getContractNumber();
+        checkContractIsAllowListedForV3(contractNumber);
+    }
+
+    // Validate v3.on is enabled, and contract either starts with 'Z' or is allowlisted for V3
+    public void checkContractIsAllowListedForV3(final String contract) {
         if (!"true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
             log.info("{} is not enabled", V3_ON);
             throw new EndpointNotAvailableException(AB2D_V3_CURRENTLY_DISABLED);
         }
 
-        if (contract.startsWith("Z")) {
-            return;
-        }
-
-        val whiteListedContracts = propertiesService.getProperty(V3_WHITELISTED_CONTRACTS, "");
-        val contractIsWhitelisted = Arrays.stream(whiteListedContracts.split(","))
+        val allowListedContracts = propertiesService.getProperty(V3_ALLOWLISTED_CONTRACTS, "");
+        val contractIsAllowListed = Arrays.stream(allowListedContracts.split(","))
                 .anyMatch(value -> value.trim().equalsIgnoreCase(contract));
-        if (!contractIsWhitelisted) {
-            log.info("Contract {} is not whitelisted", contract);
-            throw new EndpointNotAvailableException(AB2D_V3_CONTRACT_NOT_WHITELISTED);
+        if (!contractIsAllowListed) {
+            log.info("Contract {} is not allowlisted", contract);
+            throw new EndpointNotAvailableException(AB2D_V3_CONTRACT_NOT_ALLOWED);
         }
     }
 

@@ -90,6 +90,9 @@ public class BulkDataAccessAPIV3 {
             OffsetDateTime until,
             @RequestParam(name = TYPEFILTER, required = false)
                     String typeFilter) {
+      
+        apiCommon.checkContractIsAllowListedForV3();
+      
         log.info("Received request to export");
 
         CheckValidParametersDTO params = new CheckValidParametersDTO(resourceTypes, outputFormat, since, until, apiCommon.getServiceDates(typeFilter));

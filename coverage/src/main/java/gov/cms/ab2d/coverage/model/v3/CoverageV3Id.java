@@ -1,10 +1,7 @@
 package gov.cms.ab2d.coverage.model.v3;
 
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
 

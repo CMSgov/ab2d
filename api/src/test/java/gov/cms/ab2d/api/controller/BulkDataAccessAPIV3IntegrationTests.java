@@ -35,7 +35,7 @@ import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
-import static gov.cms.ab2d.common.util.PropertyConstants.V3_WHITELISTED_CONTRACTS;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ALLOWLISTED_CONTRACTS;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -82,19 +82,19 @@ public class BulkDataAccessAPIV3IntegrationTests {
     public static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
     @BeforeEach
-    public void setup() throws JwtVerificationException {
+    void setup() throws JwtVerificationException {
         testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
         ApiCommon apiCommon = context.getBean(ApiCommon.class);
         ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
         propertiesService.createProperty(MAINTENANCE_MODE, "false");
         propertiesService.createProperty(V3_ON, "true");
-        propertiesService.createProperty(V3_WHITELISTED_CONTRACTS, VALID_CONTRACT_NUMBER);
+        propertiesService.createProperty(V3_ALLOWLISTED_CONTRACTS, VALID_CONTRACT_NUMBER);
 
     }
 
     @AfterEach
-    public void cleanup() {
+    void cleanup() {
         dataSetup.cleanup();
         jobClientMock.cleanupAll();
     }

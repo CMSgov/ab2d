@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
-import static gov.cms.ab2d.common.util.PropertyConstants.V3_WHITELISTED_CONTRACTS;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ALLOWLISTED_CONTRACTS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
@@ -142,31 +142,24 @@ class ApiCommonTest {
     }
 
     @Test
-    void v3TestContractAllowed() {
+    void v3ContractIsAllowListed() {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
-        when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn(null);
-        assertDoesNotThrow(() -> apiCommon.checkValidCreateJobV3("Z1234"));
+        when(propertiesService.getProperty(eq(V3_ALLOWLISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
+        assertDoesNotThrow(() -> apiCommon.checkContractIsAllowListedForV3("S1234"));
+        assertDoesNotThrow(() -> apiCommon.checkContractIsAllowListedForV3("S5555"));
     }
 
     @Test
-    void v3ContractIsWhiteListed() {
-        when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
-        when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
-        assertDoesNotThrow(() -> apiCommon.checkValidCreateJobV3("S1234"));
-        assertDoesNotThrow(() -> apiCommon.checkValidCreateJobV3("S5555"));
-    }
-
-    @Test
-    void v3ContractNotWhiteListed() {
+    void v3ContractNotAllowListed() {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("false");
-        when(propertiesService.getProperty(eq(V3_WHITELISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
-        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkValidCreateJobV3("S9999"));
+        when(propertiesService.getProperty(eq(V3_ALLOWLISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
+        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkContractIsAllowListedForV3("S9999"));
     }
 
     @Test
     void v3NotEnabled() {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("false");
-        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkValidCreateJobV3("Z1234"));
+        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkContractIsAllowListedForV3("Z1234"));
     }
 
 }
