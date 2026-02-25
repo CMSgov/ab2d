@@ -272,8 +272,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             );
 
             return coverageDriver.pageCoverageV3(request);
-        }
-        else {
+        } else {
             val request = new CoveragePagingRequest(
                 eobJobPatientQueuePageSize,
                 null,
@@ -288,8 +287,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private CoveragePagingResult nextPagingResult(CoveragePagingRequest request) {
         if (request.isV3()) {
             return coverageDriver.pageCoverageV3(request);
-        }
-        else {
+        } else {
             return coverageDriver.pageCoverage(request);
         }
     }

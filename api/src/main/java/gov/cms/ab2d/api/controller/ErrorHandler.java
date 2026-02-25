@@ -141,8 +141,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             UsernameNotFoundException.class,
             ClientNotEnabledException.class,
             JwtVerificationException.class,
-            InvalidJobAccessException.class,
-            EndpointNotAvailableException.class
+            InvalidJobAccessException.class
     })
     public ResponseEntity<Void> handleAuthorizationErrors(Exception ex, HttpServletRequest request) {
         HttpStatus status = getErrorResponse(ex.getClass());
@@ -159,6 +158,11 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         eventLogger.sendLogs(responseEvent);
 
         return new ResponseEntity<>(null, null, status);
+    }
+
+    @ExceptionHandler(EndpointNotAvailableException.class)
+    public ResponseEntity<JsonNode> handleEndpointNotAvailable(final Exception e, HttpServletRequest request) throws IOException {
+        return generateFHIRError(e, request);
     }
 
     @ExceptionHandler({InMaintenanceModeException.class})

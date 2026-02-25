@@ -332,7 +332,7 @@ class CoverageDriverUnitTest {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockFalse);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, propertiesService, null, lockWrapper,null, snapshotService);
+        driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, propertiesService, null, lockWrapper,null, snapshotService);
 
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, driver::discoverCoveragePeriods);
         assertTrue(exception.getMessage().contains("could not retrieve lock"));
@@ -352,7 +352,7 @@ class CoverageDriverUnitTest {
         Job job = new Job();
         job.setContractNumber(contract.getContractNumber());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, propertiesService, null, lockWrapper,null, snapshotService);
+        driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, propertiesService, null, lockWrapper,null, snapshotService);
 
         assertThrows(InterruptedException.class, driver::discoverCoveragePeriods);
         assertThrows(InterruptedException.class, driver::queueStaleCoveragePeriods);
@@ -367,7 +367,7 @@ class CoverageDriverUnitTest {
         when(coverageService.coveragePeriodStuckJobs(any())).thenReturn(Collections.emptyList());
         when(coverageService.coveragePeriodNotUpdatedSince(anyInt(), anyInt(), any())).thenReturn(Collections.emptyList());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, null, null, lockWrapper,null, snapshotService);
+        driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, null, null, lockWrapper,null, snapshotService);
 
         ContractDTO contract = new ContractDTO(null, "contractNum", null, null, null, 0, 0);
         Job job = new Job();
@@ -385,7 +385,7 @@ class CoverageDriverUnitTest {
     void failureToPageCausesExceptions(CapturedOutput output) {
         when(coverageService.pageCoverage(any())).thenThrow(RuntimeException.class);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, null, null, null,null, snapshotService);
+        driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, null, null, null,null, snapshotService);
 
         ContractForCoverageDTO contract = new ContractForCoverageDTO();
         contract.setContractNumber("contractNum");
@@ -399,7 +399,7 @@ class CoverageDriverUnitTest {
     @DisplayName("When loading a mapping job exit early if conditions not met")
     @Test
     void loadMappingFailsQuietly() {
-        CoverageDriverImpl driver = spy(new CoverageDriverImpl(null, null,
+        driver = spy(new CoverageDriverImpl(null, null,
                 coverageService, coverageV3Service, propertiesService, coverageProcessor, lockWrapper,null, snapshotService)
         );
 
