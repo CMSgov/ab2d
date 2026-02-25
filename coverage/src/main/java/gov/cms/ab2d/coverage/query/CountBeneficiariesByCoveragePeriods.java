@@ -12,11 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CountBeneficiariesByCoveragePeriods extends CoverageV3BaseQuery {
-
     public CountBeneficiariesByCoveragePeriods(DataSource dataSource) {
         super(dataSource);
     }
-    
+
     private static final String COUNT_BENEFICIARIES_WITHOUT_OPTOUT =
     """
     select count(distinct patient_id) from (

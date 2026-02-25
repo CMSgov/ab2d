@@ -9,7 +9,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
 /**
  * Request to BFD for a single patient's claims matching the provided parameters and requirements.

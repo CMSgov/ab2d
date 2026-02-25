@@ -37,6 +37,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Configuration
 public class OpenAPIConfig {
 
+    private static final String PACKAGES_TO_SCAN = "gov.cms.ab2d.api.controller";
+
     /**
      * Configuration for the whole swagger page
      */
@@ -64,7 +66,7 @@ public class OpenAPIConfig {
     public GroupedOpenApi apiV1() {
         return GroupedOpenApi.builder()
                 .group("V1 - FHIR STU3")
-                .packagesToScan("gov.cms.ab2d.api.controller")
+                .packagesToScan(PACKAGES_TO_SCAN)
                 // Only match /v1/fhir calls
                 .pathsToMatch(API_PREFIX_V1 + FHIR_PREFIX + "/**")
                 // Customize the page with default error responses to authentication and internal errors
@@ -79,7 +81,7 @@ public class OpenAPIConfig {
     public GroupedOpenApi apiV2() {
         return GroupedOpenApi.builder()
                 .group("V2 - FHIR R4")
-                .packagesToScan("gov.cms.ab2d.api.controller")
+                .packagesToScan(PACKAGES_TO_SCAN)
                 // Only match /v2/fhir calls
                 .pathsToMatch(API_PREFIX_V2 + FHIR_PREFIX + "/**")
                 // Customize the page with default error responses to authentication and internal errors
@@ -94,7 +96,7 @@ public class OpenAPIConfig {
     public GroupedOpenApi apiV3() {
         return GroupedOpenApi.builder()
                 .group("V3 - FHIR R4")
-                .packagesToScan("gov.cms.ab2d.api.controller")
+                .packagesToScan(PACKAGES_TO_SCAN)
                 // Only match /v3/fhir calls
                 .pathsToMatch(API_PREFIX_V3 + FHIR_PREFIX + "/**")
                 // Customize the page with default error responses to authentication and internal errors

@@ -7,8 +7,6 @@ import gov.cms.ab2d.coverage.query.CountBeneficiariesByCoveragePeriods;
 import gov.cms.ab2d.coverage.query.GetCoverageMembership;
 import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
-import gov.cms.ab2d.coverage.repository.v3.CoverageV3HistoricalRepository;
-import gov.cms.ab2d.coverage.repository.v3.CoverageV3Repository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,19 +31,10 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     private final DataSource dataSource;
     private final PropertiesService propertiesService;
-    private final CoverageV3Repository coverageV3Repository;
-    private final CoverageV3HistoricalRepository coverageV3HistoricalRepository;
 
-    public CoverageV3ServiceImpl(
-            DataSource dataSource,
-            PropertiesService propertiesService,
-            CoverageV3Repository coverageV3Repository,
-            CoverageV3HistoricalRepository coverageV3HistoricalRepository
-    ) {
+    public CoverageV3ServiceImpl(DataSource dataSource, PropertiesService propertiesService) {
         this.dataSource = dataSource;
         this.propertiesService = propertiesService;
-        this.coverageV3Repository = coverageV3Repository;
-        this.coverageV3HistoricalRepository = coverageV3HistoricalRepository;
     }
 
     public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {

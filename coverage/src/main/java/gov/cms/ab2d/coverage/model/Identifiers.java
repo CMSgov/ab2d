@@ -35,8 +35,8 @@ public class Identifiers {
         this(beneficiaryId, currentMbi, historicMbis, -1L, false);
     }
 
-    public static Identifiers ofV3(long patientIdV3, String currentMbi, LinkedHashSet<String> historicMbis) {
-        return new Identifiers(-1L, currentMbi, historicMbis, patientIdV3, true);
+    public static Identifiers ofV3(long patientIdV3, String currentMbi) {
+        return new Identifiers(-1L, currentMbi, new LinkedHashSet<>(0), patientIdV3, true);
     }
 
     public boolean isV3() {

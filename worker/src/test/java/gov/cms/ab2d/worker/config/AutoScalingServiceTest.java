@@ -66,7 +66,7 @@ public class AutoScalingServiceTest {
     private int originalMaxPoolSize;
 
     @BeforeEach
-    public void init() throws Exception {
+    void init() throws Exception {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
         autoScalingService = new AutoScalingServiceImpl(patientProcessorThreadPool,
                 eobClaimRequestsQueue, propertiesService, 3, 20, 20);
@@ -83,7 +83,7 @@ public class AutoScalingServiceTest {
     }
 
     @AfterEach
-    public void cleanup() {
+    void cleanup() {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
         ((PropertyServiceStub) propertiesService).reset();
         propertiesService.updateProperty(MAINTENANCE_MODE, "false");

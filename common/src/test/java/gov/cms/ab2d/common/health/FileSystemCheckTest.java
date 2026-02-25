@@ -1,6 +1,5 @@
 package gov.cms.ab2d.common.health;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Disabled;
