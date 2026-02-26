@@ -29,9 +29,9 @@ public class SpringBootApp implements ApplicationRunner {
         try {
             importer.runOnce();
             exitCode = 0;
-            log.info("ECS task completed successfully");
+            log.info("IDR import ECS task completed successfully");
         } catch (Exception e) {
-            log.error("IDR S3 import ECS task failed", e);
+            log.error("IDR import ECS task failed", e);
         } finally {
             System.exit(exitCode);
         }
