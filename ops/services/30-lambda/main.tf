@@ -195,7 +195,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_deletion_lambda" {
 #TODO determine if this dependency chain makes sense; if this errors on next creation, we will know that it's bad.
 resource "aws_cloudwatch_log_group" "audit" {
   name              = "/aws/lambda/${aws_lambda_function.audit.function_name}"
-  retention_in_days = 30
+  retention_in_days = 180
   tags = {
     Name = aws_lambda_function.audit.function_name
   }
