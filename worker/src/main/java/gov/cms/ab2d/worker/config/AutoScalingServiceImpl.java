@@ -85,7 +85,7 @@ public class AutoScalingServiceImpl implements AutoScalingService {
 
 
     @Override
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelayString = "${pcp.autoscale.delay:5000}")
     public void autoscale() {
         updateProperties();
 
@@ -147,8 +147,9 @@ public class AutoScalingServiceImpl implements AutoScalingService {
         corePoolSize = getIntProperty(PCP_CORE_POOL_SIZE, corePoolSize);
         maxPoolSize = getIntProperty(PCP_MAX_POOL_SIZE, maxPoolSize);
         scaleToMaxTime = getDoubleProperty(PCP_SCALE_TO_MAX_TIME, scaleToMaxTime);
-
-        this.executor.setMaxPoolSize(maxPoolSize);
+        if (!getBooleanProperty(MAINTENANCE_MODE, false)) {
+            this.executor.setMaxPoolSize(maxPoolSize);
+        }
         this.executor.setCorePoolSize(corePoolSize);
     }
 
