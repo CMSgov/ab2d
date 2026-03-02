@@ -51,11 +51,8 @@ locals {
   }, local.parent_env, "https://prod-sbx.fhir.bfd.cmscloud.local")
 
   bfd_url_v3 = lookup({
-    dev     = "https://test.fhirv3.bfd.cmscloud.local"
-    test    = "https://test.fhirv3.bfd.cmscloud.local"
-    sandbox = "https://sandbox.fhirv3.bfd.cmscloud.local"
-    prod    = "https://prod.fhirv3.bfd.cmscloud.local"
-  }, local.parent_env)
+    prod = "https://prod.fhirv3.bfd.cmscloud.local"
+  }, local.parent_env, "https://sandbox.fhirv3.bfd.cmscloud.local")
 
   ab2d_efs_mount                = "/mnt/efs"
   aws_region                    = module.platform.primary_region.name
@@ -167,6 +164,8 @@ module "service" {
   container_secrets = [
     { name = "AB2D_BFD_KEYSTORE_BASE64", valueFrom = local.bfd_keystore_base64_arn },
     { name = "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom = local.bfd_keystore_password_arn },
+    { name : "AB2D_BFD_TRUSTSTORE_CERT", valueFrom : local.bfd_server_public_cert_arn },
+    { name : "AB2D_BFD_V3_TRUSTSTORE_CERT", valueFrom : local.bfd_v3_server_public_cert_arn },
     { name = "AB2D_DB_DATABASE", valueFrom = local.db_name_arn },
     { name = "AB2D_DB_PASSWORD", valueFrom = local.db_password_arn },
     { name = "AB2D_DB_USER", valueFrom = local.db_username_arn },
