@@ -61,6 +61,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set working directory
+        id: vars
+        run: |
+          if [ "${{ inputs.contracts_service_image }}" != "" ]; then
+            echo "working_dir=ops/services/20-contracts/" >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.events_service_image }}" != "" ]; then
+            echo "working_dir=ops/services/20-events/" >> $GITHUB_OUTPUT
+          else
+            echo "working_dir=ops/services/20-contracts/" >> $GITHUB_OUTPUT
+          fi
+
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
@@ -74,7 +85,7 @@ jobs:
         uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
 
       - name: Tofu init & plan
-        working-directory: ops/services/20-microservices/
+        working-directory: ${{ steps.vars.outputs.working_dir }}
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
@@ -93,6 +104,6 @@ jobs:
 
       - name: Tofu apply
         if: ${{ inputs.apply == true }}
-        working-directory: ops/services/20-microservices/
+        working-directory: ${{ steps.vars.outputs.working_dir }}
         run: |
           tofu apply -input=false tfplan 
