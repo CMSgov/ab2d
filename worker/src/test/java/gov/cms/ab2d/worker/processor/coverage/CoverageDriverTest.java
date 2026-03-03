@@ -74,7 +74,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 // Never run internal coverage processor so this coverage processor runs unimpeded
-@SpringBootTest(properties = "coverage.update.initial.delay=1000000")
+@SpringBootTest(properties = {
+        "coverage.update.initial.delay=1000000",
+        "eob.job.queueing.frequency=1000000"
+})
 @Testcontainers
 @Import({AB2DSQSMockConfig.class, LiquibaseTestConfig.class})
 class CoverageDriverTest extends JobCleanup {
@@ -555,7 +558,7 @@ class CoverageDriverTest extends JobCleanup {
     }
 
     /**
-     * Verify that null is returned if there are no searches, a search there is one and verify that it
+     * Verify that null is returned if there are no searches, a search if there is one and verify that it
      * was deleted after it was searched.
      */
     @DisplayName("Getting another search gets and removes a coverage search specification")
@@ -573,7 +576,7 @@ class CoverageDriverTest extends JobCleanup {
     }
 
     /**
-     * Verify that null is returned if there are no searches, a search there is one and verify that it
+     * Verify that null is returned if there are no searches, a search if there is one and verify that it
      * was deleted after it was searched.
      */
     @DisplayName("Getting a search prioritizes coverage searches for already submitted eob jobs")
