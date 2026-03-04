@@ -18,4 +18,5 @@ CMD java \
     -XX:InitialRAMPercentage=${JVM_INITIAL_RAM} \
     -XX:MinRAMPercentage=${JVM_MIN_RAM} \
     -XX:MaxRAMPercentage=${JVM_MAX_RAM} \
+    -javaagent:/usr/src/ab2d-worker/newrelic/newrelic.jar \
     -jar worker.jar
