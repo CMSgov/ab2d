@@ -577,7 +577,7 @@ public class CoverageServiceRepository {
         CoveragePagingRequest request = null;
         if (nextCursor.isPresent()) {
             Map.Entry<Long, List<CoverageMembership>> nextCursorBeneficiary = nextCursor.get();
-            request = CoveragePagingRequest.ofV3(page.getPageSize(), nextCursorBeneficiary.getKey(), contract, page.getJobStartTime());
+            request = new CoveragePagingRequest(page.getPageSize(), nextCursorBeneficiary.getKey(), contract, page.getJobStartTime());
         }
 
         return new CoveragePagingResult(beneficiarySummaries, request);
