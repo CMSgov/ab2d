@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.controller.common;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
+import gov.cms.ab2d.api.security.EndpointNotAvailableException;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.ContractService;
@@ -16,9 +17,11 @@ import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -27,6 +30,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ALLOWLISTED_CONTRACTS;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -43,6 +48,8 @@ public class ApiCommon {
     public static final String ALLOWABLE_OUTPUT_FORMATS = "application/fhir+ndjson,application/ndjson,ndjson";
     public static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
     public static final String JOB_CANCELLED_MSG = "Job canceled";
+    public static final String AB2D_V3_CURRENTLY_DISABLED = "The V3 API is currently unavailable";
+    public static final String AB2D_V3_CONTRACT_NOT_ALLOWED = "V3 access not enabled for this PDP";
 
     private static final String HTTPS_STRING = "https";
 
@@ -92,7 +99,7 @@ public class ApiCommon {
         }
         if (version.equals(FhirVersion.STU3)) {
             log.error("_until is not available for V1");
-            throw new InvalidClientInputException("The _until parameter is only available with version 2 (FHIR R4) of the API");
+            throw new InvalidClientInputException("The _until parameter is only available with version 2 and version 3 of the API");
         }
         if (since != null && until.isBefore(since)) {
             log.error("Invalid _until time received {}", until);
@@ -165,6 +172,29 @@ public class ApiCommon {
         checkUntilTime(since, until, version);
         return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,
                 getCurrentUrl(request), outputFormat, since, until, version);
+    }
+
+    public void checkContractIsAllowListedForV3() {
+        val pdpClient = pdpClientService.getCurrentClient();
+        val contract = contractService.getContractByContractId(pdpClient.getContractId());
+        val contractNumber = contract.getContractNumber();
+        checkContractIsAllowListedForV3(contractNumber);
+    }
+
+    // Validate v3.on is enabled, and contract either starts with 'Z' or is allowlisted for V3
+    public void checkContractIsAllowListedForV3(final String contract) {
+        if (!"true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
+            log.info("{} is not enabled", V3_ON);
+            throw new EndpointNotAvailableException(AB2D_V3_CURRENTLY_DISABLED);
+        }
+
+        val allowListedContracts = propertiesService.getProperty(V3_ALLOWLISTED_CONTRACTS, "");
+        val contractIsAllowListed = Arrays.stream(allowListedContracts.split(","))
+                .anyMatch(value -> value.trim().equalsIgnoreCase(contract));
+        if (!contractIsAllowListed) {
+            log.info("Contract {} is not allowlisted", contract);
+            throw new EndpointNotAvailableException(AB2D_V3_CONTRACT_NOT_ALLOWED);
+        }
     }
 
     protected String checkIfContractAttested(Contract contract, String contractNumber) {

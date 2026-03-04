@@ -29,7 +29,8 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
+import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -72,16 +73,18 @@ class StatusAPIV3Test {
   private String token;
 
   @BeforeEach
-  public void setup() throws Exception {
+  void setup() throws Exception {
     token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     testUtil.turnMaintenanceModeOff();
     ApiCommon apiCommon = context.getBean(ApiCommon.class);
     ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
     propertiesService.createProperty(MAINTENANCE_MODE, "false");
+    propertiesService.createProperty(V3_ON, "true");
+    propertiesService.createProperty(V3_ALLOWLISTED_CONTRACTS, VALID_CONTRACT_NUMBER);
   }
 
   @AfterEach
-  public void cleanup() {
+  void cleanup() {
     dataSetup.cleanup();
     jobClientMock.cleanupAll();
   }

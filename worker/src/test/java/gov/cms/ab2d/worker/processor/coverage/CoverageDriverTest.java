@@ -7,6 +7,7 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.coverage.service.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
@@ -112,6 +113,9 @@ class CoverageDriverTest extends JobCleanup {
     private CoverageService coverageService;
 
     @Autowired
+    private CoverageV3Service coverageV3Service;
+
+    @Autowired
     private PdpClientService pdpClientService;
 
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
@@ -192,7 +196,7 @@ class CoverageDriverTest extends JobCleanup {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient, snapshotService);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractToContractCoverageMapping, snapshotService);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, coverageV3Service, propertiesService, processor, searchLock, contractToContractCoverageMapping, snapshotService);
     }
 
     @AfterEach

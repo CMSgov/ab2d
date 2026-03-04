@@ -14,6 +14,9 @@ import java.util.List;
 import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 
 public class CapabilityStatementR4 {
+    private CapabilityStatementR4() {
+    }
+
     public static CapabilityStatement populateCS(String server) {
         final String oauthString = "OAuth";
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");

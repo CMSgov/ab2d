@@ -22,7 +22,7 @@ class ErrorHandlerTest {
     MockHttpServletRequest request;
     MockHttpServletResponse response;
 
-    String expected_no_job = """
+    static final String EXPECTED_NO_JOB = """
             {
               "resourceType": "OperationOutcome",
               "issue": [
@@ -37,7 +37,7 @@ class ErrorHandlerTest {
             }
             """;
 
-    String expected_invalid = """
+    static final String EXPECTED_INVALID = """
                 {
                   "resourceType": "OperationOutcome",
                   "issue": [
@@ -70,7 +70,7 @@ class ErrorHandlerTest {
 
         assertEquals(404, response.getStatus());
         assertJsonEquals(
-                expected_no_job,
+                EXPECTED_NO_JOB,
                 response.getContentAsString());
     }
 
@@ -82,7 +82,7 @@ class ErrorHandlerTest {
         assertEquals(404, response.getStatus());
 
         assertJsonEquals(
-                expected_no_job,
+                EXPECTED_NO_JOB,
                 response.getContentAsString());
     }
 
@@ -95,7 +95,7 @@ class ErrorHandlerTest {
         assertEquals(500, response.getStatus());
 
         assertJsonEquals(
-                expected_invalid,
+                EXPECTED_INVALID,
                 response.getContentAsString());
     }
 
@@ -107,7 +107,7 @@ class ErrorHandlerTest {
         assertEquals(500, response.getStatus());
 
         assertJsonEquals(
-                expected_invalid,
+                EXPECTED_INVALID,
                 response.getContentAsString());
     }
 
