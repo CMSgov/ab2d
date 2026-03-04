@@ -297,7 +297,7 @@ module "contracts_service" {
 
   load_balancers = [{
     target_group_arn = aws_lb_target_group.contracts.arn
-    container_name   = "contracts-service-container"
+    container_name   = "contracts"
     container_port   = 8070
 
   }]
