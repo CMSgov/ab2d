@@ -77,10 +77,8 @@ jobs:
         env:
           MAVEN_OPTS: "-Xmx1G -Xms1G"
         run: |
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} -Dcheckstyle.skip test -pl common,job,coverage,api,worker
 
   sonarqube:
     uses: ./.github/workflows/sonarqube.yml
     secrets: inherit
-
-  

@@ -71,13 +71,13 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         if (job.getFhirVersion() == FhirVersion.STU3 && job.getUntil() != null) {
-            log.warn("JobPreProcessorImpl > preprocess: job FAILED because the _until parameter is only available with version 2 (FHIR R4).");
+            log.warn("JobPreProcessorImpl > preprocess: job FAILED because the _until parameter is only available with version 2 and version 3 of the API");
 
             eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
-                    + "failed because the _until parameter is only available with version 2 (FHIR R4)"), PUBLIC_LIST);
+                    + "failed because the _until parameter is only available with version 2 and version 3 of the API"), PUBLIC_LIST);
 
             job.setStatus(FAILED);
-            job.setStatusMessage("failed because the _until parameter is only available with version 2 (FHIR R4).");
+            job.setStatusMessage("failed because the _until parameter is only available with version 2 and version 3 of the API.");
 
             jobRepository.save(job);
             return job;
@@ -127,7 +127,11 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         try {
-            if (!coverageDriver.isCoverageAvailable(job, contract)) {
+            final boolean isCoverageAvailable = (job.getFhirVersion() == FhirVersion.R4V3)
+                ? coverageDriver.isCoverageAvailableV3(job, contract)
+                : coverageDriver.isCoverageAvailable(job, contract);
+
+            if (!isCoverageAvailable) {
                 log.info("coverage metadata is not up to date so job will not be started");
                 return job;
             }
