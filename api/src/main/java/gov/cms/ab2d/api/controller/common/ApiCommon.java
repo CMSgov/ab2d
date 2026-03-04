@@ -58,13 +58,13 @@ public class ApiCommon {
     private static final String HTTPS_STRING = "https";
 
     // regex for matching a FHIR DateTime search parameter:
-    // (eq|gt|ge|lt|le|sa|eb)?: An optional group matching one of the specific two-letter operator codes (equal, greater than, less than, etc.).
-    // \\d{4}: Matches 4 digit year (YYYY)
-    // (-(0[1-9]|1[0-2]) ... )?: Optional month (MM).
-    // (-(0[1-9]|[1-2]\\d|3[0-1]) ... )?: Optional day (DD).
-    // (T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?: Optional time component (T + hours, minutes, seconds).
-    // \\.\\d+: Optional decimal fraction for seconds.
-    // (Z|[+-]\\d{2}:\\d{2})?: Optional time zone (UTC or offset).
+    // - (eq|gt|ge|lt|le|sa|eb)?: An optional group matching one of the specific two-letter operator codes (equal, greater than, less than, etc.).
+    // -  \\d{4}: Matches 4 digit year (YYYY)
+    // - (-(0[1-9]|1[0-2]) ... )?: Optional month (MM).
+    // - (-(0[1-9]|[1-2]\\d|3[0-1]) ... )?: Optional day (DD).
+    // - (T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?: Optional time component (T + hours, minutes, seconds).
+    // - \\.\\d+: Optional decimal fraction for seconds.
+    // - (Z|[+-]\\d{2}:\\d{2})?: Optional time zone (UTC or offset).
     // Simplified version of this regex, with the added match on search param prefix: https://hl7.org/fhir/R4/datatypes.html#dateTime
     private static final String SERVICE_DATE_PARAM_REGEX = "^(eq|gt|ge|lt|le|sa|eb)?(\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2]\\d|3[0-1])(T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?)?)?)$"; // NOSONAR
 

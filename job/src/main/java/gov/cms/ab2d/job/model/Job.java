@@ -77,6 +77,8 @@ public class Job {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime until;
 
+    private List<String> serviceDates;
+
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime expiresAt;
 

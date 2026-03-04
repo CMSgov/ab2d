@@ -43,6 +43,12 @@ public class PatientClaimsRequest {
     private final OffsetDateTime untilTime;
 
     /**
+     * Optional datetime filter for date of service.
+     */
+    @Nullable
+    private final List<String> serviceDates;
+
+    /**
      * Organization name of contract that is not case sensitive
      */
     private final String organization;

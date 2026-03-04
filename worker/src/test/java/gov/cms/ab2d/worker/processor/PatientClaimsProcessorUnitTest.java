@@ -114,7 +114,7 @@ class PatientClaimsProcessorUnitTest {
                 null, List.of(TestUtil.getOpenRange()));
         coverageSummaries.add(fileSummary);
 
-        request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, null, "client", "job",
+        request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, null, null, "client", "job",
                 CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
     }
 
@@ -150,7 +150,7 @@ class PatientClaimsProcessorUnitTest {
 
         assertEquals(3, bundle1.getEntry().size());
 
-        PatientClaimsRequest request2 = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, LATER_ATT_DATE, null, "client", "job",
+        PatientClaimsRequest request2 = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, LATER_ATT_DATE, null, null, "client", "job",
                 CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, request2.getAttTime(), null, contractDTO.getContractNumber())).thenReturn(bundle1);
 
@@ -234,7 +234,7 @@ class PatientClaimsProcessorUnitTest {
 
         OffsetDateTime sinceDate = EARLY_ATT_DATE.plusDays(1);
 
-        request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, sinceDate, null,"client", "job",
+        request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, sinceDate, null, null, "client", "job",
                 CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
@@ -251,7 +251,7 @@ class PatientClaimsProcessorUnitTest {
         // Override default behavior of setup
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
-        request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, null, null, "client", "job",
+        request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, null, null, null, "client", "job",
                 CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
@@ -268,7 +268,7 @@ class PatientClaimsProcessorUnitTest {
         // Override default behavior of setup
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
-        request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, EARLY_SINCE_DATE, null,"client", "job",
+        request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, EARLY_SINCE_DATE, null, null, "client", "job",
                 CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
