@@ -179,3 +179,5 @@ databaseChangeLog:
       file: db/changelog/v2025/update_coverage_mbi_sync_proc.sql
   - include:
       file: db/changelog/v2025/add_v3_property.sql
+  - include:
+      file: db/changelog/v2025/add_v3_allow_list_property.sql
