@@ -13,8 +13,8 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,7 +42,7 @@ public class WorkerDataSetup {
         domainObjects.add(object);
     }
 
-    Random randomGenerator = new Random();
+    AtomicLong contractIdCounter = new AtomicLong(20000L);
 
     public void cleanup() {
 
@@ -96,7 +96,7 @@ public class WorkerDataSetup {
         contract.setContractNumber(contractNumber);
         contract.setAttestedOn(attestedOn);
         queueForCleanup(contract);
-        contract.setId(randomGenerator.nextLong(200L, 400L));
+        contract.setId(contractIdCounter.getAndIncrement());
         return contract;
     }
 }
