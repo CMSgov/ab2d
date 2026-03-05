@@ -7,8 +7,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,17 +28,13 @@ public class SNSConfig {
     public SnsClient amazonSNS() throws URISyntaxException {
         log.info("Localstack url " + url);
         // only use the injected url locally, let aws figure itself out when deployed
-        if ((url + "").contains("localhost")) {
-            return SnsClient.builder()
-                    .endpointOverride(new URI(url))
-                    .credentialsProvider(StaticCredentialsProvider.create(
-                            AwsBasicCredentials.create("test", "test")))
-                    .region(Region.US_EAST_1)
-                    .build();
-        }
-        return SnsClient.builder()
-                .region(Region.US_EAST_1)
-                .build();
+        return ((url + "").contains("localhost")
+                        ? SnsClient.builder()
+                        .endpointOverride(new URI(url))
+                        .region(Region.US_EAST_1)
+                        : SnsClient.builder()
+                        .region(Region.US_EAST_1)
+                ).build();
     }
 
     @Bean
