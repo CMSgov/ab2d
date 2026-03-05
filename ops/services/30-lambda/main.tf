@@ -32,7 +32,7 @@ locals {
     common        = "/ab2d/${local.env}/common"
     core          = "/ab2d/${local.env}/core"
     eft           = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
-    microservices = "/ab2d/${local.env}/microservices"
+    microservices = "/ab2d/${local.env}/contracts"
     webhooks      = "/ab2d/mgmt/slack-webhooks"
   }
 
