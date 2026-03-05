@@ -37,11 +37,7 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import javax.annotation.Nullable;
 
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
@@ -78,7 +74,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 // Never run internal coverage processor so this coverage processor runs unimpeded
-@SpringBootTest(properties = "coverage.update.initial.delay=1000000")
+@SpringBootTest(properties = {
+        "coverage.update.initial.delay=1000000",
+        "eob.job.queueing.frequency=1000000"
+})
 @Testcontainers
 @Import({AB2DSQSMockConfig.class, LiquibaseTestConfig.class})
 class CoverageDriverTest extends JobCleanup {
@@ -203,10 +202,8 @@ class CoverageDriverTest extends JobCleanup {
     void cleanup() {
         jobCleanup();
         processor.shutdown();
-
         coverageDataSetup.cleanup();
         dataSetup.cleanup();
-
         propertiesService.updateProperty(WORKER_ENGAGEMENT, IN_GEAR.getSerialValue());
         propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
         contractServiceStub.reset();
@@ -561,7 +558,7 @@ class CoverageDriverTest extends JobCleanup {
     }
 
     /**
-     * Verify that null is returned if there are no searches, a search there is one and verify that it
+     * Verify that null is returned if there are no searches, a search if there is one and verify that it
      * was deleted after it was searched.
      */
     @DisplayName("Getting another search gets and removes a coverage search specification")
@@ -579,7 +576,7 @@ class CoverageDriverTest extends JobCleanup {
     }
 
     /**
-     * Verify that null is returned if there are no searches, a search there is one and verify that it
+     * Verify that null is returned if there are no searches, a search if there is one and verify that it
      * was deleted after it was searched.
      */
     @DisplayName("Getting a search prioritizes coverage searches for already submitted eob jobs")
@@ -624,7 +621,6 @@ class CoverageDriverTest extends JobCleanup {
     @DisplayName("Do not start an eob job if any relevant coverage period is queued for an update")
     @Test
     void availableCoverageWhenPeriodSubmitted() {
-
         Job job = new Job();
         job.setContractNumber(contractForCoverageDTO.getContractNumber());
         job.setCreatedAt(OffsetDateTime.now());
@@ -710,7 +706,6 @@ class CoverageDriverTest extends JobCleanup {
 
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
-
         Contract temp = contractServiceStub.getContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
         job.setContractNumber(temp.getContractNumber());
 
@@ -745,7 +740,6 @@ class CoverageDriverTest extends JobCleanup {
     @DisplayName("Number of beneficiaries to process calculation works")
     @Test
     void numberOfBeneficiariesToProcess() {
-
         // Override BeforeEach method settings to make this test work for a smaller period of time
         contract.setAttestedOn(OffsetDateTime.now().minus(1, ChronoUnit.SECONDS));
         contractServiceStub.updateContract(contract);

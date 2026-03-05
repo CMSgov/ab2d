@@ -14,7 +14,6 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.toList;
 
@@ -44,7 +43,7 @@ public class DataSetup {
 
     private final Set<Object> domainObjects = new HashSet<>();
 
-    Random randomGenerator = new Random();
+    private static final AtomicLong contractIdCounter = new AtomicLong(10000L);
 
     public void queueForCleanup(Object object) {
         domainObjects.add(object);
@@ -105,7 +104,7 @@ public class DataSetup {
         contract.setAttestedOn(attestedOn);
         contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);
-        contract.setId(randomGenerator.nextLong(200L, 400L));
+        contract.setId(contractIdCounter.getAndIncrement());
 
         contractService.updateContract(contract);
         queueForCleanup(contract);
