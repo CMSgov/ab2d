@@ -28,12 +28,12 @@ locals {
   service      = "lambda"
 
   ssm_root_map = {
-    artifactory   = "/ab2d/mgmt/artifactory" #FIXME: Standardize this
-    common        = "/ab2d/${local.env}/common"
-    core          = "/ab2d/${local.env}/core"
-    eft           = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
-    microservices = "/ab2d/${local.env}/microservices"
-    webhooks      = "/ab2d/mgmt/slack-webhooks"
+    artifactory = "/ab2d/mgmt/artifactory" #FIXME: Standardize this
+    common      = "/ab2d/${local.env}/common"
+    core        = "/ab2d/${local.env}/core"
+    eft         = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
+    contracts   = "/ab2d/${local.env}/contracts"
+    webhooks    = "/ab2d/mgmt/slack-webhooks"
   }
 
   benv = lookup({
@@ -60,7 +60,7 @@ locals {
   db_password                     = module.platform.ssm.core.database_password.value
   db_username                     = module.platform.ssm.core.database_user.value
   slack_webhook_ab2d_slack_alerts = module.platform.ssm.webhooks.ab2d-slack-alerts.value
-  contracts_service_url           = module.platform.ssm.microservices.url.value
+  contracts_service_url           = module.platform.ssm.contracts.url.value
 
   microservices_lb = data.aws_security_group.microservices_lb.id
   cloudfront_id    = data.aws_ec2_managed_prefix_list.cloudfront.id

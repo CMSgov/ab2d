@@ -62,19 +62,6 @@ module "cluster" {
   platform = module.platform
 }
 
-# Chatbot Guardrail Policy
-# FIXME No idea where the chatbot/amazonq resources are to be defined
-resource "aws_iam_policy" "chatbot_guardrail_policy" {
-  name = "${local.service_prefix}-chatbot-guardrail-policy"
-  path = "/delegatedadmin/developer/"
-  policy = templatefile("${path.module}/templates/config/iam/chatbot_policy.json",
-    {
-      aws_account_number = local.aws_account_number
-      role_name          = data.aws_iam_role.task_execution_role.id
-    }
-  )
-}
-
 # Eventbridge
 resource "aws_cloudwatch_event_rule" "this" {
   name          = "${local.service_prefix}-${local.service}-task-monitoring-rule"
@@ -297,7 +284,7 @@ module "contracts_service" {
 
   load_balancers = [{
     target_group_arn = aws_lb_target_group.contracts.arn
-    container_name   = "contracts-service-container"
+    container_name   = local.service
     container_port   = 8070
 
   }]
