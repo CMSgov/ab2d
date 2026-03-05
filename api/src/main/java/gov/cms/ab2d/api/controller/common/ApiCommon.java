@@ -16,8 +16,12 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.dto.StartJobDTO;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +56,17 @@ public class ApiCommon {
     public static final String AB2D_V3_CONTRACT_NOT_ALLOWED = "V3 access not enabled for this PDP";
 
     private static final String HTTPS_STRING = "https";
+
+    // regex for matching a FHIR DateTime search parameter:
+    // - (eq|gt|ge|lt|le|sa|eb)?: An optional group matching one of the specific two-letter operator codes (equal, greater than, less than, etc.).
+    // -  \\d{4}: Matches 4 digit year (YYYY)
+    // - (-(0[1-9]|1[0-2]) ... )?: Optional month (MM).
+    // - (-(0[1-9]|[1-2]\\d|3[0-1]) ... )?: Optional day (DD).
+    // - (T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?: Optional time component (T + hours, minutes, seconds).
+    // - \\.\\d+: Optional decimal fraction for seconds.
+    // - (Z|[+-]\\d{2}:\\d{2})?: Optional time zone (UTC or offset).
+    // Simplified version of this regex, with the added match on search param prefix: https://hl7.org/fhir/R4/datatypes.html#dateTime
+    private static final String SERVICE_DATE_PARAM_REGEX = "^(eq|gt|ge|lt|le|sa|eb)?(\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2]\\d|3[0-1])(T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?)?)?)$"; // NOSONAR
 
     private ContractService contractService;
 
@@ -111,6 +126,53 @@ public class ApiCommon {
         }
     }
 
+    public List<String> getServiceDates(String typeFilter) {
+        ArrayList<String> serviceDates = new ArrayList<>();
+
+        if (typeFilter == null) {
+            return serviceDates;
+        }
+
+        String decoded = URLDecoder.decode(typeFilter, StandardCharsets.UTF_8);
+        String[] typeFilterParts = decoded.split("\\?");
+        if (typeFilterParts.length != 2) {
+            throw new InvalidClientInputException("Invalid _typeFilter parameter");
+        }
+
+        String resourceType = typeFilterParts[0];
+        String subquery = typeFilterParts [1];
+        if (!resourceType.equals("ExplanationOfBenefit")) {
+            throw new InvalidClientInputException("The _typeFilter parameter must be for the ExplanationOfBenefit resource");
+        }
+
+        String[] paramList = subquery.split("&");
+        for ( String paramPair : paramList ) {
+            String[] keyValue = paramPair.split("=");
+            String paramName = keyValue[0];
+            String paramValue = keyValue[1];
+
+            if (!paramName.equals("service-date")) {
+                throw new InvalidClientInputException("The _typeFilter subquery must be for the service-type parameter");
+            }
+
+            serviceDates.add(paramValue);
+        }
+        return serviceDates;
+    }
+
+    public void checkServiceDates(List<String> serviceDates) {
+        if (serviceDates == null || serviceDates.isEmpty()) {
+            return;
+        }
+
+        for (String serviceDateParam : serviceDates) {
+            if (!serviceDateParam.matches(SERVICE_DATE_PARAM_REGEX)) {
+                log.error("Invalid service-date received {}", serviceDateParam);
+                throw new InvalidClientInputException("invalid service-date parameter: " + serviceDateParam);
+            }
+        }
+    }
+
     public void checkIfInMaintenanceMode() {
         if (propertiesService.isToggleOn(PropertyConstants.MAINTENANCE_MODE, false)) {
             throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
@@ -163,15 +225,27 @@ public class ApiCommon {
 
     public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
                                            OffsetDateTime until, String resourceTypes, String outputFormat, FhirVersion version) {
+        CheckValidParametersDTO parameters = new CheckValidParametersDTO( resourceTypes, outputFormat, since, until, null );
+        return checkValidCreateJob( request, contractNumber, version, parameters);
+    }
+
+    public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, FhirVersion version, CheckValidParametersDTO parameters) {
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         contractNumber = checkIfContractAttested(contractService.getContractByContractId(pdpClient.getContractId()), contractNumber);
+        OffsetDateTime since = parameters.getSince();
+        OffsetDateTime until = parameters.getUntil();
+        String resourceTypes = parameters.getResourceTypes();
+        String outputFormat = parameters.getOutputFormat();
+        List<String> serviceDates = parameters.getServiceDates();
+
         checkIfInMaintenanceMode();
         checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
         checkUntilTime(since, until, version);
+        checkServiceDates(serviceDates);
         return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,
-                getCurrentUrl(request), outputFormat, since, until, version);
+                getCurrentUrl(request), outputFormat, since, until, version, serviceDates);
     }
 
     public void checkContractIsAllowListedForV3() {

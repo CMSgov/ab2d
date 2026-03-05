@@ -177,6 +177,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Guarantee that since and until dates provided with job don't violate AB2D requirements
         OffsetDateTime sinceTime = getSinceTime(request);
         OffsetDateTime untilTime = getUntilTime(request, sinceTime);
+        List<String> serviceDates = request.getServiceDates();
 
         try {
 
@@ -184,7 +185,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getContractNum());
+            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {

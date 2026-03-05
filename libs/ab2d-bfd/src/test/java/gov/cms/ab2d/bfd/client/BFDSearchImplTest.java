@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
@@ -26,6 +27,7 @@ class BFDSearchImplTest {
     private static final int PATIENT_ID = 1;
     private static final OffsetDateTime SINCE = OffsetDateTime.now();
     private static final OffsetDateTime UNTIL = OffsetDateTime.now();
+    private static final List<String> SERVICE_DATES = List.of("gt2025-01-01")
     private static final int PAGE_SIZE = 10;
     private static final String BULK_JOB_ID = "bulkJobId";
     private static final FhirVersion VERSION = FhirVersion.R4;
@@ -88,7 +90,7 @@ class BFDSearchImplTest {
         // Business logic & assertion(s)
         assertThrows(
                 RuntimeException.class,
-                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
+                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, SERVICE_DATES, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
         );
     }
 
@@ -104,7 +106,7 @@ class BFDSearchImplTest {
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
 
         // Business logic & assertion(s)
-        IBaseBundle result = bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM);
+        IBaseBundle result = bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, SERVICE_DATES, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM);
         assertNotNull(result);
     }
 
@@ -120,7 +122,7 @@ class BFDSearchImplTest {
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
 
         // Business logic & assertion(s)
-        IBaseBundle result = bfdSearchImpl.searchEOB(PATIENT_ID, null, null, 0, BULK_JOB_ID, VERSION, CONTRACT_NUM);
+        IBaseBundle result = bfdSearchImpl.searchEOB(PATIENT_ID, null, null, null, 0, BULK_JOB_ID, VERSION, CONTRACT_NUM);
         assertNotNull(result);
     }
 
@@ -138,7 +140,7 @@ class BFDSearchImplTest {
         // Business logic & assertion(s)
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
+                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, SERVICE_DATES, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
         );
     }
 
@@ -156,7 +158,7 @@ class BFDSearchImplTest {
         // Business logic & assertion(s)
         assertThrows(
                 RuntimeException.class,
-                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
+                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, SERVICE_DATES, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
         );
     }
 
