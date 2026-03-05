@@ -24,9 +24,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 import software.amazon.awssdk.services.sqs.model.SqsException;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+
 import java.net.URI;
 
 @Import(SqsBootstrapConfiguration.class)
@@ -82,10 +80,8 @@ public class SQSConfig {
     public SqsAsyncClient amazonSQSAsync() {
         log.info("Localstack url " + url);
         if (url != null) {
-            AwsCredentialsProvider localCreds = StaticCredentialsProvider.create(
-                    AwsBasicCredentials.create("test","test"));
             return createQueue(SqsAsyncClient.builder()
-                    .credentialsProvider(localCreds)
+                    .credentialsProvider(DefaultCredentialsProvider.builder().build())
                     .endpointOverride(URI.create(url))
                     .region(Region.US_EAST_1)
                     .build());
