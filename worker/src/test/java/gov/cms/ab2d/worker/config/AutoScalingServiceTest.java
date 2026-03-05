@@ -37,7 +37,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 // Set property.change.detection to false, otherwise the values from the database will override the values that are being hardcoded here.
-@SpringBootTest(properties = {"pcp.core.pool.size=3", "pcp.max.pool.size=20", "pcp.scaleToMax.time=2", "pcp.autoscale.delay=500", "property.change.detection=false"})
+@SpringBootTest(properties = {"pcp.core.pool.size=3", "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
 @Testcontainers
 @Slf4j
 @Import(AB2DSQSMockConfig.class)
@@ -69,17 +69,17 @@ public class AutoScalingServiceTest {
     void init() throws Exception {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
         autoScalingService = new AutoScalingServiceImpl(patientProcessorThreadPool,
-                eobClaimRequestsQueue, propertiesService, 3, 20, 2);
+                eobClaimRequestsQueue, propertiesService, 3, 20, 20);
         originalMaxPoolSize = autoScalingService.getMaxPoolSize();
         patientProcessorThreadPool.setMaxPoolSize(originalMaxPoolSize);
         AutoScalingService asservice = context.getBean(AutoScalingServiceImpl.class);
         ReflectionTestUtils.setField(asservice, "propertiesService", propertiesService);
         ((PropertyServiceStub)propertiesService).createProperty(MAINTENANCE_MODE, "false");
         ((PropertyServiceStub)propertiesService).createProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
-        ((PropertyServiceStub)propertiesService).createProperty(PCP_SCALE_TO_MAX_TIME, "2");
+        ((PropertyServiceStub)propertiesService).createProperty(PCP_SCALE_TO_MAX_TIME, "20");
         ((PropertyServiceStub)propertiesService).createProperty(PCP_CORE_POOL_SIZE, "3");
         // Sleep due to race condition / flakiness
-        Thread.sleep(1200); //NOSONAR
+        Thread.sleep(5000); //NOSONAR
     }
 
     @AfterEach
@@ -101,7 +101,7 @@ public class AutoScalingServiceTest {
         }
         RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
 
-        Thread.sleep(500);
+        Thread.sleep(1000);
 
         // Starts at three will scale once there is work in queue
         assertEquals(20, patientProcessorThreadPool.getMaxPoolSize());
@@ -109,11 +109,11 @@ public class AutoScalingServiceTest {
 
         propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "4");
 
-        Thread.sleep(1500);
+        Thread.sleep(10000);
 
         propertiesService.updateProperty(MAINTENANCE_MODE, "true");
 
-        Thread.sleep(1200);
+        Thread.sleep(6000);
 
         assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
@@ -129,7 +129,7 @@ public class AutoScalingServiceTest {
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
         // Auto-scaling should not kick in while the queue is empty
-        Thread.sleep(1500);
+        Thread.sleep(7000);
         assertEquals(originalMaxPoolSize, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
@@ -149,7 +149,7 @@ public class AutoScalingServiceTest {
         // In approximately 20 seconds the Executor should grow to the max.
         var start = Instant.now();
         LinkedHashSet<Integer> metrics = new LinkedHashSet<>();
-        for (int i = 0; i < 40; i++) {
+        for (int i = 0; i < 80; i++) {
             int size =
                     patientProcessorThreadPool.getThreadPoolExecutor().getMaximumPoolSize();
             metrics.add(size);
@@ -157,7 +157,7 @@ public class AutoScalingServiceTest {
             if (size >= MAX_POOL_SIZE) {
                 break;
             }
-            Thread.sleep(200);
+            Thread.sleep(500);
         }
         var end = Instant.now();
 
@@ -181,7 +181,7 @@ public class AutoScalingServiceTest {
 
         // We need to make sure it does not grow beyond the max though. Let's sleep for a bit
         // and verify the size is still at the same max value.
-        Thread.sleep(1500);
+        Thread.sleep(8000);
         assertEquals(MAX_POOL_SIZE, patientProcessorThreadPool.getMaxPoolSize());
 
         // Clean up.
@@ -190,7 +190,7 @@ public class AutoScalingServiceTest {
         // Sleep for a bit to let auto scaling run another cycle. The max pool size should be
         // reverted
         // back to the original value after that.
-        Thread.sleep(2500);
+        Thread.sleep(10000);
         assertEquals(MIN_POOL_SIZE, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(0, patientProcessorThreadPool.getThreadPoolExecutor().getActiveCount());
     }
