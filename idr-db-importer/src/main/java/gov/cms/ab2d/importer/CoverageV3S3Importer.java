@@ -4,16 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.S3Object;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 @Component
 @Slf4j
@@ -31,12 +24,12 @@ public class CoverageV3S3Importer {
 
 
     private final CoverageV3ImportService importService;
- //   private final SnowflakeCoverageQueryService snowflake;
+    private final SnowflakeCoverageQueryService snowflake;
     private final S3CsvWriter s3Writer;
 
-    public CoverageV3S3Importer(S3CsvWriter s3Writer, CoverageV3ImportService importService) {
-      //  public CoverageV3S3Importer(SnowflakeCoverageQueryService snowflake, S3CsvWriter s3Writer, CoverageV3ImportService importService) {
-   //     this.snowflake = snowflake;
+    // public CoverageV3S3Importer(S3CsvWriter s3Writer, CoverageV3ImportService importService) {
+    public CoverageV3S3Importer(SnowflakeCoverageQueryService snowflake, S3CsvWriter s3Writer, CoverageV3ImportService importService) {
+        this.snowflake = snowflake;
         this.s3Writer = s3Writer;
         this.importService = importService;
     }
