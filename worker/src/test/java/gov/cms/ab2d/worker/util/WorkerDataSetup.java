@@ -42,7 +42,7 @@ public class WorkerDataSetup {
         domainObjects.add(object);
     }
 
-    AtomicLong contractIdCounter = new AtomicLong(20000L);
+    private static final AtomicLong contractIdCounter = new AtomicLong(20000L);
 
     public void cleanup() {
 

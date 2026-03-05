@@ -43,7 +43,8 @@ public class DataSetup {
 
     private final Set<Object> domainObjects = new HashSet<>();
 
-    AtomicLong contractIdCounter = new AtomicLong(10000L);
+    private static final AtomicLong contractIdCounter = new AtomicLong(10000L);
+
     public void queueForCleanup(Object object) {
         domainObjects.add(object);
     }
