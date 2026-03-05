@@ -201,9 +201,9 @@ class CoverageDriverTest extends JobCleanup {
     @AfterEach
     void cleanup() {
         jobCleanup();
+        processor.shutdown();
         coverageDataSetup.cleanup();
         dataSetup.cleanup();
-        processor.shutdown();
         propertiesService.updateProperty(WORKER_ENGAGEMENT, IN_GEAR.getSerialValue());
         propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
         contractServiceStub.reset();

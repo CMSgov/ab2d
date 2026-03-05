@@ -124,12 +124,13 @@ public class CoverageDataSetup {
     }
 
     private void cleanupRepository(JpaRepository<?, ?> repository) {
-        repository.deleteAll();
-        repository.flush();
-
         await()
-                .atMost(2, TimeUnit.SECONDS) // Maximum time to wait
+                .atMost(4, TimeUnit.SECONDS) // Maximum time to wait
                 .pollInterval(50, TimeUnit.MILLISECONDS) // How often to check
-                .until(() -> repository.count() == 0);
+                .until(() -> {
+                    repository.deleteAll();
+                    repository.flush();
+                    return repository.count() == 0;
+                });
     }
 }
