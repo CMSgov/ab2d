@@ -89,12 +89,12 @@ class CoverageDriverUnitTest {
     private final Lock tryLockFalse = new Lock() {
         @Override
         public void lock() {
-
+            // Intentional
         }
 
         @Override
         public void lockInterruptibly() throws InterruptedException {
-
+            // Intentional
         }
 
         @Override
@@ -109,7 +109,7 @@ class CoverageDriverUnitTest {
 
         @Override
         public void unlock() {
-
+            // Intentional
         }
 
         @NotNull
@@ -122,12 +122,12 @@ class CoverageDriverUnitTest {
     private final Lock tryLockInterrupt = new Lock() {
         @Override
         public void lock() {
-
+            // Intentional
         }
 
         @Override
         public void lockInterruptibly() throws InterruptedException {
-
+            // Intentional
         }
 
         @Override
@@ -142,7 +142,7 @@ class CoverageDriverUnitTest {
 
         @Override
         public void unlock() {
-
+            // Intentional
         }
 
         @NotNull

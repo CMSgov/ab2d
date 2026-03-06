@@ -70,7 +70,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ContractProcessorUnitTest {
 
-    private static final String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
+    private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
     // class under test
     private ContractProcessor cut;
@@ -108,7 +108,7 @@ class ContractProcessorUnitTest {
 
         //ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
 
-        var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
+        var outputDirPath = Paths.get(efsMountTmpDir.toString(), JOB_UUID);
         Files.createDirectories(outputDirPath);
     }
 
@@ -122,7 +122,7 @@ class ContractProcessorUnitTest {
         job.setContractNumber(contract.getContractNumber());
         jobRepository = new StubJobRepository(job);
         jobProgressImpl = new JobProgressServiceImpl(jobRepository);
-        jobProgressImpl.initJob(jobUuid);
+        jobProgressImpl.initJob(JOB_UUID);
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
         this.jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
@@ -181,7 +181,7 @@ class ContractProcessorUnitTest {
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2), null));
 
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(3);
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         job.setStatus(JobStatus.CANCELLED);
 
@@ -205,7 +205,7 @@ class ContractProcessorUnitTest {
 
         // Calls numberOfBeneficiariesToProcessV3
         when(coverageDriver.numberOfBeneficiariesToProcessV3(any(Job.class), any(ContractDTO.class))).thenReturn(3);
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         job.setStatus(JobStatus.CANCELLED);
 
@@ -239,8 +239,8 @@ class ContractProcessorUnitTest {
                         new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2), null));
 
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.PATIENTS_EXPECTED, 18);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         cut.process(job);
 
@@ -272,8 +272,8 @@ class ContractProcessorUnitTest {
                         CoveragePagingRequest.ofV3(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 2), null));
 
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.PATIENTS_EXPECTED, 18);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         cut.process(job);
 
@@ -360,8 +360,8 @@ class ContractProcessorUnitTest {
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1), new CoveragePagingRequest(1, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1), null));
 
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 2);
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 1);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.PATIENTS_EXPECTED, 2);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.FAILURE_THRESHHOLD, 1);
 
         when(requestQueue.size(anyString())).thenReturn(1_0000_000);
 
@@ -387,8 +387,8 @@ class ContractProcessorUnitTest {
                         CoveragePagingRequest.ofV3(1, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse_V3(contractForCoverageDTO, 1), null));
 
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 2);
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 1);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.PATIENTS_EXPECTED, 2);
+        jobChannelService.sendUpdate(JOB_UUID, JobMeasure.FAILURE_THRESHHOLD, 1);
 
         when(requestQueue.size(anyString())).thenReturn(1_0000_000);
 
@@ -419,7 +419,7 @@ class ContractProcessorUnitTest {
 
     private Job createJob(PdpClient pdpClient, FhirVersion fhirVersion) {
         Job job = new Job();
-        job.setJobUuid(jobUuid);
+        job.setJobUuid(JOB_UUID);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setOrganization(pdpClient.getOrganization());
