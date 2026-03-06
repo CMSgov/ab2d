@@ -40,7 +40,7 @@ public class ContractServiceTestConfig {
 
             @Override
             public void updateContract(ContractDTO contractDTO) {
-
+                // Intentional
             }
 
             @Override

@@ -41,7 +41,9 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
 
         private long id = 0;
 
-        public BeneficiaryIdSupplier() {}
+        public BeneficiaryIdSupplier() {
+            // Intentional
+        }
 
         public Identifiers get() {
             long generated = id++;

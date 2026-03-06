@@ -33,6 +33,7 @@ import org.springframework.test.context.TestPropertySource;
 
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -144,7 +145,7 @@ class PerformanceTestingCoverageOperations {
         // Raise number of datapoints to stress database
         InsertionJob job = new InsertionJob(period1, dataSource, coverageService,
                 1_000_000, 1, coverageSearchRepository);
-        job.call();
+        assertDoesNotThrow(job::call);
     }
 
     /**
