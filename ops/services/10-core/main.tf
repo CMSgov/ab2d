@@ -325,7 +325,7 @@ resource "aws_security_group" "attribution" {
 }
 
 resource "aws_security_group" "idr_endpoint" {
-  count = module.platform.parent_env == "prod" ? 1 : 0
+ // count = module.platform.parent_env == "prod" ? 1 : 0
 
   name        = "${local.service_prefix}-idr-endpoint"
   description = "For the PrivateLink endpoint for IDR Snowflake"
@@ -334,7 +334,7 @@ resource "aws_security_group" "idr_endpoint" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_http" {
-  count = module.platform.parent_env == "prod" ? 1 : 0
+//  count = module.platform.parent_env == "prod" ? 1 : 0
 
   security_group_id = aws_security_group.idr_endpoint[0].id
 
@@ -345,7 +345,7 @@ resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_http" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
-  count = module.platform.parent_env == "prod" ? 1 : 0
+//  count = module.platform.parent_env == "prod" ? 1 : 0
 
   security_group_id = aws_security_group.idr_endpoint[0].id
 
