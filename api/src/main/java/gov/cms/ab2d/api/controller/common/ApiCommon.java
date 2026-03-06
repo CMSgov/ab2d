@@ -152,7 +152,7 @@ public class ApiCommon {
             String paramValue = keyValue[1];
 
             if (!paramName.equals("service-date")) {
-                throw new InvalidClientInputException("The _typeFilter subquery must be for the service-type parameter");
+                throw new InvalidClientInputException("The _typeFilter subquery must be for the service-date parameter");
             }
 
             serviceDates.add(paramValue);
