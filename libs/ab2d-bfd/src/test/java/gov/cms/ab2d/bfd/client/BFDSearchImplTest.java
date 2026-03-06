@@ -27,7 +27,7 @@ class BFDSearchImplTest {
     private static final int PATIENT_ID = 1;
     private static final OffsetDateTime SINCE = OffsetDateTime.now();
     private static final OffsetDateTime UNTIL = OffsetDateTime.now();
-    private static final List<String> SERVICE_DATES = List.of("gt2025-01-01")
+    private static final List<String> SERVICE_DATES = List.of("gt2025-01-01");
     private static final int PAGE_SIZE = 10;
     private static final String BULK_JOB_ID = "bulkJobId";
     private static final FhirVersion VERSION = FhirVersion.R4;
