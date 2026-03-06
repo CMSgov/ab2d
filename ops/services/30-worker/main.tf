@@ -30,10 +30,10 @@ locals {
   service      = "worker"
 
   ssm_root_map = {
-    common    = "/ab2d/${local.env}/common"
-    core      = "/ab2d/${local.env}/core"
-    contracts = "/ab2d/${local.env}/contracts"
-    worker    = "/ab2d/${local.env}/worker"
+    common        = "/ab2d/${local.env}/common"
+    core          = "/ab2d/${local.env}/core"
+    microservices = "/ab2d/${local.env}/microservices"
+    worker        = "/ab2d/${local.env}/worker"
   }
 
   bfd_insights = "none"
@@ -74,7 +74,7 @@ locals {
   db_name_arn               = module.platform.ssm.core.database_name.arn
   db_password_arn           = module.platform.ssm.core.database_password.arn
   db_username_arn           = module.platform.ssm.core.database_user.arn
-  contracts_url             = module.platform.ssm.contracts.url.value
+  microservices_url         = module.platform.ssm.microservices.url.value
   new_relic_app_name        = module.platform.ssm.common.new_relic_app_name.value
   new_relic_license_key_arn = module.platform.ssm.common.new_relic_license_key.arn
   slack_alert_webhooks_arn  = module.platform.ssm.common.slack_alert_webhooks.arn
@@ -158,7 +158,7 @@ module "service" {
     { name = "AWS_SNS_TOPIC_PREFIX", value = "ab2d-${local.parent_env}" },
     { name = "IMAGE_VERSION", value = local.worker_image_tag },
     { name = "NEW_RELIC_APP_NAME", value = local.new_relic_app_name },
-    { name = "MICROSERVICES_URL", value = local.contracts_url }
+    { name = "MICROSERVICES_URL", value = local.microservices_url }
   ]
 
   container_secrets = [
