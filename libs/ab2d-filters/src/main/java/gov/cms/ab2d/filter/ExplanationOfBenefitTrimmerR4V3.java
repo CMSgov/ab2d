@@ -411,8 +411,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
 
         List<ExplanationOfBenefit.InsuranceComponent> srcList = source.getInsurance();
         boolean focalSet = false;
-        for (int i = 0; i < srcList.size(); i++) {
-            ExplanationOfBenefit.InsuranceComponent src = srcList.get(i);
+        for (ExplanationOfBenefit.InsuranceComponent src : srcList) {
             if (src == null) {
                 continue;
             }
@@ -446,7 +445,6 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         }
         String reference = ref.getReference();
         if (reference == null || !reference.startsWith("#")) {
-            // External reference; nothing to copy into contained
             return;
         }
         String id = reference.substring(1);
@@ -457,11 +455,9 @@ public class ExplanationOfBenefitTrimmerR4V3 {
             return;
         }
         Resource res = match.get();
-        // Ensure type matches
         if (!(res instanceof Coverage)) {
-            return; // or throw if you want strictness
+            return;
         }
-        // Avoid duplicates in target contained
         boolean alreadyPresent = targetContained.stream().anyMatch(r -> id.equals(r.getIdPart()));
         if (!alreadyPresent) {
             targetContained.add(res.copy());
