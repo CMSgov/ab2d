@@ -1,0 +1,1 @@
+ALTER TABLE job ADD COLUMN IF NOT EXISTS service_dates character varying;
