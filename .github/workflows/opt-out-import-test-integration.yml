@@ -46,7 +46,7 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           # Now assume the BFD bucket role
-          role-to-assume: arn:aws:iam::${{ secrets.BFD_ACCOUNT_ID }}:role/delegatedadmin/developer/bfd-test-eft-ab2d-ct-bucket-role
+          role-to-assume: arn:aws:iam::${{ secrets.BFD_NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/bfd-test-bene-prefs-ab2d-bucket-access-role
           role-chaining: true
           role-skip-session-tagging: true
       - name: Upload test file to the BFD bucket to trigger lambda function via SNS message
