@@ -90,9 +90,9 @@ class TestRunner {
     private static final String CURRENCY_IDENTIFIER =
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
 
-    private static APIClient apiClient_Z0000;
+    private static APIClient apiClient_PDP100;
 
-    private static APIClient apiClient_Z0001;
+    private static APIClient apiClient_PDP1000;
 
     private static final int DELAY = 5;
 
@@ -170,8 +170,8 @@ class TestRunner {
             loadDockerComposeContainers(apiPort);
         }
 
-        apiClient_Z0000 = loadApiClientConfiguration(apiPort, PDP_100);
-        apiClient_Z0001 = loadApiClientConfiguration(apiPort, PDP_1000);
+        apiClient_PDP100 = loadApiClientConfiguration(apiPort, PDP_100);
+        apiClient_PDP1000 = loadApiClientConfiguration(apiPort, PDP_1000);
     }
 
     /**
@@ -862,10 +862,10 @@ class TestRunner {
     void testHealthEndPoint() throws IOException, InterruptedException {
         System.out.println();
         log.info("Starting test 14");
-        HttpResponse<String> healthCheckResponse = apiClient_Z0000.healthCheck();
+        HttpResponse<String> healthCheckResponse = apiClient_PDP100.healthCheck();
         assertEquals(200, healthCheckResponse.statusCode());
 
-        healthCheckResponse = apiClient_Z0001.healthCheck();
+        healthCheckResponse = apiClient_PDP1000.healthCheck();
         assertEquals(200, healthCheckResponse.statusCode());
     }
 
@@ -915,19 +915,19 @@ class TestRunner {
         // Define default test contract
         if (v3Enabled()) {
             return Stream.of(
-                arguments(STU3, PDP_100.contract, apiClient_Z0000),
-                arguments(R4,   PDP_100.contract, apiClient_Z0000),
-                arguments(R4V3, PDP_1000.contract, apiClient_Z0001)
+                arguments(STU3, PDP_100.contract, apiClient_PDP100),
+                arguments(R4,   PDP_100.contract, apiClient_PDP100),
+                arguments(R4V3, PDP_1000.contract, apiClient_PDP1000)
             );
         }
         else if (v2Enabled()) {
             return Stream.of(
-                arguments(STU3, PDP_100.contract, apiClient_Z0000),
-                arguments(R4,   PDP_100.contract, apiClient_Z0000)
+                arguments(STU3, PDP_100.contract, apiClient_PDP100),
+                arguments(R4,   PDP_100.contract, apiClient_PDP100)
             );
         } else {
             return Stream.of(
-                arguments(STU3, PDP_100.contract, apiClient_Z0000)
+                arguments(STU3, PDP_100.contract, apiClient_PDP100)
             );
         }
     }
@@ -940,32 +940,32 @@ class TestRunner {
     static Stream<Arguments> getVersionAndApiClient() {
         if (v3Enabled()) {
             return Stream.of(
-                arguments(STU3, apiClient_Z0000),
-                arguments(R4,   apiClient_Z0000),
-                arguments(R4V3, apiClient_Z0001)
+                arguments(STU3, apiClient_PDP100),
+                arguments(R4, apiClient_PDP100),
+                arguments(R4V3, apiClient_PDP1000)
             );
         } else if (v2Enabled()) {
             return Stream.of(
-                arguments(STU3, apiClient_Z0000),
-                arguments(R4, apiClient_Z0000)
+                arguments(STU3, apiClient_PDP100),
+                arguments(R4, apiClient_PDP100)
             );
         } else {
             return Stream.of(
-                arguments(STU3, apiClient_Z0000)
+                arguments(STU3, apiClient_PDP100)
             );
         }
     }
 
     static APIClient apiClient(FhirVersion version) {
         return version == R4V3
-            ? apiClient_Z0001
-            : apiClient_Z0000;
+            ? apiClient_PDP1000
+            : apiClient_PDP100;
     }
 
     static APIClient secondaryApiClient(FhirVersion version) {
         return version == R4V3
-            ? apiClient_Z0000
-            : apiClient_Z0001;
+            ? apiClient_PDP100
+            : apiClient_PDP1000;
     }
 
     private static boolean v2Enabled() {
@@ -977,9 +977,5 @@ class TestRunner {
         String v3Enabled = System.getenv("AB2D_V3_ENABLED");
         return v3Enabled != null && v3Enabled.equalsIgnoreCase("true");
     }
-
-
-
-
 
 }
