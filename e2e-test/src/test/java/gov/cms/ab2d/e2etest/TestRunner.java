@@ -30,6 +30,7 @@ import javax.crypto.SecretKey;
 import javax.net.ssl.HttpsURLConnection;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -43,6 +44,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
@@ -685,7 +688,7 @@ class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contract, version, apiClient);
 
-        APIClient secondAPIClient = secondaryApiClient(version);
+        APIClient secondAPIClient = getOtherPdpApiClient(version);
 
         assertNotNull(downloadDetails);
         HttpResponse<InputStream> downloadResponse = secondAPIClient.fileDownloadRequest(downloadDetails.getFirst());
@@ -705,7 +708,7 @@ class TestRunner {
 
         String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
-        APIClient secondAPIClient = secondaryApiClient(version);
+        APIClient secondAPIClient = getOtherPdpApiClient(version);
 
         HttpResponse<String> deleteResponse = secondAPIClient.cancelJobRequest(jobUUid, version);
         assertEquals(403, deleteResponse.statusCode());
@@ -726,7 +729,7 @@ class TestRunner {
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        APIClient secondAPIClient = secondaryApiClient(version);
+        APIClient secondAPIClient = getOtherPdpApiClient(version);
 
         HttpResponse<String> statusResponse = secondAPIClient.statusRequest(contentLocationList.iterator().next());
         assertEquals(403, statusResponse.statusCode());
@@ -906,6 +909,28 @@ class TestRunner {
         downloadFileWithoutAcceptEncoding(downloadDetails, earliest, version, apiClient);
     }
 
+    @Order(17)
+    @Test
+    void verifyPdp100NotAllowlistedForV3() throws Exception {
+        val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3);
+        val expectedResponseBody =
+        """
+        {
+          "resourceType": "OperationOutcome",
+          "issue": [
+            {
+              "severity": "error",
+              "code": "invalid",
+              "details": {
+                "text": "V3 access not enabled for this PDP"
+              }
+            }
+          ]
+        }
+        """;
+        JSONAssert.assertEquals(response.body(), expectedResponseBody, JSONCompareMode.LENIENT);
+    }
+
     /**
      * Returns the stream of FHIR version and contract to use for that version
      *
@@ -962,7 +987,7 @@ class TestRunner {
             : apiClient_PDP100;
     }
 
-    static APIClient secondaryApiClient(FhirVersion version) {
+    static APIClient getOtherPdpApiClient(FhirVersion version) {
         return version == R4V3
             ? apiClient_PDP100
             : apiClient_PDP1000;
