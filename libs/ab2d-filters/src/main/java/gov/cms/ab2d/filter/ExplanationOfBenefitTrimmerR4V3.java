@@ -435,7 +435,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         return result;
     }
 
-    private static <T extends Resource> void addContainedIfReferenced(
+    private static void addContainedIfReferenced(
             ExplanationOfBenefit source,
             Reference ref,
             List<Resource> targetContained
