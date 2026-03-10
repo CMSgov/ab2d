@@ -30,7 +30,6 @@ import javax.crypto.SecretKey;
 import javax.net.ssl.HttpsURLConnection;
 
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -54,8 +53,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
-import static gov.cms.ab2d.e2etest.TestRunner.PdpContract.Z0000;
-import static gov.cms.ab2d.e2etest.TestRunner.PdpContract.Z0001;
+import static gov.cms.ab2d.e2etest.TestRunner.PdpContract.PDP_100;
+import static gov.cms.ab2d.e2etest.TestRunner.PdpContract.PDP_1000;
 import static gov.cms.ab2d.fhir.FhirVersion.*;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -113,27 +112,29 @@ class TestRunner {
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
 
     enum PdpContract {
-        Z0000(
+        PDP_100(
+                "Z0000",
                 "OKTA_CLIENT_ID",
                 "OKTA_CLIENT_PASSWORD"
         ),
-        Z0001(
+        PDP_1000(
+                "Z0001",
                 "SECONDARY_USER_OKTA_CLIENT_ID",
                 "SECONDARY_USER_OKTA_CLIENT_PASSWORD"
         );
 
+        public final String contract;
         public final String oktaId;
         public final String oktaPassword;
 
-        PdpContract(String oktaIdVar, String oktaPasswordVar) {
+        PdpContract(String contract, String oktaIdVar, String oktaPasswordVar) {
+            this.contract = contract;
             this.oktaId = System.getenv(oktaIdVar);
             this.oktaPassword = System.getenv(oktaPasswordVar);
-            if (StringUtils.isBlank(oktaIdVar) || StringUtils.isBlank(oktaPassword)) {
+            if (StringUtils.isBlank(oktaId) || StringUtils.isBlank(oktaPassword)) {
                 fail(String.format("Both %s and %s must be set in env", oktaIdVar, oktaPasswordVar));
             }
         }
-
-        public final String contract = name();
     }
 
     // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
@@ -169,8 +170,8 @@ class TestRunner {
             loadDockerComposeContainers(apiPort);
         }
 
-        apiClient_Z0000 = loadApiClientConfiguration(apiPort, Z0000);
-        apiClient_Z0001 = loadApiClientConfiguration(apiPort, Z0001);
+        apiClient_Z0000 = loadApiClientConfiguration(apiPort, PDP_100);
+        apiClient_Z0001 = loadApiClientConfiguration(apiPort, PDP_1000);
     }
 
     /**
@@ -914,19 +915,19 @@ class TestRunner {
         // Define default test contract
         if (v3Enabled()) {
             return Stream.of(
-                arguments(STU3, Z0000.contract, apiClient_Z0000),
-                arguments(R4,   Z0000.contract, apiClient_Z0000),
-                arguments(R4V3, Z0001.contract, apiClient_Z0001)
+                arguments(STU3, PDP_100.contract, apiClient_Z0000),
+                arguments(R4,   PDP_100.contract, apiClient_Z0000),
+                arguments(R4V3, PDP_1000.contract, apiClient_Z0001)
             );
         }
         else if (v2Enabled()) {
             return Stream.of(
-                arguments(STU3, Z0000.contract, apiClient_Z0000),
-                arguments(R4,   Z0000.contract, apiClient_Z0000)
+                arguments(STU3, PDP_100.contract, apiClient_Z0000),
+                arguments(R4,   PDP_100.contract, apiClient_Z0000)
             );
         } else {
             return Stream.of(
-                arguments(STU3, Z0000.contract, apiClient_Z0000)
+                arguments(STU3, PDP_100.contract, apiClient_Z0000)
             );
         }
     }
