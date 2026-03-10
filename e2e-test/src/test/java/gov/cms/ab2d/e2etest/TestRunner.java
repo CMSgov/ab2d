@@ -259,7 +259,7 @@ class TestRunner {
         //uploadAttestationReport();
     }
 
-    private HttpResponse<String> pollForStatusResponse(String statusUrl) throws InterruptedException, IOException {
+    private HttpResponse<String> pollForStatusResponse(String statusUrl, APIClient apiClient) throws InterruptedException, IOException {
         HttpResponse<String> statusResponse = null;
         long start = System.currentTimeMillis();
         int status = 0;
@@ -269,7 +269,7 @@ class TestRunner {
 
             log.info("polling for status at url start {}", statusUrl);
 
-            statusResponse = apiClient_Z0001.statusRequest(statusUrl);
+            statusResponse = apiClient.statusRequest(statusUrl);
 
             log.info("polling for status at url end {} {}", statusUrl, statusResponse);
 
@@ -580,7 +580,7 @@ class TestRunner {
         List<String> retryAfterListRepeat = retryStatusResponse.headers().map().get("retry-after");
         assertEquals(retryAfterListRepeat.iterator().next(), String.valueOf(DELAY));
 
-        HttpResponse<String> statusResponseAgain = pollForStatusResponse(contentLocationList.iterator().next());
+        HttpResponse<String> statusResponseAgain = pollForStatusResponse(contentLocationList.iterator().next(), apiClient);
 
         String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
