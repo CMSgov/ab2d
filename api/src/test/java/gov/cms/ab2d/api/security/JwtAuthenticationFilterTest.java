@@ -177,7 +177,7 @@ class JwtAuthenticationFilterTest {
 
         try {
             // Expect a 404 because the static site is not yet included in the constructed JAR/resources
-            // However, this URI is whitelisted as public so it serves for the test
+            // However, this URI is allowlisted as public so it serves for the test
             mockMvc.perform(get("/swagger-ui"))
                     .andExpect(status().is(404));
 
