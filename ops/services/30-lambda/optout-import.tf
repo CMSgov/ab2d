@@ -72,7 +72,7 @@ resource "aws_iam_role_policy" "import_assume_bucket_role" {
       {
         Action   = "sts:AssumeRole"
         Effect   = "Allow"
-        Resource = module.platform.ssm.eft.bfd-bucket-role-arn.value
+        Resource = module.platform.ssm.bene-prefs.bfd-bucket-role-arn.value
       }
     ]
     Version = "2012-10-17"
@@ -217,7 +217,7 @@ data "aws_iam_policy_document" "import" {
     condition {
       test     = "ArnEquals"
       variable = "aws:SourceArn"
-      values   = [module.platform.ssm.eft.bfd-sns-topic-arn.value]
+      values   = [module.platform.ssm.bene-prefs.bfd-sns-topic-arn.value]
     }
   }
 }
@@ -234,7 +234,7 @@ resource "aws_sns_topic_subscription" "import" {
 
   endpoint  = aws_sqs_queue.import[0].arn
   protocol  = "sqs"
-  topic_arn = module.platform.ssm.eft.bfd-sns-topic-arn.value
+  topic_arn = nonsensitive(module.platform.ssm.bene-prefs.bfd-sns-topic-arn.value)
 }
 
 resource "aws_lambda_event_source_mapping" "import" {
