@@ -30,6 +30,7 @@ import javax.crypto.SecretKey;
 import javax.net.ssl.HttpsURLConnection;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -53,8 +54,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
-import static gov.cms.ab2d.fhir.FhirVersion.R4;
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.*;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -884,10 +884,21 @@ class TestRunner {
      */
     private Stream<Arguments> getVersionAndContract() {
         // Define default test contract
-        String testContractV1 = "Z0000";
-        if (v2Enabled()) {
-            String testContractV2 = "Z0000";
-            return Stream.of(arguments(STU3, testContractV1), arguments(R4, testContractV2));
+        val testContractV1 = "Z0000";
+        val testContractV2 = "Z0000";
+        val testContractV3 = "Z0001";
+        if (v3Enabled()) {
+            return Stream.of(
+                arguments(STU3, testContractV1),
+                arguments(R4, testContractV2),
+                arguments(R4V3, testContractV3)
+            );
+        }
+        else if (v2Enabled()) {
+            return Stream.of(
+                arguments(STU3, testContractV1),
+                arguments(R4, testContractV2)
+            );
         } else {
             return Stream.of(arguments(STU3, testContractV1));
         }
@@ -899,7 +910,9 @@ class TestRunner {
      * @return the stream of FHIR versions
      */
     static Stream<Arguments> getVersion() {
-        if (v2Enabled()) {
+        if (v3Enabled()) {
+            return Stream.of(arguments(STU3), arguments(R4), arguments(R4V3));
+        } else if (v2Enabled()) {
             return Stream.of(arguments(STU3), arguments(R4));
         } else {
             return Stream.of(arguments(STU3));
@@ -910,4 +923,10 @@ class TestRunner {
         String v2Enabled = System.getenv("AB2D_V2_ENABLED");
         return v2Enabled != null && v2Enabled.equalsIgnoreCase("true");
     }
+
+    private static boolean v3Enabled() {
+        String v3Enabled = System.getenv("AB2D_V3_ENABLED");
+        return v3Enabled != null && v3Enabled.equalsIgnoreCase("true");
+    }
+
 }
