@@ -183,6 +183,10 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     @Override
     public boolean isProcessorBusy() {
 
+        if (inShutdown.get()) {
+            return true;
+        }
+
         boolean busy = coverageInsertionQueue.size() >= executor.getCorePoolSize() ||
                 executor.getActiveCount() >= executor.getCorePoolSize();
 
