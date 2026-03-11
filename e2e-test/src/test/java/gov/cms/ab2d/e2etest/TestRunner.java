@@ -345,7 +345,7 @@ class TestRunner {
 
             JSONObject jsonObject = new JSONObject(str);
 
-            assertTrue(validFields(jsonObject));
+            assertTrue(validFields(jsonObject, version));
             assertEquals("ExplanationOfBenefit", jsonObject.getString("resourceType"));
             String status = jsonObject.getString("status");
             assertTrue(List.of("active", "cancelled").contains(status));
@@ -485,7 +485,7 @@ class TestRunner {
         assertTrue(extensions.length() == 1 || extensions.length() == 2);
     }
 
-    private boolean validFields(JSONObject jsonObject) {
+    private boolean validFields(JSONObject jsonObject, FhirVersion version) {
         Set<String> allowedFields = Set.of("identifier", "status", "item", "meta", "patient", "billablePeriod", "diagnosis",
                 "provider", "id", "type", "precedence", "resourceType", "organization", "facility", "careTeam",
                 "procedure", "extension", "supportingInfo", "subType");
@@ -497,6 +497,11 @@ class TestRunner {
                 "originalPrescriptionTarget", "payee", "information", "precedence", "insurance", "accident",
                 "employmentImpacted", "hospitalization", "addItem", "totalCost", "unallocDeductable", "totalBenefit",
                 "payment", "form", "contained", "processNote", "benefitBalance");
+
+        if (version == FhirVersion.R4V3) {
+            allowedFields.addAll(Arrays.asList("insurance", "use", "created", "outcome"));
+            disallowedFields.removeAll(Arrays.asList("insurance", "outcome"));
+        }
 
         JSONArray obj = jsonObject.names();
         for (int i = 0; i < obj.length(); i++) {
