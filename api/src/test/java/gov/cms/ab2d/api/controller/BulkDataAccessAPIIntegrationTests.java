@@ -23,6 +23,7 @@ import gov.cms.ab2d.eventclient.events.*;
 import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.model.JobOutput;
+import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hamcrest.collection.IsIn;
 import org.hamcrest.core.Is;
 import org.jetbrains.annotations.Nullable;
@@ -578,9 +579,15 @@ class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token)).andReturn();
 
         String body = mvcResult.getResponse().getContentAsString();
+        CapabilityStatement actual = STU3.getJsonParser().parseResource(CapabilityStatement.class, body);
+        CapabilityStatement expected = CapabilityStatementSTU3.populateCS("https://localhost:8443" + API_PREFIX_V1 + FHIR_PREFIX);
 
-        assertEquals(body, STU3.getJsonParser().encodeResourceToString(
-                CapabilityStatementSTU3.populateCS("https://localhost:8443" + API_PREFIX_V1 + FHIR_PREFIX)));
+        // prevent possible mismatch if minute rolls over between calls
+        assertNotNull(actual.getDate());
+        actual.setDate(null);
+        expected.setDate(null);
+
+        assertEquals(STU3.getJsonParser().encodeResourceToString(expected), STU3.getJsonParser().encodeResourceToString(actual));
     }
 
     @Test
@@ -590,9 +597,14 @@ class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token)).andReturn();
 
         String body = mvcResult.getResponse().getContentAsString();
+        org.hl7.fhir.r4.model.CapabilityStatement actual = R4.getJsonParser().parseResource(org.hl7.fhir.r4.model.CapabilityStatement.class, body);
+        org.hl7.fhir.r4.model.CapabilityStatement expected = CapabilityStatementR4.populateCS("https://localhost:8443" + API_PREFIX_V2 + FHIR_PREFIX);
 
-        assertEquals(body, R4.getJsonParser().encodeResourceToString(
-                CapabilityStatementR4.populateCS("https://localhost:8443" + API_PREFIX_V2 + FHIR_PREFIX)));
+        assertNotNull(actual.getDate());
+        actual.setDate(null);
+        expected.setDate(null);
+
+        assertEquals(R4.getJsonParser().encodeResourceToString(expected), R4.getJsonParser().encodeResourceToString(actual));
     }
 
     @Test
@@ -602,9 +614,14 @@ class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token)).andReturn();
 
         String body = mvcResult.getResponse().getContentAsString();
+        org.hl7.fhir.r4.model.CapabilityStatement actual = R4.getJsonParser().parseResource(org.hl7.fhir.r4.model.CapabilityStatement.class, body);
+        org.hl7.fhir.r4.model.CapabilityStatement expected = CapabilityStatementR4V3.populateCS("https://localhost:8443" + API_PREFIX_V3 + FHIR_PREFIX);
 
-        assertEquals(body, R4.getJsonParser().encodeResourceToString(
-                CapabilityStatementR4V3.populateCS("https://localhost:8443" + API_PREFIX_V3 + FHIR_PREFIX)));
+        assertNotNull(actual.getDate());
+        actual.setDate(null);
+        expected.setDate(null);
+
+        assertEquals(R4.getJsonParser().encodeResourceToString(expected), R4.getJsonParser().encodeResourceToString(actual));
     }
 
 
@@ -615,9 +632,14 @@ class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token)).andReturn();
 
         String body = mvcResult.getResponse().getContentAsString();
+        org.hl7.fhir.dstu3.model.CapabilityStatement actual = (org.hl7.fhir.dstu3.model.CapabilityStatement) STU3.getJsonParser().parseResource(body);
+        org.hl7.fhir.dstu3.model.CapabilityStatement expected = CapabilityStatementSTU3.populateCS("https://localhost:8443" + API_PREFIX_V1 + FHIR_PREFIX);
 
-        assertEquals(body, STU3.getJsonParser().encodeResourceToString(
-                CapabilityStatementSTU3.populateCS("https://localhost:8443" + API_PREFIX_V1 + FHIR_PREFIX)));
+        assertNotNull(actual.getDate());
+        actual.setDate(null);
+        expected.setDate(null);
+
+        assertEquals(STU3.getJsonParser().encodeResourceToString(expected), STU3.getJsonParser().encodeResourceToString(actual));
     }
 
     private ResultMatcher buildExpiresMatcher() {

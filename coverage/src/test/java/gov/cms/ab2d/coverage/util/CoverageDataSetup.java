@@ -16,11 +16,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-
+import static org.awaitility.Awaitility.await;
 //plan on cleaning up when decoupling contract_id foreign keys in database
 @Component
 public class CoverageDataSetup {
@@ -122,14 +123,14 @@ public class CoverageDataSetup {
         return new ContractForCoverageDTO(contractNumber, attestedOn, ContractForCoverageDTO.ContractType.NORMAL);
     }
 
-    private void cleanupRepository(JpaRepository repository) {
-        repository.deleteAll();
-        repository.flush();
-
-        try {
-            Thread.sleep(2000);   //NOSONAR
-        } catch (InterruptedException e) {
-            System.out.print("Exception: " + e);
-        }
+    private void cleanupRepository(JpaRepository<?, ?> repository) {
+        await()
+                .atMost(4, TimeUnit.SECONDS) // Maximum time to wait
+                .pollInterval(50, TimeUnit.MILLISECONDS) // How often to check
+                .until(() -> {
+                    repository.deleteAll();
+                    repository.flush();
+                    return repository.count() == 0;
+                });
     }
 }

@@ -78,7 +78,7 @@ public class SQSConfig {
     @Primary
     @Bean
     public SqsAsyncClient amazonSQSAsync() {
-        log.info("Locakstack url " + url);
+        log.info("Localstack url " + url);
         if (url != null) {
             return createQueue(SqsAsyncClient.builder()
                     .credentialsProvider(DefaultCredentialsProvider.builder().build())

@@ -26,7 +26,7 @@ public class SNSConfig {
 
     @Bean
     public SnsClient amazonSNS() throws URISyntaxException {
-        log.info("Locakstack url " + url);
+        log.info("Localstack url " + url);
         // only use the injected url locally, let aws figure itself out when deployed
         return ((url + "").contains("localhost")
                         ? SnsClient.builder()

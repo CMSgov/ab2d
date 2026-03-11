@@ -21,7 +21,9 @@ public abstract class JobCleanup {
     protected void jobCleanup() {
         jobsToCleanup.forEach(job -> {
             Job foundJob = jobRepository.findByJobUuid(job.getJobUuid());
-            jobRepository.delete(foundJob);
+            if (foundJob != null) {
+                jobRepository.delete(foundJob);
+            }
         });
         jobRepository.flush();
         jobsToCleanup.clear();
