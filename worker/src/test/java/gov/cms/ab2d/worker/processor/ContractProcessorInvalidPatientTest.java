@@ -137,9 +137,9 @@ class ContractProcessorInvalidPatientTest {
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any(), any(), any())).thenReturn(b1);
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any(), any(), any())).thenReturn(b2);
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any(), any(), any())).thenReturn(b4);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any(), any(), any(), any())).thenReturn(b1);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any(), any(), any(), any())).thenReturn(b2);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any(), any(), any(), any())).thenReturn(b4);
 
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(3);
 
@@ -183,9 +183,9 @@ class ContractProcessorInvalidPatientTest {
         org.hl7.fhir.r4.model.Bundle b2 = BundleUtils.createBundle_R4(createBundleEntry_R4("2"));
         org.hl7.fhir.r4.model.Bundle b4 = BundleUtils.createBundle_R4(createBundleEntry_R4("4"));
 
-        when(bfdClient.requestEOBFromServer(eq(R4V3), eq(1L), any(), any(), any())).thenReturn(b1);
-        when(bfdClient.requestEOBFromServer(eq(R4V3), eq(2L), any(), any(), any())).thenReturn(b2);
-        when(bfdClient.requestEOBFromServer(eq(R4V3), eq(3L), any(), any(), any())).thenReturn(b4);
+        when(bfdClient.requestEOBFromServer(eq(R4V3), eq(1L), any(), any(), any(), any())).thenReturn(b1);
+        when(bfdClient.requestEOBFromServer(eq(R4V3), eq(2L), any(), any(), any(), any())).thenReturn(b2);
+        when(bfdClient.requestEOBFromServer(eq(R4V3), eq(3L), any(), any(), any(), any())).thenReturn(b4);
 
         // Note: numberOfBeneficiariesToProcessV3
         when(coverageDriver.numberOfBeneficiariesToProcessV3(any(Job.class), any(ContractDTO.class))).thenReturn(3);

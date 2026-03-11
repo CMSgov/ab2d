@@ -11,6 +11,8 @@ import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.fhir.FhirVersion;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
@@ -87,6 +89,34 @@ class ApiCommonTest {
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(SINCE_EARLIEST_DATE_TIME, currentDate, FhirVersion.STU3));
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(currentDate, SINCE_EARLIEST_DATE_TIME, FhirVersion.R4));
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(null, SINCE_EARLIEST_DATE_TIME.minusMonths(1), FhirVersion.R4));
+    }
+
+    @Test
+    void getServiceDateTest() {
+        String validTypeFilter = "ExplanationOfBenefit%3Fservice-date%3Dgt2026-02-01";
+        String invalidMissingResourceType = "service-date=2012-01-01";
+        String invalidWrongResourceType = "Patient?service-date=2012-01-01";
+        String invalidQueryParam = "ExplanationOfBenefit%3F_tag%3DNationalClaimsHistory";
+        assertDoesNotThrow(() -> apiCommon.getServiceDates(null));
+        assertDoesNotThrow(() -> apiCommon.getServiceDates(validTypeFilter));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.getServiceDates(invalidMissingResourceType));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.getServiceDates(invalidWrongResourceType));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.getServiceDates(invalidQueryParam));
+    }
+
+    @Test
+    void checkServiceDateTest() {
+        List<String> validServiceDates = List.of("gt2020-01-01", "le2020-02-01");
+        List<String> validYearOnly = List.of("eq2022");
+        List<String> invalidOperatorCode = List.of("zz2020-01-01");
+        List<String> invalidFormat = List.of("lt20200101");
+        List<String> invalidNotRealDate = List.of("eq2020-22-44");
+        assertDoesNotThrow(() -> apiCommon.checkServiceDates(null));
+        assertDoesNotThrow(() -> apiCommon.checkServiceDates(validServiceDates));
+        assertDoesNotThrow(() -> apiCommon.checkServiceDates(validYearOnly));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidOperatorCode));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidFormat));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidNotRealDate));
     }
   
     void testCheckSinceTime() {
