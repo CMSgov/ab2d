@@ -31,6 +31,10 @@ import java.util.stream.Collectors;
  * . billablePeriod
  * . item (some of the data)
  * . status
+ * . created
+ * . provider
+ * . insurance (focal, coverage)
+ * . use (new for R4)
  * . Near Line Record Identification Code (in extension)
  * <p>
  * Items not kept:
@@ -164,7 +168,6 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     private static ExplanationOfBenefit copyData(ExplanationOfBenefit benefit) {
         ExplanationOfBenefit copy = new ExplanationOfBenefit();
         List<Resource> contained = new ArrayList<>();
-        copy.setContained(contained);
         // Inherited data
         copy.setMeta(benefit.getMeta().copy());
         copy.setType(benefit.getType().copy());
@@ -239,7 +242,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
 
         copy.setUse(benefit.getUse());
         copy.setOutcome(benefit.getOutcome());
-        copy.setInsurance(copyInsuranceWithFocalAndCoverage(benefit, contained));
+        copy.setInsurance(copyInsuranceWithFocalAndCoverage(benefit));
 
         return copy;
     }
@@ -333,15 +336,15 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     }
 
     public static List<ExplanationOfBenefit.CareTeamComponent> getCareTeamsByRoleCodes(
-            ExplanationOfBenefit eob,
+            ExplanationOfBenefit benefit,
             List<String> roleCodes
     ) {
         List<ExplanationOfBenefit.CareTeamComponent> result = new ArrayList<>();
-        if (eob == null || eob.getCareTeam() == null || roleCodes == null || roleCodes.isEmpty()) {
+        if (benefit == null || benefit.getCareTeam() == null || roleCodes == null || roleCodes.isEmpty()) {
             return result;
         }
 
-        for (ExplanationOfBenefit.CareTeamComponent ct : eob.getCareTeam()) {
+        for (ExplanationOfBenefit.CareTeamComponent ct : benefit.getCareTeam()) {
             if (ct == null || ct.getRole() == null) {
                 continue;
             }
@@ -357,10 +360,10 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     }
 
     public static Optional<Resource> getProviderContainedForCareTeam(
-            ExplanationOfBenefit eob,
+            ExplanationOfBenefit benefit,
             ExplanationOfBenefit.CareTeamComponent careTeam
     ) {
-        if (eob == null || careTeam == null || !careTeam.hasProvider() || !careTeam.getProvider().hasReference()) {
+        if (benefit == null || careTeam == null || !careTeam.hasProvider() || !careTeam.getProvider().hasReference()) {
             return Optional.empty();
         }
 
@@ -372,7 +375,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         }
 
         // Find contained resource with that id
-        return eob.getContained().stream()
+        return benefit.getContained().stream()
                 .filter(r -> containedId.equals(r.getIdPart()))
                 .findFirst();
     }
@@ -388,29 +391,22 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         return Collections.emptyList();
     }
 
-    public static Optional<Resource> getProviderContainedResource(ExplanationOfBenefit eob) {
-        if (eob == null || !eob.hasProvider() || !eob.getProvider().hasReference()) {
+    public static Optional<Resource> getProviderContainedResource(ExplanationOfBenefit benefit) {
+        if (benefit == null || !benefit.hasProvider() || !benefit.getProvider().hasReference()) {
             return Optional.empty();
         }
 
-        String ref = eob.getProvider().getReference();
+        String ref = benefit.getProvider().getReference();
         String containedId = ref.startsWith("#") ? ref.substring(1) : ref;
-        return eob.getContained().stream()
+        return benefit.getContained().stream()
                 .filter(r -> containedId.equals(r.getIdPart()))
                 .findFirst();
     }
 
-    private static List<ExplanationOfBenefit.InsuranceComponent> copyInsuranceWithFocalAndCoverage(
-            ExplanationOfBenefit source,
-            List<Resource> targetContained
-    ) {
+    private static List<ExplanationOfBenefit.InsuranceComponent> copyInsuranceWithFocalAndCoverage(ExplanationOfBenefit benefit) {
         List<ExplanationOfBenefit.InsuranceComponent> result = new ArrayList<>();
-        if (source == null || !source.hasInsurance()) {
-            throw new IllegalStateException("EOB missing insurance; cannot set required insurance.focal and insurance.coverage");
-        }
 
-        List<ExplanationOfBenefit.InsuranceComponent> srcList = source.getInsurance();
-        boolean focalSet = false;
+        List<ExplanationOfBenefit.InsuranceComponent> srcList = benefit.getInsurance();
         for (ExplanationOfBenefit.InsuranceComponent src : srcList) {
             if (src == null) {
                 continue;
@@ -418,52 +414,12 @@ public class ExplanationOfBenefitTrimmerR4V3 {
 
             ExplanationOfBenefit.InsuranceComponent dst = new ExplanationOfBenefit.InsuranceComponent();
             dst.setCoverage(src.getCoverage().copy());
-            boolean srcFocal = src.hasFocal() && src.getFocal();
-            if (!focalSet && srcFocal) {
-                dst.setFocal(true);
-                focalSet = true;
-            } else {
-                dst.setFocal(false);
-            }
+            dst.setFocal(src.getFocal());
             result.add(dst);
-            addContainedIfReferenced(source, dst.getCoverage(), targetContained);
-        }
-        if (!result.isEmpty() && !focalSet) {
-            result.get(0).setFocal(true);
         }
 
         return result;
     }
-
-    private static void addContainedIfReferenced(
-            ExplanationOfBenefit source,
-            Reference ref,
-            List<Resource> targetContained
-    ) {
-        if (source == null || ref == null || !ref.hasReference()) {
-            return;
-        }
-        String reference = ref.getReference();
-        if (reference == null || !reference.startsWith("#")) {
-            return;
-        }
-        String id = reference.substring(1);
-        Optional<Resource> match = source.getContained().stream()
-                .filter(r -> id.equals(r.getIdPart()))
-                .findFirst();
-        if (match.isEmpty()) {
-            return;
-        }
-        Resource res = match.get();
-        if (!(res instanceof Coverage)) {
-            return;
-        }
-        boolean alreadyPresent = targetContained.stream().anyMatch(r -> id.equals(r.getIdPart()));
-        if (!alreadyPresent) {
-            targetContained.add(res.copy());
-        }
-    }
-
 
     /**
      * Used to clean up the ItemComponent because this object is also contains a subset
