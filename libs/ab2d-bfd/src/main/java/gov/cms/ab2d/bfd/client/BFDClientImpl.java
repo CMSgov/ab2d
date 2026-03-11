@@ -111,7 +111,7 @@ public class BFDClientImpl implements BFDClient {
         bfdSegment.setMetricName("RequestEOB");
 
         BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(patientID, version, contractNum, getJobId(), pageSize, sinceTime, untilTime, serviceDates);
-        IBaseBundle result = bfdSearch.searchEOB(BFDSearchDTO);
+        IBaseBundle result = bfdSearch.searchEOB(bfdSearchDTO);
         bfdSegment.end();
 
         return result;
