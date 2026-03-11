@@ -19,7 +19,6 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
