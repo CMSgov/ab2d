@@ -1022,9 +1022,8 @@ class TestRunner {
     }
 
     private static boolean v3Only() {
-        return true;
-//        String v3Only = System.getenv("AB2D_V3_ONLY");
-//        return v3Only != null && v3Only.equalsIgnoreCase("true");
+        String v3Only = System.getenv("AB2D_V3_ONLY");
+        return v3Only != null && v3Only.equalsIgnoreCase("true");
     }
 
 
