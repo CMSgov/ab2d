@@ -683,7 +683,7 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersionContractAndApiClient")
-    @Order(-1)
+    @Order(6)
     void testClientCannotDownloadOtherClientsJob(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         if (version == R4V3) {
             // Skipping because this tests `apiClient.exportByContractRequest` which does not exist in V3
