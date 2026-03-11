@@ -1,5 +1,6 @@
 package gov.cms.ab2d.bfd.client;
 
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
