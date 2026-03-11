@@ -7,6 +7,10 @@ on:
       environment:
         required: true
         type: string
+      v3_only:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       environment:
@@ -18,6 +22,11 @@ on:
           - test
           - sandbox
         default: test
+      v3_only:
+        description: Run V3 E2E tests only (temporary)
+        required: false
+        type: boolean
+        default: false
       api_base_url:
         description: Overrides the 'base-url' property for testing in ephemeral environments
         required: false
@@ -35,7 +44,7 @@ jobs:
     env:
       AB2D_V2_ENABLED: 'true'
       AB2D_V3_ENABLED: 'true'
-      AB2D_V3_ONLY: 'true' # only run V3 tests temporarily -- TODO remove
+      AB2D_V3_ONLY: ${{ inputs.v3_only }}
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
       AB2D_ENV: ${{ inputs.environment }}
