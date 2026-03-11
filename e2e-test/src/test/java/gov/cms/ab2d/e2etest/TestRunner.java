@@ -116,14 +116,14 @@ class TestRunner {
 
     enum PdpContract {
         PDP_100(
-    "Z0000",
-    "OKTA_CLIENT_ID",
-    "OKTA_CLIENT_PASSWORD"
+        "Z0000",
+        "OKTA_CLIENT_ID",
+        "OKTA_CLIENT_PASSWORD"
         ),
         PDP_1000(
-    "Z0001",
-    "SECONDARY_USER_OKTA_CLIENT_ID",
-    "SECONDARY_USER_OKTA_CLIENT_PASSWORD"
+        "Z0001",
+        "SECONDARY_USER_OKTA_CLIENT_ID",
+        "SECONDARY_USER_OKTA_CLIENT_PASSWORD"
         );
 
         public final String contract;
