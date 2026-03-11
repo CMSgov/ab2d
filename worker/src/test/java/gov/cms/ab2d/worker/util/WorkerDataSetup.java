@@ -18,9 +18,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-
-import static java.util.stream.Collectors.toList;
-
 @Component
 public class WorkerDataSetup {
 
