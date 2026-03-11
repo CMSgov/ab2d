@@ -48,7 +48,16 @@ public class BFDSearchImpl implements BFDSearch {
      */
     @Trace
     @Override
-    public IBaseBundle searchEOB(long patientId, OffsetDateTime since, OffsetDateTime until, List<String> serviceDates, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException {
+    public IBaseBundle searchEOB(BFDSearchDTO searchDTO) throws IOException {
+        long patientId = searchDTO.getPatientId();
+        OffsetDateTime since = searchDTO.getSince();
+        OffsetDateTime until = searchDTO.getUntil();
+        List<String> serviceDates = searchDTO.getServiceDates();
+        int pageSize = searchDTO.getPageSize();
+        String bulkJobId = searchDTO.getBulkJobId();
+        FhirVersion version = searchDTO.getVersion();
+        String contractNum = searchDTO.getContractNum();
+
         String urlLocation = bfdClientVersions.getUrl(version);
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId);
 

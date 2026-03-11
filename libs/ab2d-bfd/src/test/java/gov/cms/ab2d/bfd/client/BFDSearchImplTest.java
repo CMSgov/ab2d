@@ -86,11 +86,12 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES);
 
         // Business logic & assertion(s)
         assertThrows(
                 RuntimeException.class,
-                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, SERVICE_DATES, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
+                () -> bfdSearchImpl.searchEOB(bfdSearchDTO)
         );
     }
 
@@ -104,9 +105,11 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES);
+
 
         // Business logic & assertion(s)
-        IBaseBundle result = bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, SERVICE_DATES, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM);
+        IBaseBundle result = bfdSearchImpl.searchEOB(bfdSearchDTO);
         assertNotNull(result);
     }
 
@@ -120,9 +123,11 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, 0, null, null, null);
+
 
         // Business logic & assertion(s)
-        IBaseBundle result = bfdSearchImpl.searchEOB(PATIENT_ID, null, null, null, 0, BULK_JOB_ID, VERSION, CONTRACT_NUM);
+        IBaseBundle result = bfdSearchImpl.searchEOB(bfdSearchDTO);
         assertNotNull(result);
     }
 
@@ -136,11 +141,13 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES);
+
 
         // Business logic & assertion(s)
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, SERVICE_DATES, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
+                () -> bfdSearchImpl.searchEOB(bfdSearchDTO)
         );
     }
 
@@ -154,11 +161,13 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES);
+
 
         // Business logic & assertion(s)
         assertThrows(
                 RuntimeException.class,
-                () -> bfdSearchImpl.searchEOB(PATIENT_ID, SINCE, UNTIL, SERVICE_DATES, PAGE_SIZE, BULK_JOB_ID, VERSION, CONTRACT_NUM)
+                () -> bfdSearchImpl.searchEOB(bfdSearchDTO)
         );
     }
 

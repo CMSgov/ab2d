@@ -184,7 +184,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
             copy.getPatient().setReference("Patient/" + args.getArgument(1));
             return EobTestDataUtil.createBundle(copy);
         });
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), any(), any(), anyString())).thenAnswer((args) -> {
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), any(), any(), anyString())).thenAnswer(args -> {
             ExplanationOfBenefit copy = EOB.copy();
             copy.getPatient().setReference("Patient/" + args.getArgument(1));
             return EobTestDataUtil.createBundle(copy);
