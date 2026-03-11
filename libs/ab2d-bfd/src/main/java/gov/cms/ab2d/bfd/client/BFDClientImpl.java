@@ -19,6 +19,7 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 /**
  * Credits: most of the code in this class has been copied over from https://github
@@ -79,7 +80,7 @@ public class BFDClientImpl implements BFDClient {
             exclude = { ResourceNotFoundException.class }
     )
     public IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, String contractNum) {
-        return requestEOBFromServer(version, patientID, null, null, contractNum);
+        return requestEOBFromServer(version, patientID, null, null, null, contractNum);
     }
 
     /**
@@ -104,13 +105,13 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, String contractNum) {
+    public IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum) {
             final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
-                    " using since " + sinceTime + " and until " + untilTime);
+                    " using since " + sinceTime + " and until " + untilTime + " and serviceDates " + serviceDates);
         bfdSegment.setMetricName("RequestEOB");
 
-        IBaseBundle result = bfdSearch.searchEOB(patientID, sinceTime, untilTime, pageSize, getJobId(), version, contractNum);
-
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(patientID, version, contractNum, getJobId(), pageSize, sinceTime, untilTime, serviceDates);
+        IBaseBundle result = bfdSearch.searchEOB(bfdSearchDTO);
         bfdSegment.end();
 
         return result;
