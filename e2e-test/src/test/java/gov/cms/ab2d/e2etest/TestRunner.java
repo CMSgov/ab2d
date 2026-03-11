@@ -343,7 +343,7 @@ class TestRunner {
 
             JSONObject jsonObject = new JSONObject(str);
 
-            assertTrue(validFields(jsonObject));
+            assertTrue(validFields(jsonObject, version));
             assertEquals("ExplanationOfBenefit", jsonObject.getString("resourceType"));
             String status = jsonObject.getString("status");
             assertTrue(List.of("active", "cancelled").contains(status));
