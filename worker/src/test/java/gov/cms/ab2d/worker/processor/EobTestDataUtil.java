@@ -12,9 +12,12 @@ import org.springframework.core.io.ResourceLoader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 public final class EobTestDataUtil {
 
@@ -32,13 +35,10 @@ public final class EobTestDataUtil {
         final org.hl7.fhir.dstu3.model.ExplanationOfBenefit explanationOfBenefit = parser.parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, inputStream);
         eob = ExplanationOfBenefitTrimmerSTU3.getBenefit(explanationOfBenefit);
         org.hl7.fhir.dstu3.model.Period billingPeriod = new org.hl7.fhir.dstu3.model.Period();
-        try {
-            billingPeriod.setStart(sdf.parse("01/02/2020"));
-            final LocalDate now = LocalDate.now();
-            final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-            final String nowFormatted = now.format(formatter);
-            billingPeriod.setEnd(sdf.parse(nowFormatted));
-        } catch (Exception ignored) {}
+        billingPeriod.setStart(Date.from(
+                LocalDate.of(2020, 1, 2).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        billingPeriod.setEnd(Date.from(
+                LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()));
         //noinspection ConstantConditions
         ((org.hl7.fhir.dstu3.model.ExplanationOfBenefit) eob).setBillablePeriod(billingPeriod);
 

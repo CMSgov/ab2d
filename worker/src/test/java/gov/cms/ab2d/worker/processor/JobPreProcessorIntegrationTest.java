@@ -140,9 +140,10 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
 
         Job inProgress = jobRepository.save(job);
 
+        String jobId = inProgress.getJobUuid();
         var exceptionThrown = assertThrows(
                 IllegalArgumentException.class,
-                () -> cut.preprocess(inProgress.getJobUuid()));
+                () -> cut.preprocess(jobId));
 
         assertEquals("Job S0000 is not in SUBMITTED status", exceptionThrown.getMessage());
     }
@@ -324,30 +325,30 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     }
 
     private PdpClient createClient(Contract contract) {
-        PdpClient pdpClient = new PdpClient();
-        pdpClient.setClientId("Harry_Potter");
-        pdpClient.setOrganization("Harry_Potter");
-        pdpClient.setEnabled(true);
-        pdpClient.setContractId(contract.getId());
+        PdpClient newPdpClient = new PdpClient();
+        newPdpClient.setClientId("Harry_Potter");
+        newPdpClient.setOrganization("Harry_Potter");
+        newPdpClient.setEnabled(true);
+        newPdpClient.setContractId(contract.getId());
 
-        pdpClient = pdpClientRepository.save(pdpClient);
-        dataSetup.queueForCleanup(pdpClient);
-        return pdpClient;
+        newPdpClient = pdpClientRepository.save(newPdpClient);
+        dataSetup.queueForCleanup(newPdpClient);
+        return newPdpClient;
     }
 
     private Job createJob(PdpClient pdpClient, String contractNumber) {
-        Job job = new Job();
-        job.setJobUuid("S0000");
-        job.setStatus(JobStatus.SUBMITTED);
-        job.setStatusMessage("0%");
-        job.setOrganization(pdpClient.getOrganization());
-        job.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
-        job.setCreatedAt(OffsetDateTime.now());
-        job.setFhirVersion(STU3);
-        job.setContractNumber(contractNumber);
+        Job newJob = new Job();
+        newJob.setJobUuid("S0000");
+        newJob.setStatus(JobStatus.SUBMITTED);
+        newJob.setStatusMessage("0%");
+        newJob.setOrganization(pdpClient.getOrganization());
+        newJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
+        newJob.setCreatedAt(OffsetDateTime.now());
+        newJob.setFhirVersion(STU3);
+        newJob.setContractNumber(contractNumber);
 
-        job = jobRepository.save(job);
-        addJobForCleanup(job);
-        return job;
+        newJob = jobRepository.save(newJob);
+        addJobForCleanup(newJob);
+        return newJob;
     }
 }

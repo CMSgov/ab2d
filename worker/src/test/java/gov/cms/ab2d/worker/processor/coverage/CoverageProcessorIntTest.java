@@ -10,6 +10,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.util.Coverage;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+
+import java.util.concurrent.TimeUnit;
 
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -80,11 +83,9 @@ class CoverageProcessorIntTest {
 
         assertEquals(4, coverageSearchRepo.count());
 
-        sleep(90);
-
-        while (taskExecutor.getActiveCount() > 0) {
-            sleep(2);
-        }
+        Awaitility.await().pollInterval(2, TimeUnit.SECONDS).until(() ->
+                taskExecutor.getActiveCount() == 0
+        );
 
         assertEquals(40000, dataSetup.countCoverage());
         assertEquals(4, dataSetup.findCoverage()
@@ -92,11 +93,4 @@ class CoverageProcessorIntTest {
                 .collect(toSet()).size());
     }
 
-    private void sleep(int seconds) {
-        try {
-            Thread.sleep(seconds * 1000L);
-        } catch (InterruptedException ie) {
-
-        }
-    }
 }

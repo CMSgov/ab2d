@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -106,8 +105,6 @@ class ContractProcessorUnitTest {
 
         initialize();
 
-        //ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
-
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), JOB_UUID);
         Files.createDirectories(outputDirPath);
     }
@@ -147,29 +144,29 @@ class ContractProcessorUnitTest {
 
     @Test
     void testIsDone() throws IOException {
-        String job = "job1";
+        String jobId = "job1";
         Future<Integer> aggThread = mock(Future.class);
         when(aggThread.isDone()).thenReturn(false);
         when(aggThread.isCancelled()).thenReturn(false);
 
         ContractProcessorImpl impl = (ContractProcessorImpl) cut;
-        assertFalse(impl.isDone(aggThread, job, false));
-        Path testFinishedDir = Path.of(efsMountTmpDir.toFile().getAbsolutePath(), job, FINISHED);
+        assertFalse(impl.isDone(aggThread, jobId, false));
+        Path testFinishedDir = Path.of(efsMountTmpDir.toFile().getAbsolutePath(), jobId, FINISHED);
         Files.createDirectories(testFinishedDir);
         Path testFile = Path.of(testFinishedDir.toString(), "tst.ndjson");
         Files.createFile(testFile);
         Files.writeString(testFile, "abc");
-        assertFalse(impl.isDone(aggThread, job, true));
+        assertFalse(impl.isDone(aggThread, jobId, true));
 
         Files.delete(testFile);
-        Path testStreamingDir = Path.of(efsMountTmpDir.toFile().getAbsolutePath(), job, STREAMING);
+        Path testStreamingDir = Path.of(efsMountTmpDir.toFile().getAbsolutePath(), jobId, STREAMING);
         Files.deleteIfExists(testStreamingDir);
-        assertTrue(impl.isDone(aggThread, job, true));
+        assertTrue(impl.isDone(aggThread, jobId, true));
         verify(aggThread).cancel(true);
         assertFalse(Files.exists(testFinishedDir));
 
         when(aggThread.isCancelled()).thenReturn(true);
-        assertTrue(impl.isDone(aggThread, job, false));
+        assertTrue(impl.isDone(aggThread, jobId, false));
     }
 
     @Test
@@ -380,6 +377,7 @@ class ContractProcessorUnitTest {
 
     @Test
     @DisplayName("V3 - When round robin blocking queue is full, patients should not be skipped")
+    @SuppressWarnings("java:S2925") // Suppress warning for `Thread.sleep(5000)`
     void whenBlockingQueueFullPatientsNotSkipped_V3() throws InterruptedException {
         initialize(FhirVersion.R4V3);
         when(coverageDriver.pageCoverageV3(any(CoveragePagingRequest.class)))
@@ -418,13 +416,13 @@ class ContractProcessorUnitTest {
     }
 
     private Job createJob(PdpClient pdpClient, FhirVersion fhirVersion) {
-        Job job = new Job();
-        job.setJobUuid(JOB_UUID);
-        job.setStatusMessage("0%");
-        job.setStatus(JobStatus.IN_PROGRESS);
-        job.setOrganization(pdpClient.getOrganization());
-        job.setFhirVersion(fhirVersion);
-        return job;
+        Job newJob = new Job();
+        newJob.setJobUuid(JOB_UUID);
+        newJob.setStatusMessage("0%");
+        newJob.setStatus(JobStatus.IN_PROGRESS);
+        newJob.setOrganization(pdpClient.getOrganization());
+        newJob.setFhirVersion(fhirVersion);
+        return newJob;
     }
 
     private static List<CoverageSummary> createPatientsByContractResponse(ContractForCoverageDTO contractcoverageContractForCoverageDTO, int num) {
