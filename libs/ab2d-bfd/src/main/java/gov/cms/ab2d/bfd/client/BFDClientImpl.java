@@ -110,8 +110,8 @@ public class BFDClientImpl implements BFDClient {
                     " using since " + sinceTime + " and until " + untilTime + " and serviceDates " + serviceDates);
         bfdSegment.setMetricName("RequestEOB");
 
-        IBaseBundle result = bfdSearch.searchEOB(patientID, sinceTime, untilTime, serviceDates, pageSize, getJobId(), version, contractNum);
-
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(patientID, version, contractNum, getJobId(), pageSize, sinceTime, untilTime, serviceDates);
+        IBaseBundle result = bfdSearch.searchEOB(BFDSearchDTO);
         bfdSegment.end();
 
         return result;

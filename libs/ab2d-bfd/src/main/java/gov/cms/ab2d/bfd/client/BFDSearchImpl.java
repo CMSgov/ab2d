@@ -2,7 +2,6 @@ package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.bfd.dto;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
@@ -54,7 +53,7 @@ public class BFDSearchImpl implements BFDSearch {
         OffsetDateTime since = searchDTO.getSince();
         OffsetDateTime until = searchDTO.getUntil();
         List<String> serviceDates = searchDTO.getServiceDates();
-        int pageSize = searchDTO.getSince();
+        int pageSize = searchDTO.getPageSize();
         String bulkJobId = searchDTO.getBulkJobId();
         FhirVersion version = searchDTO.getVersion();
         String contractNum = searchDTO.getContractNum();

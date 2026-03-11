@@ -1,4 +1,4 @@
-package gov.cms.ab2d.bfd.dto;
+package gov.cms.ab2d.bfd.client;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
