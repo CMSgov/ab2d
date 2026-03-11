@@ -486,17 +486,17 @@ class TestRunner {
     }
 
     private boolean validFields(JSONObject jsonObject, FhirVersion version) {
-        Set<String> allowedFields = Set.of("identifier", "status", "item", "meta", "patient", "billablePeriod", "diagnosis",
+        Set<String> allowedFields = new HashSet<>(Set.of("identifier", "status", "item", "meta", "patient", "billablePeriod", "diagnosis",
                 "provider", "id", "type", "precedence", "resourceType", "organization", "facility", "careTeam",
-                "procedure", "extension", "supportingInfo", "subType");
+                "procedure", "extension", "supportingInfo", "subType"));
 
-        Set<String> disallowedFields = Set.of("patientTarget", "created", "enterer",
+        Set<String> disallowedFields = new HashSet<>(Set.of("patientTarget", "created", "enterer",
                 "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
                 "referralTarget", "facilityTarget", "claim", "claimTarget", "claimResponse", "claimResponseTarget",
                 "outcome", "disposition", "related", "prescription", "prescriptionTarget", "originalPrescription",
                 "originalPrescriptionTarget", "payee", "information", "precedence", "insurance", "accident",
                 "employmentImpacted", "hospitalization", "addItem", "totalCost", "unallocDeductable", "totalBenefit",
-                "payment", "form", "contained", "processNote", "benefitBalance");
+                "payment", "form", "contained", "processNote", "benefitBalance"));
 
         if (version == FhirVersion.R4V3) {
             allowedFields.addAll(Arrays.asList("insurance", "use", "created", "outcome"));
