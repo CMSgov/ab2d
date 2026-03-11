@@ -23,7 +23,7 @@ on:
           - sandbox
         default: test
       v3_only:
-        description: Run V3 E2E tests only (temporary)
+        description: Run V3 E2E tests only (temporary option - to be removed)
         required: false
         type: boolean
         default: false
