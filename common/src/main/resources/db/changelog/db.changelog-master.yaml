@@ -182,4 +182,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2025/add_v3_allow_list_property.sql
   - include:
+      file: db/changelog/v2026/add_service_dates_column.sql
+  - include:    
       file: db/changelog/v2026/add_v3_tables_partitions.sql
