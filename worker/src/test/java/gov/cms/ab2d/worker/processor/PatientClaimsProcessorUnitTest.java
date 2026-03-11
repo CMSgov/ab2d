@@ -19,6 +19,7 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
+import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +63,6 @@ class PatientClaimsProcessorUnitTest {
     private static final OffsetDateTime EARLY_SINCE_DATE = OffsetDateTime.of(2020, 1, 15, 0, 0, 0, 0, ZoneOffset.UTC);
     private static final OffsetDateTime LATER_ATT_DATE = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
     private CoverageSummary coverageSummary;
-    private ProgressTrackerUpdate update = new ProgressTrackerUpdate();
 
     private final Token noOpToken = new Token() {
         @Override
@@ -131,7 +131,6 @@ class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenPatientHasDataWithBadLastUpdated() throws ExecutionException, InterruptedException {
-        ExplanationOfBenefit firstEob = eob.copy();
         eob.getMeta().setLastUpdated(null);
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         ExplanationOfBenefit eob2 = eob.copy();
@@ -162,13 +161,13 @@ class PatientClaimsProcessorUnitTest {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, CONTRACT_NUM)).thenReturn(bundle1);
 
-        ProgressTrackerUpdate update = cut.process(request).get();
-        assertNotNull(update);
-        assertEquals(1, update.getEobsProcessedCount());
-        assertEquals(1, update.getEobsFetchedCount());
-        assertEquals(1, update.getPatientRequestProcessedCount());
-        assertEquals(1, update.getPatientWithEobCount());
-        assertEquals(0, update.getPatientFailureCount());
+        ProgressTrackerUpdate trackerUpdate = cut.process(request).get();
+        assertNotNull(trackerUpdate);
+        assertEquals(1, trackerUpdate.getEobsProcessedCount());
+        assertEquals(1, trackerUpdate.getEobsFetchedCount());
+        assertEquals(1, trackerUpdate.getPatientRequestProcessedCount());
+        assertEquals(1, trackerUpdate.getPatientWithEobCount());
+        assertEquals(0, trackerUpdate.getPatientFailureCount());
 
         verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, CONTRACT_NUM);
         verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);
@@ -184,13 +183,13 @@ class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, CONTRACT_NUM)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM)).thenReturn(bundle2);
 
-        ProgressTrackerUpdate update = cut.process(request).get();
-        assertNotNull(update);
-        assertEquals(2, update.getEobsProcessedCount());
-        assertEquals(2, update.getEobsFetchedCount());
-        assertEquals(1, update.getPatientRequestProcessedCount());
-        assertEquals(1, update.getPatientWithEobCount());
-        assertEquals(0, update.getPatientFailureCount());
+        ProgressTrackerUpdate trackerUpdate = cut.process(request).get();
+        assertNotNull(trackerUpdate);
+        assertEquals(2, trackerUpdate.getEobsProcessedCount());
+        assertEquals(2, trackerUpdate.getEobsFetchedCount());
+        assertEquals(1, trackerUpdate.getPatientRequestProcessedCount());
+        assertEquals(1, trackerUpdate.getPatientWithEobCount());
+        assertEquals(0, trackerUpdate.getPatientFailureCount());
 
         verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, CONTRACT_NUM);
         verify(mockBfdClient).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);
@@ -215,13 +214,13 @@ class PatientClaimsProcessorUnitTest {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
         when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(),null, null, CONTRACT_NUM)).thenReturn(bundle1);
 
-        ProgressTrackerUpdate update = cut.process(request).get();
-        assertNotNull(update);
-        assertEquals(0, update.getEobsProcessedCount());
-        assertEquals(0, update.getEobsFetchedCount());
-        assertEquals(1, update.getPatientRequestProcessedCount());
-        assertEquals(0, update.getPatientWithEobCount());
-        assertEquals(0, update.getPatientFailureCount());
+        ProgressTrackerUpdate trackerUpdate = cut.process(request).get();
+        assertNotNull(trackerUpdate);
+        assertEquals(0, trackerUpdate.getEobsProcessedCount());
+        assertEquals(0, trackerUpdate.getEobsFetchedCount());
+        assertEquals(1, trackerUpdate.getPatientRequestProcessedCount());
+        assertEquals(0, trackerUpdate.getPatientWithEobCount());
+        assertEquals(0, trackerUpdate.getPatientFailureCount());
 
         verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, CONTRACT_NUM);
         verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);

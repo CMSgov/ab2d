@@ -47,7 +47,7 @@ public class WorkerDataSetup {
     public void cleanup() {
 
         List<Job> jobsToDelete = domainObjects.stream().filter(object -> object instanceof Job)
-                .map(object -> (Job) object).collect(toList());
+                .map(object -> (Job) object).toList();
         jobsToDelete.forEach(job -> {
             job = jobRepository.findByJobUuid(job.getJobUuid());
             jobRepository.delete(job);
@@ -55,7 +55,7 @@ public class WorkerDataSetup {
         });
 
         List<PdpClient> clientsToDelete = domainObjects.stream().filter(object -> object instanceof PdpClient)
-                .map(object -> (PdpClient) object).collect(toList());
+                .map(object -> (PdpClient) object).toList();
         clientsToDelete.forEach(pdpClient -> {
             pdpClient = pdpClientRepository.findByClientId(pdpClient.getClientId());
 
@@ -66,7 +66,7 @@ public class WorkerDataSetup {
         });
 
         List<Role> rolesToDelete = domainObjects.stream().filter(object -> object instanceof Role)
-                .map(object -> (Role) object).collect(toList());
+                .map(object -> (Role) object).toList();
         rolesToDelete.forEach(role -> {
             Optional<Role> roleOptional = roleRepository.findRoleByName(role.getName());
 
@@ -76,8 +76,6 @@ public class WorkerDataSetup {
             }
         });
 
-        List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
-                .map(object -> (Contract) object).collect(toList());
         contractServiceStub.reset();
 
         domainObjects.clear();

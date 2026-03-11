@@ -168,8 +168,8 @@ class CoverageDriverUnitTest {
     @DisplayName("Paging coverage fails when ")
     @Test
     void failPagingRequestWhenContractMissing() {
-
-        CoverageDriverException contractMissing = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(new Job(), null));
+        Job newJob = new Job();
+        CoverageDriverException contractMissing = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(newJob, null));
 
         assertEquals("cannot retrieve metadata for job missing contract", contractMissing.getMessage());
     }
@@ -438,7 +438,7 @@ class CoverageDriverUnitTest {
 
         CoverageSearch search = new CoverageSearch();
 
-        CoverageMapping mapping = new CoverageMapping(event, search);
+        CoverageMapping coverageMapping = new CoverageMapping(event, search);
 
         doReturn(Optional.of(search)).when(driver).getNextSearch();
         doReturn(Optional.empty()).when(coverageService).startSearch(any(), anyString());
@@ -448,7 +448,7 @@ class CoverageDriverUnitTest {
             fail("coverage service not starting search should not fail", exception);
         }
 
-        doReturn(Optional.of(mapping)).when(coverageService).startSearch(any(), anyString());
+        doReturn(Optional.of(coverageMapping)).when(coverageService).startSearch(any(), anyString());
         doReturn(false).when(coverageProcessor).startJob(any());
         doReturn(event).when(coverageService).cancelSearch(anyInt(), anyString());
         doNothing().when(coverageProcessor).queueMapping(any(), anyBoolean());
@@ -477,18 +477,16 @@ class CoverageDriverUnitTest {
     @DisplayName("Coverage period update fails then throw exception")
     @Test
     void periodUpdateFailsThenThrowException() {
+        ContractDTO contract = new ContractDTO(null, "contractNum", null, null, null, 0, 0);
 
+        CoveragePeriod coveragePeriod = new CoveragePeriod();
+        coveragePeriod.setContractNumber(contract.getContractNumber());
+        coveragePeriod.setModified(OffsetDateTime.now().plusHours(1));
+        coveragePeriod.setStatus(CoverageJobStatus.FAILED);
+
+        Job job = new Job();
+        job.setCreatedAt(OffsetDateTime.now());
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, () -> {
-            ContractDTO contract = new ContractDTO(null, "contractNum", null, null, null, 0, 0);
-
-            CoveragePeriod coveragePeriod = new CoveragePeriod();
-            coveragePeriod.setContractNumber(contract.getContractNumber());
-            coveragePeriod.setModified(OffsetDateTime.now().plus(1, ChronoUnit.HOURS));
-            coveragePeriod.setStatus(CoverageJobStatus.FAILED);
-
-            Job job = new Job();
-            job.setCreatedAt(OffsetDateTime.now());
-
             driver.checkCoveragePeriodValidity(job, coveragePeriod);
         });
 

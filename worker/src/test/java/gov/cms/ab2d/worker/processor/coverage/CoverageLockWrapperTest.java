@@ -1,14 +1,12 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+
+import java.util.concurrent.*;
 
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +37,7 @@ class CoverageLockWrapperTest {
     @Disabled("skipping testLockThreads() - testLockThreads() sometimes succeeds and sometimes fails even with multiple retries")
     void testLockThreadsWithRetry() {
         int maxAttempts=15;
-        int attempt=1;
+        int attempt=0;
         boolean success=false;
         while (attempt < maxAttempts && !success) {
             try {
@@ -70,28 +68,12 @@ class CoverageLockWrapperTest {
         LockThread callable3 = new LockThread(coverageLockWrapper, 3);
         Future<Boolean> task1 = executor.submit(callable1);
         Future<Boolean> task2 = executor.submit(callable2);
-        Thread.sleep(5000);
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> task1.isDone() && task2.isDone());
+        boolean got1 = task1.get();
+        boolean got2 = task2.get();
+        assertTrue(got1 != got2);
         Future<Boolean> task3 = executor.submit(callable3);
-        boolean done1 = false;
-        boolean done3 = false;
-        while (!task1.isDone() || !task2.isDone() || !task3.isDone()) {
-            if (task1.isDone() && task2.isDone() && !done1) {
-                if (task1.get() == false && task2.get() == false) {
-                    fail("Atleast one thread should get the lock");
-                }
-                if (task1.get() == true && task2.get() == true) {
-                    fail("Both threads cannot get the lock");
-                }
-                if (!done1) {
-                    done1 = true;
-                }
-            }
-            if (task3.isDone()) {
-                if (!done3) {
-                    assertTrue(task3.get());
-                    done3 = true;
-                }
-            }
-        }
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).until(task3::isDone);
+        assertTrue(task3.get());
     }
 }

@@ -40,6 +40,8 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -248,8 +250,9 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void failedValidation() {
+        StartJobDTO jobRequest = buildStartJobResourceTypes("Patient,ExplanationOfBenefit,Coverage");
         assertThrows(TransactionSystemException.class,
-                () -> jobService.createJob(buildStartJobResourceTypes("Patient,ExplanationOfBenefit,Coverage")));
+                () -> jobService.createJob(jobRequest));
     }
 
     @Test
@@ -266,8 +269,9 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void cancelNonExistingJob() {
+        String org = pdpClientService.getCurrentClient().getOrganization();
         assertThrows(ResourceNotFoundException.class,
-                () -> jobService.cancelJob("NonExistingJob", pdpClientService.getCurrentClient().getOrganization()));
+                () -> jobService.cancelJob("NonExistingJob", org));
     }
 
     @Test
@@ -301,10 +305,10 @@ class JobServiceTest extends JobCleanup {
         Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         setupRegularClientSecurityContext();
-
+        String jobId = job.getJobUuid();
+        String org = pdpClientService.getCurrentClient().getOrganization();
         assertThrows(InvalidJobAccessException.class,
-                () -> jobService.getAuthorizedJobByJobUuid(job.getJobUuid(),
-                        pdpClientService.getCurrentClient().getOrganization()));
+                () -> jobService.getAuthorizedJobByJobUuid(jobId, org));
     }
 
     private void setupAdminClient() {
@@ -330,44 +334,22 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void getNonExistentJob() {
+        String org = pdpClientService.getCurrentClient().getOrganization();
         assertThrows(ResourceNotFoundException.class,
-                () -> jobService.getAuthorizedJobByJobUuid("NonExistent",
-                        pdpClientService.getCurrentClient().getOrganization()));
+                () -> jobService.getAuthorizedJobByJobUuid("NonExistent", org));
     }
 
-    @Test
-    void testJobInSuccessfulState() {
+    @ParameterizedTest
+    @EnumSource(value = JobStatus.class, names = {"SUCCESSFUL", "CANCELLED", "FAILED"})
+    void testJobInTerminalStates(JobStatus status) {
         Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
-
-        job.setStatus(SUCCESSFUL);
+        job.setStatus(status);
         jobRepository.saveAndFlush(job);
+        String jobId = job.getJobUuid();
+        String org = pdpClientService.getCurrentClient().getOrganization();
 
-        assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid(),
-                pdpClientService.getCurrentClient().getOrganization()));
-    }
-
-    @Test
-    void testJobInCancelledState() {
-        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
-
-        job.setStatus(JobStatus.CANCELLED);
-        jobRepository.saveAndFlush(job);
-
-        assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid(),
-                pdpClientService.getCurrentClient().getOrganization()));
-
-    }
-
-    @Test
-    void testJobInFailedState() {
-        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
-
-        job.setStatus(FAILED);
-        jobRepository.saveAndFlush(job);
-
-        assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid(),
-                pdpClientService.getCurrentClient().getOrganization()));
-
+        assertThrows(InvalidJobStateTransition.class, () ->
+                jobService.cancelJob(jobId, org));
     }
 
     @Test
@@ -456,8 +438,9 @@ class JobServiceTest extends JobCleanup {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
+        String jobId = job.getJobUuid();
 
-        Path destination = Paths.get(tmpJobLocation, job.getJobUuid());
+        Path destination = Paths.get(tmpJobLocation, jobId);
         String destinationStr = destination.toString();
         Files.createDirectories(destination);
 
@@ -481,10 +464,10 @@ class JobServiceTest extends JobCleanup {
                         new org.springframework.security.core.userdetails.User(savedPdpClient.getClientId(),
                                 "test", new ArrayList<>()), "pass"));
 
+        String org = pdpClientService.getCurrentClient().getOrganization();
         var exceptionThrown = assertThrows(
                 InvalidJobAccessException.class,
-                () -> jobService.getResourceForJob(job.getJobUuid(), testFile,
-                        pdpClientService.getCurrentClient().getOrganization()));
+                () -> jobService.getResourceForJob(jobId, testFile, org));
 
         assertEquals("Unauthorized", exceptionThrown.getMessage());
     }
@@ -540,9 +523,10 @@ class JobServiceTest extends JobCleanup {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
+        String jobId = job.getJobUuid();
+        String org = pdpClientService.getCurrentClient().getOrganization();
         assertThrows(ResourceNotFoundException.class,
-                () -> jobService.getResourceForJob(job.getJobUuid(), "filenamewrong.ndjson",
-                        pdpClientService.getCurrentClient().getOrganization()));
+                () -> jobService.getResourceForJob(jobId, "filenamewrong.ndjson", org));
     }
 
     @Test
@@ -551,9 +535,10 @@ class JobServiceTest extends JobCleanup {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
+        String jobId = job.getJobUuid();
+        String org = pdpClientService.getCurrentClient().getOrganization();
         assertThrows(JobOutputMissingException.class,
-                () -> jobService.getResourceForJob(job.getJobUuid(), "outputmissing.ndjson",
-                        pdpClientService.getCurrentClient().getOrganization()));
+                () -> jobService.getResourceForJob(jobId, "outputmissing.ndjson", org));
     }
 
     @Test
@@ -565,9 +550,10 @@ class JobServiceTest extends JobCleanup {
         jobOutput.setDownloaded(30);
         jobOutputRepository.save(jobOutput);
 
+        String jobId = job.getJobUuid();
+        String org = pdpClientService.getCurrentClient().getOrganization();
         var exception = assertThrows(JobOutputMissingException.class,
-                () -> jobService.getResourceForJob(job.getJobUuid(), "test.ndjson",
-                        pdpClientService.getCurrentClient().getOrganization()));
+                () -> jobService.getResourceForJob(jobId, "test.ndjson", org));
         assertEquals("The file has already been download the maximum number of allowed times.",
                 exception.getMessage());
     }
@@ -580,10 +566,10 @@ class JobServiceTest extends JobCleanup {
         job.setExpiresAt(OffsetDateTime.now().minusDays(2));
         jobRepository.save(job);
 
-
+        String jobId = job.getJobUuid();
+        String org = pdpClientService.getCurrentClient().getOrganization();
         var exception = assertThrows(JobOutputMissingException.class,
-                () -> jobService.getResourceForJob(job.getJobUuid(), "test.ndjson",
-                        pdpClientService.getCurrentClient().getOrganization()));
+                () -> jobService.getResourceForJob(jobId, "test.ndjson", org));
         assertEquals("The file is not present as it has expired. Please resubmit the job.", exception.getMessage());
     }
 
