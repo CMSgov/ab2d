@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller.v3;
 
 import gov.cms.ab2d.api.controller.common.ApiCommon;
+import gov.cms.ab2d.api.controller.common.CheckValidParametersDTO;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.job.dto.StartJobDTO;
@@ -23,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.api.util.SwaggerConstants.*;
@@ -60,6 +62,7 @@ public class BulkDataAccessAPIV3 {
             ),
             @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE)),
             @Parameter(name = UNTIL, description = BULK_UNTIL_DEFAULT, schema = @Schema(type = "date-time", description = UNTIL_EXAMPLE_DATE)),
+            @Parameter(name = TYPEFILTER, description = BULK_TYPEFILTER, schema = @Schema(type = "string")),
     }
     )
     @ApiResponses(value = {
@@ -84,14 +87,17 @@ public class BulkDataAccessAPIV3 {
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             OffsetDateTime since,
             @RequestParam(required = false, name = UNTIL) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            OffsetDateTime until) {
+            OffsetDateTime until,
+            @RequestParam(name = TYPEFILTER, required = false)
+            String typeFilter) {
 
         apiCommon.checkContractIsAllowListedForV3();
 
         log.info("Received request to export");
 
-        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, until, resourceTypes,
-                outputFormat, R4V3);
+        CheckValidParametersDTO params = new CheckValidParametersDTO(resourceTypes, outputFormat, since, until, apiCommon.getServiceDates(typeFilter));
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, R4V3, params);
+
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);
         return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V3, (String) request.getAttribute(REQUEST_ID), request);
