@@ -497,8 +497,8 @@ class TestRunner {
                 "payment", "form", "contained", "processNote", "benefitBalance"));
 
         if (version == FhirVersion.R4V3) {
-            allowedFields.addAll(Arrays.asList("insurance", "use", "created"));
-            disallowedFields.remove("insurance");
+            allowedFields.addAll(Arrays.asList("insurance", "use", "created", "outcome"));
+            disallowedFields.removeAll(Arrays.asList("insurance", "outcome"));
         }
 
         JSONArray obj = jsonObject.names();
