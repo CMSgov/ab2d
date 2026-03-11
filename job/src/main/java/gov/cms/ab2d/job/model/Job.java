@@ -147,12 +147,12 @@ public class Job {
 
         @Override
         public String convertToDatabaseColumn(List<String> stringList) {
-            return stringList != null ? String.join(SPLIT_CHAR, stringList) : "";
+            return stringList != null ? String.join(SPLIT_CHAR, stringList) : null;
         }
 
         @Override
         public List<String> convertToEntityAttribute(String string) {
-            return string != null ? Arrays.asList(string.split(SPLIT_CHAR)) : emptyList();
+            return string != null ? Arrays.asList(string.split(SPLIT_CHAR)) : null;
         }
     }
 }
