@@ -115,15 +115,17 @@ class TestRunner {
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
 
     enum PdpContract {
+        // Use PDP-100 for testing V1/V2
         PDP_100(
-        "Z0000",
-        "OKTA_CLIENT_ID",
-        "OKTA_CLIENT_PASSWORD"
+            "Z0000",
+            "OKTA_CLIENT_ID",
+            "OKTA_CLIENT_PASSWORD"
         ),
+        // Use PDP-1000 for testing V3 -- synthetic data does not exist for contract Z0000
         PDP_1000(
-        "Z0001",
-        "SECONDARY_USER_OKTA_CLIENT_ID",
-        "SECONDARY_USER_OKTA_CLIENT_PASSWORD"
+            "Z0001",
+            "SECONDARY_USER_OKTA_CLIENT_ID",
+            "SECONDARY_USER_OKTA_CLIENT_PASSWORD"
         );
 
         public final String contract;
@@ -947,6 +949,7 @@ class TestRunner {
      * @return the stream of arguments
      */
     private Stream<Arguments> getVersionContractAndApiClient() {
+        // Temporary - to be removed
         if (v3Only()) {
             return Stream.of(arguments(R4V3, PDP_1000.contract, apiClient_PDP1000));
         }
@@ -977,6 +980,7 @@ class TestRunner {
      * @return the stream of FHIR versions
      */
     static Stream<Arguments> getVersionAndApiClient() {
+        // Temporary - to be removed
         if (v3Only()) {
             return Stream.of(arguments(R4V3, apiClient_PDP1000));
         }
@@ -999,12 +1003,17 @@ class TestRunner {
         }
     }
 
+    /**
+     * For V3, use API client configured with credentials for PDP-1000
+     * Otherwise use API client for PDP-100
+     */
     static APIClient apiClient(FhirVersion version) {
         return version == R4V3
             ? apiClient_PDP1000
             : apiClient_PDP100;
     }
 
+    // Used for testing that a PDP cannot download files belonging to a different PDP
     static APIClient getOtherPdpApiClient(FhirVersion version) {
         return version == R4V3
             ? apiClient_PDP100
@@ -1021,6 +1030,7 @@ class TestRunner {
         return v3Enabled != null && v3Enabled.equalsIgnoreCase("true");
     }
 
+    // Temporary - Run only V3 tests for debugging test failures if populated
     private static boolean v3Only() {
         String v3Only = System.getenv("AB2D_V3_ONLY");
         return v3Only != null && v3Only.equalsIgnoreCase("true");
