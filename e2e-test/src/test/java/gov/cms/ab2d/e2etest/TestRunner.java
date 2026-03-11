@@ -647,6 +647,11 @@ class TestRunner {
     @MethodSource("getVersionContractAndApiClient")
     @Order(4)
     void runContractNumberExport(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
+        if (version == R4V3) {
+            // Skipping because this tests `apiClient.exportByContractRequest` which does not exist in V3
+            log.info("Skipping test 4 - " + version.toString() + " - not applicable");
+            return;
+        }
         System.out.println();
         log.info("Starting test 4 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
@@ -678,8 +683,13 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersionContractAndApiClient")
-    @Order(6)
+    @Order(-1)
     void testClientCannotDownloadOtherClientsJob(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+        if (version == R4V3) {
+            // Skipping because this tests `apiClient.exportByContractRequest` which does not exist in V3
+            log.info("Starting test 6 - " + version.toString() + " - not applicable");
+            return;
+        }
         System.out.println();
         log.info("Starting test 6 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
