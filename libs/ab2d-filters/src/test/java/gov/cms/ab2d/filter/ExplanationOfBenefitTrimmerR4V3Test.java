@@ -10,11 +10,15 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.util.Date;
 import java.util.List;
 
-import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.*;
+import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.ANESTHESIA_UNIT_COUNT;
+import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.NL_RECORD_IDENTIFICATION;
+import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.PRICING_STATE;
+import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.SUPPLIER_TYPE;
 import static org.hl7.fhir.r4.model.ExplanationOfBenefit.RemittanceOutcome.COMPLETE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExplanationOfBenefitTrimmerR4V3Test {
+
     private static final ExplanationOfBenefit EOB = new ExplanationOfBenefit();
     private static final Date SAMPLE_DATE = new Date();
     private static final String DUMMY_REF = "1234";
@@ -74,7 +78,9 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                         .setReference(new Identifier().setValue("one"))));
         EOB.setPayee(new ExplanationOfBenefit.PayeeComponent().setParty(new Reference("party")));
         EOB.setInsurance(List.of(
-                new ExplanationOfBenefit.InsuranceComponent().setCoverage(new Reference("coverage"))));
+                new ExplanationOfBenefit.InsuranceComponent()
+                        .setCoverage(new Reference("coverage"))
+                        .setFocal(true)));
         EOB.setAccident(new ExplanationOfBenefit.AccidentComponent().setDate(SAMPLE_DATE));
         EOB.setAddItem(List.of(
                 new ExplanationOfBenefit.AddedItemComponent()
@@ -119,7 +125,7 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                 .setSequence(3)
                 .setCategory(new CodeableConcept().setText("category"))
                 .setDiagnosisSequence(List.of(new PositiveIntType(1)))
-                .setCareTeamSequence(List.of(new PositiveIntType(1))) // points to careTeam sequence 1
+                .setCareTeamSequence(List.of(new PositiveIntType(1)))
                 .setProcedureSequence(List.of(new PositiveIntType(3)));
         EOB.setItem(List.of(item));
 
@@ -185,7 +191,6 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                                 )
                         )
         );
-
 
         rendering.addExtension(
                 new Extension()
@@ -295,7 +300,9 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                 () -> assertEquals(0, eobtrim.getExtension().size()),
                 () -> assertEquals(6, eobtrim.getContained().size()),
                 () -> assertEquals(SAMPLE_DATE, eobtrim.getMeta().getLastUpdated()),
-                () -> assertEquals("Patient/1234", eobtrim.getPatient().getReference())
+                () -> assertEquals("Patient/1234", eobtrim.getPatient().getReference()),
+                () -> assertEquals(ExplanationOfBenefit.Use.CLAIM, eobtrim.getUse()),
+                () -> assertEquals(COMPLETE, eobtrim.getOutcome())
         );
 
         Practitioner renderingProvider = (Practitioner) eobtrim.getContained().get(0);
@@ -344,12 +351,10 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                         eobtrim.getFormCode().getText(),
                         eobtrim.getBenefitPeriod().getStart(),
                         eobtrim.getBenefitPeriod().getEnd(),
-                        eobtrim.getOutcome(),
                         eobtrim.getPayee().getParty().getReference(),
                         eobtrim.getAccident().getDate(),
                         eobtrim.getPayment().getDate(),
-                        eobtrim.getForm().getCreation(),
-                        eobtrim.getUse()
+                        eobtrim.getForm().getCreation()
                 ),
                 () -> assertEquals(DUMMY_REF, eobtrim.getFacility().getReference()),
                 () -> assertEquals(0, eobtrim.getPrecedence()),
@@ -357,7 +362,6 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                         eobtrim.getPreAuthRef().size(),
                         eobtrim.getPreAuthRefPeriod().size(),
                         eobtrim.getRelated().size(),
-                        eobtrim.getInsurance().size(),
                         eobtrim.getAddItem().size(),
                         eobtrim.getProcessNote().size(),
                         eobtrim.getBenefitBalance().size(),
@@ -365,15 +369,23 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                 )
         );
 
+        assertAll("insurance kept",
+                () -> assertEquals(1, eobtrim.getInsurance().size()),
+                () -> assertEquals("coverage", eobtrim.getInsuranceFirstRep().getCoverage().getReference()),
+                () -> assertTrue(eobtrim.getInsuranceFirstRep().getFocal())
+        );
+
         ExplanationOfBenefit.SupportingInformationComponent si = eobtrim.getSupportingInfoFirstRep();
         assertAll("supportingInfo DRG",
                 () -> assertEquals(1, eobtrim.getSupportingInfo().size()),
-                () -> assertEquals("http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+                () -> assertEquals(SUPPORTING_INFO_SYSTEM,
                         si.getCategory().getCodingFirstRep().getSystem()),
-                () -> assertEquals("drg", si.getCategory().getCodingFirstRep().getCode()),
-                () -> assertEquals("https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software",
+                () -> assertEquals(DRG_SUPPORTING_INFO_CODE,
+                        si.getCategory().getCodingFirstRep().getCode()),
+                () -> assertEquals(DRG_SYSTEM,
                         si.getCode().getCodingFirstRep().getSystem()),
-                () -> assertEquals("123", si.getCode().getCodingFirstRep().getCode())
+                () -> assertEquals("123",
+                        si.getCode().getCodingFirstRep().getCode())
         );
 
         ExplanationOfBenefit.ItemComponent component = eobtrim.getItem().get(0);
@@ -401,7 +413,6 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                 () -> assertEquals("procedure", ((CodeableConcept) eobtrim.getProcedureFirstRep().getProcedure()).getText())
         );
     }
-
 
     void giveStats(IBaseResource resource) {
         ExplanationOfBenefit eob = (ExplanationOfBenefit) resource;
@@ -457,13 +468,18 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         }
 
         List<ExplanationOfBenefit.SupportingInformationComponent> suppInfoComps = eob.getSupportingInfo();
-        assertTrue(suppInfoComps.size() <= 1);
-        if (suppInfoComps.size() == 1) {
-            ExplanationOfBenefit.SupportingInformationComponent component = suppInfoComps.get(0);
-            CodeableConcept concept = component.getCode();
-            Coding code = concept.getCoding().get(0);
-            assertEquals(ExplanationOfBenefitTrimmerR4.RELATED_DIAGNOSIS_GROUP, code.getSystem());
-            System.out.println(eob.getId() + " Supporting Info Found: " + code.getSystem());
+        assertTrue(suppInfoComps.size() <= 2);
+        for (ExplanationOfBenefit.SupportingInformationComponent component : suppInfoComps) {
+            if (component.hasCategory()
+                    && component.getCategory().hasCoding()
+                    && SUPPORTING_INFO_SYSTEM.equals(component.getCategory().getCodingFirstRep().getSystem())
+                    && DRG_SUPPORTING_INFO_CODE.equals(component.getCategory().getCodingFirstRep().getCode())) {
+
+                assertTrue(component.hasCode());
+                assertTrue(component.getCode().hasCoding());
+                assertEquals(DRG_SYSTEM, component.getCode().getCodingFirstRep().getSystem());
+                System.out.println(eob.getId() + " Supporting Info Found: " + component.getCode().getCodingFirstRep().getSystem());
+            }
         }
 
         int numExtensions = extensions.size();
