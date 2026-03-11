@@ -9,7 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.sql.DataSource;
 
 import java.sql.Connection;
-import java.sql.Statement;
 
 import static gov.cms.ab2d.common.health.FileSystemCheckTest.*;
 import static gov.cms.ab2d.common.health.MemoryUtilizationTest.*;
