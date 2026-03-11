@@ -22,21 +22,21 @@ data "aws_security_group" "idr_db_importer_eventbridge_scheduler" {
 ### SSM parameters
 
 data "aws_ssm_parameter" "ab2d_db_database" {
-  name = "/ab2d/test/core/nonsensitive/database_name"
+  name = "/ab2d/${local.env}/core/nonsensitive/database_name"
 }
 
 data "aws_ssm_parameter" "ab2d_db_host" {
-  name = "/ab2d/test/core/nonsensitive/writer_endpoint"
+  name = "/ab2d/${local.env}/core/nonsensitive/writer_endpoint"
 }
 
 data "aws_ssm_parameter" "ab2d_db_password" {
-  name = "/ab2d/test/core/sensitive/database_password"
+  name = "/ab2d/${local.env}/core/sensitive/database_password"
 }
 
 data "aws_ssm_parameter" "ab2d_db_user" {
-  name = "/ab2d/test/core/sensitive/database_user"
+  name = "/ab2d/${local.env}/core/sensitive/database_user"
 }
 
 data "aws_ssm_parameter" "idr_db_importer_bucket" {
-  name = "/ab2d/test/core/nonsensitive/idr-db-importer-bucket"
+  name = "/ab2d/${local.env}/core/nonsensitive/idr-db-importer-bucket"
 }
