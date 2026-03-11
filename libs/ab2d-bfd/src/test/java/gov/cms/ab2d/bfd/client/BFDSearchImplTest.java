@@ -86,7 +86,7 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
-        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES)
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES);
 
         // Business logic & assertion(s)
         assertThrows(
@@ -105,7 +105,7 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
-        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES)
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES);
 
 
         // Business logic & assertion(s)
@@ -123,7 +123,7 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
-        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, 0, null, null, null)
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, 0, null, null, null);
 
 
         // Business logic & assertion(s)
@@ -141,7 +141,7 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
-        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES)
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES);
 
 
         // Business logic & assertion(s)
@@ -161,7 +161,7 @@ class BFDSearchImplTest {
         // Setup classes
         BfdClientVersions bfdClientVersions = new BfdClientVersions(BFD_URL, BFD_URL_V3, httpClient);
         BFDSearchImpl bfdSearchImpl = new BFDSearchImpl(httpClient, environment, bfdClientVersions);
-        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES)
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(PATIENT_ID, VERSION, CONTRACT_NUM, BULK_JOB_ID, PAGE_SIZE, SINCE, UNTIL, SERVICE_DATES);
 
 
         // Business logic & assertion(s)
