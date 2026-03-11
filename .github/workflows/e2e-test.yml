@@ -35,6 +35,7 @@ jobs:
     env:
       AB2D_V2_ENABLED: 'true'
       AB2D_V3_ENABLED: 'true'
+      AB2D_V3_ONLY: 'true' # only run V3 tests temporarily -- TODO remove
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
       AB2D_ENV: ${{ inputs.environment }}

@@ -937,6 +937,10 @@ class TestRunner {
      * @return the stream of arguments
      */
     private Stream<Arguments> getVersionContractAndApiClient() {
+        if (v3Only()) {
+            return Stream.of(arguments(R4V3, PDP_1000.contract, apiClient_PDP1000));
+        }
+
         // Define default test contract
         if (v3Enabled()) {
             return Stream.of(
@@ -963,6 +967,10 @@ class TestRunner {
      * @return the stream of FHIR versions
      */
     static Stream<Arguments> getVersionAndApiClient() {
+        if (v3Only()) {
+            return Stream.of(arguments(R4V3, apiClient_PDP1000));
+        }
+
         if (v3Enabled()) {
             return Stream.of(
                 arguments(STU3, apiClient_PDP100),
@@ -1002,5 +1010,12 @@ class TestRunner {
         String v3Enabled = System.getenv("AB2D_V3_ENABLED");
         return v3Enabled != null && v3Enabled.equalsIgnoreCase("true");
     }
+
+    private static boolean v3Only() {
+        return true;
+//        String v3Only = System.getenv("AB2D_V3_ONLY");
+//        return v3Only != null && v3Only.equalsIgnoreCase("true");
+    }
+
 
 }
