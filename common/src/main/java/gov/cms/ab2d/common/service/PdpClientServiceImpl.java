@@ -63,12 +63,18 @@ public class PdpClientServiceImpl implements PdpClientService {
     @Override
     public PdpClient getCurrentClient() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null ? pdpClientRepository
-                .findByClientId(
-                        auth.getPrincipal() instanceof String ? (String) auth.getPrincipal() :
-                                ((org.springframework.security.core.userdetails.User) auth
-                                        .getPrincipal())
-                                        .getUsername()) : null;
+        if (auth == null || auth.getPrincipal() == null) {
+            return null;
+        }
+
+        String clientId;
+        if (auth.getPrincipal() instanceof String) {
+            clientId = (String) auth.getPrincipal();
+        } else {
+            clientId = ((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername();
+        }
+
+        return pdpClientRepository.findByClientId(clientId);
     }
 
     /**

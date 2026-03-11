@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 /**
  * A custom implementation of {@link BlockingQueue} made to fit the needs of AB2D. Because we have
@@ -250,15 +249,15 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public E take() throws InterruptedException {
-        final ReentrantLock lock = this.lock;
-        lock.lockInterruptibly();
+        final ReentrantLock reentrantLock = this.lock;
+        reentrantLock.lockInterruptibly();
         try {
             while (size() == 0) {
                 notEmpty.await();
             }
             return getNext();
         } finally {
-            lock.unlock();
+            reentrantLock.unlock();
         }
     }
 
@@ -298,7 +297,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
                 currentIndex.set(0);
             }
             String currentContract =
-                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex.get());
+                    categoryQueues.keySet().stream().toList().get(currentIndex.get());
             Deque<E> queue = categoryQueues.get(currentContract);
             E val = queue.poll();
             if (queue.size() == 0) {
@@ -324,7 +323,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
                 currentIndex.set(0);
             }
             String currentContract =
-                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex.get());
+                    categoryQueues.keySet().stream().toList().get(currentIndex.get());
             return categoryQueues.get(currentContract).peek();
         } finally {
             lock.unlock();

@@ -83,9 +83,9 @@ public class SecurityConfig {
     private void logSecurityException(HttpServletRequest request, Exception securityException, int status) {
 
         try {
-            String error = String.format(API_AUTHNZ_ERROR + " URL (%s), Exception (%s), Message (%s), Origin(%s)",
-                    request.getRequestURL(), securityException.getClass(), securityException.getMessage(),
-                    securityException.getStackTrace()[0].toString());
+            String error = String.format("(%s) URL (%s), Exception (%s), Message (%s), Origin(%s)",
+                    API_AUTHNZ_ERROR, request.getRequestURL(), securityException.getClass(),
+                    securityException.getMessage(), securityException.getStackTrace()[0].toString());
 
             // Attempt to log who made request
             PdpClient client = pdpClientService.getCurrentClient();

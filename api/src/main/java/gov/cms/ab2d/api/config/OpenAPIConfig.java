@@ -122,7 +122,7 @@ public class OpenAPIConfig {
                 ApiResponses responses = operation.getResponses();
 
                 // Response schema that you can display template
-                Schema schema = new Schema();
+                Schema<OperationOutcome> schema = new Schema<>();
                 schema.setName("OperationOutcome");
                 schema.set$ref("#/components/schemas/OperationOutcome");
 
