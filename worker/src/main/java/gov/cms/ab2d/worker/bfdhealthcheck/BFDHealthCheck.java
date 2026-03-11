@@ -67,7 +67,6 @@ class BFDHealthCheck {
                 }
             }
         } catch (Exception ex) {
-            errorOccurred = true;
             log.error("Exception occurred while trying to retrieve capability statement - Invalid version", ex);
             markFailure(data);
         }

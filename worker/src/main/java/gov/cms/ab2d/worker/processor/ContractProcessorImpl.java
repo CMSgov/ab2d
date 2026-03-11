@@ -502,7 +502,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             eventLogger.sendLogs(new ErrorEvent(null, progressTracker.getJobUuid(),
                     ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS, description));
             log.error("{} out of {} records failed. Stopping job", progressTracker.getPatientFailureCount(), progressTracker.getTotalCount());
-            throw new RuntimeException("Too many patient records in the job had failures");
+            throw new JobProcessingException("Too many patient records in the job had failures");
         }
     }
 

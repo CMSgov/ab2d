@@ -1,6 +1,10 @@
 package gov.cms.ab2d.contracts.config;
 
 public final class SwaggerConstants {
+    private SwaggerConstants(){
+        throw new IllegalStateException("Utility class");
+    }
+
     public static final String MAIN = "HPMS is the source of truth for PDP attestation. " +
             "To ensure that the PDP has access to the claims data, periodically we will retrieve data from their API and update our data. " +
             "We have the ability to overwrite data and specify if we want it to automatically update or not";

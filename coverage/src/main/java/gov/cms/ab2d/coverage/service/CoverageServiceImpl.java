@@ -263,7 +263,7 @@ public class CoverageServiceImpl implements CoverageService {
 
         return neverSuccessful.stream().filter(period ->
                 period.getStatus() != CoverageJobStatus.SUBMITTED && period.getStatus() != CoverageJobStatus.IN_PROGRESS)
-                .collect(toList());
+                .toList();
     }
 
     @Override

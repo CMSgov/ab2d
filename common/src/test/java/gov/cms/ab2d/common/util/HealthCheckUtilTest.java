@@ -24,7 +24,6 @@ class HealthCheckUtilTest {
 
     @Mock DataSource healthyDataSource;
     @Mock Connection healthyConnection;
-    @Mock Statement healthyStatement;
 
     @Mock DataSource unhealthyDataSource;
     @Mock org.slf4j.Logger healthyLogger;
@@ -33,7 +32,7 @@ class HealthCheckUtilTest {
     @BeforeEach
     void setup() throws Exception {
         lenient().when(healthyDataSource.getConnection()).thenReturn(healthyConnection);
-        lenient().when(healthyConnection.createStatement()).thenReturn(healthyStatement);
+        lenient().when(healthyConnection.isValid(2)).thenReturn(true);
 
         lenient().when(unhealthyDataSource.getConnection()).thenThrow(new RuntimeException("database error"));
 

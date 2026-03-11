@@ -4,7 +4,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-public class Common {
+public final class Common {
+
+    private Common() {
+        throw new IllegalStateException("Utility class");
+    }
+
     private static final String HTTPS_STRING = "https";
 
     public static boolean shouldReplaceWithHttps(HttpServletRequest request) {
