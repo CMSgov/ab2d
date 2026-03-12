@@ -119,18 +119,18 @@ jobs:
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-microservices --service ab2d-$ENV-contracts --query 'taskArns[]' --output text)
-          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-microservices --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
-          tofu plan ${{ inputs.contracts_image_tag != '' && format('{0}{1}', '-var=contracts_service_image_tag=', inputs.contracts_image_tag) || '-var=contracts_service_image_tag=$ACTIVE_IMAGE_TAG' }} -out=tfplan
+          export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-contracts --service ab2d-$ENV-contracts --query 'taskArns[]' --output text)
+          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-contracts --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
+          tofu plan ${{ inputs.contracts_image_tag != '' && format('{0}{1}', '-var=contracts_service_image_tag=', inputs.contracts_image_tag) || '-var=contracts_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan
       - name: tofu apply - events
         working-directory: ops/services/20-events/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-microservices --service ab2d-$ENV-events --query 'taskArns[]' --output text)
-          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-microservices --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
-          tofu plan ${{ inputs.events_image_tag != '' && format('{0}{1}', '-var=events_service_image_tag=', inputs.events_image_tag) || '-var=events_service_image_tag=$ACTIVE_IMAGE_TAG' }} -out=tfplan
+          export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-events --service ab2d-$ENV-events --query 'taskArns[]' --output text)
+          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-events --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
+          tofu plan ${{ inputs.events_image_tag != '' && format('{0}{1}', '-var=events_service_image_tag=', inputs.events_image_tag) || '-var=events_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
       - name: tofu apply - api
         working-directory: ops/services/30-api/
         run: |
@@ -138,7 +138,7 @@ jobs:
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-api --service ab2d-$ENV-api --query 'taskArns[]' --output text)
           export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-api --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
-          tofu plan ${{ inputs.api_image_tag != '' && format('{0}{1}', '-var=api_service_image_tag=', inputs.api_image_tag) || '-var=api_service_image_tag=$ACTIVE_IMAGE_TAG' }} -out=tfplan
+          tofu plan ${{ inputs.api_image_tag != '' && format('{0}{1}', '-var=api_service_image_tag=', inputs.api_image_tag) || '-var=api_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan
       - name: tofu plan - idr-db-importer
         working-directory: ops/services/30-idr-db-importer/
@@ -147,7 +147,7 @@ jobs:
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV --service ab2d-$ENV-idr-db-importer --query 'taskArns[]' --output text)
           export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
-          tofu plan ${{ inputs.idr_db_importer_image_tag != '' && format('{0}{1}', '-var=image_tag=', inputs.idr_db_importer_image_tag) || '-var=image_tag=$ACTIVE_IMAGE_TAG' }} -out=tfplan
+          tofu plan ${{ inputs.idr_db_importer_image_tag != '' && format('{0}{1}', '-var=image_tag=', inputs.idr_db_importer_image_tag) || '-var=image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan
       - name: tofu apply - lambda
         working-directory: ops/services/30-lambda/
@@ -163,5 +163,5 @@ jobs:
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-worker --service ab2d-$ENV-worker --query 'taskArns[]' --output text)
           export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-worker --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
-          tofu plan ${{ inputs.worker_image_tag != '' && format('{0}{1}', '-var=worker_service_image_tag=', inputs.worker_image_tag) || '-var=worker_service_image_tag=$ACTIVE_IMAGE_TAG' }} -out=tfplan
+          tofu plan ${{ inputs.worker_image_tag != '' && format('{0}{1}', '-var=worker_service_image_tag=', inputs.worker_image_tag) || '-var=worker_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan 
