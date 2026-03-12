@@ -217,7 +217,7 @@ class JwtAuthenticationFilterTest {
         rebuildFilters("");
 
         try {
-            String token = testUtil.setupToken(List.of(ADMIN_ROLE));
+            testUtil.setupToken(List.of(ADMIN_ROLE));
 
             // Expect call to fail but just want to check that event was logged
             mockMvc.perform(get("/swagger-ui"))
@@ -238,7 +238,7 @@ class JwtAuthenticationFilterTest {
         ReflectionTestUtils.invokeMethod(filter, "constructFilters");
 
         try {
-            String token = testUtil.setupToken(List.of(ADMIN_ROLE));
+            testUtil.setupToken(List.of(ADMIN_ROLE));
 
             // Expect call to fail but just want to check that event was logged
             mockMvc.perform(get("/swagger-ui"))
@@ -258,7 +258,7 @@ class JwtAuthenticationFilterTest {
         rebuildFilters("", "   ", "   ");
 
         try {
-            String token = testUtil.setupToken(List.of(ADMIN_ROLE));
+            testUtil.setupToken(List.of(ADMIN_ROLE));
 
             // Expect call to fail but just want to check that event was logged
             mockMvc.perform(get("/swagger-ui"))
@@ -278,7 +278,7 @@ class JwtAuthenticationFilterTest {
         rebuildFilters("", "   ", "/health.*");
 
         try {
-            String token = testUtil.setupToken(List.of(ADMIN_ROLE));
+            testUtil.setupToken(List.of(ADMIN_ROLE));
 
             // Expect call to fail but just want to check that event was logged
             mockMvc.perform(get(HEALTH_ENDPOINT))

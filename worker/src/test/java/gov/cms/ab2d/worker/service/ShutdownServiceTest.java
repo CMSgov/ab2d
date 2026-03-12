@@ -56,6 +56,7 @@ class ShutdownServiceTest {
 
         @Override
         public void logAndAlert(LoggableEvent event, List<Ab2dEnvironment> environments) {
+            // Intentional
         }
     }
 

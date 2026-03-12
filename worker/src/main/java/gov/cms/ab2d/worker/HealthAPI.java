@@ -34,14 +34,16 @@ public class HealthAPI {
     public ResponseEntity<Void> isBfdUp() {
         try {
             bfdClient.capabilityStatement(STU3);
-            try {
-                bfdClient.capabilityStatement(R4);
-            } catch (Exception ex) {
-                log.error("BFD V2 interface is down");
-            }
-            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+
+        try {
+            bfdClient.capabilityStatement(R4);
+        } catch (Exception ex) {
+            log.error("BFD V2 interface is down");
+        }
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

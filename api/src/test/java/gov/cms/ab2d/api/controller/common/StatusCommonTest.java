@@ -130,7 +130,7 @@ class StatusCommonTest {
   @Test
   void testGetJobCanceledResponse() {
     assertNotNull(
-      statusCommon.getCanceledResponse(jobPollResult, "1234", req)
+      statusCommon.getCanceledResponse("1234", req)
     );
   }
 

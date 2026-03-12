@@ -10,7 +10,11 @@ import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 @Slf4j
-public class FhirUtils {
+public final class FhirUtils {
+
+    private FhirUtils() {
+        throw new IllegalStateException("Utility class");
+    }
 
     public static void addMbiIdsToEobs(IBaseResource eob, CoverageSummary patient, FhirVersion version) {
         if (eob == null) {

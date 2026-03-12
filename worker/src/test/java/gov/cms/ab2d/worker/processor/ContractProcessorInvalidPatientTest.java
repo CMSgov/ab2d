@@ -87,7 +87,7 @@ class ContractProcessorInvalidPatientTest {
     private ContractProcessor cut;
     private ContractDTO contract;
     private Job job;
-    private static final String jobId = "1234";
+    private static final String JOB_ID = "1234";
     private final String contractId = "ABC";
     private static final String FINISHED_DIR = "finishedDir";
     private static final String STREAMING_DIR = "streamingDir";
@@ -106,7 +106,7 @@ class ContractProcessorInvalidPatientTest {
     private void initialize(final FhirVersion fhirVersion) {
         job = new Job();
         job.setFhirVersion(fhirVersion);
-        job.setJobUuid(jobId);
+        job.setJobUuid(JOB_ID);
         job.setContractNumber(contract.getContractNumber());
         JobRepository jobRepository = new StubJobRepository(job);
 
@@ -114,7 +114,7 @@ class ContractProcessorInvalidPatientTest {
                 FINISHED_DIR, 0, 0, 1, 2);
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger, searchConfig);
         JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
-        jobProgressUpdateService.initJob(jobId);
+        jobProgressUpdateService.initJob(JOB_ID);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
 
         ThreadPoolTaskExecutor aggTP = new ThreadPoolTaskExecutor();
@@ -125,7 +125,7 @@ class ContractProcessorInvalidPatientTest {
 
         ReflectionTestUtils.setField(cut, "eobJobPatientQueueMaxSize", 1);
         ReflectionTestUtils.setField(cut, "eobJobPatientQueuePageSize", 1);
-        jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
+        jobChannelService.sendUpdate(JOB_ID, JobMeasure.FAILURE_THRESHHOLD, 100);
 
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/2020");
     }

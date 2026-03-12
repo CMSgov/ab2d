@@ -38,9 +38,11 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -137,24 +139,22 @@ class CoverageDriverTest extends JobCleanup {
     private Contract contract;
     private Contract contract1;
     private ContractForCoverageDTO contractForCoverageDTO;
-    private ContractForCoverageDTO contractForCoverageDTO1;
     private CoveragePeriod january;
     private CoveragePeriod february;
     private CoveragePeriod march;
     private Job job;
+
+    private ThreadPoolTaskExecutor taskExecutor;
 
     private BFDClient bfdClient;
 
     private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
-    private ContractToContractCoverageMapping mapping;
-
     @BeforeEach
     void before() {
         coverageDataSetup.cleanup();
         dataSetup.cleanup();
-        mapping = new ContractToContractCoverageMapping();
         // Set properties values in database
         addPropertiesTableValues();
 
@@ -163,7 +163,6 @@ class CoverageDriverTest extends JobCleanup {
         contract1 = dataSetup.setupContract("TST-45", AB2D_EPOCH.toOffsetDateTime());
 
         contractForCoverageDTO = new ContractForCoverageDTO("TST-12", AB2D_EPOCH.toOffsetDateTime(), ContractForCoverageDTO.ContractType.NORMAL);
-        contractForCoverageDTO1 = new ContractForCoverageDTO("TST-45", AB2D_EPOCH.toOffsetDateTime(), ContractForCoverageDTO.ContractType.NORMAL);
 
 
         contractServiceStub.updateContract(contract);
@@ -189,7 +188,7 @@ class CoverageDriverTest extends JobCleanup {
 
         bfdClient = mock(BFDClient.class);
 
-        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setMaxPoolSize(6);
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
@@ -546,8 +545,7 @@ class CoverageDriverTest extends JobCleanup {
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(CoverageJobStatus.IN_PROGRESS, status);
 
-        sleep(1000);
-
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).until(() -> taskExecutor.getActiveCount() ==0);
         processor.monitorMappingJobs();
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(CoverageJobStatus.IN_PROGRESS, status);
@@ -581,7 +579,7 @@ class CoverageDriverTest extends JobCleanup {
      */
     @DisplayName("Getting a search prioritizes coverage searches for already submitted eob jobs")
     @Test
-    void getNextSearchPrioritizesCoverageForExistinEobJobs() {
+    void getNextSearchPrioritizesCoverageForExistingEobJobs() {
 
         CoveragePeriod secondPeriod = coverageDataSetup.createCoveragePeriod(contract1.getContractName(), 2, 2020);
 
@@ -605,11 +603,11 @@ class CoverageDriverTest extends JobCleanup {
     @Test
     void availableCoverageWhenNeverSearched() {
 
-        Job job = new Job();
-        job.setContractNumber(contract.getContractNumber());
+        Job currentJob = new Job();
+        currentJob.setContractNumber(contract.getContractNumber());
 
         try {
-            boolean noCoverageStatuses = driver.isCoverageAvailable(job, contract.toDTO());
+            boolean noCoverageStatuses = driver.isCoverageAvailable(currentJob, contract.toDTO());
 
             assertFalse(noCoverageStatuses, "eob searches should not run when a" +
                     " coverage period has no information");
@@ -621,9 +619,9 @@ class CoverageDriverTest extends JobCleanup {
     @DisplayName("Do not start an eob job if any relevant coverage period is queued for an update")
     @Test
     void availableCoverageWhenPeriodSubmitted() {
-        Job job = new Job();
-        job.setContractNumber(contractForCoverageDTO.getContractNumber());
-        job.setCreatedAt(OffsetDateTime.now());
+        Job currentJob = new Job();
+        currentJob.setContractNumber(contractForCoverageDTO.getContractNumber());
+        currentJob.setCreatedAt(OffsetDateTime.now());
 
         try {
             changeStatus(contractForCoverageDTO, AB2D_EPOCH.toOffsetDateTime(), CoverageJobStatus.SUBMITTED);
@@ -635,7 +633,7 @@ class CoverageDriverTest extends JobCleanup {
             currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
 
-            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, contract.toDTO());
+            boolean submittedCoverageStatus = driver.isCoverageAvailable(currentJob, contract.toDTO());
             assertFalse(submittedCoverageStatus, "eob searches should not run if a " +
                     "coverage period is submitted");
         } catch (InterruptedException | CoverageDriverException exception) {
@@ -647,9 +645,9 @@ class CoverageDriverTest extends JobCleanup {
     @Test
     void availableCoverageWhenPeriodInProgress() {
 
-        Job job = new Job();
-        job.setContractNumber(contract.getContractNumber());
-        job.setCreatedAt(OffsetDateTime.now());
+        Job currentJob = new Job();
+        currentJob.setContractNumber(contract.getContractNumber());
+        currentJob.setCreatedAt(OffsetDateTime.now());
 
         try {
 
@@ -662,7 +660,7 @@ class CoverageDriverTest extends JobCleanup {
             currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
 
-            boolean inProgressCoverageStatus = driver.isCoverageAvailable(job, contract.toDTO());
+            boolean inProgressCoverageStatus = driver.isCoverageAvailable(currentJob, contract.toDTO());
             assertFalse(inProgressCoverageStatus, "eob searches should not run when a coverage period is in progress");
         } catch (InterruptedException | CoverageDriverException exception) {
             fail("could not check for available coverage", exception);
@@ -673,9 +671,9 @@ class CoverageDriverTest extends JobCleanup {
     @Test
     void availableCoverageWhenAllSuccessful() {
 
-        Job job = new Job();
-        job.setContractNumber(contractForCoverageDTO.getContractNumber());
-        job.setCreatedAt(OffsetDateTime.now());
+        Job currentJob = new Job();
+        currentJob.setContractNumber(contractForCoverageDTO.getContractNumber());
+        currentJob.setCreatedAt(OffsetDateTime.now());
 
         try {
 
@@ -688,7 +686,7 @@ class CoverageDriverTest extends JobCleanup {
             currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
 
-            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, contract.toDTO());
+            boolean submittedCoverageStatus = driver.isCoverageAvailable(currentJob, contract.toDTO());
             assertTrue(submittedCoverageStatus, "eob searches should not run if a " +
                     "coverage period is submitted");
         } catch (InterruptedException | CoverageDriverException exception) {
@@ -704,10 +702,11 @@ class CoverageDriverTest extends JobCleanup {
     @Test
     void availableCoverageWhenSinceContainsOnlySuccessful() {
 
-        Job job = new Job();
-        job.setCreatedAt(OffsetDateTime.now());
+        Job currentJob = new Job();
+        currentJob.setCreatedAt(OffsetDateTime.now());
+
         Contract temp = contractServiceStub.getContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
-        job.setContractNumber(temp.getContractNumber());
+        currentJob.setContractNumber(temp.getContractNumber());
 
         OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
                 LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
@@ -719,17 +718,17 @@ class CoverageDriverTest extends JobCleanup {
             LocalDate startMonth = LocalDate.of(2020, 3, 1);
             LocalTime startDay = LocalTime.of(0, 0, 0);
 
-            job.setSince(OffsetDateTime.of(startMonth, startDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
+            currentJob.setSince(OffsetDateTime.of(startMonth, startDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
-            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job, contract.toDTO());
+            boolean inProgressBeginningMonth = driver.isCoverageAvailable(currentJob, contract.toDTO());
             assertFalse(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
 
             LocalDate endMonth = LocalDate.of(2020, 3, 31);
             LocalTime endDay = LocalTime.of(23, 59, 59);
 
-            job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
+            currentJob.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
-            boolean inProgressEndMonth = driver.isCoverageAvailable(job, contract.toDTO());
+            boolean inProgressEndMonth = driver.isCoverageAvailable(currentJob, contract.toDTO());
             assertFalse(inProgressEndMonth, "eob searches should run when only month after since is successful");
         } catch (InterruptedException | CoverageDriverException exception) {
             fail("could not check for available coverage", exception);
@@ -796,14 +795,6 @@ class CoverageDriverTest extends JobCleanup {
             bundle1.addEntry(component);
         }
         return bundle1;
-    }
-
-    private void sleep(int milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException ie) {
-
-        }
     }
 
     private void changeStatus(ContractForCoverageDTO contract, OffsetDateTime attestationTime, CoverageJobStatus status) {

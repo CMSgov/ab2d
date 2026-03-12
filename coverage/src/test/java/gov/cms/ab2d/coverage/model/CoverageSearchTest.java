@@ -57,7 +57,7 @@ class CoverageSearchTest {
             CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
             CoverageSearch search2 = new CoverageSearch(null, period2, OffsetDateTime.now().minusDays(2), 0);
 
-            CoverageSearch savedSearch1 = coverageSearchRepository.save(search1);
+            coverageSearchRepository.save(search1);
 
             CoverageSearch savedSearch2 = coverageSearchRepository.save(search2);
 

@@ -11,6 +11,10 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 @Slf4j
 public final class CoverageUtils {
 
+    private CoverageUtils() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static ZonedDateTime getEndDateTime() {
         // Assume current time zone is EST since all deployments are in EST
         ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
