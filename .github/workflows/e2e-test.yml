@@ -27,7 +27,7 @@ on:
           - sandbox
         default: test
       v3_enabled:
-        description: Run V3 tests (not available in sandbox) in addition to V1/V2 tests
+        description: Run V3 tests in addition to V1/V2 tests
         required: false
         type: boolean
         default: true
