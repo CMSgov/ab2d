@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -78,7 +79,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         }
 
         List<String> filters = List.of(uriFilters.split(",")).stream()
-                .filter(StringUtils::isNotBlank).toList();
+                .filter(StringUtils::isNotBlank).collect(Collectors.toList()); //NOSONAR
 
         if (filters.isEmpty()) {
             log.warn("all filters provided are empty so all api requests will be logged");
@@ -90,7 +91,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         List<Predicate<String>> compiledFilters = filters.stream()
                 .filter(StringUtils::isNotBlank)
                 .map(Pattern::compile).map(Pattern::asPredicate)
-                .toList();
+                .collect(Collectors.toList()); //NOSONAR
 
         // Reduce filters to single predicate statement
         uriFilter = compiledFilters.stream().reduce(Predicate::or).orElse(uri -> false).negate();
@@ -148,7 +149,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         MDC.put(ORGANIZATION, pdpClient.getOrganization());
 
         // If client is disabled for any reason do not proceed
-        if (!pdpClient.getEnabled()) {
+        if (Boolean.FALSE.equals(pdpClient.getEnabled())) {
             log.error("Client {} is not enabled", pdpClient.getOrganization());
             logApiRequestEvent(request, token, pdpClient.getOrganization(), jobId);
             throw new ClientNotEnabledException("Client " + pdpClient.getOrganization() + " is not enabled");

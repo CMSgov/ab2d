@@ -18,6 +18,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
@@ -71,7 +72,7 @@ class CoverageLockWrapperTest {
         Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> task1.isDone() && task2.isDone());
         boolean got1 = task1.get();
         boolean got2 = task2.get();
-        assertTrue(got1 != got2);
+        assertNotEquals(got1, got2);
         Future<Boolean> task3 = executor.submit(callable3);
         Awaitility.await().atMost(5, TimeUnit.SECONDS).until(task3::isDone);
         assertTrue(task3.get());

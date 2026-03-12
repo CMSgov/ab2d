@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -49,8 +48,8 @@ public class DataSetup {
 
     public void cleanup() {
 
-        List<PdpClient> clientsToDelete = domainObjects.stream().filter(object -> object instanceof PdpClient)
-                .map(object -> (PdpClient) object).toList();
+        List<PdpClient> clientsToDelete = domainObjects.stream().filter(PdpClient.class::isInstance)
+                .map(PdpClient.class::cast).toList();
         clientsToDelete.forEach(pdpClient -> {
             pdpClient = pdpClientRepository.findByClientId(pdpClient.getClientId());
 
@@ -60,8 +59,8 @@ public class DataSetup {
             }
         });
 
-        List<Role> rolesToDelete = domainObjects.stream().filter(object -> object instanceof Role)
-                .map(object -> (Role) object).toList();
+        List<Role> rolesToDelete = domainObjects.stream().filter(Role.class::isInstance)
+                .map(Role.class::cast).toList();
         rolesToDelete.forEach(role -> {
             Optional<Role> roleOptional = roleRepository.findRoleByName(role.getName());
 

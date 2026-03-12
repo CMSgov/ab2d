@@ -47,7 +47,7 @@ public class PdpClientServiceImpl implements PdpClientService {
                 .filter(this::hasSponsorRole)
                 .map(pdpClient -> contractService.getContractByContractId(pdpClient.getContractId()))
                 .filter(contract -> contract.getAttestedOn() != null)
-                .collect(toList());
+                .collect(toList()); //NOSONAR
     }
 
     private boolean hasSponsorRole(PdpClient client) {
@@ -68,8 +68,8 @@ public class PdpClientServiceImpl implements PdpClientService {
         }
 
         String clientId;
-        if (auth.getPrincipal() instanceof String) {
-            clientId = (String) auth.getPrincipal();
+        if (auth.getPrincipal() instanceof String currentClient) {
+            clientId = currentClient;
         } else {
             clientId = ((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername();
         }
