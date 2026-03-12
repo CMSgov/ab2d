@@ -7,6 +7,10 @@ on:
       environment:
         required: true
         type: string
+      v3_enabled:
+        required: false
+        type: boolean
+        default: true
       v3_only:
         required: false
         type: boolean
@@ -22,8 +26,13 @@ on:
           - test
           - sandbox
         default: test
+      v3_enabled:
+        description: Run V3 tests (not available in sandbox)
+        required: false
+        type: boolean
+        default: true
       v3_only:
-        description: Run V3 E2E tests only (temporary option - to be removed)
+        description: Run V3 tests only (temporary option - to be removed)
         required: false
         type: boolean
         default: false
@@ -43,7 +52,7 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
       AB2D_V2_ENABLED: 'true'
-      AB2D_V3_ENABLED: 'true'
+      AB2D_V3_ENABLED: ${{ inputs.v3_enabled }}
       AB2D_V3_ONLY: ${{ inputs.v3_only }}
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
