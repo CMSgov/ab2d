@@ -36,6 +36,6 @@ https://plugins.jetbrains.com/plugin/7861-envfile
 
 ## Update run configuration
 
-In the `TestRunner` run configuration, check _Enable EnvFile_ and add YAML config:  
+In the `TestRunner` run configuration, check _Enable EnvFile_ and link the YAML config file:  
 
 ![TestRunner run config](TestRunner-run-config.png)
