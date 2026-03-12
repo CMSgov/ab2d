@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -214,7 +215,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         List<Job> sortedFilteredlist = successfulJobs.stream()
                 .filter(j -> downloadedAll(j.getJobOutputs()))
                 .sorted(comparator)
-                .toList();
+                .collect(Collectors.toList()); //NOSONAR
 
         if (sortedFilteredlist.isEmpty()) {
             return Optional.empty();

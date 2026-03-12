@@ -12,11 +12,8 @@ import org.springframework.core.io.ResourceLoader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public final class EobTestDataUtil {
@@ -24,7 +21,6 @@ public final class EobTestDataUtil {
     public static IBaseResource createEOB() {
         IBaseResource eob;
 
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         Resource resource = resourceLoader.getResource("classpath:" + File.separator +
                 "test-data" + File.separator + "EOB-for-Carrier-Claims.json");
