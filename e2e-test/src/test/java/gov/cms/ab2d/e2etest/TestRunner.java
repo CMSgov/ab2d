@@ -30,6 +30,7 @@ import javax.crypto.SecretKey;
 import javax.net.ssl.HttpsURLConnection;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -43,6 +44,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
@@ -53,8 +56,9 @@ import org.yaml.snakeyaml.Yaml;
 
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
-import static gov.cms.ab2d.fhir.FhirVersion.R4;
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.e2etest.TestRunner.PdpContract.PDP_100;
+import static gov.cms.ab2d.e2etest.TestRunner.PdpContract.PDP_1000;
+import static gov.cms.ab2d.fhir.FhirVersion.*;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -89,7 +93,9 @@ class TestRunner {
     private static final String CURRENCY_IDENTIFIER =
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
 
-    private static APIClient apiClient;
+    private static APIClient apiClient_PDP100;
+
+    private static APIClient apiClient_PDP1000;
 
     private static final int DELAY = 5;
 
@@ -107,6 +113,34 @@ class TestRunner {
     private static final OffsetDateTime earliest = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
+
+    enum PdpContract {
+        // Use PDP-100 for testing V1/V2
+        PDP_100(
+            "Z0000",
+            "OKTA_CLIENT_ID",
+            "OKTA_CLIENT_PASSWORD"
+        ),
+        // Use PDP-1000 for testing V3 -- synthetic data does not exist for contract Z0000
+        PDP_1000(
+            "Z0001",
+            "SECONDARY_USER_OKTA_CLIENT_ID",
+            "SECONDARY_USER_OKTA_CLIENT_PASSWORD"
+        );
+
+        public final String contract;
+        public final String oktaId;
+        public final String oktaPassword;
+
+        PdpContract(String contract, String oktaIdVar, String oktaPasswordVar) {
+            this.contract = contract;
+            this.oktaId = System.getenv(oktaIdVar);
+            this.oktaPassword = System.getenv(oktaPasswordVar);
+            if (StringUtils.isBlank(oktaId) || StringUtils.isBlank(oktaPassword)) {
+                fail(String.format("Both %s and %s must be set in env", oktaIdVar, oktaPasswordVar));
+            }
+        }
+    }
 
     // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
     // an external environment, the regular tests that run as part of a build will be called like they normally would
@@ -141,7 +175,8 @@ class TestRunner {
             loadDockerComposeContainers(apiPort);
         }
 
-        loadApiClientConfiguration(apiPort);
+        apiClient_PDP100 = loadApiClientConfiguration(apiPort, PDP_100);
+        apiClient_PDP1000 = loadApiClientConfiguration(apiPort, PDP_1000);
     }
 
     /**
@@ -204,7 +239,7 @@ class TestRunner {
      *
      * @param apiPort api port to connect client to, only used in local or CI environments
      */
-    private void loadApiClientConfiguration(int apiPort) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    private APIClient loadApiClientConfiguration(int apiPort, PdpContract contract) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
 
         Yaml yaml = new Yaml();
         InputStream inputStream = new FileInputStream("src/test/resources/" + environment.getConfigName());
@@ -222,17 +257,14 @@ class TestRunner {
             baseUrl += ":" + apiPort;
         }
 
-        String oktaClientId = System.getenv("OKTA_CLIENT_ID");
-        String oktaPassword = System.getenv("OKTA_CLIENT_PASSWORD");
-
-        apiClient = new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
+        return new APIClient(baseUrl, oktaUrl, contract.oktaId, contract.oktaPassword);
 
         // add in later
         //uploadOrgStructureReport();
         //uploadAttestationReport();
     }
 
-    private HttpResponse<String> pollForStatusResponse(String statusUrl) throws InterruptedException, IOException {
+    private HttpResponse<String> pollForStatusResponse(String statusUrl, APIClient apiClient) throws InterruptedException, IOException {
         HttpResponse<String> statusResponse = null;
         long start = System.currentTimeMillis();
         int status = 0;
@@ -313,7 +345,7 @@ class TestRunner {
 
             JSONObject jsonObject = new JSONObject(str);
 
-            assertTrue(validFields(jsonObject));
+            assertTrue(validFields(jsonObject, version));
             assertEquals("ExplanationOfBenefit", jsonObject.getString("resourceType"));
             String status = jsonObject.getString("status");
             assertTrue(List.of("active", "cancelled").contains(status));
@@ -453,18 +485,23 @@ class TestRunner {
         assertTrue(extensions.length() == 1 || extensions.length() == 2);
     }
 
-    private boolean validFields(JSONObject jsonObject) {
-        Set<String> allowedFields = Set.of("identifier", "status", "item", "meta", "patient", "billablePeriod", "diagnosis",
+    private boolean validFields(JSONObject jsonObject, FhirVersion version) {
+        Set<String> allowedFields = new HashSet<>(Set.of("identifier", "status", "item", "meta", "patient", "billablePeriod", "diagnosis",
                 "provider", "id", "type", "precedence", "resourceType", "organization", "facility", "careTeam",
-                "procedure", "extension", "supportingInfo", "subType");
+                "procedure", "extension", "supportingInfo", "subType"));
 
-        Set<String> disallowedFields = Set.of("patientTarget", "created", "enterer",
+        Set<String> disallowedFields = new HashSet<>(Set.of("patientTarget", "created", "enterer",
                 "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
                 "referralTarget", "facilityTarget", "claim", "claimTarget", "claimResponse", "claimResponseTarget",
                 "outcome", "disposition", "related", "prescription", "prescriptionTarget", "originalPrescription",
                 "originalPrescriptionTarget", "payee", "information", "precedence", "insurance", "accident",
                 "employmentImpacted", "hospitalization", "addItem", "totalCost", "unallocDeductable", "totalBenefit",
-                "payment", "form", "contained", "processNote", "benefitBalance");
+                "payment", "form", "contained", "processNote", "benefitBalance"));
+
+        if (version == FhirVersion.R4V3) {
+            allowedFields.addAll(Arrays.asList("insurance", "use", "created", "outcome"));
+            disallowedFields.removeAll(Arrays.asList("insurance", "outcome"));
+        }
 
         JSONArray obj = jsonObject.names();
         for (int i = 0; i < obj.length(); i++) {
@@ -485,7 +522,11 @@ class TestRunner {
         return true;
     }
 
-    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since, FhirVersion version) throws IOException, InterruptedException, JSONException {
+    private void downloadFile(
+            Pair<String, JSONArray> downloadDetails,
+            OffsetDateTime since,
+            FhirVersion version,
+            APIClient apiClient) throws IOException, InterruptedException, JSONException {
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst());
 
         assertEquals(200, downloadResponse.statusCode());
@@ -500,7 +541,11 @@ class TestRunner {
         verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since, version);
     }
 
-    private void downloadFileWithoutAcceptEncoding(Pair<String, JSONArray> downloadDetails, OffsetDateTime since, FhirVersion version) throws IOException, InterruptedException, JSONException {
+    private void downloadFileWithoutAcceptEncoding(
+            Pair<String, JSONArray> downloadDetails,
+            OffsetDateTime since,
+            FhirVersion version,
+            APIClient apiClient) throws IOException, InterruptedException, JSONException {
         // set acceptEncoding=null to omit 'Accept-Encoding' header
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst(), null);
 
@@ -524,8 +569,13 @@ class TestRunner {
         verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since, version);
     }
 
-    private Pair<String, JSONArray> performStatusRequests(List<String> contentLocationList, boolean isContract,
-                                                          String contractNumber, FhirVersion version) throws JSONException, IOException, InterruptedException {
+    private Pair<String, JSONArray> performStatusRequests(
+            List<String> contentLocationList,
+            boolean isContract,
+            String contractNumber,
+            FhirVersion version,
+            APIClient apiClient
+    ) throws JSONException, IOException, InterruptedException {
         HttpResponse<String> statusResponse = apiClient.statusRequest(contentLocationList.iterator().next());
 
         assertEquals(202, statusResponse.statusCode());
@@ -540,7 +590,7 @@ class TestRunner {
         List<String> retryAfterListRepeat = retryStatusResponse.headers().map().get("retry-after");
         assertEquals(retryAfterListRepeat.iterator().next(), String.valueOf(DELAY));
 
-        HttpResponse<String> statusResponseAgain = pollForStatusResponse(contentLocationList.iterator().next());
+        HttpResponse<String> statusResponseAgain = pollForStatusResponse(contentLocationList.iterator().next(), apiClient);
 
         String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
@@ -555,24 +605,24 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersionAndContract")
+    @MethodSource("getVersionContractAndApiClient")
     @Order(1)
-    void runSystemWideExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
+    void runSystemWideExport(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         System.out.println();
         log.info("Starting test 1 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version, apiClient);
         assertNotNull(downloadDetails);
-        downloadFile(downloadDetails, null, version);
+        downloadFile(downloadDetails, null, version, apiClient);
     }
 
     @ParameterizedTest
-    @MethodSource("getVersionAndContract")
+    @MethodSource("getVersionContractAndApiClient")
     @Order(2)
-    void runSystemWideExportSince(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
+    void runSystemWideExportSince(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         System.out.println();
         log.info("Starting test 2 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version);
@@ -580,15 +630,15 @@ class TestRunner {
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version, apiClient);
         assertNotNull(downloadDetails);
-        downloadFile(downloadDetails, earliest, version);
+        downloadFile(downloadDetails, earliest, version, apiClient);
     }
 
     @ParameterizedTest
-    @MethodSource("getVersion")
+    @MethodSource("getVersionAndApiClient")
     @Order(3)
-    void runErrorSince(FhirVersion version) throws IOException, InterruptedException {
+    void runErrorSince(FhirVersion version, APIClient apiClient) throws IOException, InterruptedException {
         System.out.println();
         log.info("Starting test 3 - " + version.toString());
         OffsetDateTime timeBeforeEarliest = earliest.minus(1, ChronoUnit.MINUTES);
@@ -601,9 +651,14 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersionAndContract")
+    @MethodSource("getVersionContractAndApiClient")
     @Order(4)
-    void runContractNumberExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
+    void runContractNumberExport(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
+        if (version == R4V3) {
+            // Skipping because this tests `apiClient.exportByContractRequest` which does not exist in V3
+            log.info("Skipping test 4 - " + version.toString() + " - not applicable");
+            return;
+        }
         System.out.println();
         log.info("Starting test 4 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
@@ -611,15 +666,15 @@ class TestRunner {
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contract, version);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contract, version, apiClient);
         assertNotNull(downloadDetails);
-        downloadFile(downloadDetails, null, version);
+        downloadFile(downloadDetails, null, version, apiClient);
     }
 
     @ParameterizedTest
-    @MethodSource("getVersion")
+    @MethodSource("getVersionAndApiClient")
     @Order(5)
-    void testDelete(FhirVersion version) throws IOException, InterruptedException {
+    void testDelete(FhirVersion version, APIClient apiClient) throws IOException, InterruptedException {
         System.out.println();
         log.info("Starting test 5 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
@@ -634,18 +689,23 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersionAndContract")
+    @MethodSource("getVersionContractAndApiClient")
     @Order(6)
-    void testClientCannotDownloadOtherClientsJob(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    void testClientCannotDownloadOtherClientsJob(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+        if (version == R4V3) {
+            // Skipping because this tests `apiClient.exportByContractRequest` which does not exist in V3
+            log.info("Starting test 6 - " + version.toString() + " - not applicable");
+            return;
+        }
         System.out.println();
         log.info("Starting test 6 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contract, version);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contract, version, apiClient);
 
-        APIClient secondAPIClient = createSecondClient();
+        APIClient secondAPIClient = getOtherPdpApiClient(version);
 
         assertNotNull(downloadDetails);
         HttpResponse<InputStream> downloadResponse = secondAPIClient.fileDownloadRequest(downloadDetails.getFirst());
@@ -653,9 +713,9 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersion")
+    @MethodSource("getVersionAndApiClient")
     @Order(7)
-    void testClientCannotDeleteOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    void testClientCannotDeleteOtherClientsJob(FhirVersion version, APIClient apiClient) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println();
         log.info("Starting test 7 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
@@ -665,7 +725,7 @@ class TestRunner {
 
         String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
-        APIClient secondAPIClient = createSecondClient();
+        APIClient secondAPIClient = getOtherPdpApiClient(version);
 
         HttpResponse<String> deleteResponse = secondAPIClient.cancelJobRequest(jobUUid, version);
         assertEquals(403, deleteResponse.statusCode());
@@ -676,9 +736,9 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersion")
+    @MethodSource("getVersionAndApiClient")
     @Order(8)
-    void testClientCannotCheckStatusOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    void testClientCannotCheckStatusOtherClientsJob(FhirVersion version, APIClient apiClient) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println();
         log.info("Starting test 8 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
@@ -686,7 +746,7 @@ class TestRunner {
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        APIClient secondAPIClient = createSecondClient();
+        APIClient secondAPIClient = getOtherPdpApiClient(version);
 
         HttpResponse<String> statusResponse = secondAPIClient.statusRequest(contentLocationList.iterator().next());
         assertEquals(403, statusResponse.statusCode());
@@ -697,23 +757,10 @@ class TestRunner {
         assertEquals(202, secondDeleteResponse.statusCode());
     }
 
-    private APIClient createSecondClient() throws InterruptedException, JSONException, IOException, KeyManagementException, NoSuchAlgorithmException {
-        String oktaUrl = yamlMap.get("okta-url");
-
-        String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
-        String oktaPassword = System.getenv("SECONDARY_USER_OKTA_CLIENT_PASSWORD");
-
-        if (StringUtils.isBlank(oktaClientId) || StringUtils.isBlank(oktaPassword)) {
-            fail("Both SECONDARY_USER_OKTA_CLIENT_ID and SECONDARY_USER_OKTA_CLIENT_PASSWORD must be set in env");
-        }
-
-        return new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
-    }
-
     @ParameterizedTest
-    @MethodSource("getVersion")
+    @MethodSource("getVersionAndApiClient")
     @Order(9)
-    void testClientCannotMakeRequestWithoutToken(FhirVersion version) throws IOException, InterruptedException {
+    void testClientCannotMakeRequestWithoutToken(FhirVersion version, APIClient apiClient) throws IOException, InterruptedException {
         System.out.println();
         log.info("Starting test 9 - " + version.toString());
         HttpRequest exportRequest = HttpRequest.newBuilder()
@@ -729,7 +776,7 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersion")
+    @MethodSource("getVersionAndApiClient")
     @Order(10)
     void testClientCannotMakeRequestWithSelfSignedToken(FhirVersion version) throws IOException, InterruptedException, JSONException {
         System.out.println();
@@ -762,15 +809,15 @@ class TestRunner {
                 .GET()
                 .build();
 
-        HttpResponse<String> response = apiClient.getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = apiClient(version).getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
 
         assertEquals(403, response.statusCode());
     }
 
     @ParameterizedTest
-    @MethodSource("getVersion")
+    @MethodSource("getVersionAndApiClient")
     @Order(11)
-    void testClientCannotMakeRequestWithNullClaims(FhirVersion version) throws IOException, InterruptedException, JSONException {
+    void testClientCannotMakeRequestWithNullClaims(FhirVersion version, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         System.out.println();
         log.info("Starting test 11 - " + version.toString());
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
@@ -800,9 +847,9 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersion")
+    @MethodSource("getVersionAndApiClient")
     @Order(12)
-    void testBadQueryParameterResource(FhirVersion version) throws IOException, InterruptedException {
+    void testBadQueryParameterResource(FhirVersion version, APIClient apiClient) throws IOException, InterruptedException {
         System.out.println();
         log.info("Starting test 12 - " + version.toString());
         var params = new HashMap<>() {{
@@ -815,9 +862,9 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersion")
+    @MethodSource("getVersionAndApiClient")
     @Order(13)
-    void testBadQueryParameterOutputFormat(FhirVersion version) throws IOException, InterruptedException {
+    void testBadQueryParameterOutputFormat(FhirVersion version, APIClient apiClient) throws IOException, InterruptedException {
         System.out.println();
         log.info("Starting test 13 - " + version.toString());
         var params = new HashMap<>() {{
@@ -835,8 +882,10 @@ class TestRunner {
     void testHealthEndPoint() throws IOException, InterruptedException {
         System.out.println();
         log.info("Starting test 14");
-        HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
+        HttpResponse<String> healthCheckResponse = apiClient_PDP100.healthCheck();
+        assertEquals(200, healthCheckResponse.statusCode());
 
+        healthCheckResponse = apiClient_PDP1000.healthCheck();
         assertEquals(200, healthCheckResponse.statusCode());
     }
 
@@ -844,27 +893,27 @@ class TestRunner {
      * This test is identical to {@link #runSystemWideExport} except this calls {@link #downloadFileWithoutAcceptEncoding}
      */
     @ParameterizedTest
-    @MethodSource("getVersionAndContract")
+    @MethodSource("getVersionContractAndApiClient")
     @Order(15)
-    void runSystemWideExportWithoutAcceptEncoding(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
+    void runSystemWideExportWithoutAcceptEncoding(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         System.out.println();
         log.info("Starting test 15 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version, apiClient);
         assertNotNull(downloadDetails);
-        downloadFileWithoutAcceptEncoding(downloadDetails, null, version);
+        downloadFileWithoutAcceptEncoding(downloadDetails, null, version, apiClient);
     }
 
     /**
      * This test is identical to {@link #runSystemWideExportSince} except this calls {@link #downloadFileWithoutAcceptEncoding}
      */
     @ParameterizedTest
-    @MethodSource("getVersionAndContract")
+    @MethodSource("getVersionContractAndApiClient")
     @Order(16)
-    void runSystemWideExportSinceWithoutAcceptEncoding(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
+    void runSystemWideExportSinceWithoutAcceptEncoding(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         System.out.println();
         log.info("Starting test 16 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version);
@@ -872,9 +921,31 @@ class TestRunner {
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version, apiClient);
         assertNotNull(downloadDetails);
-        downloadFileWithoutAcceptEncoding(downloadDetails, earliest, version);
+        downloadFileWithoutAcceptEncoding(downloadDetails, earliest, version, apiClient);
+    }
+
+    @Order(17)
+    @Test
+    void verifyPdp100NotAllowlistedForV3() throws Exception {
+        val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3);
+        val expectedResponseBody =
+        """
+        {
+          "resourceType": "OperationOutcome",
+          "issue": [
+            {
+              "severity": "error",
+              "code": "invalid",
+              "details": {
+                "text": "V3 access not enabled for this PDP"
+              }
+            }
+          ]
+        }
+        """;
+        JSONAssert.assertEquals(response.body(), expectedResponseBody, JSONCompareMode.LENIENT);
     }
 
     /**
@@ -882,14 +953,29 @@ class TestRunner {
      *
      * @return the stream of arguments
      */
-    private Stream<Arguments> getVersionAndContract() {
+    private Stream<Arguments> getVersionContractAndApiClient() {
+        // Temporary - to be removed
+        if (v3Only()) {
+            return Stream.of(arguments(R4V3, PDP_1000.contract, apiClient_PDP1000));
+        }
+
         // Define default test contract
-        String testContractV1 = "Z0000";
-        if (v2Enabled()) {
-            String testContractV2 = "Z0000";
-            return Stream.of(arguments(STU3, testContractV1), arguments(R4, testContractV2));
+        if (v3Enabled()) {
+            return Stream.of(
+                arguments(STU3, PDP_100.contract, apiClient_PDP100),
+                arguments(R4,   PDP_100.contract, apiClient_PDP100),
+                arguments(R4V3, PDP_1000.contract, apiClient_PDP1000)
+            );
+        }
+        else if (v2Enabled()) {
+            return Stream.of(
+                arguments(STU3, PDP_100.contract, apiClient_PDP100),
+                arguments(R4,   PDP_100.contract, apiClient_PDP100)
+            );
         } else {
-            return Stream.of(arguments(STU3, testContractV1));
+            return Stream.of(
+                arguments(STU3, PDP_100.contract, apiClient_PDP100)
+            );
         }
     }
 
@@ -898,16 +984,62 @@ class TestRunner {
      *
      * @return the stream of FHIR versions
      */
-    static Stream<Arguments> getVersion() {
-        if (v2Enabled()) {
-            return Stream.of(arguments(STU3), arguments(R4));
-        } else {
-            return Stream.of(arguments(STU3));
+    static Stream<Arguments> getVersionAndApiClient() {
+        // Temporary - to be removed
+        if (v3Only()) {
+            return Stream.of(arguments(R4V3, apiClient_PDP1000));
         }
+
+        if (v3Enabled()) {
+            return Stream.of(
+                arguments(STU3, apiClient_PDP100),
+                arguments(R4, apiClient_PDP100),
+                arguments(R4V3, apiClient_PDP1000)
+            );
+        } else if (v2Enabled()) {
+            return Stream.of(
+                arguments(STU3, apiClient_PDP100),
+                arguments(R4, apiClient_PDP100)
+            );
+        } else {
+            return Stream.of(
+                arguments(STU3, apiClient_PDP100)
+            );
+        }
+    }
+
+    /**
+     * For V3, use API client configured with credentials for PDP-1000
+     * Otherwise use API client for PDP-100
+     */
+    static APIClient apiClient(FhirVersion version) {
+        return version == R4V3
+            ? apiClient_PDP1000
+            : apiClient_PDP100;
+    }
+
+    // Used for testing that a PDP cannot download files belonging to a different PDP
+    static APIClient getOtherPdpApiClient(FhirVersion version) {
+        return version == R4V3
+            ? apiClient_PDP100
+            : apiClient_PDP1000;
     }
 
     private static boolean v2Enabled() {
         String v2Enabled = System.getenv("AB2D_V2_ENABLED");
         return v2Enabled != null && v2Enabled.equalsIgnoreCase("true");
     }
+
+    private static boolean v3Enabled() {
+        String v3Enabled = System.getenv("AB2D_V3_ENABLED");
+        return v3Enabled != null && v3Enabled.equalsIgnoreCase("true");
+    }
+
+    // Temporary - Run only V3 tests for debugging test failures if populated
+    private static boolean v3Only() {
+        String v3Only = System.getenv("AB2D_V3_ONLY");
+        return v3Only != null && v3Only.equalsIgnoreCase("true");
+    }
+
+
 }
