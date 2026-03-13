@@ -205,6 +205,8 @@
   K/QUY3QusnjrDcgGRyoWn0Zt53meMCi3C0hoQ+FrQ3zF4/7wtxKnGGBH5hKBU23M
   2XrKEZL5RmGZidpWP6ZBbvEs2MqSD7zcFvY=
   -----END CERTIFICATE-----
+/ab2d/${env}/bene-prefs/sensitive/bfd-sns-topic-arn: ENC[AES256_GCM,data:moygrod4UE1RI51hjI9Wev2bUyq+0ndcieknDHdHjwPcUOphrJdtekrN1gQANR/5C6h/VBrxhqrl+VD3ekoC2WE1nvB14VQ=,iv:SvfluYHlItp+BQth2pgrr+gmIFVKC6j8kYbp+gHF7gU=,tag:EnRIFw8K8HwbHkNPlw28vw==,type:str]
+/ab2d/${env}/bene-prefs/sensitive/bfd-bucket-role-arn: ENC[AES256_GCM,data:ZXE3kEhTV7tUBqxnXadekTPWJn6uSXGylnsfRXFnbP9N7GUzV00f0cwY9niXwCOElvxYOQ3TtNJRC/D5vrQGkdlEGKtg2yrKr2Ex1zzTyRu7tlmM91nfqxZ2IgmGi5lPAoxp,iv:iwGKCtsMD+UAiuVk+IvMHOmUtYR72b33g1aU2iNkf9M=,tag:cenGj80p16J6iyB+deCw5A==,type:str]
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/ab2d-test
