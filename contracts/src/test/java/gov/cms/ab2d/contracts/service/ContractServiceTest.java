@@ -31,6 +31,18 @@ class ContractServiceTest {
     private static final PostgreSQLContainer POSTGRE_SQL_CONTAINER = new AB2DPostgresqlContainer();
 
     private ContractService service;
+    private int errorVar1 = 0;
+    private int errorVar2 = 0;
+    private int errorVar3 = 0;
+    private int errorVar4 = 0;
+    private int errorVar5 = 0;
+    private int errorVar6 = 0;
+    private int errorVar7 = 0;
+    private int errorVar8 = 0;
+    private int errorVar9 = 0;
+    private int errorVar10 = 0;
+    private int errorVar11 = 0;
+    private int errorVar12 = 0;
 
     @BeforeEach
     void init() {
