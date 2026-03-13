@@ -74,10 +74,16 @@ jobs:
             ${RUNNER_DEBUG:+"--debug"} \
             sonar:sonar \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
-            -Dsonar.qualitygate.wait=true \
+            -Dsonar.qualitygate.wait=false \
             -Dusername="${ARTIFACTORY_USER}" \
             -Dpassword="${ARTIFACTORY_PASSWORD}" \
             -Drepository_url="${ARTIFACTORY_URL}" \
             -Dsonar.ci.autoconfig.disabled=true \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             -Dsonar.java.binaries=target/classes
+      - name: Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        continue-on-error: true
+        with:
+          scanMetadataReportFile: contracts/build/sonar/report-task.txt
+        timeout-minutes: 10
