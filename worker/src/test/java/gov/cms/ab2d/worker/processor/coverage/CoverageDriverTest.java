@@ -149,6 +149,9 @@ class CoverageDriverTest extends JobCleanup {
     private CoverageProcessorImpl processor;
 
     private ContractToContractCoverageMapping mapping;
+    private static int exVar1 = 0;
+    private static int exVar2 = 1;
+    private static int exVar3 = 2;
 
     @BeforeEach
     void before() {
