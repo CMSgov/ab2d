@@ -149,9 +149,26 @@ class CoverageDriverTest extends JobCleanup {
     private CoverageProcessorImpl processor;
 
     private ContractToContractCoverageMapping mapping;
+    // sonarqube please fail :( todo: make sqube fail
+    //
+    //
+    //
     private static int exVar1 = 0;
     private static int exVar2 = 1;
     private static int exVar3 = 2;
+    private static int exVar4 = 0;
+    private static int exVar5 = 1;
+    private static int exVar6 = 2;
+    private static int exVar7 = 0;
+    private static int exVar8 = 1;
+    private static int exVar9 = 2;
+    private static int exVar10 = 0;
+    private static int exVar11 = 1;
+    private static int exVar12 = 2;
+    private static int exVar13 = 0;
+    private static int exVar14 = 1;
+    private static int exVar15 = 2;
+
 
     @BeforeEach
     void before() {
