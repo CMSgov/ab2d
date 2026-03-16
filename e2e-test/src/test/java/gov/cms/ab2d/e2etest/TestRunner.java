@@ -1049,6 +1049,9 @@ class TestRunner {
     }
 
     private static boolean v3Enabled() {
+        if (v3Only()) {
+            return true;
+        }
         String v3Enabled = System.getenv("AB2D_V3_ENABLED");
         return v3Enabled != null && v3Enabled.equalsIgnoreCase("true");
     }
