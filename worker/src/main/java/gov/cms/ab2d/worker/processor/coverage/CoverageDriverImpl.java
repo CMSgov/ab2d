@@ -365,20 +365,20 @@ public class CoverageDriverImpl implements CoverageDriver {
             return;
         }
 
-        CoverageMapping mapping = maybeSearch.get();
+        CoverageMapping coverageMapping = maybeSearch.get();
 
         log.info("found a search in queue for contract {} during {}-{}, attempting to search",
-                mapping.getContractNumber(), mapping.getPeriod()
+                coverageMapping.getContractNumber(), coverageMapping.getPeriod()
                         .getMonth(),
-                mapping.getPeriod()
+                coverageMapping.getPeriod()
                         .getYear());
 
         /*
          * Start a job, if starting a job fails immediately cancel the job and queue the search again.
          */
-        if (!coverageProcessor.startJob(mapping)) {
-            coverageService.cancelSearch(mapping.getPeriodId(), "failed to start job");
-            coverageProcessor.queueMapping(mapping, false);
+        if (!coverageProcessor.startJob(coverageMapping)) {
+            coverageService.cancelSearch(coverageMapping.getPeriodId(), "failed to start job");
+            coverageProcessor.queueMapping(coverageMapping, false);
         }
     }
 
@@ -445,7 +445,9 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public boolean isCoverageAvailable(Job job, ContractDTO contract) throws InterruptedException {
         String contractNumber = job.getContractNumber();
-        assert contractNumber.equals(contract.getContractNumber());
+        if (!contractNumber.equals(contract.getContractNumber())) {
+            throw new IllegalArgumentException("Job and contract do not match " + contractNumber);
+        }
 
         Lock coverageLock = coverageLockWrapper.getCoverageLock();
 

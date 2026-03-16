@@ -63,7 +63,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     private static final String API_ERROR = "API Error";
 
-    private static final HashMap<Class, HttpStatus> RESPONSE_MAP;
+    private static final HashMap<Class<?>, HttpStatus> RESPONSE_MAP;
         static {
             RESPONSE_MAP = new HashMap<>();
             RESPONSE_MAP.put(InvalidClientInputException.class, HttpStatus.BAD_REQUEST);
@@ -92,7 +92,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         this.apiCommon = apiCommon;
     }
 
-    private static HttpStatus getErrorResponse(Class clazz) {
+    private static HttpStatus getErrorResponse(Class<?> clazz) {
         HttpStatus res = RESPONSE_MAP.get(clazz);
         if (res == null) {
             return HttpStatus.INTERNAL_SERVER_ERROR;
