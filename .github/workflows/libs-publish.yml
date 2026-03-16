@@ -84,7 +84,6 @@ jobs:
       - name: Force publish to Artifactory
         if: ${{ env.FORCE_PUBLISH == 'true' }}
         run: |
-            echo "Force publishing (overwriting) all artifacts to Artifactory"
-            ./gradlew artifactoryPublish -b build.gradle
-
+          echo "Force publishing (overwriting) all artifacts to Artifactory"
+          ./gradlew artifactoryPublish -b build.gradle
 

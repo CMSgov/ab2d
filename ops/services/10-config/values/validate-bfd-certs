@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+usage() {
+  echo "Usage: $0 <environment>"
+  echo "Used to test connectivity to BFD endpoints using certificates from <environment>.sops.yaml"
+  echo "Valid environments are dev|test|sandbox|prod"
+  echo -e "\nTo retain p12 and pem certificates for testing purposes, use:"
+  echo "  KEEP_FILES=true $0 <environment>"
+  exit 1
+}
+
+read_var() {
+  echo "$sops_yaml_decrypted" | yq e "$1"
+}
+
+call_bfd() {
+  url="$1"
+  cacert="$2"
+  echo
+  set -x
+  status_code=$(curl  --cert "${env}-bfd-cert.pem" --key "${env}-bfd-key.pem" --cacert $cacert "$url" -w "%{http_code}" --output "${env}-bfd-curl.out" --silent)
+  set +x
+
+  if [[ "status_code" -eq 200 ]]; then
+    echo "Received HTTP 200 OK from $url"
+    rm "${env}-bfd-curl.out"
+  else
+    echo "ERROR: Expected HTTP 200 but got $STATUS_CODE from $url"
+    cat "${env}-bfd-curl.out"
+  fi
+}
+
+
+env="$1"
+sops_file="$env".sopsw.yaml
+keep_files="${KEEP_FILES:-false}"
+
+set -euao pipefail
+
+if [ -z "${env}" ]; then
+  usage
+fi
+
+if [ ! -f "$sops_file" ]; then
+    echo "File '$sops_file' not found"
+    usage
+fi
+
+sops_yaml_decrypted=$(EDITOR=yq ./sopsw -e "$sops_file")
+
+read_var '.*bfd_keystore_base64' | base64 -d > "${env}-bfd-keystore.p12"
+
+export KEYSTORE_PASSWORD=$(read_var '.*bfd_keystore_password')
+openssl pkcs12 -in "${env}-bfd-keystore.p12" -nokeys -passin "env:KEYSTORE_PASSWORD" > "${env}-bfd-cert.pem"
+openssl pkcs12 -in "${env}-bfd-keystore.p12" -nodes -nocerts -passin "env:KEYSTORE_PASSWORD" > "${env}-bfd-key.pem"
+
+if [ "$env" = "prod" ]; then
+  bfd_v2_url="https://prod.fhir.bfd.cmscloud.local/v2/fhir/metadata"
+  bfd_v3_url="https://prod.fhirv3.bfd.cmscloud.local/v3/fhir/metadata"
+else
+  bfd_v2_url="https://prod-sbx.fhir.bfd.cmscloud.local/v2/fhir/metadata"
+  bfd_v3_url="https://sandbox.fhirv3.bfd.cmscloud.local/v3/fhir/metadata"
+fi
+
+read_var '.*bfd_truststore_cert' > "${env}-bfd-truststore.pem"
+read_var '.*bfd_v3_truststore_cert'  > "${env}-bfd-v3-truststore.pem"
+
+call_bfd "$bfd_v2_url" "${env}-bfd-truststore.pem"
+call_bfd "$bfd_v3_url" "${env}-bfd-v3-truststore.pem"
+
+if ! $keep_files; then
+    rm "${env}-bfd-keystore.p12" "${env}-bfd-key.pem" "${env}-bfd-cert.pem" "${env}-bfd-v3-truststore.pem" "${env}-bfd-truststore.pem"
+fi

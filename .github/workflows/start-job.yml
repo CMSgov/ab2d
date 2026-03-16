@@ -6,7 +6,12 @@ on:
     inputs:
       environment:
         description: 'AB2D environment'
-        type: string
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+          - prod
         required: true
         default: 'test'
       contractNumber:
@@ -20,6 +25,7 @@ on:
         options:
           - STU3
           - R4
+          - R4V3
         default: STU3
       since:
         description: 'Since date to use for a job. The earliest accepted date is 2020-02-13T00:00:00.000-05:00'
@@ -56,28 +62,31 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          PARENT_ENV="${AB2D_ENV##*-}"
+          # AB2D_ENV is now strictly one of: dev, test, sandbox, prod
+          PARENT_ENV="${AB2D_ENV}"
           echo "PARENT_ENV=${PARENT_ENV}" >> $GITHUB_ENV
           
-          if [ "$PARENT_ENV" = "sandbox" ] || [ "$PARENT_ENV" = "prod" ]; then
-             AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
+          # do not allow V3 jobs in sandbox or prod
+          if [[ "$PARENT_ENV" == "sandbox" || "$PARENT_ENV" == "prod" ]]; then
+            if [[ "$FHIR_VERSION" == "R4V3" ]]; then
+              echo "Error: V3 jobs are not allowed in the $PARENT_ENV environment."
+              exit 1
+            fi
+            AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
           else
-             AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
+            AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
           fi
           
           echo "AWS_ACCOUNT=${AWS_ACCOUNT}" >> $GITHUB_ENV
           
-          if [ "$PARENT_ENV" == "dev" ]; then
+          if [[ "$PARENT_ENV" == "dev" ]]; then
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
-          elif [ "$PARENT_ENV" == "test" ]; then
+          elif [[ "$PARENT_ENV" == "test" ]]; then
             DEFAULT_API_URL_PREFIX="https://test.ab2d.cms.gov"
-          elif [ "$PARENT_ENV" == "sandbox" ]; then
+          elif [[ "$PARENT_ENV" == "sandbox" ]]; then
             DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
-          elif [ "$PARENT_ENV" == "prod" ]; then
+          elif [[ "$PARENT_ENV" == "prod" ]]; then
             DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
-          else
-            echo "Invalid environment: $PARENT_ENV"
-            exit 1
           fi
    
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
@@ -101,22 +110,28 @@ jobs:
       - name: Insert record
         run: |
           set -e
-          export JOB_ID=$(uuidgen)
-
+          BASE_ID=$(uuidgen)
+          if [[ "$FHIR_VERSION" == "R4V3" ]]; then
+            export JOB_ID="33333333${BASE_ID:8}"
+          else
+            export JOB_ID="${BASE_ID}"
+          fi
+          
           SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
           export ORGANIZATION=$(psql -t --command="${SQL_GET_ORGANIZATION}" | head -n 1 | xargs | tr -d '\r')
-          if [ -z "${ORGANIZATION}" ]; then
+          if [[ -z "${ORGANIZATION}" ]]; then
             echo "Unable to retrieve organization"
             exit 1
           fi
 
-          if [[ ${FHIR_VERSION} = "R4" ]]; then
+          # V2 and V3 support the 'until' parameter
+          if [[ ("$FHIR_VERSION" == "R4" || "$FHIR_VERSION" == "R4V3") && -n "$UNTIL" ]]; then
             export UNTIL="'${UNTIL}'"
           else
             export UNTIL="null"
           fi
 
-          if [ -z "${API_URL_PREFIX}" ]; then
+          if [[ -z "${API_URL_PREFIX}" ]]; then
             export API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}
           fi
 

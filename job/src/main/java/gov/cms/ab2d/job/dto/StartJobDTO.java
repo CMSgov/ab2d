@@ -6,6 +6,7 @@ import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 /**
  * StartJobDTO is a fully verified and validated request to start a job.
@@ -28,4 +29,5 @@ public class StartJobDTO {
     private final OffsetDateTime until;
     @NotNull
     private final FhirVersion version;
+    private final List<String> serviceDates;
 }

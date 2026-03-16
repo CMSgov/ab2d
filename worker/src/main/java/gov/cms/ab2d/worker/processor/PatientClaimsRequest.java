@@ -7,14 +7,14 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import java.time.OffsetDateTime;
 import java.util.List;
 import javax.annotation.Nullable;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Request to BFD for a single patient's claims matching the provided parameters and requirements.
  */
 @Getter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PatientClaimsRequest {
 
     /**
@@ -41,6 +41,12 @@ public class PatientClaimsRequest {
      */
     @Nullable
     private final OffsetDateTime untilTime;
+
+    /**
+     * Optional list of service-date params.
+     */
+    @Nullable
+    private final List<String> serviceDates;
 
     /**
      * Organization name of contract that is not case sensitive

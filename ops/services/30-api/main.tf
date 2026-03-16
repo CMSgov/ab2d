@@ -28,7 +28,7 @@ locals {
     api           = "/ab2d/${local.env}/api"
     common        = "/ab2d/${local.env}/common"
     core          = "/ab2d/${local.env}/core"
-    microservices = "/ab2d/${local.env}/microservices"
+    microservices = "/ab2d/${local.env}/contracts"
     contracts     = "/ab2d/mgmt/pdps/nonsensitive/contracts-csv"
     cidrs         = "/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv"
     accounts      = "/ab2d/mgmt/aws-account-numbers"

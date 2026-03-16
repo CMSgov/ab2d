@@ -174,6 +174,18 @@ resource "aws_iam_role_policy_attachment" "microservices" {
   policy_arn = each.value
 }
 
+# Chatbot Guardrail Policy
+resource "aws_iam_policy" "chatbot_guardrail_policy" {
+  name = "${local.service_prefix}-chatbot-guardrail-policy"
+  path = "/delegatedadmin/developer/"
+  policy = templatefile("${path.module}/templates/config/iam/chatbot_policy.json",
+    {
+      aws_account_number = module.platform.account_id
+      role_name          = aws_iam_role.microservices.id
+    }
+  )
+}
+
 # IDR-DB-IMPORTER
 resource "aws_iam_role" "idr_db_importer_task_execution" {
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn

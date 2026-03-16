@@ -16,6 +16,7 @@ sopsw
 .viminfo
 *.pw
 *.pem
+*.p12
 *.pub
 *_key
 *-key

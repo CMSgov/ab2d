@@ -569,7 +569,7 @@ class CoverageServiceImplTest {
 
         Set<Identifiers> identifiersContract2 = new LinkedHashSet<>();
         for (long idx = 500; idx < 500 + totalBeneficiaries; idx++) {
-            identifiersContract1.add(createIdentifier(idx));
+            identifiersContract2.add(createIdentifier(idx));
         }
 
         CoverageSearchEvent savedTo1 = coverageService.insertCoverage(inProgressContract1.getId(), identifiersContract1);

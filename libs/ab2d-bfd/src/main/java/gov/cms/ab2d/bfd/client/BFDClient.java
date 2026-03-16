@@ -4,6 +4,7 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 
 public interface BFDClient {
@@ -11,7 +12,7 @@ public interface BFDClient {
     String BFD_HDR_BULK_JOBID = "BULK-JOBID";
 
     IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, String contractNum);
-    IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, String contractNum);
+    IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum);
     IBaseBundle requestNextBundleFromServer(FhirVersion version, IBaseBundle bundle, String contractNum);
 
     /**

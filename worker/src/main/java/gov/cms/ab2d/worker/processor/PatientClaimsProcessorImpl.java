@@ -168,13 +168,16 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Aggregate claims into a single list
         PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
 
-        long beneficiaryId = patient.getIdentifiers().getBeneficiaryId();
+        final long patientIdentifier = (request.getVersion() == FhirVersion.R4V3)
+            ? patient.getIdentifiers().getPatientIdV3()
+            : patient.getIdentifiers().getBeneficiaryId();
 
         IBaseBundle eobBundle;
 
         // Guarantee that since and until dates provided with job don't violate AB2D requirements
         OffsetDateTime sinceTime = getSinceTime(request);
         OffsetDateTime untilTime = getUntilTime(request, sinceTime);
+        List<String> serviceDates = request.getServiceDates();
 
         try {
 
@@ -182,7 +185,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
+            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
@@ -191,7 +194,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
 
             // Log request to Kinesis and NewRelic
-            logSuccessful(request, beneficiaryId, requestStartTime);
+            logSuccessful(request, patientIdentifier, requestStartTime);
+
             collector.logBundleEvent(sinceTime, untilTime);
 
             return collector.getEobs();
@@ -205,7 +209,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         .stateType(MetricsEvent.State.CONTINUE)
                         .build());
             }
-            logError(request, beneficiaryId, requestStartTime, ex);
+            logError(request, patientIdentifier, requestStartTime, ex);
             throw ex;
         } finally {
             BFDClient.BFD_BULK_JOB_ID.remove();

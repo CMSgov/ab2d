@@ -15,12 +15,14 @@ import lombok.Setter;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
 import static jakarta.persistence.EnumType.STRING;
+import static java.util.Collections.emptyList;
 
 @Entity
 @Getter
@@ -77,6 +79,11 @@ public class Job {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime until;
 
+    @Column(name = "service_dates")
+    @Convert(converter = ServiceDateConverter.class)
+    @EqualsAndHashCode.Include
+    List<String> servicesDates;
+
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime expiresAt;
 
@@ -125,5 +132,27 @@ public class Job {
 
     public FileEvent buildFileEvent(File file, FileEvent.FileStatus status) {
         return new FileEvent(organization, jobUuid, file, status);
+    }
+
+    public List<String> getServiceDates() {
+        return servicesDates;
+    }
+
+    public void setServiceDates(List<String> serviceDates) {
+        servicesDates = serviceDates;
+    }
+
+    private static class ServiceDateConverter implements AttributeConverter<List<String>, String> {
+        private static final String SPLIT_CHAR = ",";
+
+        @Override
+        public String convertToDatabaseColumn(List<String> stringList) {
+            return stringList != null ? String.join(SPLIT_CHAR, stringList) : null;
+        }
+
+        @Override
+        public List<String> convertToEntityAttribute(String string) {
+            return string != null ? Arrays.asList(string.split(SPLIT_CHAR)) : null;
+        }
     }
 }

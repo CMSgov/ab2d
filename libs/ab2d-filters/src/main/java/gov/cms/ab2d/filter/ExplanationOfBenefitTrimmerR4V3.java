@@ -31,6 +31,10 @@ import java.util.stream.Collectors;
  * . billablePeriod
  * . item (some of the data)
  * . status
+ * . created
+ * . provider
+ * . insurance (focal, coverage)
+ * . use (new for R4)
  * . Near Line Record Identification Code (in extension)
  * <p>
  * Items not kept:
@@ -38,12 +42,10 @@ import java.util.stream.Collectors;
  * except for: Near Line Record Identification Code
  * . modifierExtension (new for R4, inherited)
  * . patientTarget
- * . created
  * . enterer
  * . entererTarget
  * . insurer
  * . insurerTarget
- * . provider
  * . providerTarget
  * . referral
  * . referralTarget
@@ -61,7 +63,6 @@ import java.util.stream.Collectors;
  * . originalPrescriptionTarget
  * . payee
  * . precedence
- * . insurance
  * . accident
  * . supportingInfo (was information in STU3)
  * . addItem
@@ -72,7 +73,6 @@ import java.util.stream.Collectors;
  * . benefitBalance
  * . priority (new for R4)
  * . total (new for R4)
- * . use (new for R4)
  * . fundsReserveRequested (new for R4)
  * . fundsReserve (new for R4)
  * . preAuthRef (new for R4)
@@ -167,6 +167,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
      */
     private static ExplanationOfBenefit copyData(ExplanationOfBenefit benefit) {
         ExplanationOfBenefit copy = new ExplanationOfBenefit();
+        List<Resource> contained = new ArrayList<>();
         // Inherited data
         copy.setMeta(benefit.getMeta().copy());
         copy.setType(benefit.getType().copy());
@@ -189,11 +190,18 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         copy.setPatient(benefit.getPatient().copy());
         copy.setFacility(benefit.getFacility().copy());
 
+        if (benefit.hasProvider()) {
+            copy.setProvider(benefit.getProvider().copy());
+
+            // Also copy referenced contained Organization if present
+            getProviderContainedResource(benefit)
+                    .ifPresent(org -> copy.getContained().add(org.copy()));
+        }
+
         List<ExplanationOfBenefit.CareTeamComponent> newCars = getCareTeamsByRoleCodes(benefit, roleCodes);
 
         copy.setCareTeam(newCars);
 
-        List<Resource> contained = new ArrayList<>();
         List<Resource> npiContained =
                 newCars.stream()
                         .flatMap(ct -> getProviderContainedForCareTeam(benefit, ct).stream())
@@ -231,6 +239,10 @@ public class ExplanationOfBenefitTrimmerR4V3 {
 
         copy.setBillablePeriod(benefit.getBillablePeriod().copy());
         copy.setStatus(benefit.getStatus());
+
+        copy.setUse(benefit.getUse());
+        copy.setOutcome(benefit.getOutcome());
+        copy.setInsurance(copyInsuranceWithFocalAndCoverage(benefit));
 
         return copy;
     }
@@ -324,15 +336,15 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     }
 
     public static List<ExplanationOfBenefit.CareTeamComponent> getCareTeamsByRoleCodes(
-            ExplanationOfBenefit eob,
+            ExplanationOfBenefit benefit,
             List<String> roleCodes
     ) {
         List<ExplanationOfBenefit.CareTeamComponent> result = new ArrayList<>();
-        if (eob == null || eob.getCareTeam() == null || roleCodes == null || roleCodes.isEmpty()) {
+        if (benefit == null || benefit.getCareTeam() == null || roleCodes == null || roleCodes.isEmpty()) {
             return result;
         }
 
-        for (ExplanationOfBenefit.CareTeamComponent ct : eob.getCareTeam()) {
+        for (ExplanationOfBenefit.CareTeamComponent ct : benefit.getCareTeam()) {
             if (ct == null || ct.getRole() == null) {
                 continue;
             }
@@ -348,10 +360,10 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     }
 
     public static Optional<Resource> getProviderContainedForCareTeam(
-            ExplanationOfBenefit eob,
+            ExplanationOfBenefit benefit,
             ExplanationOfBenefit.CareTeamComponent careTeam
     ) {
-        if (eob == null || careTeam == null || !careTeam.hasProvider() || !careTeam.getProvider().hasReference()) {
+        if (benefit == null || careTeam == null || !careTeam.hasProvider() || !careTeam.getProvider().hasReference()) {
             return Optional.empty();
         }
 
@@ -363,7 +375,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         }
 
         // Find contained resource with that id
-        return eob.getContained().stream()
+        return benefit.getContained().stream()
                 .filter(r -> containedId.equals(r.getIdPart()))
                 .findFirst();
     }
@@ -379,6 +391,35 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         return Collections.emptyList();
     }
 
+    public static Optional<Resource> getProviderContainedResource(ExplanationOfBenefit benefit) {
+        if (benefit == null || !benefit.hasProvider() || !benefit.getProvider().hasReference()) {
+            return Optional.empty();
+        }
+
+        String ref = benefit.getProvider().getReference();
+        String containedId = ref.startsWith("#") ? ref.substring(1) : ref;
+        return benefit.getContained().stream()
+                .filter(r -> containedId.equals(r.getIdPart()))
+                .findFirst();
+    }
+
+    private static List<ExplanationOfBenefit.InsuranceComponent> copyInsuranceWithFocalAndCoverage(ExplanationOfBenefit benefit) {
+        List<ExplanationOfBenefit.InsuranceComponent> result = new ArrayList<>();
+
+        List<ExplanationOfBenefit.InsuranceComponent> srcList = benefit.getInsurance();
+        for (ExplanationOfBenefit.InsuranceComponent src : srcList) {
+            if (src == null) {
+                continue;
+            }
+
+            ExplanationOfBenefit.InsuranceComponent dst = new ExplanationOfBenefit.InsuranceComponent();
+            dst.setCoverage(src.getCoverage().copy());
+            dst.setFocal(src.getFocal());
+            result.add(dst);
+        }
+
+        return result;
+    }
 
     /**
      * Used to clean up the ItemComponent because this object is also contains a subset
@@ -438,15 +479,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
      * @return the list of matching extensions
      */
     static List<Extension> findExtensions(List<Extension> extensions, String... url) {
-        List<Extension> keptExtensions = new ArrayList<>();
-        if (extensions == null || extensions.isEmpty()) {
-            return keptExtensions;
-        }
-        for (String urlItem : url) {
-            Optional<Extension> extension = extensions.stream().filter(e -> e.getUrl().equalsIgnoreCase(urlItem)).findFirst();
-            extension.ifPresent(keptExtensions::add);
-        }
-        return keptExtensions;
+        return ExplanationOfBenefitTrimmerR4.findExtensions(extensions, url);
     }
 
     /**
