@@ -18,18 +18,14 @@ public class CoverageV3S3Importer {
     @Value("${app.s3.bucket}")
     private String bucket;
 
-    private final String schema = "v3";
-
-    private final String table = "coverage_v3";
-
 
     private final CoverageV3ImportService importService;
-    private final SnowflakeCoverageQueryService snowflake;
+  //  private final SnowflakeCoverageQueryService snowflake;
     private final S3CsvWriter s3Writer;
 
-    // public CoverageV3S3Importer(S3CsvWriter s3Writer, CoverageV3ImportService importService) {
-    public CoverageV3S3Importer(SnowflakeCoverageQueryService snowflake, S3CsvWriter s3Writer, CoverageV3ImportService importService) {
-        this.snowflake = snowflake;
+     public CoverageV3S3Importer(S3CsvWriter s3Writer, CoverageV3ImportService importService) {
+ //   public CoverageV3S3Importer(SnowflakeCoverageQueryService snowflake, S3CsvWriter s3Writer, CoverageV3ImportService importService) {
+    //    this.snowflake = snowflake;
         this.s3Writer = s3Writer;
         this.importService = importService;
     }
@@ -47,8 +43,7 @@ public class CoverageV3S3Importer {
 //            s3Writer.writeSnowflakeToS3(bucket, finalKey, rs);
 //        }
 
-        String fqtn = schema + "." + table;
-
+        String fqtn = "v3.coverage_v3";
         log.info("Starting import of s3://{}/{} into {}", bucket, finalKey, fqtn);
         importService.importWithRetry(fqtn, bucket, finalKey, region.id());
     }

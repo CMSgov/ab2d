@@ -11,6 +11,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 @Component
 @Slf4j
@@ -34,18 +36,39 @@ public class CoverageV3ImportService {
     private static final String IMPORT_SQL =
             "SELECT aws_s3.table_import_from_s3(?, ?, ?, aws_commons.create_s3_uri(?, ?, ?))";
 
-    private static final String CREATE_STAGING_SQL =
-            "CREATE TABLE IF NOT EXISTS %s (LIKE %s INCLUDING DEFAULTS INCLUDING IDENTITY INCLUDING GENERATED)";
+    private static final String TRUNCATE_SQL = "TRUNCATE TABLE %s";
 
-    private static final String TRUNCATE_SQL =
-            "TRUNCATE TABLE %s";
+    private static final String COVERAGE_UPSERT_SQL =
+            """
+                    INSERT INTO %s (patient_id, contract, year, month, current_mbi)
+                    SELECT patient_id, contract, year, month, current_mbi
+                    FROM %s
+                    ON CONFLICT (patient_id, contract, year, month, current_mbi)
+                    DO NOTHING""";
 
-    private static final String UPSERT_SQL =
-            "INSERT INTO %s (patient_id, contract, year, month, current_mbi)\n" +
-                    "SELECT patient_id, contract, year, month, current_mbi\n" +
-                    "FROM %s\n" +
-                    "ON CONFLICT (patient_id, contract, year, month, current_mbi)\n" +
-                    "DO NOTHING";
+    private static final String HISTORIC_SYNC_SQL =
+            """
+                    INSERT INTO %s (patient_id, contract, year, month, current_mbi)
+                    SELECT coverage.patient_id, coverage.contract, coverage.year, coverage.month, coverage.current_mbi
+                    FROM %s coverage
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM %s historic
+                        WHERE historic.patient_id = coverage.patient_id
+                          AND historic.contract = coverage.contract
+                          AND historic.year = coverage.year
+                          AND historic.month = coverage.month
+                          AND historic.current_mbi = coverage.current_mbi
+                    )
+                    ON CONFLICT (patient_id, contract, year, month, current_mbi)
+                    DO NOTHING""";
+
+    private static final String DELETE_OLD_MONTHS_SQL =
+            "DELETE FROM %s\n" +
+                    "WHERE make_date(year, month, 1) < (date_trunc('month', CURRENT_DATE) - interval '2 months')::date";
+
+    private static final String COVERAGE_V3_TABLE = "v3.coverage_v3";
+    private static final String COVERAGE_V3_HISTORIC_TABLE = "v3.coverage_v3_historic";
 
     @Retryable(
             retryFor = Exception.class,
@@ -54,30 +77,37 @@ public class CoverageV3ImportService {
     )
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws Exception {
         String stagingFqtn = fqtn + "_staging";
-        try (Connection conn = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
-            conn.setAutoCommit(false);
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
+            connection.setAutoCommit(false);
             try {
-                ensureStagingTable(conn, stagingFqtn, fqtn);
-                truncate(conn, stagingFqtn);
-                long before = queryCount(conn, fqtn);
-                int stagedRows = executeImport(conn, stagingFqtn, bucket, key, region);
-                int upsertRows = upsert(conn, fqtn, stagingFqtn);
-                truncate(conn, stagingFqtn);
-                long after = queryCount(conn, fqtn);
-                conn.commit();
+                long before = queryCount(connection, fqtn);
+                int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
+                int upsertRows = upsert(connection, fqtn, stagingFqtn);
+
+                int historicRows = 0;
+                //If first day of month
+                if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 1) {
+                    historicRows = syncToHistoric(connection, fqtn);
+                }
+
+                int deletedOldRows = deleteOldCoverageMonths(connection, fqtn);
+
+                truncate(connection, stagingFqtn);
+                long after = queryCount(connection, fqtn);
+
+                connection.commit();
                 log.info(
-                        "CoverageV3 import success: stagedRows={}, upsertRows={}, before={}, after={}, source=s3://{}/{}",
-                        stagedRows, upsertRows, before, after, bucket, key
+                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, historicRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
+                        stagedRows, upsertRows, historicRows, deletedOldRows, before, after, bucket, key
                 );
             } catch (Exception e) {
-                rollback(conn);
+                rollback(connection);
                 log.error(
-                        "CoverageV3 import failed: source=s3://{}/{}, target={}",
-                        bucket, key, fqtn, e
+                        "CoverageV3 import failed: source=s3://{}/{}, target={}", bucket, key, fqtn, e
                 );
                 throw e;
             }
-            conn.setAutoCommit(true);
+            connection.setAutoCommit(true);
         }
     }
 
@@ -88,13 +118,6 @@ public class CoverageV3ImportService {
                 bucket, key, fqtn, e
         );
         throw e;
-    }
-
-    private void ensureStagingTable(Connection conn, String stagingFqtn, String targetFqtn) throws Exception {
-        String sql = String.format(CREATE_STAGING_SQL, stagingFqtn, targetFqtn);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.execute();
-        }
     }
 
     private void truncate(Connection conn, String fqtn) throws Exception {
@@ -124,8 +147,25 @@ public class CoverageV3ImportService {
     }
 
     private int upsert(Connection conn, String targetFqtn, String stagingFqtn) throws Exception {
-        String sql = String.format(UPSERT_SQL, targetFqtn, stagingFqtn);
+        String sql = String.format(COVERAGE_UPSERT_SQL, targetFqtn, stagingFqtn);
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            return ps.executeUpdate();
+        }
+    }
+
+    private int syncToHistoric(Connection conn, String sourceFqtn) throws Exception {
+        String sql = String.format(HISTORIC_SYNC_SQL, COVERAGE_V3_HISTORIC_TABLE, sourceFqtn, COVERAGE_V3_HISTORIC_TABLE);
+        log.info("----- "+ sql);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            log.info("Starting coverage_v3_historic sync");
+            return ps.executeUpdate();
+        }
+    }
+
+    private int deleteOldCoverageMonths(Connection conn, String fqtn) throws Exception {
+        String sql = String.format(DELETE_OLD_MONTHS_SQL, fqtn);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            log.info("Starting 3-month data cleanup");
             return ps.executeUpdate();
         }
     }
