@@ -22,6 +22,7 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
 import static jakarta.persistence.EnumType.STRING;
+import static java.util.Collections.emptyList;
 
 @Entity
 @Getter

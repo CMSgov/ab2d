@@ -2,6 +2,7 @@ package gov.cms.ab2d.common.health;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.Statement;
 
 /**
  * Does a health check on a database
@@ -18,7 +19,12 @@ public final class DatabaseAvailable {
      */
     public static boolean isDbAvailable(DataSource datasource) {
         try (Connection conn = datasource.getConnection()) {
-            return conn.isValid(0);
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("SELECT 1");
+                return true;
+            } catch (Exception ex) {
+                return false;
+            }
         } catch (Exception ex) {
             return false;
         }

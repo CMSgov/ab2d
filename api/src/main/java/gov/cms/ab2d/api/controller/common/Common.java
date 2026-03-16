@@ -1,13 +1,10 @@
 package gov.cms.ab2d.api.controller.common;
 
-import lombok.experimental.UtilityClass;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-@UtilityClass
 public class Common {
-
     private static final String HTTPS_STRING = "https";
 
     public static boolean shouldReplaceWithHttps(HttpServletRequest request) {

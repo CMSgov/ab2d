@@ -15,6 +15,7 @@ public class CoveragePeriodQuartzConfig {
         this.schedule = schedule;
     }
 
+    @Qualifier("coverage_period_update")
     @Bean
     JobDetail coveragePeriodJobDetail() {
         return JobBuilder.newJob(CoveragePeriodQuartzJob.class)
@@ -24,7 +25,7 @@ public class CoveragePeriodQuartzConfig {
     }
 
     @Bean
-    Trigger coveragePeriodJobPeriodicTrigger(@Qualifier("coveragePeriodJobDetail") JobDetail coveragePeriodJobDetail) {
+    Trigger coveragePeriodJobPeriodicTrigger(@Qualifier("coverage_period_update") JobDetail coveragePeriodJobDetail) {
         return TriggerBuilder.newTrigger()
                 .forJob(coveragePeriodJobDetail)
                 .withIdentity("coverage_period_update_trigger_periodic")

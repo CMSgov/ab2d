@@ -2,8 +2,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import java.time.ZonedDateTime;
-
-import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -11,8 +9,7 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 
 @Slf4j
-@UtilityClass
-public class CoverageUtils {
+public final class CoverageUtils {
 
     public static ZonedDateTime getEndDateTime() {
         // Assume current time zone is EST since all deployments are in EST
