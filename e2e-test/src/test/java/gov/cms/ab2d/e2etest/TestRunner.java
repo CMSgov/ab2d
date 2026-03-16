@@ -943,6 +943,10 @@ class TestRunner {
     @Order(17)
     @Test
     void verifyPdp100NotAllowlistedForV3() throws Exception {
+        if (!v3Enabled()) {
+            log.info("Skipping test 17 - V3 is not enabled");
+            return;
+        }
         val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3);
         val expectedResponseBody =
         """
@@ -1045,6 +1049,9 @@ class TestRunner {
     }
 
     private static boolean v3Enabled() {
+        if (v3Only()) {
+            return true;
+        }
         String v3Enabled = System.getenv("AB2D_V3_ENABLED");
         return v3Enabled != null && v3Enabled.equalsIgnoreCase("true");
     }
