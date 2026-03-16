@@ -140,13 +140,13 @@ public class ApiCommon {
         }
 
         String resourceType = typeFilterParts[0];
-        String subquery = typeFilterParts [1];
+        String subquery = typeFilterParts[1];
         if (!resourceType.equals("ExplanationOfBenefit")) {
             throw new InvalidClientInputException("The _typeFilter parameter must be for the ExplanationOfBenefit resource");
         }
 
         String[] paramList = subquery.split("&");
-        for ( String paramPair : paramList ) {
+        for (String paramPair : paramList) {
             String[] keyValue = paramPair.split("=");
             String paramName = keyValue[0];
             String paramValue = keyValue[1];
@@ -225,8 +225,8 @@ public class ApiCommon {
 
     public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
                                            OffsetDateTime until, String resourceTypes, String outputFormat, FhirVersion version) {
-        CheckValidParametersDTO parameters = new CheckValidParametersDTO( resourceTypes, outputFormat, since, until, null );
-        return checkValidCreateJob( request, contractNumber, version, parameters);
+        CheckValidParametersDTO parameters = new CheckValidParametersDTO(resourceTypes, outputFormat, since, until, null);
+        return checkValidCreateJob(request, contractNumber, version, parameters);
     }
 
     public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, FhirVersion version, CheckValidParametersDTO parameters) {

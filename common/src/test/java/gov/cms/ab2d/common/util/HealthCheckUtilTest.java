@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.sql.DataSource;
 
 import java.sql.Connection;
+import java.sql.Statement;
 
 import static gov.cms.ab2d.common.health.FileSystemCheckTest.*;
 import static gov.cms.ab2d.common.health.MemoryUtilizationTest.*;
@@ -23,6 +24,7 @@ class HealthCheckUtilTest {
 
     @Mock DataSource healthyDataSource;
     @Mock Connection healthyConnection;
+    @Mock Statement healthyStatement;
 
     @Mock DataSource unhealthyDataSource;
     @Mock org.slf4j.Logger healthyLogger;
@@ -31,7 +33,7 @@ class HealthCheckUtilTest {
     @BeforeEach
     void setup() throws Exception {
         lenient().when(healthyDataSource.getConnection()).thenReturn(healthyConnection);
-        lenient().when(healthyConnection.isValid(2)).thenReturn(true);
+        lenient().when(healthyConnection.createStatement()).thenReturn(healthyStatement);
 
         lenient().when(unhealthyDataSource.getConnection()).thenThrow(new RuntimeException("database error"));
 
