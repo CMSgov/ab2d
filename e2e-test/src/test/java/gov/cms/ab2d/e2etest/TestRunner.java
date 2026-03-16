@@ -943,6 +943,10 @@ class TestRunner {
     @Order(17)
     @Test
     void verifyPdp100NotAllowlistedForV3() throws Exception {
+        if (!v3Enabled()) {
+            log.info("Skipping test 17 - V3 is not enabled");
+            return;
+        }
         val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3);
         val expectedResponseBody =
         """
