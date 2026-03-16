@@ -87,7 +87,7 @@ public class StatusCommon {
                         (String) request.getAttribute(REQUEST_ID)));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
             case CANCELLED:
-                return getCanceledResponse(jobPollResult, jobUuid, request);
+                return getCanceledResponse(jobUuid, request);
             case FAILED:
                 throwFailedResponse("Job failed while processing");
                 break;
@@ -125,7 +125,7 @@ public class StatusCommon {
         return resp;
     }
 
-    protected ResponseEntity<OpenAPIConfig.OperationOutcome> getCanceledResponse(JobPollResult jobPollResult, String jobUuid, HttpServletRequest request) {
+    protected ResponseEntity<OpenAPIConfig.OperationOutcome> getCanceledResponse(String jobUuid, HttpServletRequest request) {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(APPLICATION_JSON);
 
@@ -147,7 +147,7 @@ public class StatusCommon {
         eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.NOT_FOUND,
                 "Job was previously canceled", null, (String) request.getAttribute(REQUEST_ID)));
 
-        return new ResponseEntity<OpenAPIConfig.OperationOutcome>(outcome, responseHeaders, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(outcome, responseHeaders, HttpStatus.NOT_FOUND);
     }
 
     protected String getUrlPath(String jobUuid, String filePath, HttpServletRequest request, String apiPrefix) {
@@ -170,7 +170,7 @@ public class StatusCommon {
         return valueOutputs;
     }
 
-    private ResponseEntity getSuccessResponse(JobPollResult jobPollResult, String jobUuid,
+    private ResponseEntity<JobCompletedResponse> getSuccessResponse(JobPollResult jobPollResult, String jobUuid,
                                               HttpServletRequest request, String apiPrefix) {
         HttpHeaders responseHeaders = new HttpHeaders();
         final ZonedDateTime jobExpiresUTC =
@@ -183,7 +183,7 @@ public class StatusCommon {
         return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
     }
 
-    public ResponseEntity cancelJob(String jobUuid, HttpServletRequest request) {
+    public ResponseEntity<Void> cancelJob(String jobUuid, HttpServletRequest request) {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to cancel job");
 

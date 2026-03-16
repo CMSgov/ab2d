@@ -53,6 +53,11 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         this.coverageDriver = coverageDriver;
     }
 
+    void logAndAlertFailure(Job job, String reason) {
+        String message = String.format("%s Job %s %s", EOB_JOB_FAILURE, job.getJobUuid(), reason);
+        eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, message), PUBLIC_LIST);
+    }
+
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
     public Job preprocess(String jobUuid) {
@@ -73,8 +78,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         if (job.getFhirVersion() == FhirVersion.STU3 && job.getUntil() != null) {
             log.warn("JobPreProcessorImpl > preprocess: job FAILED because the _until parameter is only available with version 2 and version 3 of the API");
 
-            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
-                    + "failed because the _until parameter is only available with version 2 and version 3 of the API"), PUBLIC_LIST);
+            logAndAlertFailure(job, "failed because the _until parameter is only available with version 2 and version 3 of the API");
 
             job.setStatus(FAILED);
             job.setStatusMessage("failed because the _until parameter is only available with version 2 and version 3 of the API.");
@@ -87,8 +91,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
                 && job.getUntil().toInstant().isBefore(job.getSince().toInstant())) {
             log.warn("JobPreProcessorImpl > preprocess: job FAILED because the _until is before _since.");
 
-            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
-                    + "failed because the _until is before _since."), PUBLIC_LIST);
+            logAndAlertFailure(job, "failed because the _until is before _since.");
 
             job.setStatus(FAILED);
             job.setStatusMessage("failed because the _until is before _since.");
@@ -105,8 +108,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         if (contract.getAttestedOn() == null) {
             log.warn("JobPreProcessorImpl > preprocess: job FAILED because the contract attestation date is null.");
 
-            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
-                + "failed for contract: " + contract.getContractNumber() + " because contract attestation date is null"), PUBLIC_LIST);
+            logAndAlertFailure(job, "failed for contract: " + contract.getContractNumber() + " because contract attestation date is null");
 
             job.setStatus(FAILED);
             job.setStatusMessage("failed because contract attestation date is null.");
@@ -152,7 +154,8 @@ public class JobPreProcessorImpl implements JobPreProcessor {
 
             job = jobRepository.save(job);
         } catch (InterruptedException ie) {
-            throw new RuntimeException("could not determine whether coverage metadata was up to date", ie);
+            Thread.currentThread().interrupt();
+            throw new JobProcessingException("could not determine whether coverage metadata was up to date", ie);
         }
 
         return job;
@@ -212,7 +215,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         List<Job> sortedFilteredlist = successfulJobs.stream()
                 .filter(j -> downloadedAll(j.getJobOutputs()))
                 .sorted(comparator)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()); //NOSONAR
 
         if (sortedFilteredlist.isEmpty()) {
             return Optional.empty();

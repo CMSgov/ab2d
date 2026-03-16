@@ -91,7 +91,7 @@ public class StatusAPIV1 {
     )
     @DeleteMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
-    public ResponseEntity deleteRequest(HttpServletRequest request,
+    public ResponseEntity<Void> deleteRequest(HttpServletRequest request,
             @PathVariable @NotBlank String jobUuid) {
         return statusCommon.cancelJob(jobUuid, request);
     }

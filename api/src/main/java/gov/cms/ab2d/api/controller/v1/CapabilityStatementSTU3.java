@@ -16,7 +16,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 
-public class CapabilityStatementSTU3 {
+public final class CapabilityStatementSTU3 {
     private CapabilityStatementSTU3() {
     }
 

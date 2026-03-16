@@ -28,13 +28,13 @@ public final class UrlAvailable {
             int port = url.getPort() == -1 ? url.getDefaultPort() : url.getPort();
             try (Socket socket = new Socket(url.getHost(), port)) {
                 log.debug("Socket opened to " + testUrl + " and is connected: " + socket.isConnected());
-            } catch (IOException e) {
-                log.info("Unable to open socket to " + testUrl);
-                return false;
             }
             return true;
-        } catch (MalformedURLException e1) {
+        } catch (MalformedURLException e) {
             log.info("Malformed URL: " + testUrl);
+            return false;
+        } catch (IOException e) {
+            log.info("Unable to open socket to " + testUrl);
             return false;
         }
     }

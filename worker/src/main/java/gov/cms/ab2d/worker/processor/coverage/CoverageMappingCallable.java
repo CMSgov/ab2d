@@ -284,7 +284,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         } catch (Exception e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("Error while calling for Contract-2-Bene API : {}", e.getMessage(), rootCause);
-            throw new RuntimeException(rootCause);
+            throw new CoverageDriverException("Error while calling for Contract-2-Bene API", rootCause);
         }
     }
 }

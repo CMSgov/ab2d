@@ -15,8 +15,8 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
 
 @Slf4j
 @Service
@@ -78,7 +78,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         final List<CoverageSummary> beneficiarySummaries = enrollmentByBeneficiary.entrySet().stream()
                 .limit(page.getPageSize())
                 .map(membershipEntry -> CoverageServiceRepository.summarizeCoverageMembership(contract, membershipEntry))
-                .collect(toList());
+                .collect(Collectors.toList()); //NOSONAR
 
         // Get the patient to start from next time
         final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =

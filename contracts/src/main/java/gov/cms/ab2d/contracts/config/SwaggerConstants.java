@@ -1,6 +1,9 @@
 package gov.cms.ab2d.contracts.config;
+import lombok.experimental.UtilityClass;
 
-public final class SwaggerConstants {
+@UtilityClass
+public class SwaggerConstants {
+
     public static final String MAIN = "HPMS is the source of truth for PDP attestation. " +
             "To ensure that the PDP has access to the claims data, periodically we will retrieve data from their API and update our data. " +
             "We have the ability to overwrite data and specify if we want it to automatically update or not";

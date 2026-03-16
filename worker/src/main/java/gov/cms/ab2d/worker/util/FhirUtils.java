@@ -5,11 +5,13 @@ import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.fhir.ExtensionUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 @Slf4j
+@UtilityClass
 public class FhirUtils {
 
     public static void addMbiIdsToEobs(IBaseResource eob, CoverageSummary patient, FhirVersion version) {

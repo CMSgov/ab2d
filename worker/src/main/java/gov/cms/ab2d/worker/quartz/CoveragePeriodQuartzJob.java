@@ -79,6 +79,10 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
             } else {
                 log.info("coverage search queueing is NOT engaged");
             }
+        } catch (InterruptedException interruptedException) {
+            log.error("coverage period updates were interrupted");
+            Thread.currentThread().interrupt();
+            throw new JobExecutionException(interruptedException);
         } catch (Exception exception) {
             log.error("coverage period updates could not be conducted");
             logManager.alert(COVERAGE_UPDATES_FAILED + " coverage period updates could not be conducted", List.of(PRODUCTION, SANDBOX));

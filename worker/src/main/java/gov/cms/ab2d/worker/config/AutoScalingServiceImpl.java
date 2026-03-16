@@ -92,7 +92,7 @@ public class AutoScalingServiceImpl implements AutoScalingService {
         // If in maintenance mode immediately scale down because new work won't be processed.
         // If no new work is present immediately scale down.
         if (getBooleanProperty(MAINTENANCE_MODE, false) || eobClaimRequestsQueue.isEmpty()) {
-            // No busy threads -- no active jobs. We can scale back to minimums immediately;
+            // No busy threads - no active jobs. We can scale back to minimums immediately
             // no need to do so gradually.
             scaleBackToMin();
         } else {

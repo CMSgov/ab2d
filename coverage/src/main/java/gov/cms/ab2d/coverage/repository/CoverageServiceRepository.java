@@ -254,7 +254,7 @@ public class CoverageServiceRepository {
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
         return template.queryForList(SELECT_COVERAGE_BY_SEARCH_COUNT, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for " +
+                .stream().findFirst().orElseThrow(() -> new IllegalStateException("no coverage information found for " +
                         "the coverage search event"));
     }
 
@@ -291,7 +291,7 @@ public class CoverageServiceRepository {
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
         return template.queryForList(SELECT_INTERSECTION, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any" +
+                .stream().findFirst().orElseThrow(() -> new IllegalStateException("no coverage information found for any" +
                         "of the search events provided"));
     }
 
@@ -315,7 +315,7 @@ public class CoverageServiceRepository {
         String query = (propertiesService.isToggleOn("OptOutOn", false)) ? SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT : SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT;
 
         return template.queryForList(query, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
+                .stream().findFirst().orElseThrow(() -> new IllegalStateException("no coverage information found for any " +
                                 "of the coverage periods provided"));
     }
 
@@ -383,7 +383,7 @@ public class CoverageServiceRepository {
             }
 
         } catch (SQLException sqlException) {
-            throw new RuntimeException("failed to insert coverage information", sqlException);
+            throw new IllegalStateException("failed to insert coverage information", sqlException);
         }
     }
 
@@ -762,7 +762,7 @@ public class CoverageServiceRepository {
              PreparedStatement statement = connection.prepareStatement(vacuumCoverage)) {
             statement.execute();
         } catch (SQLException exception) {
-            throw new RuntimeException("Could not vacuum coverage table", exception);
+            throw new IllegalStateException("Could not vacuum coverage table", exception);
         }
     }
 }

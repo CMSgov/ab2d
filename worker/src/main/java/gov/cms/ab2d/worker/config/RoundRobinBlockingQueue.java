@@ -224,7 +224,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
     public int size() {
         lock.lock();
         try {
-            return categoryQueues.values().stream().map(queue -> queue.size())
+            return categoryQueues.values().stream().map(Deque::size)
                     .reduce(0, Integer::sum);
         } finally {
             lock.unlock();
@@ -250,15 +250,15 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public E take() throws InterruptedException {
-        final ReentrantLock lock = this.lock;
-        lock.lockInterruptibly();
+        final ReentrantLock reentrantLock = this.lock;
+        reentrantLock.lockInterruptibly();
         try {
             while (size() == 0) {
                 notEmpty.await();
             }
             return getNext();
         } finally {
-            lock.unlock();
+            reentrantLock.unlock();
         }
     }
 
@@ -298,10 +298,10 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
                 currentIndex.set(0);
             }
             String currentContract =
-                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex.get());
+                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex.get()); //NOSONAR
             Deque<E> queue = categoryQueues.get(currentContract);
             E val = queue.poll();
-            if (queue.size() == 0) {
+            if (queue.isEmpty()) {
                 // No more requests so remove category. We don't have to increment index since we removed the item at the
                 // current index
                 categoryQueues.remove(currentContract);
@@ -324,7 +324,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
                 currentIndex.set(0);
             }
             String currentContract =
-                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex.get());
+                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex.get()); //NOSONAR
             return categoryQueues.get(currentContract).peek();
         } finally {
             lock.unlock();
