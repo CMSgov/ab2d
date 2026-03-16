@@ -64,6 +64,7 @@ services:
       # LOCAL always to shut off Kinesis logging
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV:-local}
       - AB2D_V2_ENABLED=${AB2D_V2_ENABLED}
+      - AB2D_V3_ENABLED=${AB2D_V3_ENABLED}
       - AWS_SQS_URL=http://localstack:4566
       - MICROSERVICES_URL=contracts:8070
 #      Only Needed if running Locally
@@ -146,6 +147,7 @@ services:
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK=true
       - AB2D_V2_ENABLED=true
+      - AB2D_V3_ENABLED=true
       - HPMS_INGEST_SCHEDULE=0 0/1 * * * ?
       - AWS_SQS_URL=http://localstack:4566
       - HPMS_AUTH_KEY_ID="${HPMS_AUTH_KEY_ID}"
