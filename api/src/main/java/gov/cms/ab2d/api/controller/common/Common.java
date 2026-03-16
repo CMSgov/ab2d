@@ -1,14 +1,12 @@
 package gov.cms.ab2d.api.controller.common;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-public final class Common {
-
-    private Common() {
-        throw new IllegalStateException("Utility class");
-    }
+@UtilityClass
+public class Common {
 
     private static final String HTTPS_STRING = "https";
 

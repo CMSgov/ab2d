@@ -18,7 +18,7 @@ public final class DatabaseAvailable {
      */
     public static boolean isDbAvailable(DataSource datasource) {
         try (Connection conn = datasource.getConnection()) {
-            return conn.isValid(2);
+            return conn.isValid(0);
         } catch (Exception ex) {
             return false;
         }
