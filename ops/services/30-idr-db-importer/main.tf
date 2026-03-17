@@ -101,7 +101,7 @@ resource "aws_scheduler_schedule" "idr_db_importer" {
 
       network_configuration {
         assign_public_ip = false
-        security_groups  = [data.aws_security_group.idr_db_importer_eventbridge_scheduler.id]
+        security_groups  = [data.aws_security_group.idr_db_importer.id]
         subnets          = keys(module.platform.private_subnets)
       }
     }
