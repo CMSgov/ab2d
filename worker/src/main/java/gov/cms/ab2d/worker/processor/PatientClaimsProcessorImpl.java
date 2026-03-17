@@ -83,6 +83,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
+        val requestEOBFromServerTimes = new ArrayList<Double>();
+        val requestNextBundleFromServerTimes = new ArrayList<Double>();
+
         File file = null;
         String anyErrors = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
@@ -90,12 +93,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             file = stream.getFile();
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             for (CoverageSummary patient : request.getCoverageSummary()) {
-                List<IBaseResource> eobs = getEobBundleResources(request, patient);
+                List<IBaseResource> eobs = getEobBundleResources(request, patient, requestEOBFromServerTimes, requestNextBundleFromServerTimes);
                 anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
                 update.incPatientProcessCount();
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
+            summarizeRequestTimes("requestEOBFromServer", requestEOBFromServerTimes, request.getJob());
+            summarizeRequestTimes("requestNextBundleFromServer", requestNextBundleFromServerTimes, request.getJob());
         }
         return anyErrors;
     }
@@ -164,8 +169,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * cannot provide
      */
     @Trace(metricName = "EOBRequest", dispatcher = true)
-    private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request, CoverageSummary patient) {
-
+    private List<IBaseResource> getEobBundleResources(
+            PatientClaimsRequest request,
+            CoverageSummary patient,
+            List<Double> requestEOBFromServerTimes,
+            List<Double> requestNextBundleFromServerTimes
+    ) {
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
         Date earliestDate = getEarliestDataDate();
@@ -184,7 +193,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime untilTime = getUntilTime(request, sinceTime);
         List<String> serviceDates = request.getServiceDates();
 
-        val requestTimes = new ArrayList<Double>();
 
         try {
 
@@ -192,17 +200,17 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = executeTimedEobRequest(
+            eobBundle = executeTimedRequest(
                 () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum()),
-                requestTimes
+                requestEOBFromServerTimes
             );
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
                 val currentEobBundle = eobBundle;
-                eobBundle = executeTimedEobRequest(
+                eobBundle = executeTimedRequest(
                     () -> bfdClient.requestNextBundleFromServer(request.getVersion(), currentEobBundle, request.getContractNum()),
-                    requestTimes
+                    requestNextBundleFromServerTimes
                 );
                 collector.filterAndAddEntries(eobBundle, patient);
             }
@@ -227,11 +235,10 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             throw ex;
         } finally {
             BFDClient.BFD_BULK_JOB_ID.remove();
-            summarizeRequestTimes(requestTimes, request.getJob());
         }
     }
 
-    private IBaseBundle executeTimedEobRequest(Supplier<IBaseBundle> bfdEobRequest, List<Double> requestTimes) {
+    private IBaseBundle executeTimedRequest(Supplier<IBaseBundle> bfdEobRequest, List<Double> requestTimes) {
         val start = LocalDateTime.now();
         val bundle = bfdEobRequest.get();
         val end = LocalDateTime.now();
@@ -241,13 +248,16 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return bundle;
     }
 
-    private void summarizeRequestTimes(List<Double> requestTimes, String jobUuid) {
+    private void summarizeRequestTimes(String bfdRequestOperation, List<Double> requestTimes, String jobUuid) {
         val stats = requestTimes.stream().collect(Collectors.summarizingDouble(Double::doubleValue));
-        log.info("BFD request statistics for {} in batch...", jobUuid);
-        log.info("Number of requests in batch: {}", stats.getCount());
-        log.info("Average request time: {}", stats.getAverage());
-        log.info("Min request time: {}", stats.getMin());
-        log.info("Max request time: {}", stats.getMax());
+        log.info("BFD {} statistics; Job={}; Num requests={}s; Average={}s, Min={}s, Max={}s",
+            bfdRequestOperation,
+            jobUuid,
+            stats.getCount(),
+            stats.getAverage(),
+            stats.getMin(),
+            stats.getMax()
+        );
     }
 
     /**
