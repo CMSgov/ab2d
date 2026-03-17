@@ -101,6 +101,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
             summarizeRequestTimes("requestEOBFromServer", requestEOBFromServerTimes, request.getJob());
             summarizeRequestTimes("requestNextBundleFromServer", requestNextBundleFromServerTimes, request.getJob());
+            log.info("---------------------------------------------------");
+            BFDSearchImpl.summarizeRequestTimes(request.getJob());
+            BFDSearchImpl.REQUEST_TIMES.remove();
         }
         return anyErrors;
     }

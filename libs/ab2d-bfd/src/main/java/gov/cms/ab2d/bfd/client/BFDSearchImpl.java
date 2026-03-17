@@ -12,6 +12,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import gov.cms.ab2d.bfd.client.BFDSearchImpl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
