@@ -478,12 +478,6 @@ public class CoverageCheckPredicatesIntegrationTest {
         coveragePeriodRepo.saveAndFlush(period);
     }
 
-    private void runSearch(CoveragePeriod period) {
-        coverageService.submitSearch(period.getId(), "testing");
-        startSearchAndPullEvent();
-        coverageService.completeSearch(period.getId(), "testing");
-    }
-
     private void runSearchAndLeaveOld(CoveragePeriod period) {
         coverageService.submitSearch(period.getId(), "testing");
         startSearchAndPullEvent();

@@ -92,12 +92,12 @@ public class CoverageCheckIntegrationTest {
     private CoveragePeriod attestationMonth;
     private CoveragePeriod attestationMonthPlus1;
     private CoveragePeriod attestationMonthPlus2;
-    private CoveragePeriod attestationMonthPlus3;
 
     @BeforeEach
     void setUp() {
         enabledContracts = pdpClientService.getAllEnabledContracts();
-        enabledContracts.forEach(contract -> pdpClientService.disableClient(contract.getContractNumber()));
+        enabledContracts.forEach(enabledContract ->
+                pdpClientService.disableClient(enabledContract.getContractNumber()));
 
         PdpClient client = dataSetup.setupNonStandardClient("special", "TEST", List.of("SPONSOR"));
         contract = contractService.getContractByContractNumber("TEST").get();
@@ -108,7 +108,8 @@ public class CoverageCheckIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        enabledContracts.forEach(contract -> pdpClientService.enableClient(contract.getContractNumber()));
+        enabledContracts.forEach(enabledContract ->
+                pdpClientService.enableClient(enabledContract.getContractNumber()));
         coverageDataSetup.cleanup();
         dataSetup.cleanup();
     }
@@ -163,7 +164,7 @@ public class CoverageCheckIntegrationTest {
     @Test
     void verifyCoverage_whenZContractIgnore() {
 
-        PdpClient client = dataSetup.setupNonStandardClient("special2", "Z5555", List.of("SPONSOR"));
+        dataSetup.setupNonStandardClient("special2", "Z5555", List.of("SPONSOR"));
         contract = contractService.getContractByContractNumber("Z5555").get();
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contract.setUpdateMode(Contract.UpdateMode.NONE);
@@ -333,7 +334,7 @@ public class CoverageCheckIntegrationTest {
                 dateTime.plusMonths(1).getYear());
         attestationMonthPlus2 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), dateTime.plusMonths(2).getMonthValue(),
                 dateTime.plusMonths(2).getYear());
-        attestationMonthPlus3 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), dateTime.plusMonths(3).getMonthValue(),
+        coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), dateTime.plusMonths(3).getMonthValue(),
                 dateTime.plusMonths(3).getYear());
     }
 
