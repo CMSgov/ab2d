@@ -24,7 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.api.util.SwaggerConstants.*;

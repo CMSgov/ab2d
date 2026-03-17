@@ -53,8 +53,6 @@ public class BFDHealthCheckTest {
     @Value("${bfd.health.check.consecutive.successes}")
     private int consecutiveSuccessesToBringUp;
 
-    private static final String TEST_DIR = "test-data/";
-
     private CapabilityStatement statement = new CapabilityStatement().setStatus(Enumerations.PublicationStatus.ACTIVE);
 
     @BeforeEach

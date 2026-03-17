@@ -33,6 +33,7 @@ import org.springframework.test.context.TestPropertySource;
 
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -143,8 +144,8 @@ class PerformanceTestingCoverageOperations {
     void insertPerformanceUsingConnection() {
         // Raise number of datapoints to stress database
         InsertionJob job = new InsertionJob(period1, dataSource, coverageService,
-                1_000_000, 1, coverageSearchRepository);
-        job.call();
+                1_000_000, 1);
+        assertDoesNotThrow(job::call);
     }
 
     /**
@@ -318,13 +319,13 @@ class PerformanceTestingCoverageOperations {
     void deletePreviousSearch() {
 
         InsertionJob first = new InsertionJob(period1, dataSource, coverageService,
-                100_000, 1, coverageSearchRepository);
+                100_000, 1);
         CoverageSearchEvent inProgress1 = first.call();
 
         coverageService.completeSearch(period1.getId(), "testing");
 
         InsertionJob second = new InsertionJob(period1, dataSource, coverageService,
-                100_000, 1, coverageSearchRepository);
+                100_000, 1);
         CoverageSearchEvent inProgress2 = second.call();
 
         coverageService.completeSearch(period1.getId(), "testing");
@@ -356,7 +357,7 @@ class PerformanceTestingCoverageOperations {
 
             for (CoveragePeriod period : periods) {
                 InsertionJob job = new InsertionJob(period, dataSource, coverageService,
-                        dataPoints, 1, coverageSearchRepository);
+                        dataPoints, 1);
                 insertions.add(executor.submit(job));
             }
 
