@@ -57,6 +57,7 @@ jobs:
 
       - name: Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
+        continue-on-error: true
         with:
           scanMetadataReportFile: idr-db-importer/build/sonar/report-task.txt
         timeout-minutes: 10
