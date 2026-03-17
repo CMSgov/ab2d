@@ -62,7 +62,6 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.coverage.repository.CoverageDeltaRepository.COVERAGE_ADDED;
 import static gov.cms.ab2d.coverage.repository.CoverageDeltaRepository.COVERAGE_DELETED;
 import static java.util.Collections.disjoint;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -455,7 +454,7 @@ class CoverageServiceImplTest {
         Set<Identifiers> identifiers = Set.of(createIdentifier(123L), createIdentifier(456L),
                 createIdentifier(789L));
         List<Long> originalBeneIds = identifiers.stream().map(Identifiers::getBeneficiaryId)
-                                        .collect(toList());
+                                        .toList();
 
         CoverageSearchEvent savedTo = coverageService.insertCoverage(inProgress.getId(), identifiers);
 
@@ -464,7 +463,7 @@ class CoverageServiceImplTest {
         CoveragePagingRequest pagingRequest = new CoveragePagingRequest(1000, null, contract1, jobStartTime);
         CoveragePagingResult result = coverageServiceRepo.pageCoverage(pagingRequest);
         List<Long> savedBeneficiaryIds = result.getCoverageSummaries().stream()
-                .map(summary -> summary.getIdentifiers().getBeneficiaryId()).collect(toList());
+                .map(summary -> summary.getIdentifiers().getBeneficiaryId()).toList();
 
         assertTrue(savedBeneficiaryIds.containsAll(originalBeneIds));
         assertTrue(originalBeneIds.containsAll(savedBeneficiaryIds));
@@ -882,16 +881,16 @@ class CoverageServiceImplTest {
         // Bootstrap coverage periods
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgressJan = startSearchAndPullEvent();
+        startSearchAndPullEvent();
 
         coverageService.submitSearch(period1Feb.getId(), "testing");
         CoverageSearchEvent inProgressFeb = startSearchAndPullEvent();
 
         coverageService.submitSearch(period1March.getId(), "testing");
-        CoverageSearchEvent inProgressMarch = startSearchAndPullEvent();
+        startSearchAndPullEvent();
 
         coverageService.submitSearch(period1April.getId(), "testing");
-        CoverageSearchEvent inProgressApril = startSearchAndPullEvent();
+        startSearchAndPullEvent();
 
 
         coverageService.insertCoverage(inProgressFeb.getId(), Set.of(createIdentifier(1L)));
@@ -955,7 +954,8 @@ class CoverageServiceImplTest {
         coverageService.submitSearch(period1Jan.getId(), "testing");
 
         // Search must currently be in progress or exception is thrown
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.searchDiff(period1Jan.getId()));
+        Integer periodId = period1Jan.getId();
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.searchDiff(periodId));
 
         CoverageSearchEvent inProgress2 = startSearchAndPullEvent();
         CoverageSearchEvent savedTo2 = coverageService.insertCoverage(inProgress2.getId(), results2);
@@ -1024,7 +1024,7 @@ class CoverageServiceImplTest {
         assertEquals(inProgress3, savedTo3);
 
         List<Long> coverages = dataSetup.findCoverage()
-                .stream().map(Coverage::getBeneficiaryId).collect(toList());
+                .stream().map(Coverage::getBeneficiaryId).toList();
 
         assertTrue(disjoint(beneIds1, coverages));
         assertTrue(coverages.containsAll(beneIds2));
@@ -1277,7 +1277,8 @@ class CoverageServiceImplTest {
         coverageService.submitSearch(period2Jan.getId(), "testing");
 
         // Cannot start search that has not been submitted
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1Feb.getId(), "testing"));
+        Integer period1FebId = period1Feb.getId();
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1FebId, "testing"));
 
         startSearchAndPullEvent();
 
@@ -1291,7 +1292,8 @@ class CoverageServiceImplTest {
         assertNotNull(completedCopy.getCoveragePeriod().getLastSuccessfulJob());
 
         // Cannot complete job twice
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1Jan.getId(), "testing"));
+        Integer period1JanId = period1Jan.getId();
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1JanId, "testing"));
 
         // Add status changes that should invalidate marking a job completed
 
@@ -1318,8 +1320,9 @@ class CoverageServiceImplTest {
         coveragePeriodRepo.saveAndFlush(period1Jan);
         coveragePeriodRepo.saveAndFlush(period2Jan);
 
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1Jan.getId(), "testing"));
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period2Jan.getId(), "testing"));
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1JanId, "testing"));
+        Integer period2JanId = period2Jan.getId();
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period2JanId, "testing"));
     }
 
     @DisplayName("Coverage period searches can be cancelled")
@@ -1336,14 +1339,15 @@ class CoverageServiceImplTest {
         assertEquals(CoverageJobStatus.CANCELLED, cancelledCopy.getNewStatus());
 
         // Cannot cancel job twice
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.cancelSearch(period1Jan.getId(), "testing"));
+        Integer periodId = period1Jan.getId();
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.cancelSearch(periodId, "testing"));
 
         // Add status changes that should invalidate marking a job completed
-        coverageService.submitSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(periodId, "testing");
         startSearchAndPullEvent();
 
         // Cannot cancel in progress job
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.cancelSearch(period1Jan.getId(), "testing"));
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.cancelSearch(periodId, "testing"));
     }
 
     @DisplayName("Coverage period searches can be cancelled")
@@ -1354,8 +1358,9 @@ class CoverageServiceImplTest {
         coverageService.submitSearch(period2Jan.getId(), "testing");
 
         // Cannot fail search that has not been started
+        Integer periodId = period1Jan.getId();
         assertThrows(InvalidJobStateTransition.class,
-                () -> coverageService.failSearch(period1Jan.getId(), "testing"));
+                () -> coverageService.failSearch(periodId, "testing"));
 
         startSearchAndPullEvent();
 

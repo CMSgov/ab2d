@@ -52,17 +52,16 @@ class PatientClaimsProcessorUnitTest {
     File tmpEfsMountDir;
 
     private org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob;
-    private final String CONTRACT_NUM="Z0001";
-    ContractForCoverageDTO contractDTO = new ContractForCoverageDTO(CONTRACT_NUM, OffsetDateTime.MIN,
+    private final String contractNum = "Z0001";
+    ContractForCoverageDTO contractDTO = new ContractForCoverageDTO(contractNum, OffsetDateTime.MIN,
             ContractForCoverageDTO.ContractType.CLASSIC_TEST);
 
-    private final static Long patientId = -199900000022040L;
+    private static final Long PATIENT_ID = -199900000022040L;
 
     private static final OffsetDateTime EARLY_ATT_DATE = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private static final OffsetDateTime EARLY_SINCE_DATE = OffsetDateTime.of(2020, 1, 15, 0, 0, 0, 0, ZoneOffset.UTC);
     private static final OffsetDateTime LATER_ATT_DATE = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
     private CoverageSummary coverageSummary;
-    private ProgressTrackerUpdate update = new ProgressTrackerUpdate();
 
     private final Token noOpToken = new Token() {
         @Override
@@ -105,17 +104,11 @@ class PatientClaimsProcessorUnitTest {
         eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
         createOutputFiles();
 
-        List<CoverageSummary> coverageSummaries = new ArrayList<>();
-         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId),
+        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
                 contractDTO, List.of(TestUtil.getOpenRange()));
-        coverageSummaries.add(coverageSummary);
-
-        CoverageSummary fileSummary = new CoverageSummary(createIdentifierWithoutMbi(-199900000022040L),
-                null, List.of(TestUtil.getOpenRange()));
-        coverageSummaries.add(fileSummary);
 
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, null, null,"client", "job",
-                CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
     }
 
     @Test
@@ -131,7 +124,6 @@ class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenPatientHasDataWithBadLastUpdated() throws ExecutionException, InterruptedException {
-        ExplanationOfBenefit firstEob = eob.copy();
         eob.getMeta().setLastUpdated(null);
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         ExplanationOfBenefit eob2 = eob.copy();
@@ -151,8 +143,8 @@ class PatientClaimsProcessorUnitTest {
         assertEquals(3, bundle1.getEntry().size());
 
         PatientClaimsRequest request2 = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, LATER_ATT_DATE, null, null,"client", "job",
-                CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
-        when(mockBfdClient.requestEOBFromServer(STU3, patientId, request2.getAttTime(), null, null, contractDTO.getContractNumber())).thenReturn(bundle1);
+                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+        when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, request2.getAttTime(), null, null, contractDTO.getContractNumber())).thenReturn(bundle1);
 
         cut.process(request2).get();
     }
@@ -160,18 +152,18 @@ class PatientClaimsProcessorUnitTest {
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(STU3, patientId, request.getAttTime(), null, null, CONTRACT_NUM)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, contractNum)).thenReturn(bundle1);
 
-        ProgressTrackerUpdate update = cut.process(request).get();
-        assertNotNull(update);
-        assertEquals(1, update.getEobsProcessedCount());
-        assertEquals(1, update.getEobsFetchedCount());
-        assertEquals(1, update.getPatientRequestProcessedCount());
-        assertEquals(1, update.getPatientWithEobCount());
-        assertEquals(0, update.getPatientFailureCount());
+        ProgressTrackerUpdate trackerUpdate = cut.process(request).get();
+        assertNotNull(trackerUpdate);
+        assertEquals(1, trackerUpdate.getEobsProcessedCount());
+        assertEquals(1, trackerUpdate.getEobsFetchedCount());
+        assertEquals(1, trackerUpdate.getPatientRequestProcessedCount());
+        assertEquals(1, trackerUpdate.getPatientWithEobCount());
+        assertEquals(0, trackerUpdate.getPatientFailureCount());
 
-        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, request.getAttTime(), null, null, CONTRACT_NUM);
-        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);
+        verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, contractNum);
+        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, contractNum);
     }
 
     @Test
@@ -181,103 +173,103 @@ class PatientClaimsProcessorUnitTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = EobTestDataUtil.createBundle(eob.copy());
 
-        when(mockBfdClient.requestEOBFromServer(STU3, patientId, request.getAttTime(), null, null, CONTRACT_NUM)).thenReturn(bundle1);
-        when(mockBfdClient.requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM)).thenReturn(bundle2);
+        when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, contractNum)).thenReturn(bundle1);
+        when(mockBfdClient.requestNextBundleFromServer(STU3, bundle1, contractNum)).thenReturn(bundle2);
 
-        ProgressTrackerUpdate update = cut.process(request).get();
-        assertNotNull(update);
-        assertEquals(2, update.getEobsProcessedCount());
-        assertEquals(2, update.getEobsFetchedCount());
-        assertEquals(1, update.getPatientRequestProcessedCount());
-        assertEquals(1, update.getPatientWithEobCount());
-        assertEquals(0, update.getPatientFailureCount());
+        ProgressTrackerUpdate trackerUpdate = cut.process(request).get();
+        assertNotNull(trackerUpdate);
+        assertEquals(2, trackerUpdate.getEobsProcessedCount());
+        assertEquals(2, trackerUpdate.getEobsFetchedCount());
+        assertEquals(1, trackerUpdate.getPatientRequestProcessedCount());
+        assertEquals(1, trackerUpdate.getPatientWithEobCount());
+        assertEquals(0, trackerUpdate.getPatientFailureCount());
 
-        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, request.getAttTime(), null, null, CONTRACT_NUM);
-        verify(mockBfdClient).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);
+        verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, contractNum);
+        verify(mockBfdClient).requestNextBundleFromServer(STU3, bundle1, contractNum);
     }
 
     @Test
     void process_whenBfdClientThrowsException() {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(STU3, patientId, request.getAttTime(), null, null, CONTRACT_NUM)).thenThrow(new RuntimeException("Test Exception"));
+        when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, contractNum)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
                 () -> cut.process(request).get());
 
         assertTrue(exceptionThrown.getCause().getMessage().startsWith("Test Exception"));
 
-        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, request.getAttTime(),null, null, CONTRACT_NUM);
-        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);
+        verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(),null, null, contractNum);
+        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, contractNum);
     }
 
     @Test
     void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
-        when(mockBfdClient.requestEOBFromServer(STU3, patientId, request.getAttTime(),null, null, CONTRACT_NUM)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(),null, null, contractNum)).thenReturn(bundle1);
 
-        ProgressTrackerUpdate update = cut.process(request).get();
-        assertNotNull(update);
-        assertEquals(0, update.getEobsProcessedCount());
-        assertEquals(0, update.getEobsFetchedCount());
-        assertEquals(1, update.getPatientRequestProcessedCount());
-        assertEquals(0, update.getPatientWithEobCount());
-        assertEquals(0, update.getPatientFailureCount());
+        ProgressTrackerUpdate trackerUpdate = cut.process(request).get();
+        assertNotNull(trackerUpdate);
+        assertEquals(0, trackerUpdate.getEobsProcessedCount());
+        assertEquals(0, trackerUpdate.getEobsFetchedCount());
+        assertEquals(1, trackerUpdate.getPatientRequestProcessedCount());
+        assertEquals(0, trackerUpdate.getPatientWithEobCount());
+        assertEquals(0, trackerUpdate.getPatientFailureCount());
 
-        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, request.getAttTime(), null, null, CONTRACT_NUM);
-        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);
+        verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, request.getAttTime(), null, null, contractNum);
+        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, contractNum);
     }
 
     @Test
     void process_whenPatientHasSinglePageOfClaimsDataSince() throws ExecutionException, InterruptedException {
         // Override default behavior of setup
-        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
+        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID), null, List.of(TestUtil.getOpenRange()));
 
         OffsetDateTime sinceDate = EARLY_ATT_DATE.plusDays(1);
 
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, sinceDate, null, null,"client", "job",
-                CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(STU3, patientId, LATER_ATT_DATE, null, null, CONTRACT_NUM)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, LATER_ATT_DATE, null, null, contractNum)).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, LATER_ATT_DATE, null, null, CONTRACT_NUM);
-        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);
+        verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, LATER_ATT_DATE, null, null, contractNum);
+        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, contractNum);
     }
 
     @Test
     void process_whenPatientHasSinglePageOfClaimsDataEarlyAttDate() throws ExecutionException, InterruptedException {
         // Override default behavior of setup
-        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
+        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID), null, List.of(TestUtil.getOpenRange()));
 
         request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, null, null, null,"client", "job",
-                CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(STU3, patientId, null, null, null, CONTRACT_NUM)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, null, null, null, contractNum)).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, null, null, null, CONTRACT_NUM);
-        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);
+        verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, null, null, null, contractNum);
+        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, contractNum);
     }
 
     @Test
     void process_whenPatientHasSinglePageOfClaimsDataEarlySinceDate() throws ExecutionException, InterruptedException {
         // Override default behavior of setup
-        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
+        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID), null, List.of(TestUtil.getOpenRange()));
 
         request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, EARLY_SINCE_DATE, null, null,"client", "job",
-                CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(STU3, patientId, null,null, null, CONTRACT_NUM)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, null,null, null, contractNum)).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, null,null, null, CONTRACT_NUM);
-        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, CONTRACT_NUM);
+        verify(mockBfdClient).requestEOBFromServer(STU3, PATIENT_ID, null,null, null, contractNum);
+        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1, contractNum);
     }
 
     private void createOutputFiles() throws IOException {
@@ -288,8 +280,8 @@ class PatientClaimsProcessorUnitTest {
         createFile(outputDirPath, "contract_name_error.ndjson");
     }
 
-    private Path createFile(Path outputDirPath, String output_filename) throws IOException {
-        final Path outputFilePath = Path.of(outputDirPath.toString(), output_filename);
+    private Path createFile(Path outputDirPath, String outputFilename) throws IOException {
+        final Path outputFilePath = Path.of(outputDirPath.toString(), outputFilename);
         return Files.createFile(outputFilePath);
     }
 

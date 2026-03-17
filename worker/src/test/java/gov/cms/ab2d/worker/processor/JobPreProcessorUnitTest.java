@@ -119,12 +119,12 @@ class JobPreProcessorUnitTest {
     @Test
     @DisplayName("Throws exception when the job for the given JobUuid is not in submitted status")
     void whenTheJobForTheGivenJobUuidIsNotInSubmittedStatus_ThrowsException() {
-
-        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        String jobId = job.getJobUuid();
+        when(jobRepository.findByJobUuid(jobId)).thenReturn(job);
 
         var exceptionThrown = assertThrows(
                 IllegalArgumentException.class,
-                () -> cut.preprocess(job.getJobUuid()));
+                () -> cut.preprocess(jobId));
 
         assertEquals(String.format("Job %s is not in SUBMITTED status", JOB_UUID), exceptionThrown.getMessage());
     }
@@ -199,13 +199,14 @@ class JobPreProcessorUnitTest {
     @Test
     void proccessingNotTriggeredIfCoverageCheckInterrupted() throws InterruptedException {
 
+        String jobId = job.getJobUuid();
         job.setStatus(JobStatus.SUBMITTED);
-        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        when(jobRepository.findByJobUuid(jobId)).thenReturn(job);
         when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
         when(coverageDriver.isCoverageAvailable(any(Job.class), any(ContractDTO.class))).thenThrow(InterruptedException.class);
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.preprocess(job.getJobUuid()));
+                () -> cut.preprocess(jobId));
         assertEquals("could not determine whether coverage metadata was up to date",
                 exceptionThrown.getMessage());
     }
@@ -214,32 +215,32 @@ class JobPreProcessorUnitTest {
     @Test
     void testDefaultSinceSTU3() {
         // Test if it's STU3, nothing changes since default 'since' is not defined for STU3
-        Job job = createJob();
-        job.setStatus(JobStatus.SUBMITTED);
-        job.setContractNumber(contract.getContractNumber());
-        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
-        cut.preprocess(job.getJobUuid());
-        assertNull(job.getSince());
-        assertNull(job.getUntil());
+        Job testJob = createJob();
+        testJob.setStatus(JobStatus.SUBMITTED);
+        testJob.setContractNumber(contract.getContractNumber());
+        when(jobRepository.findByJobUuid(testJob.getJobUuid())).thenReturn(testJob);
+        when(contractWorkerClient.getContractByContractNumber(testJob.getContractNumber())).thenReturn(contract);
+        cut.preprocess(testJob.getJobUuid());
+        assertNull(testJob.getSince());
+        assertNull(testJob.getUntil());
         verify(jobRepository, never()).findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any());
-        assertNull(job.getSinceSource());
+        assertNull(testJob.getSinceSource());
     }
 
     @DisplayName("Test to see if default since behavior runs for R4, but doesn't work if there was no previous successful job")
     @Test
     void testDefaultSinceR4FirstRun() {
-        Job job = createJob();
-        job.setFhirVersion(R4);
-        job.setStatus(JobStatus.SUBMITTED);
-        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
+        Job testJob = createJob();
+        testJob.setFhirVersion(R4);
+        testJob.setStatus(JobStatus.SUBMITTED);
+        when(jobRepository.findByJobUuid(testJob.getJobUuid())).thenReturn(testJob);
+        when(contractWorkerClient.getContractByContractNumber(testJob.getContractNumber())).thenReturn(contract);
         when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(Collections.emptyList());
-        cut.preprocess(job.getJobUuid());
+        cut.preprocess(testJob.getJobUuid());
 
-        assertNull(job.getSince());
-        assertNull(job.getUntil());
-        assertEquals(SinceSource.FIRST_RUN, job.getSinceSource());
+        assertNull(testJob.getSince());
+        assertNull(testJob.getUntil());
+        assertEquals(SinceSource.FIRST_RUN, testJob.getSinceSource());
     }
 
     @DisplayName("has had a successful run, set since as null, populate it")
@@ -393,8 +394,6 @@ class JobPreProcessorUnitTest {
         job5.addJobOutput(createJobOutput(job5, false, 1));
         job5.addJobOutput(createJobOutput(job5, true, 0));
 
-        Job newJob = createJob("Z", R4, SUBMITTED, OffsetDateTime.of(2020, 7, 1, 1, 0, 0, 0, ZoneOffset.UTC));
-
         JobPreProcessorImpl impl = (JobPreProcessorImpl) cut;
 
         assertEquals(impl.getLastSuccessfulJobWithDownloads(List.of(job1, job2)).get().getCreatedAt().getNano(), job2.getCreatedAt().getNano());
@@ -404,15 +403,15 @@ class JobPreProcessorUnitTest {
 
     @Test
     void testDownloadedAll() {
-        Job job = new Job();
+        Job testJob = new Job();
         // Error file that was downloaded
-        JobOutput jo1 = createJobOutput(job, true, 1);
+        JobOutput jo1 = createJobOutput(testJob, true, 1);
         // Error file that was not downloaded
-        JobOutput jo2 = createJobOutput(job, true, 0);
+        JobOutput jo2 = createJobOutput(testJob, true, 0);
         // Data file that was downloaded
-        JobOutput jo3 = createJobOutput(job, false, 1);
+        JobOutput jo3 = createJobOutput(testJob, false, 1);
         // Data file that was not downloaded - anything that includes this should return false
-        JobOutput jo4 = createJobOutput(job, false, 0);
+        JobOutput jo4 = createJobOutput(testJob, false, 0);
 
         JobPreProcessorImpl impl = (JobPreProcessorImpl) cut;
         // Start with null or empty results
@@ -445,27 +444,27 @@ class JobPreProcessorUnitTest {
     }
 
     private Job createJob(String uuid, FhirVersion version, JobStatus status, OffsetDateTime created) {
-        Job job = new Job();
-        job.setJobUuid(uuid);
-        job.setStatusMessage("0%");
-        job.setFhirVersion(version);
-        job.setStatus(status);
-        job.setCreatedAt(created);
-        job.setContractNumber(contract.getContractNumber());
+        Job newJob = new Job();
+        newJob.setJobUuid(uuid);
+        newJob.setStatusMessage("0%");
+        newJob.setFhirVersion(version);
+        newJob.setStatus(status);
+        newJob.setCreatedAt(created);
+        newJob.setContractNumber(contract.getContractNumber());
 
-        return job;
+        return newJob;
 
     }
 
     // Not first run, since supplied
 
     private Job createJob() {
-        Job job = new Job();
-        job.setJobUuid(JOB_UUID);
-        job.setStatusMessage("0%");
-        job.setFhirVersion(STU3);
-        job.setContractNumber(contract.getContractNumber());
+        Job newJob = new Job();
+        newJob.setJobUuid(JOB_UUID);
+        newJob.setStatusMessage("0%");
+        newJob.setFhirVersion(STU3);
+        newJob.setContractNumber(contract.getContractNumber());
 
-        return job;
+        return newJob;
     }
 }

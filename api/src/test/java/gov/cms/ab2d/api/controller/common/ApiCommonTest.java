@@ -27,6 +27,7 @@ class ApiCommonTest {
 
     private static final String CONTRACT_NUMBER = "X1234";
     private static final Long CONTRACT_ID = 100L;
+    private static final OffsetDateTime SINCE_BEFORE_EARLIEST_DATE_TIME = SINCE_EARLIEST_DATE_TIME.minusMonths(1);
 
     final PdpClient pdpClient;
 
@@ -77,8 +78,9 @@ class ApiCommonTest {
     void checkSinceTimeTest() {
         assertDoesNotThrow(() -> apiCommon.checkSinceTime(SINCE_EARLIEST_DATE_TIME));
         assertDoesNotThrow(() -> apiCommon.checkSinceTime(null));
-        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(OffsetDateTime.now().plusMonths(1)));
-        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(SINCE_EARLIEST_DATE_TIME.minusMonths(1)));
+        OffsetDateTime oneMonthInTheFuture = OffsetDateTime.now().plusMonths(1);
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(oneMonthInTheFuture));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(SINCE_BEFORE_EARLIEST_DATE_TIME));
     }
 
     @Test
@@ -88,7 +90,7 @@ class ApiCommonTest {
         assertDoesNotThrow(() -> apiCommon.checkUntilTime(SINCE_EARLIEST_DATE_TIME, null, FhirVersion.R4));
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(SINCE_EARLIEST_DATE_TIME, currentDate, FhirVersion.STU3));
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(currentDate, SINCE_EARLIEST_DATE_TIME, FhirVersion.R4));
-        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(null, SINCE_EARLIEST_DATE_TIME.minusMonths(1), FhirVersion.R4));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(null, SINCE_BEFORE_EARLIEST_DATE_TIME, FhirVersion.R4));
     }
 
     @Test

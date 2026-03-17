@@ -26,6 +26,8 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -103,9 +106,10 @@ class AggregatorJobTest {
         ReflectionTestUtils.setField(processor, "earliestDataDate", "01/01/2020");
 
         Future<ProgressTrackerUpdate> future = processor.process(request);
-        while (!future.isDone()) {
-            Thread.sleep(500);
-        }
+        await()
+                .pollInterval(500, TimeUnit.MILLISECONDS)
+                .atMost(30, TimeUnit.SECONDS)
+                .until(future::isDone);
 
         File[] files = (new File(tempDir + "/" + job + "/" + FINISHED)).listFiles();
         assertNotNull(files);

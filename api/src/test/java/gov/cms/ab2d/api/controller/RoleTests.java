@@ -6,6 +6,9 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +23,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.ATTESTOR_ROLE;
@@ -145,33 +149,22 @@ public class RoleTests {
                 .andExpect(status().is(403));
     }
 
-    @Test
-    public void testWrongRoleClientUpdate() throws Exception {
-        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
-
-        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(403));
+    private static Stream<Arguments> urlPaths() {
+        return Stream.of(
+                Arguments.of("/client"),
+                Arguments.of("/client/testclient/job"),
+                Arguments.of("/client/testclient/job/Z0001")
+        );
     }
 
-    @Test
-    public void testWrongRoleCreateJobOnBehalfOfClient() throws Exception {
+    @ParameterizedTest
+    @MethodSource("urlPaths")
+    void testWrongRoleCreate(String path) throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/testclient/job")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(403));
-    }
-
-    @Test
-    public void testWrongRoleCreateJobByContractOnBehalfOfClient() throws Exception {
-        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
-
-        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/testclient/job/Z0001")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + path)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }
 

@@ -23,7 +23,7 @@ public class LockThread implements Callable<Boolean> {
         if (!canGetIt) {
             return false;
         }
-        Thread.sleep(3000);
+        Thread.sleep(3000); // NOSONAR - explicitly meant to occupy a thread
         lock.unlock();
         System.out.println("Thread " + id + " ending");
         return canGetIt;

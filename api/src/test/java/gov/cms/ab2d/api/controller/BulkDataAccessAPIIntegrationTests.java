@@ -36,13 +36,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.ResultMatcher;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -52,12 +50,10 @@ import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
-import static gov.cms.ab2d.api.remote.JobClientMock.EXPIRES_IN_DAYS;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
@@ -67,11 +63,8 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
-import static java.time.ZoneOffset.UTC;
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
-import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -82,8 +75,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         /* When checking in, comment out print statements. They are very helpful, but fill up the logs */
 class BulkDataAccessAPIIntegrationTests {
 
-    private static final String FILE_NOT_PRESENT_ERROR = "The file is not present as there was an error. Please resubmit the job.";
-    private static final String MAX_DOWNLOAD_EXCEDED_ERROR = "The file has reached the maximum number of downloads. Please resubmit the job.";
 
     @Autowired
     private MockMvc mockMvc;
@@ -212,7 +203,7 @@ class BulkDataAccessAPIIntegrationTests {
     void testPatientExportDuplicateSubmission() throws Exception, JsonProcessingException {
         createMaxJobs();
 
-        MvcResult mvcResult = this.mockMvc.perform(
+        this.mockMvc.perform(
                         get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
@@ -230,7 +221,6 @@ class BulkDataAccessAPIIntegrationTests {
 
         List<ApiRequestEvent> apiRequestEvents = events.stream().filter(e -> e.toString().contains("ApiRequestEvent")).map(e -> (ApiRequestEvent) getRequestEvent(e)).toList();
         List<ApiResponseEvent> apiResponseEvents = events.stream().filter(e -> e.toString().contains("ApiResponseEvent")).map(e -> (ApiResponseEvent) getRequestEvent(e)).toList();
-        List<ErrorEvent> errorEvents = events.stream().filter(e -> e.toString().contains("ErrorEvent")).map(e -> (ErrorEvent) getRequestEvent(e)).toList();
         List<JobStatusChangeEvent> jobEvents = events.stream().filter(e -> e.toString().contains("JobStatusChangeEvent")).map(e -> (JobStatusChangeEvent) getRequestEvent(e)).toList();
 
         assertEquals(MAX_JOBS_PER_CLIENT + 1, apiRequestEvents.size());
@@ -640,39 +630,5 @@ class BulkDataAccessAPIIntegrationTests {
         expected.setDate(null);
 
         assertEquals(STU3.getJsonParser().encodeResourceToString(expected), STU3.getJsonParser().encodeResourceToString(actual));
-    }
-
-    private ResultMatcher buildExpiresMatcher() {
-        return result -> {
-            MockHttpServletResponse response = result.getResponse();
-            String headerValue = response.getHeader(EXPIRES);
-            assertNotNull(headerValue, "Response does not contain header '" + EXPIRES + "'");
-            OffsetDateTime actual = OffsetDateTime.parse(headerValue, RFC_1123_DATE_TIME.withZone(UTC));
-            OffsetDateTime expected = OffsetDateTime.now().plusDays(EXPIRES_IN_DAYS);
-            assertTrue(actual.isBefore(expected), "Sanity check that now() is larger than when this was processed");
-            /*
-             * 7 is the fudge factor for the tests, passing tests on my laptop.  The build environment occasionally
-             * would exceed a one-second difference.
-             */
-            OffsetDateTime minExpected = expected.minusSeconds(7);
-            assertTrue(actual.isAfter(minExpected), "Expire header time mismatch: actual - " + actual +
-                    " should be greater than expected - " + minExpected);
-        };
-    }
-
-    /*
-     * Be more accepting of a one-second difference in timestamps when running a test.
-     */
-    private ResultMatcher buildTxTimeMatcher() {
-        return result -> {
-            OffsetDateTime buildTime = OffsetDateTime.now();
-            String buildTimeStr = new org.hl7.fhir.dstu3.model.DateTimeType(buildTime.toString()).toHumanDisplay();
-            String buildPlusOneStr = new org.hl7.fhir.dstu3.model.DateTimeType(buildTime.minusSeconds(1).toString()).toHumanDisplay();
-            List<String> elementsToMatch = new ArrayList<>();
-            elementsToMatch.add(buildTimeStr);
-            elementsToMatch.add(buildPlusOneStr);
-
-            jsonPath("$.transactionTime", IsIn.in(elementsToMatch)).match(result);
-        };
     }
 }

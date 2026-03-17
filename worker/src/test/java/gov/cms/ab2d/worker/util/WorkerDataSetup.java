@@ -18,9 +18,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-
-import static java.util.stream.Collectors.toList;
-
 @Component
 public class WorkerDataSetup {
 
@@ -46,16 +43,16 @@ public class WorkerDataSetup {
 
     public void cleanup() {
 
-        List<Job> jobsToDelete = domainObjects.stream().filter(object -> object instanceof Job)
-                .map(object -> (Job) object).collect(toList());
+        List<Job> jobsToDelete = domainObjects.stream().filter(Job.class::isInstance)
+                .map(Job.class::cast).toList();
         jobsToDelete.forEach(job -> {
             job = jobRepository.findByJobUuid(job.getJobUuid());
             jobRepository.delete(job);
             jobRepository.flush();
         });
 
-        List<PdpClient> clientsToDelete = domainObjects.stream().filter(object -> object instanceof PdpClient)
-                .map(object -> (PdpClient) object).collect(toList());
+        List<PdpClient> clientsToDelete = domainObjects.stream().filter(PdpClient.class::isInstance)
+                .map(PdpClient.class::cast).toList();
         clientsToDelete.forEach(pdpClient -> {
             pdpClient = pdpClientRepository.findByClientId(pdpClient.getClientId());
 
@@ -65,8 +62,8 @@ public class WorkerDataSetup {
             }
         });
 
-        List<Role> rolesToDelete = domainObjects.stream().filter(object -> object instanceof Role)
-                .map(object -> (Role) object).collect(toList());
+        List<Role> rolesToDelete = domainObjects.stream().filter(Role.class::isInstance)
+                .map(Role.class::cast).toList();
         rolesToDelete.forEach(role -> {
             Optional<Role> roleOptional = roleRepository.findRoleByName(role.getName());
 
@@ -76,8 +73,6 @@ public class WorkerDataSetup {
             }
         });
 
-        List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
-                .map(object -> (Contract) object).collect(toList());
         contractServiceStub.reset();
 
         domainObjects.clear();

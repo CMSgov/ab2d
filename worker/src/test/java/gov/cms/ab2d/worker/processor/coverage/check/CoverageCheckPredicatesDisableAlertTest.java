@@ -64,7 +64,7 @@ class CoverageCheckPredicatesDisableAlertTest {
                 .findFirst()
                 .orElse(null);
         method.setAccessible(true);
-        assertSame(ReflectionUtils.invokeMethod(method, check, contractDTO, 2021, 12, null), null);
+        assertSame(null, ReflectionUtils.invokeMethod(method, check, contractDTO, 2021, 12, null));
     }
 
 }

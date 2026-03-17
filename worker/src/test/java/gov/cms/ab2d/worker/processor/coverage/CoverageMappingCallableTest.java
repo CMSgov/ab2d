@@ -82,8 +82,6 @@ class CoverageMappingCallableTest {
         CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
-        ContractToContractCoverageMapping contractToContractCoverageMapping = new ContractToContractCoverageMapping();
-
         CoverageMapping mapping = new CoverageMapping(cse, search);
         CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, mapping.getPeriod().getYear());
 
@@ -121,7 +119,6 @@ class CoverageMappingCallableTest {
 
         ContractForCoverageDTO contractForCoverageDTO = contractToContractCoverageMapping.map(contract);
 
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, mapping.getPeriod().getYear());
         assertEquals(3, contractForCoverageDTO.getCorrectedYear(2020));
 
         // Test that the corrected year modification is not applied to Synthea

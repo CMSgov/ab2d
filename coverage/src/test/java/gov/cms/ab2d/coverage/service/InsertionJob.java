@@ -4,7 +4,6 @@ import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
-import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.time.Duration;
@@ -32,7 +31,6 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
     private final CoveragePeriod period;
     private final DataSource dataSource;
     private final CoverageService coverageService;
-    private final CoverageSearchRepository coverageSearchRepository;
     private final int dataPoints;
     private final int experiments;
     public static final int CHUNK_SIZE = 50000;
@@ -41,7 +39,9 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
 
         private long id = 0;
 
-        public BeneficiaryIdSupplier() {}
+        public BeneficiaryIdSupplier() {
+            // Intentional
+        }
 
         public Identifiers get() {
             long generated = id++;
@@ -61,13 +61,12 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
      * @param experiments number of times to repeat insertion
      */
     public InsertionJob(CoveragePeriod period, DataSource dataSource, CoverageService coverageService,
-                        int dataPoints, int experiments, CoverageSearchRepository coverageSearchRepository) {
+                        int dataPoints, int experiments) {
         this.period = period;
         this.dataSource = dataSource;
         this.coverageService = coverageService;
         this.dataPoints = dataPoints;
         this.experiments = experiments;
-        this.coverageSearchRepository = coverageSearchRepository;
     }
 
     public CoverageSearchEvent call() {
@@ -82,7 +81,7 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
 
         // Run inserts
         // If number of experiments is greater than 1 then data will be erased after each experiment
-        List<Long> timings = performExperiments(period, inProgress, dataPoints, experiments);
+        List<Long> timings = performExperiments(inProgress, dataPoints, experiments);
 
         // Average and print times of experiments
         long averageTime = timings.stream().reduce(0L, Long::sum) / timings.size();
@@ -95,7 +94,7 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
     /**
      * Perform experiments and capture timing of batch inserts
      */
-    private List<Long> performExperiments(CoveragePeriod period, CoverageSearchEvent inProgress, int dataPoints, int experiments) {
+    private List<Long> performExperiments(CoverageSearchEvent inProgress, int dataPoints, int experiments) {
         BeneficiaryIdSupplier supplier = new BeneficiaryIdSupplier();
 
         List<Long> timings = new ArrayList<>();

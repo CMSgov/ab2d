@@ -15,7 +15,7 @@ public class ContractWorkerClientMock extends ContractWorkerClient {
         super(null);
     }
 
-
+    @Override
     public ContractDTO getContractByContractNumber(String contractNumber) {
         return new ContractDTO(null, contractNumber, contractNumber, OffsetDateTime.now(), Contract.ContractType.NORMAL, 0, 0);
     }

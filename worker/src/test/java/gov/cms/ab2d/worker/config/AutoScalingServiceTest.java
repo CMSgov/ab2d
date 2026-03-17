@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.config;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
@@ -26,6 +27,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.awaitility.Awaitility.await;
+import java.util.concurrent.TimeUnit;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static org.junit.Assert.assertFalse;
@@ -79,7 +82,9 @@ public class AutoScalingServiceTest {
         ((PropertyServiceStub)propertiesService).createProperty(PCP_SCALE_TO_MAX_TIME, "20");
         ((PropertyServiceStub)propertiesService).createProperty(PCP_CORE_POOL_SIZE, "3");
         // Sleep due to race condition / flakiness
-        Thread.sleep(5000); //NOSONAR
+        await().atMost(6, TimeUnit.SECONDS).until(() ->
+                patientProcessorThreadPool.getCorePoolSize() == 3 &&
+                patientProcessorThreadPool.getMaxPoolSize() == originalMaxPoolSize);
     }
 
     @AfterEach
@@ -92,33 +97,38 @@ public class AutoScalingServiceTest {
 
     @Test
     @DisplayName("Auto-scaling does not kick in when maintenance mode is enabled")
-    void maintenanceModeNoAutoScaling() throws InterruptedException {
+    void maintenanceModeNoAutoScaling() {
 
-        final List<Future> futures = new ArrayList<>();
+        final List<Future<?>> futures = new ArrayList<>();
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set("TEST_CONTRACT");
         for (int i = 0; i < QUEUE_SIZE; i++) {
             futures.add(patientProcessorThreadPool.submit(sleepyRunnable()));
         }
         RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
 
-        Thread.sleep(1000);
+        try {
+            await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+                assertEquals(20, patientProcessorThreadPool.getMaxPoolSize());
+                assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
+            });
 
-        // Starts at three will scale once there is work in queue
-        assertEquals(20, patientProcessorThreadPool.getMaxPoolSize());
-        assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
+            propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "4");
 
-        propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "4");
+            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
+                assertEquals(4, patientProcessorThreadPool.getMaxPoolSize());
+            });
 
-        Thread.sleep(10000);
+            // Trigger maintenance mode
+            propertiesService.updateProperty(MAINTENANCE_MODE, "true");
 
-        propertiesService.updateProperty(MAINTENANCE_MODE, "true");
+            await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+                assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
+                assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
+            });
 
-        Thread.sleep(6000);
-
-        assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
-        assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
-
-        futures.forEach(future -> future.cancel(true));
+        } finally {
+            futures.forEach(future -> future.cancel(true));
+        }
     }
 
     @Test
@@ -129,7 +139,7 @@ public class AutoScalingServiceTest {
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
         // Auto-scaling should not kick in while the queue is empty
-        Thread.sleep(7000);
+        Thread.sleep(7000); // NOSONAR
         assertEquals(originalMaxPoolSize, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
@@ -149,16 +159,15 @@ public class AutoScalingServiceTest {
         // In approximately 20 seconds the Executor should grow to the max.
         var start = Instant.now();
         LinkedHashSet<Integer> metrics = new LinkedHashSet<>();
-        for (int i = 0; i < 80; i++) {
-            int size =
-                    patientProcessorThreadPool.getThreadPoolExecutor().getMaximumPoolSize();
-            metrics.add(size);
-            log.info("Pool size: {}", size);
-            if (size >= MAX_POOL_SIZE) {
-                break;
-            }
-            Thread.sleep(500);
-        }
+        await().atMost(40, TimeUnit.SECONDS)
+                .pollInterval(500, TimeUnit.MILLISECONDS)
+                .until(() -> {
+                    int size =
+                            patientProcessorThreadPool.getThreadPoolExecutor().getMaximumPoolSize();
+                    metrics.add(size);
+                    log.info("Pool size: {}", size);
+                    return size >= MAX_POOL_SIZE;
+                });
         var end = Instant.now();
 
         // The pool should have grown to 20.
@@ -181,7 +190,8 @@ public class AutoScalingServiceTest {
 
         // We need to make sure it does not grow beyond the max though. Let's sleep for a bit
         // and verify the size is still at the same max value.
-        Thread.sleep(8000);
+
+        Thread.sleep(8000); //NOSONAR
         assertEquals(MAX_POOL_SIZE, patientProcessorThreadPool.getMaxPoolSize());
 
         // Clean up.
@@ -190,7 +200,9 @@ public class AutoScalingServiceTest {
         // Sleep for a bit to let auto scaling run another cycle. The max pool size should be
         // reverted
         // back to the original value after that.
-        Thread.sleep(10000);
+        await().atMost(10, TimeUnit.SECONDS).until(() ->
+                patientProcessorThreadPool.getMaxPoolSize() == MIN_POOL_SIZE &&
+                patientProcessorThreadPool.getThreadPoolExecutor().getActiveCount() == 0);
         assertEquals(MIN_POOL_SIZE, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(0, patientProcessorThreadPool.getThreadPoolExecutor().getActiveCount());
     }
@@ -228,7 +240,7 @@ public class AutoScalingServiceTest {
     private Runnable sleepyRunnable() {
         return () -> {
             try {
-                Thread.sleep(Long.MAX_VALUE);
+                Thread.sleep(Long.MAX_VALUE); //NOSONAR
             } catch (InterruptedException e) {
                 // NO-OP
             }

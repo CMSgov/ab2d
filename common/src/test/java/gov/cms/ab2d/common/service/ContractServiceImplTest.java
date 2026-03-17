@@ -74,7 +74,7 @@ class ContractServiceImplTest {
         assertTrue(allContracts.containsAll(attestedContracts));
         assertFalse(attestedContracts.contains(contract));
 
-        attestedContracts.forEach(contract -> assertNotNull(contract.getESTAttestationTime()));
+        attestedContracts.forEach(attestedContract -> assertNotNull(attestedContract.getESTAttestationTime()));
     }
 
     @DisplayName("Get a contract with an appropriate number")

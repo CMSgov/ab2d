@@ -90,7 +90,8 @@ public class CoverageServiceExceptionTest {
         coverageService.submitSearch(period1Jan.getId(), "testing");
         startSearchAndPullEvent();
 
-        assertThrows(RuntimeException.class, () -> coverageService.failSearch(period1Jan.getId(), "testing"));
+        Integer periodId = period1Jan.getId();
+        assertThrows(RuntimeException.class, () -> coverageService.failSearch(periodId, "testing"));
 
         Mockito.verify(eventLogger, Mockito.times(1)).alert(ArgumentMatchers.any(), ArgumentMatchers.any());
     }
@@ -104,7 +105,8 @@ public class CoverageServiceExceptionTest {
         coverageService.submitSearch(period1Jan.getId(), "testing");
         startSearchAndPullEvent();
 
-        assertThrows(RuntimeException.class, () -> coverageService.completeSearch(period1Jan.getId(), "testing"));
+        Integer periodId = period1Jan.getId();
+        assertThrows(RuntimeException.class, () -> coverageService.completeSearch(periodId, "testing"));
 
         Mockito.verify(eventLogger, Mockito.times(1)).alert(ArgumentMatchers.any(), ArgumentMatchers.any());
     }
