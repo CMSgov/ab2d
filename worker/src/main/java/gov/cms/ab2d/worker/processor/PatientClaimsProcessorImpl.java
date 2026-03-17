@@ -102,8 +102,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             summarizeRequestTimes("requestEOBFromServer", requestEOBFromServerTimes, request.getJob());
             summarizeRequestTimes("requestNextBundleFromServer", requestNextBundleFromServerTimes, request.getJob());
             log.info("---------------------------------------------------");
-            BFDSearchImpl.summarizeRequestTimes(request.getJob());
-            BFDSearchImpl.REQUEST_TIMES.remove();
+            gov.cms.ab2d.bfd.client.BFDSearchImpl.summarizeRequestTimes(request.getJob());
+            gov.cms.ab2d.bfd.client.BFDSearchImpl.REQUEST_TIMES.remove();
         }
         return anyErrors;
     }
@@ -204,7 +204,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             // Make first request and begin looping over remaining pages
             eobBundle = executeTimedRequest(
-                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum()),
+                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, /*serviceDates,*/ request.getContractNum()),
                 requestEOBFromServerTimes
             );
             collector.filterAndAddEntries(eobBundle, patient);
