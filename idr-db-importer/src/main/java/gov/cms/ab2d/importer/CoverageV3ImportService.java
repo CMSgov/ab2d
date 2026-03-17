@@ -86,7 +86,7 @@ public class CoverageV3ImportService {
 
                 int historicRows = 0;
                 //If first day of month
-                if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 1) {
+                if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 17) {
                     historicRows = syncToHistoric(connection, fqtn);
                 }
 
