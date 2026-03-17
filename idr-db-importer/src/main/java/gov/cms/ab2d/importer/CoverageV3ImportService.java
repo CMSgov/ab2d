@@ -7,10 +7,7 @@ import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 
@@ -69,7 +66,6 @@ public class CoverageV3ImportService {
                     WHERE make_date(year, month, 1) < (date_trunc('month', CURRENT_DATE) - interval '2 months')::date
                     """;
 
-    private static final String COVERAGE_V3_TABLE = "v3.coverage_v3";
     private static final String COVERAGE_V3_HISTORICAL_TABLE = "v3.coverage_v3_historical";
 
     @Retryable(
@@ -77,18 +73,17 @@ public class CoverageV3ImportService {
             maxAttempts = 3,
             backoff = @Backoff(delay = 1000, multiplier = 2.0)
     )
-    public void importWithRetry(String fqtn, String bucket, String key, String region) throws Exception {
+    public void importWithRetry(String fqtn, String bucket, String key, String region) throws SQLException {
         String stagingFqtn = fqtn + "_staging";
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
-            connection.setAutoCommit(false);
+
             try {
                 long before = queryCount(connection, fqtn);
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
                 int upsertRows = upsert(connection, fqtn, stagingFqtn);
 
-                int historicalRows = 0;
-                if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 17) {
-                    historicalRows = syncToHistorical(connection, fqtn);
+                if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 1) {
+                    syncToHistorical(connection, fqtn);
                 }
 
                 int deletedOldRows = deleteOldCoverageMonths(connection, fqtn);
@@ -98,8 +93,8 @@ public class CoverageV3ImportService {
 
                 connection.commit();
                 log.info(
-                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, historicalRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
-                        stagedRows, upsertRows, historicalRows, deletedOldRows, before, after, bucket, key
+                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
+                        stagedRows, upsertRows, deletedOldRows, before, after, bucket, key
                 );
             } catch (Exception e) {
                 rollback(connection);
@@ -113,7 +108,7 @@ public class CoverageV3ImportService {
     }
 
     @Recover
-    public void recover(Exception e, String fqtn, String bucket, String key, String region) throws Exception {
+    public void recover(Exception e, String fqtn, String bucket, String key) throws Exception {
         log.error(
                 "CoverageV3 import permanently failed after retries: s3://{}/{} → {}",
                 bucket, key, fqtn, e
@@ -121,14 +116,14 @@ public class CoverageV3ImportService {
         throw e;
     }
 
-    private void truncate(Connection conn, String fqtn) throws Exception {
+    private void truncate(Connection conn, String fqtn) throws SQLException {
         String sql = String.format(TRUNCATE_SQL, fqtn);
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.execute();
         }
     }
 
-    private int executeImport(Connection conn, String fqtn, String bucket, String key, String region) throws Exception {
+    private int executeImport(Connection conn, String fqtn, String bucket, String key, String region) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(IMPORT_SQL)) {
             ps.setString(1, fqtn);
             ps.setString(2, COLUMNS);
@@ -147,14 +142,14 @@ public class CoverageV3ImportService {
         }
     }
 
-    private int upsert(Connection conn, String targetFqtn, String stagingFqtn) throws Exception {
+    private int upsert(Connection conn, String targetFqtn, String stagingFqtn) throws SQLException {
         String sql = String.format(COVERAGE_UPSERT_SQL, targetFqtn, stagingFqtn);
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             return ps.executeUpdate();
         }
     }
 
-    private int syncToHistorical(Connection conn, String sourceFqtn) throws Exception {
+    private int syncToHistorical(Connection conn, String sourceFqtn) throws SQLException {
         String sql = String.format(
                 HISTORICAL_SYNC_SQL,
                 COVERAGE_V3_HISTORICAL_TABLE,
@@ -167,7 +162,7 @@ public class CoverageV3ImportService {
         }
     }
 
-    private int deleteOldCoverageMonths(Connection conn, String fqtn) throws Exception {
+    private int deleteOldCoverageMonths(Connection conn, String fqtn) throws SQLException {
         String sql = String.format(DELETE_OLD_MONTHS_SQL, fqtn);
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             log.info("Starting 3-month data cleanup");
@@ -175,7 +170,7 @@ public class CoverageV3ImportService {
         }
     }
 
-    private long queryCount(Connection conn, String fqtn) throws Exception {
+    private long queryCount(Connection conn, String fqtn) throws SQLException {
         String sql = "SELECT COUNT(*) FROM " + fqtn;
         try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

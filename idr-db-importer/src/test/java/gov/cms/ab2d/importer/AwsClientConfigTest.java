@@ -8,7 +8,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AwsClientConfigTest {
+class AwsClientConfigTest {
 
     private final ApplicationContextRunner contextRunner =
             new ApplicationContextRunner().withUserConfiguration(AwsClientConfig.class);
