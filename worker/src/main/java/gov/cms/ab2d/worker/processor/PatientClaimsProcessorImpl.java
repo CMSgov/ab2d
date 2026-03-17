@@ -204,7 +204,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             // Make first request and begin looping over remaining pages
             eobBundle = executeTimedRequest(
-                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, /*serviceDates,*/ request.getContractNum()),
+                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum()),
                 requestEOBFromServerTimes
             );
             collector.filterAndAddEntries(eobBundle, patient);
