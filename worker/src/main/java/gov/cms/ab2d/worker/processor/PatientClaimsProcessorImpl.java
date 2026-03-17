@@ -250,7 +250,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private void summarizeRequestTimes(String bfdRequestOperation, List<Double> requestTimes, String jobUuid) {
         val stats = requestTimes.stream().collect(Collectors.summarizingDouble(Double::doubleValue));
-        log.info("BFD {} statistics; Job={}; Num requests={}s; Average={}s, Min={}s, Max={}s",
+        log.info("BFD {} stats; Job={}; Num requests={}; Average={}s, Min={}s, Max={}s",
             bfdRequestOperation,
             jobUuid,
             stats.getCount(),
