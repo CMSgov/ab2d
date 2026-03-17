@@ -46,29 +46,31 @@ public class CoverageV3ImportService {
                     ON CONFLICT (patient_id, contract, year, month, current_mbi)
                     DO NOTHING""";
 
-    private static final String HISTORIC_SYNC_SQL =
+    private static final String HISTORICAL_SYNC_SQL =
             """
                     INSERT INTO %s (patient_id, contract, year, month, current_mbi)
                     SELECT coverage.patient_id, coverage.contract, coverage.year, coverage.month, coverage.current_mbi
                     FROM %s coverage
                     WHERE NOT EXISTS (
                         SELECT 1
-                        FROM %s historic
-                        WHERE historic.patient_id = coverage.patient_id
-                          AND historic.contract = coverage.contract
-                          AND historic.year = coverage.year
-                          AND historic.month = coverage.month
-                          AND historic.current_mbi = coverage.current_mbi
+                        FROM %s historical
+                        WHERE historical.patient_id = coverage.patient_id
+                          AND historical.contract = coverage.contract
+                          AND historical.year = coverage.year
+                          AND historical.month = coverage.month
+                          AND historical.current_mbi = coverage.current_mbi
                     )
                     ON CONFLICT (patient_id, contract, year, month, current_mbi)
                     DO NOTHING""";
 
     private static final String DELETE_OLD_MONTHS_SQL =
-            "DELETE FROM %s\n" +
-                    "WHERE make_date(year, month, 1) < (date_trunc('month', CURRENT_DATE) - interval '2 months')::date";
+            """
+                    DELETE FROM %s
+                    WHERE make_date(year, month, 1) < (date_trunc('month', CURRENT_DATE) - interval '2 months')::date
+                    """;
 
     private static final String COVERAGE_V3_TABLE = "v3.coverage_v3";
-    private static final String COVERAGE_V3_HISTORIC_TABLE = "v3.coverage_v3_historic";
+    private static final String COVERAGE_V3_HISTORICAL_TABLE = "v3.coverage_v3_historical";
 
     @Retryable(
             retryFor = Exception.class,
@@ -84,10 +86,9 @@ public class CoverageV3ImportService {
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
                 int upsertRows = upsert(connection, fqtn, stagingFqtn);
 
-                int historicRows = 0;
-                //If first day of month
+                int historicalRows = 0;
                 if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 17) {
-                    historicRows = syncToHistoric(connection, fqtn);
+                    historicalRows = syncToHistorical(connection, fqtn);
                 }
 
                 int deletedOldRows = deleteOldCoverageMonths(connection, fqtn);
@@ -97,8 +98,8 @@ public class CoverageV3ImportService {
 
                 connection.commit();
                 log.info(
-                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, historicRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
-                        stagedRows, upsertRows, historicRows, deletedOldRows, before, after, bucket, key
+                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, historicalRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
+                        stagedRows, upsertRows, historicalRows, deletedOldRows, before, after, bucket, key
                 );
             } catch (Exception e) {
                 rollback(connection);
@@ -153,11 +154,15 @@ public class CoverageV3ImportService {
         }
     }
 
-    private int syncToHistoric(Connection conn, String sourceFqtn) throws Exception {
-        String sql = String.format(HISTORIC_SYNC_SQL, COVERAGE_V3_HISTORIC_TABLE, sourceFqtn, COVERAGE_V3_HISTORIC_TABLE);
-        log.info("----- "+ sql);
+    private int syncToHistorical(Connection conn, String sourceFqtn) throws Exception {
+        String sql = String.format(
+                HISTORICAL_SYNC_SQL,
+                COVERAGE_V3_HISTORICAL_TABLE,
+                sourceFqtn,
+                COVERAGE_V3_HISTORICAL_TABLE
+        );
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            log.info("Starting coverage_v3_historic sync");
+            log.info("Starting coverage_v3_historical sync");
             return ps.executeUpdate();
         }
     }
