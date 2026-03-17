@@ -16,6 +16,7 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -31,9 +32,13 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
@@ -179,17 +184,26 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime untilTime = getUntilTime(request, sinceTime);
         List<String> serviceDates = request.getServiceDates();
 
+        val requestTimes = new ArrayList<Double>();
+
         try {
 
             // Set header for requests so BFD knows where this request originated from
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+            eobBundle = executeTimedEobRequest(
+                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum()),
+                requestTimes
+            );
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
-                eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
+                val currentEobBundle = eobBundle;
+                eobBundle = executeTimedEobRequest(
+                    () -> bfdClient.requestNextBundleFromServer(request.getVersion(), currentEobBundle, request.getContractNum()),
+                    requestTimes
+                );
                 collector.filterAndAddEntries(eobBundle, patient);
             }
 
@@ -213,7 +227,27 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             throw ex;
         } finally {
             BFDClient.BFD_BULK_JOB_ID.remove();
+            summarizeRequestTimes(requestTimes, request.getJob());
         }
+    }
+
+    private IBaseBundle executeTimedEobRequest(Supplier<IBaseBundle> bfdEobRequest, List<Double> requestTimes) {
+        val start = LocalDateTime.now();
+        val bundle = bfdEobRequest.get();
+        val end = LocalDateTime.now();
+        val duration = ChronoUnit.MILLIS.between(start, end);
+        val durationSeconds = duration / 1000.0;
+        requestTimes.add(durationSeconds);
+        return bundle;
+    }
+
+    private void summarizeRequestTimes(List<Double> requestTimes, String jobUuid) {
+        val stats = requestTimes.stream().collect(Collectors.summarizingDouble(Double::doubleValue));
+        log.info("BFD request statistics for {} in batch...", jobUuid);
+        log.info("Number of requests in batch: {}", stats.getCount());
+        log.info("Average request time: {}", stats.getAverage());
+        log.info("Min request time: {}", stats.getMin());
+        log.info("Max request time: {}", stats.getMax());
     }
 
     /**
