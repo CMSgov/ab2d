@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BfdRequestTracking {
 
+	// Instance used if BFD request tracking is disabled
 	public static final BfdRequestTracking NOOP = new BfdRequestTracking() {
 		@Override
 		public <T> T executeRequest(BfdRequestType type, Supplier<T> supplier) {
