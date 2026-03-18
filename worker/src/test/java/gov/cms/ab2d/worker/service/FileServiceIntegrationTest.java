@@ -37,15 +37,16 @@ public class FileServiceIntegrationTest {
         Files.deleteIfExists(tmpEfsMountDir.toPath());
         final Path directory = cut.createDirectory(tmpEfsMountDir.toPath());
         assertTrue(directory.toFile().isDirectory());
-
+        Path mountDir = tmpEfsMountDir.toPath();
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.createDirectory(tmpEfsMountDir.toPath()));
+                () -> cut.createDirectory(mountDir));
 
         assertTrue(exceptionThrown.getMessage().startsWith("Could not create output directory"));
     }
 
     @Test
     void testGenerateChecksum() {
-        assertThrows(UncheckedIOException.class, () -> cut.generateChecksum(new File("/invalid/file")));
+        File invalidFile = new File("/invalid/file");
+        assertThrows(UncheckedIOException.class, () -> cut.generateChecksum(invalidFile));
     }
 }

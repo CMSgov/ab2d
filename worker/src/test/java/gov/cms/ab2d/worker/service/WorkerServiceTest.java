@@ -17,6 +17,9 @@ import gov.cms.ab2d.worker.config.JobHandler;
 import java.time.OffsetDateTime;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -66,6 +69,7 @@ class WorkerServiceTest extends JobCleanup {
     }
 
     @AfterEach
+    @Override
     public void jobCleanup() {
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
 
@@ -80,7 +84,9 @@ class WorkerServiceTest extends JobCleanup {
         final PdpClient pdpClient = createClient(contract);
         createJob(pdpClient, contract);
 
-        Thread.sleep(6000L);
+        Awaitility.await().atMost(8, TimeUnit.SECONDS).until(() ->
+                workerServiceStub.processingCalls == 1
+        );
 
         assertEquals(1, workerServiceStub.processingCalls);
     }
@@ -94,7 +100,9 @@ class WorkerServiceTest extends JobCleanup {
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
-        Thread.sleep(10000L);
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() ->
+                workerServiceStub.processingCalls == 2
+        );
 
         assertEquals(2, workerServiceStub.processingCalls);
     }
