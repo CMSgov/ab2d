@@ -99,7 +99,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
-            bfdRequestTracking.summarizeResponseTimes(bfdRequestTracking;
+            bfdRequestTracking.summarizeResponseTimes();
         }
         return anyErrors;
     }
