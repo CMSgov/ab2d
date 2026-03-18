@@ -83,8 +83,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
-        val requestEOBFromServerTimes = new ArrayList<Double>();
-        val requestNextBundleFromServerTimes = new ArrayList<Double>();
+        val requestEOBFromServerTimes = new ArrayList<Double>(100);
+        val requestNextBundleFromServerTimes = new ArrayList<Double>(100);
 
         File file = null;
         String anyErrors = null;
@@ -204,7 +204,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = executeTimedRequest(
+            eobBundle = executeTimedBfdRequest(
                 () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum()),
                 requestEOBFromServerTimes
             );
@@ -212,7 +212,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
                 val currentEobBundle = eobBundle;
-                eobBundle = executeTimedRequest(
+                eobBundle = executeTimedBfdRequest(
                     () -> bfdClient.requestNextBundleFromServer(request.getVersion(), currentEobBundle, request.getContractNum()),
                     requestNextBundleFromServerTimes
                 );
@@ -242,7 +242,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    private IBaseBundle executeTimedRequest(Supplier<IBaseBundle> bfdEobRequest, List<Double> requestTimes) {
+    private IBaseBundle executeTimedBfdRequest(Supplier<IBaseBundle> bfdEobRequest, List<Double> requestTimes) {
         val start = LocalDateTime.now();
         val bundle = bfdEobRequest.get();
         val end = LocalDateTime.now();
