@@ -14,8 +14,8 @@ data "aws_iam_role" "idr_db_importer_task_execution" {
   name = "${local.service_prefix}-${local.service}-task-execution"
 }
 
-data "aws_security_group" "idr_db_importer_eventbridge_scheduler" {
-  name   = "internet"
+data "aws_security_group" "idr_db_importer" {
+  name   = "${local.service_prefix}-idr-db-importer"
   vpc_id = module.platform.vpc_id
 }
 
