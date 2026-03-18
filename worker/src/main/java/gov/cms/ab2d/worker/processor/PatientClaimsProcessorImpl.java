@@ -14,6 +14,7 @@ import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -34,6 +35,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -49,7 +51,7 @@ import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 @RequiredArgsConstructor
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
-    public static final boolean TIME_BFD_REQUESTS = false;
+    public static final boolean TIME_BFD_REQUESTS = true;
 
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
@@ -85,9 +87,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
-        val requestEOBFromServerTimes = new ArrayList<Double>(100);
-        val requestNextBundleFromServerTimes = new ArrayList<Double>(100);
-
+        val bfdRequestTracking = TIME_BFD_REQUESTS
+                ? new BfdRequestTracking(100)
+                : new BfdRequestTracking(0);
         File file = null;
         String anyErrors = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
@@ -95,21 +97,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             file = stream.getFile();
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             for (CoverageSummary patient : request.getCoverageSummary()) {
-                List<IBaseResource> eobs = getEobBundleResources(request, patient, requestEOBFromServerTimes, requestNextBundleFromServerTimes);
+                List<IBaseResource> eobs = getEobBundleResources(request, patient, bfdRequestTracking);
                 anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
                 update.incPatientProcessCount();
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
             if (TIME_BFD_REQUESTS) {
-                if (!requestEOBFromServerTimes.isEmpty()) {
-                    summarizeBfdResponseTimes("requestEOBFromServer", requestEOBFromServerTimes, request.getJob());
-                }
-                if (!requestNextBundleFromServerTimes.isEmpty()) {
-                    summarizeBfdResponseTimes("requestNextBundleFromServer", requestNextBundleFromServerTimes, request.getJob());
-                }
+                summarizeBfdResponseTimes(bfdRequestTracking, request.getJob());
             }
-
         }
         return anyErrors;
     }
@@ -181,8 +177,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private List<IBaseResource> getEobBundleResources(
             PatientClaimsRequest request,
             CoverageSummary patient,
-            List<Double> requestEOBFromServerTimes,
-            List<Double> requestNextBundleFromServerTimes
+            BfdRequestTracking timing
     ) {
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
@@ -211,7 +206,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             // Make first request and begin looping over remaining pages
             eobBundle = executeTimedBfdRequest(
                 () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum()),
-                requestEOBFromServerTimes
+                timing.getRequestEOBFromServerTimes()
             );
             collector.filterAndAddEntries(eobBundle, patient);
 
@@ -219,7 +214,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 val currentEobBundle = eobBundle;
                 eobBundle = executeTimedBfdRequest(
                     () -> bfdClient.requestNextBundleFromServer(request.getVersion(), currentEobBundle, request.getContractNum()),
-                    requestNextBundleFromServerTimes
+                    timing.getRequestNextBundleFromServerTimes()
                 );
                 collector.filterAndAddEntries(eobBundle, patient);
             }
@@ -260,7 +255,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return bundle;
     }
 
+    private void summarizeBfdResponseTimes(BfdRequestTracking timing, String jobUuid) {
+        summarizeBfdResponseTimes("requestEOBFromServer", timing.getRequestEOBFromServerTimes(), jobUuid);
+        summarizeBfdResponseTimes("requestNextBundleFromServer", timing.getRequestNextBundleFromServerTimes(), jobUuid);
+    }
+
     private void summarizeBfdResponseTimes(String bfdRequestOperation, List<Double> requestTimes, String jobUuid) {
+        if (requestTimes.isEmpty()) {
+            return;
+        }
         val stats = requestTimes.stream().collect(Collectors.summarizingDouble(Double::doubleValue));
         log.info("BFD {} stats; Job={}; Num requests={}; Average={}s, Min={}s, Max={}s",
             bfdRequestOperation,
@@ -344,4 +347,21 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
         return date;
     }
+
+    @Getter
+    public static class BfdRequestTracking {
+        private final List<Double> requestEOBFromServerTimes;
+        private final List<Double> requestNextBundleFromServerTimes;
+
+        public BfdRequestTracking(int expectedBatchSize) {
+            if (expectedBatchSize == 0) {
+                this.requestEOBFromServerTimes = Collections.emptyList();
+                this.requestNextBundleFromServerTimes = Collections.emptyList();
+            } else {
+                this.requestEOBFromServerTimes = new ArrayList<>(expectedBatchSize);
+                this.requestNextBundleFromServerTimes = new ArrayList<>();
+            }
+        }
+    }
+
 }
