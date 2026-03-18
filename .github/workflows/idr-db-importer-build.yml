@@ -2,6 +2,9 @@ name: IDR DB Importer build
 run-name: idr-db-importer-build
 
 on:
+  push:
+    branches:
+      - 'AB2D-7048/Connect_to_snowflake'
   workflow_call:
     inputs:
       push_image:
@@ -51,8 +54,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: 'AB2D-7037/S3_Postgres_import'
 
       - uses: actions/setup-java@v4
         with:
