@@ -948,6 +948,7 @@ class TestRunner {
             return;
         }
         val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3);
+        assertEquals(403, response.statusCode());
         val expectedResponseBody =
         """
         {
@@ -968,7 +969,7 @@ class TestRunner {
 
     @Order(18)
     @Test
-    void testV3TypeFilter() throws Exception {
+    void testTypeFilterWithValidInput() throws Exception {
         if (!v3Enabled()) {
             log.info("Skipping test 18 - V3 is not enabled");
             return;
@@ -988,13 +989,13 @@ class TestRunner {
 
     @Order(19)
     @Test
-    void testV3TypeFilterReturnsError() throws Exception {
+    void testTypeFilterWithoutEobParameter() throws Exception {
         if (!v3Enabled()) {
             log.info("Skipping test 19 - V3 is not enabled");
             return;
         }
 
-        val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3, "Test?service-date=gt2020-02-15");
+        val response = apiClient_PDP1000.exportRequest(FHIR_TYPE, earliest, R4V3, "Test?service-date=gt2020-02-15");
         assertEquals(400, response.statusCode());
         val expectedResponseBody =
         """
@@ -1016,13 +1017,13 @@ class TestRunner {
 
     @Order(20)
     @Test
-    void testV3TypeFilterReturnsError2() throws Exception {
+    void testTypeFilterWithoutServiceDate() throws Exception {
         if (!v3Enabled()) {
             log.info("Skipping test 20 - V3 is not enabled");
             return;
         }
 
-        val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3, "ExplanationOfBenefit?test=gt2020-02-15");
+        val response = apiClient_PDP1000.exportRequest(FHIR_TYPE, earliest, R4V3, "ExplanationOfBenefit?test=gt2020-02-15");
         assertEquals(400, response.statusCode());
         val expectedResponseBody =
         """
