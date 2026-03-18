@@ -51,8 +51,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: 'AB2D-7037/S3_Postgres_import'
 
       - uses: actions/setup-java@v4
         with:
