@@ -29,12 +29,6 @@ class CountBeneficiariesByCoveragePeriodsTest {
         query = new CountBeneficiariesByCoveragePeriods(container.getDataSource());
     }
 
-    static ResultSet execute(String query) throws Exception {
-        val c = container.getDataSource().getConnection();
-        val s = c.createStatement();
-        return s.executeQuery(query);
-    }
-
     @Test
     void test_beneficiary_count_without_optout() {
         val periods = enumerateCoveragePeriods(START_TIME, END_TIME);

@@ -8,14 +8,19 @@ import gov.cms.ab2d.coverage.query.GetCoverageMembership;
 import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -37,10 +42,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         this.propertiesService = propertiesService;
     }
 
-    public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {
-        return new CountBeneficiariesByCoveragePeriods(dataSource).countBeneficiaries(contract, periods, isOptOutOn());
-    }
-
     @Override
     public CoveragePagingResult pageCoverage(final CoveragePagingRequest page) {
 
@@ -51,7 +52,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         // Do not remove this check because it is a fail safe to guarantee that there isn't something majorly
         // wrong with the enrollment data.
         // A missing period = one month of enrollment missing for the contract
-        final List<YearMonthRecord> coveragePeriods = new GetCoveragePeriodsByContract(dataSource).getCoveragePeriodsForContract(contract.getContractNumber());
+        final List<YearMonthRecord> coveragePeriods = getCoveragePeriodsByContract(page.getContractNumber());
         if (coveragePeriods.size() != expectedCoveragePeriods) {
             if (THROW_EXCEPTION_FOR_COVERAGE_PERIOD_MISMATCH) {
                 throw new IllegalArgumentException(
@@ -94,22 +95,50 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return new CoveragePagingResult(beneficiarySummaries, request);
     }
 
-
-    private List<CoverageMembership> queryCoverageMembership(CoveragePagingRequest page, long limit) {
-        return new GetCoverageMembership(dataSource).getCoverageMembership(
-            page.getContractNumber(),
-            CoverageServiceRepository.YEARS,
-            isOptOutOn(),
-            limit,
-            page.getCursor().orElse(null)
+    public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {
+        return executeTimedQuery(
+            format("countBeneficiariesByCoveragePeriod historicalCoverage=%s; recentCoverage=%s; contract=%s",
+                    periods.getHistoricalCoverage(),
+                    periods.getRecentCoverage(),
+                    contract
+            ),
+            () -> new CountBeneficiariesByCoveragePeriods(dataSource)
+                    .countBeneficiaries(contract, periods, isOptOutOn())
         );
     }
 
-    protected boolean isOptOutOn() {
+    private List<CoverageMembership> queryCoverageMembership(CoveragePagingRequest page, long limit) {
+        return executeTimedQuery(
+            format("queryCoverageMembership page=%s", page),
+            () -> new GetCoverageMembership(dataSource).getCoverageMembership(
+                page.getContractNumber(),
+                CoverageServiceRepository.YEARS,
+                isOptOutOn(),
+                limit,
+                page.getCursor().orElse(null)
+            )
+        );
+    }
+
+    private List<YearMonthRecord> getCoveragePeriodsByContract(final String contract) {
+        return executeTimedQuery(
+            format("getCoveragePeriodsByContract contract=%s", contract),
+            () -> new GetCoveragePeriodsByContract(dataSource).getCoveragePeriodsForContract(contract)
+        );
+    }
+
+    private boolean isOptOutOn() {
         return propertiesService.isToggleOn("OptOutOn", false);
     }
 
-    protected boolean throwExceptionForCoveragePeriodMismatch() {
-        return propertiesService.isToggleOn("OptOutOn", false);
+    private <T> T executeTimedQuery(String queryDescription, Supplier<T> supplier) {
+        val start = LocalDateTime.now();
+        val result = supplier.get();
+        val end = LocalDateTime.now();
+        val duration = ChronoUnit.MILLIS.between(start, end);
+        val durationSeconds = duration / 1000.0;
+        log.info("Query completed in {}s: {}", durationSeconds, queryDescription);
+        return result;
     }
+
 }
