@@ -324,6 +324,23 @@ resource "aws_security_group" "attribution" {
   tags        = { Name = "${local.service_prefix}-attribution" }
 }
 
+resource "aws_security_group" "idr_db_importer" {
+  name        = "${local.service_prefix}-idr-db-importer"
+  description = "IDR DB importer security group"
+  vpc_id      = local.vpc_id
+  tags        = { Name = "${local.service_prefix}-idr-db-importer" }
+}
+
+resource "aws_security_group_rule" "idr_db_importer_egress" {
+  type              = "egress"
+  description       = "${local.service_prefix} idr-db-importer outbound connections"
+  from_port         = "0"
+  to_port           = "0"
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.idr_db_importer.id
+}
+
 resource "aws_security_group" "idr_endpoint" {
 
   name        = "${local.service_prefix}-idr-endpoint"
