@@ -99,11 +99,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
-            summarizeRequestTimes("requestEOBFromServer", requestEOBFromServerTimes, request.getJob());
-            summarizeRequestTimes("requestNextBundleFromServer", requestNextBundleFromServerTimes, request.getJob());
-            log.info("---------------------------------------------------");
-            gov.cms.ab2d.bfd.client.BFDSearchImpl.summarizeRequestTimes(request.getJob());
-            gov.cms.ab2d.bfd.client.BFDSearchImpl.REQUEST_TIMES.remove();
+            if (!requestEOBFromServerTimes.isEmpty()) {
+                summarizeBfdResponseTimes("requestEOBFromServer", requestEOBFromServerTimes, request.getJob());
+            }
+            if (!requestNextBundleFromServerTimes.isEmpty()) {
+                summarizeBfdResponseTimes("requestNextBundleFromServer", requestNextBundleFromServerTimes, request.getJob());
+            }
         }
         return anyErrors;
     }
@@ -251,7 +252,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return bundle;
     }
 
-    private void summarizeRequestTimes(String bfdRequestOperation, List<Double> requestTimes, String jobUuid) {
+    private void summarizeBfdResponseTimes(String bfdRequestOperation, List<Double> requestTimes, String jobUuid) {
         val stats = requestTimes.stream().collect(Collectors.summarizingDouble(Double::doubleValue));
         log.info("BFD {} stats; Job={}; Num requests={}; Average={}s, Min={}s, Max={}s",
             bfdRequestOperation,
