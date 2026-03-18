@@ -1,18 +1,19 @@
-name: Contracts SonarQube
+name: IDR DB Importer SonarQube
 
 on:
   workflow_call:
   workflow_dispatch:
+
 
 permissions:
   contents: read
   id-token: write
 defaults:
   run:
-    working-directory: ./contracts
+    working-directory: ./idr-db-importer
 
 env:
-  SONAR_PROJECT_KEY: ab2d-contracts
+  SONAR_PROJECT_KEY: ab2d-idr-db-importer
 
 jobs:
   sonarqube:
@@ -42,8 +43,6 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
-            HPMS_AUTH_KEY_ID=/ab2d/dev/core/sensitive/hpms_auth_key_id
-            HPMS_AUTH_KEY_SECRET=/ab2d/dev/core/sensitive/hpms_auth_key_secret
 
       - name: Run tests
         run: ./gradlew clean test --info
@@ -60,5 +59,5 @@ jobs:
         uses: sonarsource/sonarqube-quality-gate-action@master
         continue-on-error: true
         with:
-          scanMetadataReportFile: contracts/build/sonar/report-task.txt
+          scanMetadataReportFile: idr-db-importer/build/sonar/report-task.txt
         timeout-minutes: 10
