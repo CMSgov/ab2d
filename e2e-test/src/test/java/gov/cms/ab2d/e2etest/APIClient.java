@@ -83,6 +83,7 @@ public class APIClient {
         this.ab2dUrl = ab2dUrl;
         this.ab2dApiUrl.put(FhirVersion.STU3, buildAB2DAPIUrlV1(ab2dUrl));
         this.ab2dApiUrl.put(FhirVersion.R4, buildAB2DAPIUrlV2(ab2dUrl));
+        this.ab2dApiUrl.put(FhirVersion.R4V3, buildAB2DAPIUrlV3(ab2dUrl));
 
         this.oktaUrl = oktaUrl;
         String clientIdAndSecret = oktaClientId + ":" + oktaPassword;
@@ -253,5 +254,8 @@ public class APIClient {
     public static String buildAB2DAPIUrlV2(String baseUrl) {
         return baseUrl + API_PREFIX_V2 + FHIR_PREFIX + "/";
     }
-}
 
+    public static String buildAB2DAPIUrlV3(String baseUrl) {
+        return baseUrl + API_PREFIX_V3 + FHIR_PREFIX + "/";
+    }
+}

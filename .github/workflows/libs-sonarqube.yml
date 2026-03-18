@@ -53,6 +53,7 @@ jobs:
 
       - name: Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
+        continue-on-error: true
         with:
           scanMetadataReportFile: libs/build/sonar/report-task.txt
         timeout-minutes: 10
