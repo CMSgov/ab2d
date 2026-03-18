@@ -63,6 +63,30 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
         {
           name  = "S3_BUCKET"
           value = data.aws_ssm_parameter.idr_db_importer_bucket.value
+        },
+        {
+          name  = "IDR_SNOWFLAKE_USER"
+          value = data.aws_ssm_parameter.idr_snowflake_user.value
+        },
+        {
+          name  = "IDR_SNOWFLAKE_PRIVATE_KEY"
+          value = data.aws_ssm_parameter.idr_private_key.value
+        },
+        {
+          name  = "IDR_SNOWFLAKE_ROLE"
+          value = data.aws_ssm_parameter.idr_snowflake_role.value
+        },
+        {
+          name  = "IDR_SNOWFLAKE_WAREHOUSE"
+          value = data.aws_ssm_parameter.idr_snowflake_warehouse.value
+        },
+        {
+          name  = "IDR_SNOWFLAKE_DB"
+          value = "IDRC_PRD"
+        },
+        {
+          name  = "IDR_SNOWFLAKE_SCHEMA"
+          value = "CMS_VDM_VIEW_MDCR_PRD"
         }
       ]
 
