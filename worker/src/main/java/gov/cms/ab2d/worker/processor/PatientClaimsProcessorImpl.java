@@ -49,6 +49,8 @@ import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 @RequiredArgsConstructor
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
+    public static final boolean TIME_BFD_REQUESTS = false;
+
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
     private final SearchConfig searchConfig;
@@ -99,12 +101,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
-            if (!requestEOBFromServerTimes.isEmpty()) {
-                summarizeBfdResponseTimes("requestEOBFromServer", requestEOBFromServerTimes, request.getJob());
+            if (TIME_BFD_REQUESTS) {
+                if (!requestEOBFromServerTimes.isEmpty()) {
+                    summarizeBfdResponseTimes("requestEOBFromServer", requestEOBFromServerTimes, request.getJob());
+                }
+                if (!requestNextBundleFromServerTimes.isEmpty()) {
+                    summarizeBfdResponseTimes("requestNextBundleFromServer", requestNextBundleFromServerTimes, request.getJob());
+                }
             }
-            if (!requestNextBundleFromServerTimes.isEmpty()) {
-                summarizeBfdResponseTimes("requestNextBundleFromServer", requestNextBundleFromServerTimes, request.getJob());
-            }
+
         }
         return anyErrors;
     }
@@ -243,6 +248,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private IBaseBundle executeTimedBfdRequest(Supplier<IBaseBundle> bfdEobRequest, List<Double> requestTimes) {
+        if (!TIME_BFD_REQUESTS) {
+            return bfdEobRequest.get();
+        }
         val start = LocalDateTime.now();
         val bundle = bfdEobRequest.get();
         val end = LocalDateTime.now();
