@@ -947,6 +947,7 @@ class TestRunner {
             log.info("Skipping test 17 - V3 is not enabled");
             return;
         }
+        log.info("Starting test 17");
         val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3);
         assertEquals(403, response.statusCode());
         val expectedResponseBody =
@@ -974,6 +975,8 @@ class TestRunner {
             log.info("Skipping test 18 - V3 is not enabled");
             return;
         }
+        log.info("Starting test 18");
+
         val apiClient = apiClient_PDP1000;
         val contract = PDP_1000.contract;
         val version = R4V3;
@@ -994,6 +997,7 @@ class TestRunner {
             log.info("Skipping test 19 - V3 is not enabled");
             return;
         }
+        log.info("Starting test 19");
 
         val response = apiClient_PDP1000.exportRequest(FHIR_TYPE, earliest, R4V3, "Test?service-date=gt2020-02-15");
         assertEquals(400, response.statusCode());
@@ -1022,6 +1026,7 @@ class TestRunner {
             log.info("Skipping test 20 - V3 is not enabled");
             return;
         }
+        log.info("Starting test 20");
 
         val response = apiClient_PDP1000.exportRequest(FHIR_TYPE, earliest, R4V3, "ExplanationOfBenefit?test=gt2020-02-15");
         assertEquals(400, response.statusCode());

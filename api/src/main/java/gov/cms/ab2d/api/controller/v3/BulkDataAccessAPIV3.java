@@ -100,7 +100,7 @@ public class BulkDataAccessAPIV3 {
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);
         if (!params.getServiceDates().isEmpty()) {
-            log.info("Job {} created with _typeFilter service dates = {}", params.getServiceDates());
+            log.info("Job {} created with _typeFilter service dates = {}", jobGuid, params.getServiceDates());
         }
         return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V3, (String) request.getAttribute(REQUEST_ID), request);
     }

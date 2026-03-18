@@ -14,7 +14,6 @@ import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -33,18 +32,15 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
+import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_EOB;
+import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_NEXT_BUNDLE;
 
 @Slf4j
 @Component
@@ -88,8 +84,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
         val bfdRequestTracking = TIME_BFD_REQUESTS
-                ? new BfdRequestTracking(100)
-                : new BfdRequestTracking(0);
+                ? new BfdRequestTracking(request.getJob())
+                : BfdRequestTracking.NOOP;
         File file = null;
         String anyErrors = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
@@ -103,9 +99,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
-            if (TIME_BFD_REQUESTS) {
-                summarizeBfdResponseTimes(bfdRequestTracking, request.getJob());
-            }
+            bfdRequestTracking.summarizeResponseTimes(bfdRequestTracking;
         }
         return anyErrors;
     }
@@ -177,7 +171,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private List<IBaseResource> getEobBundleResources(
             PatientClaimsRequest request,
             CoverageSummary patient,
-            BfdRequestTracking timing
+            BfdRequestTracking bfdRequestTracking
     ) {
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
@@ -204,17 +198,17 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = executeTimedBfdRequest(
-                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum()),
-                timing.getRequestEOBFromServerTimes()
+            eobBundle = bfdRequestTracking.executeRequest(
+                REQUEST_EOB,
+                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum())
             );
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
                 val currentEobBundle = eobBundle;
-                eobBundle = executeTimedBfdRequest(
-                    () -> bfdClient.requestNextBundleFromServer(request.getVersion(), currentEobBundle, request.getContractNum()),
-                    timing.getRequestNextBundleFromServerTimes()
+                eobBundle = bfdRequestTracking.executeRequest(
+                    REQUEST_NEXT_BUNDLE,
+                    () -> bfdClient.requestNextBundleFromServer(request.getVersion(), currentEobBundle, request.getContractNum())
                 );
                 collector.filterAndAddEntries(eobBundle, patient);
             }
@@ -240,39 +234,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         } finally {
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
-    }
-
-    private IBaseBundle executeTimedBfdRequest(Supplier<IBaseBundle> bfdEobRequest, List<Double> requestTimes) {
-        if (!TIME_BFD_REQUESTS) {
-            return bfdEobRequest.get();
-        }
-        val start = LocalDateTime.now();
-        val bundle = bfdEobRequest.get();
-        val end = LocalDateTime.now();
-        val duration = ChronoUnit.MILLIS.between(start, end);
-        val durationSeconds = duration / 1000.0;
-        requestTimes.add(durationSeconds);
-        return bundle;
-    }
-
-    private void summarizeBfdResponseTimes(BfdRequestTracking timing, String jobUuid) {
-        summarizeBfdResponseTimes("requestEOBFromServer", timing.getRequestEOBFromServerTimes(), jobUuid);
-        summarizeBfdResponseTimes("requestNextBundleFromServer", timing.getRequestNextBundleFromServerTimes(), jobUuid);
-    }
-
-    private void summarizeBfdResponseTimes(String bfdRequestOperation, List<Double> requestTimes, String jobUuid) {
-        if (requestTimes.isEmpty()) {
-            return;
-        }
-        val stats = requestTimes.stream().collect(Collectors.summarizingDouble(Double::doubleValue));
-        log.info("BFD {} stats; Job={}; Num requests={}; Average={}s, Min={}s, Max={}s",
-            bfdRequestOperation,
-            jobUuid,
-            stats.getCount(),
-            stats.getAverage(),
-            stats.getMin(),
-            stats.getMax()
-        );
     }
 
     /**
@@ -348,20 +309,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return date;
     }
 
-    @Getter
-    public static class BfdRequestTracking {
-        private final List<Double> requestEOBFromServerTimes;
-        private final List<Double> requestNextBundleFromServerTimes;
 
-        public BfdRequestTracking(int expectedBatchSize) {
-            if (expectedBatchSize == 0) {
-                this.requestEOBFromServerTimes = Collections.emptyList();
-                this.requestNextBundleFromServerTimes = Collections.emptyList();
-            } else {
-                this.requestEOBFromServerTimes = new ArrayList<>(expectedBatchSize);
-                this.requestNextBundleFromServerTimes = new ArrayList<>();
-            }
-        }
-    }
 
 }
