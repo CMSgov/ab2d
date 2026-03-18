@@ -47,7 +47,7 @@ import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.RE
 @RequiredArgsConstructor
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
-    public static final boolean TIME_BFD_REQUESTS = true;
+    public static final boolean TIME_BFD_REQUESTS = false;
 
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
