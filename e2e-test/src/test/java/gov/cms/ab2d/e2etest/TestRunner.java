@@ -966,6 +966,82 @@ class TestRunner {
         JSONAssert.assertEquals(response.body(), expectedResponseBody, JSONCompareMode.LENIENT);
     }
 
+    @Order(18)
+    @Test
+    void testV3TypeFilter() throws Exception {
+        if (!v3Enabled()) {
+            log.info("Skipping test 18 - V3 is not enabled");
+            return;
+        }
+        val apiClient = apiClient_PDP1000;
+        val contract = PDP_1000.contract;
+        val version = R4V3;
+
+        val exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version, "ExplanationOfBenefit?service-date=gt2020-02-15");
+        assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version, apiClient);
+        assertNotNull(downloadDetails);
+        downloadFile(downloadDetails, null, version, apiClient);
+    }
+
+    @Order(19)
+    @Test
+    void testV3TypeFilterReturnsError() throws Exception {
+        if (!v3Enabled()) {
+            log.info("Skipping test 19 - V3 is not enabled");
+            return;
+        }
+
+        val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3, "Test?service-date=gt2020-02-15");
+        assertEquals(400, response.statusCode());
+        val expectedResponseBody =
+        """
+        {
+          "resourceType": "OperationOutcome",
+          "issue": [
+            {
+              "severity": "error",
+              "code": "invalid",
+              "details": {
+                "text": "The _typeFilter parameter must be for the ExplanationOfBenefit resource"
+              }
+            }
+          ]
+        }
+        """;
+        JSONAssert.assertEquals(response.body(), expectedResponseBody, JSONCompareMode.LENIENT);
+    }
+
+    @Order(20)
+    @Test
+    void testV3TypeFilterReturnsError2() throws Exception {
+        if (!v3Enabled()) {
+            log.info("Skipping test 20 - V3 is not enabled");
+            return;
+        }
+
+        val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3, "ExplanationOfBenefit?test=gt2020-02-15");
+        assertEquals(400, response.statusCode());
+        val expectedResponseBody =
+        """
+        {
+          "resourceType": "OperationOutcome",
+          "issue": [
+            {
+              "severity": "error",
+              "code": "invalid",
+              "details": {
+                "text": "The _typeFilter subquery must be for the service-date parameter"
+              }
+            }
+          ]
+        }
+        """;
+        JSONAssert.assertEquals(response.body(), expectedResponseBody, JSONCompareMode.LENIENT);
+    }
+
     /**
      * Returns the stream of FHIR version and contract to use for that version
      *
