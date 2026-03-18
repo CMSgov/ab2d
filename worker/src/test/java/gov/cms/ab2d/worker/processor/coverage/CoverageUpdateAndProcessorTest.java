@@ -64,6 +64,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
+import static org.awaitility.Awaitility.await;
+import java.util.concurrent.TimeUnit;
 
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
@@ -130,6 +132,7 @@ class CoverageUpdateAndProcessorTest {
 
     private BFDClient bfdClient;
 
+    private ThreadPoolTaskExecutor taskExecutor;
     private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
@@ -155,7 +158,7 @@ class CoverageUpdateAndProcessorTest {
 
         bfdClient = mock(BFDClient.class);
 
-        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setMaxPoolSize(6);
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
@@ -463,8 +466,9 @@ class CoverageUpdateAndProcessorTest {
         driver.loadMappingJob();
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(CoverageJobStatus.IN_PROGRESS, status);
-
-        sleep(1000);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                taskExecutor.getActiveCount() == 0
+        );
 
         processor.monitorMappingJobs();
         status = coverageService.getSearchStatus(january.getId());
@@ -489,7 +493,9 @@ class CoverageUpdateAndProcessorTest {
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(CoverageJobStatus.IN_PROGRESS, status);
 
-        sleep(1000);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                taskExecutor.getActiveCount() == 0
+        );
 
         processor.monitorMappingJobs();
         assertTrue(coverageSearchEventRepo.findAll().stream().anyMatch(event -> event.getNewStatus() == CoverageJobStatus.FAILED));
@@ -510,11 +516,11 @@ class CoverageUpdateAndProcessorTest {
 
         driver.loadMappingJob();
 
-        sleep(1000);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                taskExecutor.getActiveCount() == 0
+        );
 
         processor.monitorMappingJobs();
-
-        sleep(1000);
 
         processor.insertJobResults();
 
@@ -567,7 +573,9 @@ class CoverageUpdateAndProcessorTest {
         driver.loadMappingJob();
         driver.loadMappingJob();
 
-        sleep(1000);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                twoThreads.getActiveCount() == 0
+        );
 
         processor.monitorMappingJobs();
 
@@ -589,17 +597,17 @@ class CoverageUpdateAndProcessorTest {
 
         twoThreads.submit(() -> {
            try {
-               Thread.sleep(5000);
+               Thread.sleep(5000); // NOSONAR - thread occupies pool
            } catch (InterruptedException ie) {
-
+               Thread.currentThread().interrupt();
            }
         });
 
         twoThreads.submit(() -> {
             try {
-                Thread.sleep(5000);
+                Thread.sleep(5000); // NOSONAR - thread occupies pool
             } catch (InterruptedException ie) {
-
+                Thread.currentThread().interrupt();
             }
         });
 
@@ -607,9 +615,8 @@ class CoverageUpdateAndProcessorTest {
         processor.queueCoveragePeriod(february, false);
         processor.queueCoveragePeriod(march, false);
 
+        await().atMost(5, TimeUnit.SECONDS).until(() -> twoThreads.getActiveCount() == 2);
         driver.loadMappingJob();
-
-        sleep(1000);
 
         assertEquals(2, twoThreads.getActiveCount());
         assertTrue(twoThreads.getThreadPoolExecutor().getQueue().isEmpty());
@@ -623,7 +630,7 @@ class CoverageUpdateAndProcessorTest {
         job.setCreatedAt(OffsetDateTime.now());
         job.setContractNumber(contract.getContractNumber());
         try {
-            Thread.sleep(1000);
+            Thread.sleep(1000); //NOSONAR
         } catch (InterruptedException e) {
             fail("could not complete test");
         }
@@ -665,7 +672,9 @@ class CoverageUpdateAndProcessorTest {
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(CoverageJobStatus.IN_PROGRESS, status);
 
-        sleep(1000);
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                taskExecutor.getActiveCount() == 0
+        );
 
         processor.monitorMappingJobs();
         status = coverageService.getSearchStatus(january.getId());
@@ -690,15 +699,6 @@ class CoverageUpdateAndProcessorTest {
         }
         return bundle1;
     }
-
-    private void sleep(int milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException ie) {
-
-        }
-    }
-
 
     private PdpClientDTO createClient(ContractDTO contract, String clientId, @Nullable String roleName) {
         PdpClientDTO client = new PdpClientDTO();

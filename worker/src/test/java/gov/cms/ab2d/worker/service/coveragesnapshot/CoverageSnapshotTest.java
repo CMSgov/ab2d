@@ -88,8 +88,8 @@ class CoverageSnapshotTest {
 
     @Test
     void sendCoverageCounts() {
-        CoverageService coverageService = Mockito.mock(CoverageService.class);
-        Mockito.when(coverageService.countBeneficiariesForContracts(any()))
+        CoverageService  coverageServiceMock = Mockito.mock(CoverageService.class);
+        Mockito.when(coverageServiceMock.countBeneficiariesForContracts(any()))
                 .thenReturn(Arrays.asList(new CoverageCount("test", 1, 1, 1, 1, 1), new CoverageCount("test", 1, 1, 1, 1, 1)));
         assertDoesNotThrow(() -> coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, Set.of("test")));
     }
@@ -134,7 +134,7 @@ class CoverageSnapshotTest {
         for (long idx = 0; idx < totalBeneficiaries; idx++) {
             identifiers.add(createIdentifier(idx));
         }
-        CoverageSearchEvent savedTo = coverageService.insertCoverage(inProgress.getId(), identifiers);
+        coverageService.insertCoverage(inProgress.getId(), identifiers);
 
         updates.forEach(update -> {
             CoveragePeriod period = coverageService.getCoveragePeriod(new ContractForCoverageDTO(contractNumber, contract.getAttestedOn(), ContractForCoverageDTO.ContractType.valueOf(contract.getContractType()
