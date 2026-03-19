@@ -65,6 +65,10 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
           value = data.aws_ssm_parameter.idr_db_importer_bucket.value
         },
         {
+          name  = "IDR_SNOWFLAKE_URL"
+          value = "jdbc:snowflake://cms-idr.snowflakecomputing.com"
+        },
+        {
           name  = "IDR_SNOWFLAKE_USER"
           value = data.aws_ssm_parameter.idr_snowflake_user.value
         },

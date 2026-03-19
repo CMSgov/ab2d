@@ -20,8 +20,8 @@ import java.sql.SQLException;
 @Slf4j
 public class SnowflakeCoverageQueryService{
 
-    @Value("${app.snowflake.account}")
-    private String account;
+    @Value("${app.snowflake.url}")
+    private String url;
 
     @Value("${app.snowflake.user}")
     private String user;
@@ -78,7 +78,7 @@ public class SnowflakeCoverageQueryService{
 
     public Connection open() throws IOException, SQLException {
         SnowflakeBasicDataSource ds = new SnowflakeBasicDataSource();
-        ds.setAccount(account);
+        ds.setUrl(url);
         ds.setUser(user);
         ds.setPrivateKey(loadPrivateKey(privateKeyPem));
         ds.setAuthenticator("SNOWFLAKE_JWT");
