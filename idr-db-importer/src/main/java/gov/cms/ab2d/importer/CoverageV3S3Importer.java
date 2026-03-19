@@ -23,11 +23,11 @@ public class CoverageV3S3Importer {
 
 
     private final CoverageV3ImportService importService;
-    private final CoverageQueryService coverageQueryService;
+    private final SnowflakeCoverageQueryService coverageQueryService;
     private final S3CsvWriter s3Writer;
 
 
-    public CoverageV3S3Importer(CoverageQueryService coverageQueryService, S3CsvWriter s3Writer, CoverageV3ImportService importService) {
+    public CoverageV3S3Importer(SnowflakeCoverageQueryService coverageQueryService, S3CsvWriter s3Writer, CoverageV3ImportService importService) {
         this.coverageQueryService = coverageQueryService;
         this.s3Writer = s3Writer;
         this.importService = importService;

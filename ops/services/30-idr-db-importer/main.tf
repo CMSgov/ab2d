@@ -87,6 +87,10 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
         {
           name  = "IDR_SNOWFLAKE_SCHEMA"
           value = "CMS_VDM_VIEW_MDCR_PRD"
+        },
+        {
+          name  = "ENVIRONMENT"
+          value = local.env
         }
       ]
 

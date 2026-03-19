@@ -17,9 +17,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 @Component
-@Profile("prod")
 @Slf4j
-public class SnowflakeCoverageQueryService implements CoverageQueryService {
+public class SnowflakeCoverageQueryService{
 
     @Value("${app.snowflake.account}")
     private String account;
@@ -41,6 +40,8 @@ public class SnowflakeCoverageQueryService implements CoverageQueryService {
 
     @Value("${app.snowflake.schema}")
     private String schema;
+
+    private final boolean enabled;
 
     private static final String SQL = """
         WITH month_series AS (
@@ -67,12 +68,14 @@ public class SnowflakeCoverageQueryService implements CoverageQueryService {
         ORDER BY patient_id, year, month
         """;
 
-    @Override
-    public boolean isEnabled() {
-        return true;
+    public SnowflakeCoverageQueryService(@Value("${ENVIRONMENT:prod}") String env) {
+        this.enabled = "prod".equalsIgnoreCase(env);
     }
 
-    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     public Connection open() throws IOException, SQLException {
         SnowflakeBasicDataSource ds = new SnowflakeBasicDataSource();
         ds.setAccount(account);
@@ -86,7 +89,6 @@ public class SnowflakeCoverageQueryService implements CoverageQueryService {
         return ds.getConnection();
     }
 
-    @Override
     public PreparedStatement prepare(Connection connection) throws SQLException {
         PreparedStatement ps = connection.prepareStatement(SQL);
         ps.setFetchSize(10_000);
