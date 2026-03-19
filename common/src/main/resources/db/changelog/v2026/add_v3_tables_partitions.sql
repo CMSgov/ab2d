@@ -1,4 +1,5 @@
 --V3 tables,indexes and partitions
+CREATE SCHEMA IF NOT EXISTS v3;
 
 CREATE TABLE IF NOT EXISTS v3.coverage_v3 (
                                               patient_id BIGINT NOT NULL,
