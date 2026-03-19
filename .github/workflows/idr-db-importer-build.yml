@@ -2,9 +2,6 @@ name: IDR DB Importer build
 run-name: idr-db-importer-build
 
 on:
-  push:
-    branches:
-      - 'AB2D-7048/Connect_to_snowflake'
   workflow_call:
     inputs:
       push_image:
@@ -61,7 +58,7 @@ jobs:
           java-version: '17'
 
       - name: Override AWS_ACCOUNT variables
-#        if: ${{ inputs.is_prod == false }}
+        if: ${{ inputs.is_prod == false }}
         run: |
           echo "AWS_ACCOUNT_ID=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_ENV
           echo "AWS_ACCOUNT_NAME=test" >> $GITHUB_ENV
@@ -77,7 +74,7 @@ jobs:
         run: gradle clean test --info
 
       - name: Build and push Docker image
-#        if: ${{ inputs.push_image == true }}
+        if: ${{ inputs.push_image == true }}
         id: build_image
         run: |
           gradle -b build.gradle bootJar -Dset.root.project.build.filename=true
