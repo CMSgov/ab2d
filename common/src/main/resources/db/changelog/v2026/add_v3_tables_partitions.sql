@@ -21,6 +21,16 @@ CREATE TABLE IF NOT EXISTS v3.coverage_v3_historical (
     UNIQUE (patient_id, contract, year, month, current_mbi)
     ) PARTITION BY LIST (contract);
 
+CREATE TABLE IF NOT EXISTS v3.coverage_v3_staging (
+    patient_id int8 NOT NULL,
+    contract varchar(15) NOT NULL,
+    "year" int4 NOT NULL,
+    "month" int4 NOT NULL,
+    current_mbi varchar(32) NULL,
+    CONSTRAINT coverage_v3_staging_unique
+        UNIQUE (patient_id, contract, year, month, current_mbi)
+);
+
 -- Indexes
 
 CREATE INDEX coverage_v3_patient_idx
@@ -29,6 +39,8 @@ CREATE INDEX coverage_v3_patient_idx
 CREATE INDEX coverage_v3_hist_patient_idx
     ON v3.coverage_v3_historical (patient_id, month);
 
+CREATE INDEX coverage_v3_stag_patient_idx
+    ON v3.coverage_v3_staging (patient_id, month);
 
 -- CONTRACT PARTITIONS
 
