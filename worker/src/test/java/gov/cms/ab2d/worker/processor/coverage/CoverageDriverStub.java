@@ -74,7 +74,9 @@ public class CoverageDriverStub implements CoverageDriver {
 
 
     @Override
-    public void verifyCoverage() {}
+    public void verifyCoverage() {
+        // Intentional
+    }
 
     private CoveragePagingRequest getNextRequest(CoveragePagingRequest previousRequest, Job job, ContractForCoverageDTO contract) {
         if (previousRequest == null && pageSize < totalRecords) {

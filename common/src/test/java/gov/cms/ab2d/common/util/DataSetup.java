@@ -14,17 +14,13 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.util.stream.Collectors.toList;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Import(ContractServiceTestConfig.class)
@@ -44,7 +40,7 @@ public class DataSetup {
 
     private final Set<Object> domainObjects = new HashSet<>();
 
-    Random randomGenerator = new Random();
+    private static final AtomicLong contractIdCounter = new AtomicLong(10000L);
 
     public void queueForCleanup(Object object) {
         domainObjects.add(object);
@@ -52,8 +48,8 @@ public class DataSetup {
 
     public void cleanup() {
 
-        List<PdpClient> clientsToDelete = domainObjects.stream().filter(object -> object instanceof PdpClient)
-                .map(object -> (PdpClient) object).collect(toList());
+        List<PdpClient> clientsToDelete = domainObjects.stream().filter(PdpClient.class::isInstance)
+                .map(PdpClient.class::cast).toList();
         clientsToDelete.forEach(pdpClient -> {
             pdpClient = pdpClientRepository.findByClientId(pdpClient.getClientId());
 
@@ -63,8 +59,8 @@ public class DataSetup {
             }
         });
 
-        List<Role> rolesToDelete = domainObjects.stream().filter(object -> object instanceof Role)
-                .map(object -> (Role) object).collect(toList());
+        List<Role> rolesToDelete = domainObjects.stream().filter(Role.class::isInstance)
+                .map(Role.class::cast).toList();
         rolesToDelete.forEach(role -> {
             Optional<Role> roleOptional = roleRepository.findRoleByName(role.getName());
 
@@ -105,7 +101,7 @@ public class DataSetup {
         contract.setAttestedOn(attestedOn);
         contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);
-        contract.setId(randomGenerator.nextLong(200L, 400L));
+        contract.setId(contractIdCounter.getAndIncrement());
 
         contractService.updateContract(contract);
         queueForCleanup(contract);

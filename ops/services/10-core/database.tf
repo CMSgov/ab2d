@@ -84,6 +84,16 @@ resource "aws_security_group_rule" "db_access_api" {
   security_group_id        = module.db.security_group.id
 }
 
+resource "aws_security_group_rule" "db_access_idr_db_importer" {
+  type                     = "ingress"
+  description              = "${local.service_prefix} idr-db-importer connections"
+  from_port                = "5432"
+  to_port                  = "5432"
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.idr_db_importer.id
+  security_group_id        = module.db.security_group.id
+}
+
 resource "aws_ssm_parameter" "writer_endpoint" {
   name  = "/ab2d/${local.env}/core/nonsensitive/writer_endpoint"
   value = "${module.db.aurora_cluster.endpoint}:${module.db.aurora_cluster.port}"

@@ -421,30 +421,30 @@ class JobProcessorIntegrationTest extends JobCleanup {
     }
 
     private Contract createContract() {
-        Contract contract = new Contract();
-        contract.setContractName(CONTRACT_NAME);
-        contract.setContractNumber(CONTRACT_NUMBER);
-        contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
+        Contract newContract = new Contract();
+        newContract.setContractName(CONTRACT_NAME);
+        newContract.setContractNumber(CONTRACT_NUMBER);
+        newContract.setAttestedOn(OffsetDateTime.now().minusDays(10));
 
-        contractServiceStub.updateContract(contract);
-        dataSetup.queueForCleanup(contract);
-        return contract;
+        contractServiceStub.updateContract(newContract);
+        dataSetup.queueForCleanup(newContract);
+        return newContract;
     }
 
     private Job createJob(PdpClient pdpClient) {
-        Job job = new Job();
-        job.setJobUuid(JOB_UUID);
-        job.setStatus(JobStatus.SUBMITTED);
-        job.setStatusMessage("0%");
-        job.setOrganization(pdpClient.getOrganization());
-        job.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
-        job.setCreatedAt(OffsetDateTime.now());
-        job.setFhirVersion(STU3);
-        job.setContractNumber(contract.getContractNumber());
+        Job newJob = new Job();
+        newJob.setJobUuid(JOB_UUID);
+        newJob.setStatus(JobStatus.SUBMITTED);
+        newJob.setStatusMessage("0%");
+        newJob.setOrganization(pdpClient.getOrganization());
+        newJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
+        newJob.setCreatedAt(OffsetDateTime.now());
+        newJob.setFhirVersion(STU3);
+        newJob.setContractNumber(contract.getContractNumber());
 
-        job = jobRepository.saveAndFlush(job);
-        addJobForCleanup(job);
-        return job;
+        newJob = jobRepository.saveAndFlush(newJob);
+        addJobForCleanup(newJob);
+        return newJob;
     }
 
     private static List<CoverageSummary> loadFauxMetadata(ContractForCoverageDTO contract, int rowsToRetrieve) {
@@ -457,7 +457,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         return patientIdRows.stream().map(patientId -> new CoverageSummary(
                 createIdentifierWithoutMbi(patientId),
                 contract, List.of(getOpenRange())
-        )).collect(toList());
+        )).toList();
     }
 
     private static OngoingStubbing<IBaseBundle> andThenAnswerEobs(OngoingStubbing<IBaseBundle> stubbing, int startId, int number) {
