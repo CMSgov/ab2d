@@ -37,21 +37,20 @@ public class CoverageV3S3Importer {
     }
 
     public void runOnce() throws Exception {
-        if (coverageQueryService == null) {
-            log.info("Snowflake query service is not configured for this environment. Skipping coverage_v3 export and import.");
-            return;
-        }
-
         String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
         String finalKey = "coverage_v3_" + date + ".csv";
 
-        try (Connection conn = coverageQueryService.open();
-             PreparedStatement ps = coverageQueryService.prepare(conn);
-             ResultSet rs = ps.executeQuery()) {
+        if (coverageQueryService != null) {
+            try (Connection conn = coverageQueryService.open();
+                 PreparedStatement ps = coverageQueryService.prepare(conn);
+                 ResultSet rs = ps.executeQuery()) {
 
-            log.info("Exporting Snowflake results to s3://{}/{}", bucket, finalKey);
-            s3Writer.writeSnowflakeToS3(bucket, finalKey, rs);
+                log.info("Exporting Snowflake results to s3://{}/{}", bucket, finalKey);
+                s3Writer.writeSnowflakeToS3(bucket, finalKey, rs);
+            }
         }
+        else
+            log.info("Snowflake query service is not configured for this environment. Skipping coverage_v3 export.");
 
         String fqtn = "v3.coverage_v3";
         log.info("Starting import of s3://{}/{} into {}", bucket, finalKey, fqtn);
