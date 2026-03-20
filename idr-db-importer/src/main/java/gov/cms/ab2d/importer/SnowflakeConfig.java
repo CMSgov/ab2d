@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class SnowflakeConfig {
 
     @Bean
-    @ConditionalOnProperty(name = "app.snowflake.url")
+    @ConditionalOnProperty(name = "IDR_SNOWFLAKE_URL")
     public SnowflakeCoverageQueryService snowflakeCoverageQueryService(
             @Value("${app.snowflake.url}") String url,
             @Value("${app.snowflake.user}") String user,
