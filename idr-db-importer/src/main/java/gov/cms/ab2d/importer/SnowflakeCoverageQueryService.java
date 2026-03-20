@@ -5,8 +5,8 @@ import net.snowflake.client.jdbc.SnowflakeBasicDataSource;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -18,7 +18,8 @@ import java.sql.SQLException;
 
 @Component
 @Slf4j
-public class SnowflakeCoverageQueryService{
+@ConditionalOnProperty(name = "app.snowflake.url")
+public class SnowflakeCoverageQueryService {
 
     @Value("${app.snowflake.url}")
     private String url;
@@ -40,8 +41,6 @@ public class SnowflakeCoverageQueryService{
 
     @Value("${app.snowflake.schema}")
     private String schema;
-
-    private final boolean enabled;
 
     private static final String SQL = """
         WITH month_series AS (
@@ -67,14 +66,6 @@ public class SnowflakeCoverageQueryService{
           AND bene.bene_xref_efctv_sk != 0
         ORDER BY patient_id, year, month
         """;
-
-    public SnowflakeCoverageQueryService(@Value("${ENVIRONMENT:prod}") String env) {
-        this.enabled = "prod".equalsIgnoreCase(env);
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
 
     public Connection open() throws IOException, SQLException {
         SnowflakeBasicDataSource ds = new SnowflakeBasicDataSource();
