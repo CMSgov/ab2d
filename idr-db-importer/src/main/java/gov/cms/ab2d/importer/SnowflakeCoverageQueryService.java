@@ -5,9 +5,6 @@ import net.snowflake.client.jdbc.SnowflakeBasicDataSource;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -16,31 +13,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-@Component
 @Slf4j
-@ConditionalOnProperty(name = "app.snowflake.url")
 public class SnowflakeCoverageQueryService {
 
-    @Value("${app.snowflake.url}")
-    private String url;
-
-    @Value("${app.snowflake.user}")
-    private String user;
-
-    @Value("${app.snowflake.privateKey}")
-    private String privateKeyPem;
-
-    @Value("${app.snowflake.role}")
-    private String role;
-
-    @Value("${app.snowflake.warehouse}")
-    private String warehouse;
-
-    @Value("${app.snowflake.db}")
-    private String db;
-
-    @Value("${app.snowflake.schema}")
-    private String schema;
+    private final String url;
+    private final String user;
+    private final String privateKeyPem;
+    private final String role;
+    private final String warehouse;
+    private final String db;
+    private final String schema;
 
     private static final String SQL = """
         WITH month_series AS (
@@ -66,6 +48,24 @@ public class SnowflakeCoverageQueryService {
           AND bene.bene_xref_efctv_sk != 0
         ORDER BY patient_id, year, month
         """;
+
+    public SnowflakeCoverageQueryService(
+            String url,
+            String user,
+            String privateKeyPem,
+            String role,
+            String warehouse,
+            String db,
+            String schema
+    ) {
+        this.url = url;
+        this.user = user;
+        this.privateKeyPem = privateKeyPem;
+        this.role = role;
+        this.warehouse = warehouse;
+        this.db = db;
+        this.schema = schema;
+    }
 
     public Connection open() throws IOException, SQLException {
         SnowflakeBasicDataSource ds = new SnowflakeBasicDataSource();
