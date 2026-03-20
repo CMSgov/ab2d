@@ -74,23 +74,23 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
           local.env == "prod" ? [
           {
             name  = "IDR_SNOWFLAKE_URL"
-            value = "jdbc:snowflake://cms-idr.snowflakecomputing.com"
+            value = "jdbc:snowflake://cms-idr.privatelink.snowflakecomputing.com"
           },
           {
             name  = "IDR_SNOWFLAKE_USER"
-            value = data.aws_ssm_parameter.idr_snowflake_user.value
+            value = data.aws_ssm_parameter.idr_snowflake_user[0].value
           },
           {
             name  = "IDR_SNOWFLAKE_PRIVATE_KEY"
-            value = data.aws_ssm_parameter.idr_private_key.value
+            value = data.aws_ssm_parameter.idr_private_key[0].value
           },
           {
             name  = "IDR_SNOWFLAKE_ROLE"
-            value = data.aws_ssm_parameter.idr_snowflake_role.value
+            value = data.aws_ssm_parameter.idr_snowflake_role[0].value
           },
           {
             name  = "IDR_SNOWFLAKE_WAREHOUSE"
-            value = data.aws_ssm_parameter.idr_snowflake_warehouse.value
+            value = data.aws_ssm_parameter.idr_snowflake_warehouse[0].value
           },
           {
             name  = "IDR_SNOWFLAKE_DB"
