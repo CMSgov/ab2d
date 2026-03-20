@@ -10,7 +10,6 @@ import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.fhir.FhirVersion;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -120,22 +119,6 @@ class ApiCommonTest {
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidFormat));
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidNotRealDate));
     }
-  
-    void testCheckSinceTime() {
-        assertDoesNotThrow(() -> {
-            apiCommon.checkSinceTime(null);
-        });
-
-        OffsetDateTime time1 = OffsetDateTime.of(9999, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC);
-        assertThrows(InvalidClientInputException.class, () -> {
-            apiCommon.checkSinceTime(time1);
-        });
-
-        OffsetDateTime time2 = OffsetDateTime.of(1, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC);
-        assertThrows(InvalidClientInputException.class, () -> {
-            apiCommon.checkSinceTime(time2);
-        });
-    }
 
     @Test
     void testCheckIfContractAttested() {
@@ -154,7 +137,7 @@ class ApiCommonTest {
 
     @Test
     void v3ContractNotAllowListed() {
-        when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("false");
+        when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
         when(propertiesService.getProperty(eq(V3_ALLOWLISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
         assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkContractIsAllowListedForV3("S9999"));
     }
