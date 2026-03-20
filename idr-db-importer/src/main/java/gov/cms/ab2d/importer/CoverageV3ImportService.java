@@ -76,9 +76,12 @@ public class CoverageV3ImportService {
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws SQLException {
         String stagingFqtn = fqtn + "_staging";
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
+            connection.setAutoCommit(false);
 
             try {
                 long before = queryCount(connection, fqtn);
+
+                truncate(connection, stagingFqtn);
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
                 int upsertRows = upsert(connection, fqtn, stagingFqtn);
 
@@ -87,13 +90,11 @@ public class CoverageV3ImportService {
                 }
 
                 int deletedOldRows = deleteOldCoverageMonths(connection, fqtn);
-
-                truncate(connection, stagingFqtn);
                 long after = queryCount(connection, fqtn);
 
                 connection.commit();
                 log.info(
-                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
+                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, historicalRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
                         stagedRows, upsertRows, deletedOldRows, before, after, bucket, key
                 );
             } catch (Exception e) {
@@ -103,7 +104,6 @@ public class CoverageV3ImportService {
                 );
                 throw e;
             }
-            connection.setAutoCommit(true);
         }
     }
 

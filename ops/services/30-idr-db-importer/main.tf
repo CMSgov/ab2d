@@ -24,6 +24,7 @@ module "platform" {
   service     = local.service
 }
 
+
 resource "aws_ecs_task_definition" "idr_db_importer" {
   cpu                      = 1024
   execution_role_arn       = data.aws_iam_role.idr_db_importer_task_execution.arn
@@ -39,64 +40,68 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
       name                   = local.service
       readonlyRootFilesystem = true
 
-      environment = [
-        {
-          name  = "AB2D_DB_DATABASE"
-          value = data.aws_ssm_parameter.ab2d_db_database.value
-        },
-        {
-          name  = "AB2D_DB_HOST"
-          value = data.aws_ssm_parameter.ab2d_db_host.value
-        },
-        {
-          name  = "AB2D_DB_PASSWORD"
-          value = data.aws_ssm_parameter.ab2d_db_password.value
-        },
-        {
-          name  = "AB2D_DB_PORT"
-          value = "5432"
-        },
-        {
-          name  = "AB2D_DB_USER"
-          value = data.aws_ssm_parameter.ab2d_db_user.value
-        },
-        {
-          name  = "S3_BUCKET"
-          value = data.aws_ssm_parameter.idr_db_importer_bucket.value
-        },
-        {
-          name  = "IDR_SNOWFLAKE_URL"
-          value = "jdbc:snowflake://cms-idr.snowflakecomputing.com"
-        },
-        {
-          name  = "IDR_SNOWFLAKE_USER"
-          value = data.aws_ssm_parameter.idr_snowflake_user.value
-        },
-        {
-          name  = "IDR_SNOWFLAKE_PRIVATE_KEY"
-          value = data.aws_ssm_parameter.idr_private_key.value
-        },
-        {
-          name  = "IDR_SNOWFLAKE_ROLE"
-          value = data.aws_ssm_parameter.idr_snowflake_role.value
-        },
-        {
-          name  = "IDR_SNOWFLAKE_WAREHOUSE"
-          value = data.aws_ssm_parameter.idr_snowflake_warehouse.value
-        },
-        {
-          name  = "IDR_SNOWFLAKE_DB"
-          value = "IDRC_PRD"
-        },
-        {
-          name  = "IDR_SNOWFLAKE_SCHEMA"
-          value = "CMS_VDM_VIEW_MDCR_PRD"
-        },
-        {
-          name  = "ENVIRONMENT"
-          value = local.env
-        }
-      ]
+      environment = concat(
+        [
+          {
+            name  = "AB2D_DB_DATABASE"
+            value = data.aws_ssm_parameter.ab2d_db_database.value
+          },
+          {
+            name  = "AB2D_DB_HOST"
+            value = data.aws_ssm_parameter.ab2d_db_host.value
+          },
+          {
+            name  = "AB2D_DB_PASSWORD"
+            value = data.aws_ssm_parameter.ab2d_db_password.value
+          },
+          {
+            name  = "AB2D_DB_PORT"
+            value = "5432"
+          },
+          {
+            name  = "AB2D_DB_USER"
+            value = data.aws_ssm_parameter.ab2d_db_user.value
+          },
+          {
+            name  = "S3_BUCKET"
+            value = data.aws_ssm_parameter.idr_db_importer_bucket.value
+          },
+          {
+            name  = "ENVIRONMENT"
+            value = local.env
+          }
+        ],
+          local.env == "prod" ? [
+          {
+            name  = "IDR_SNOWFLAKE_URL"
+            value = "jdbc:snowflake://cms-idr.snowflakecomputing.com"
+          },
+          {
+            name  = "IDR_SNOWFLAKE_USER"
+            value = data.aws_ssm_parameter.idr_snowflake_user.value
+          },
+          {
+            name  = "IDR_SNOWFLAKE_PRIVATE_KEY"
+            value = data.aws_ssm_parameter.idr_private_key.value
+          },
+          {
+            name  = "IDR_SNOWFLAKE_ROLE"
+            value = data.aws_ssm_parameter.idr_snowflake_role.value
+          },
+          {
+            name  = "IDR_SNOWFLAKE_WAREHOUSE"
+            value = data.aws_ssm_parameter.idr_snowflake_warehouse.value
+          },
+          {
+            name  = "IDR_SNOWFLAKE_DB"
+            value = "IDRC_PRD"
+          },
+          {
+            name  = "IDR_SNOWFLAKE_SCHEMA"
+            value = "CMS_VDM_VIEW_MDCR_PRD"
+          }
+        ] : []
+      )
 
       logConfiguration = {
         logDriver = "awslogs"
