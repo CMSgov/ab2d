@@ -47,7 +47,6 @@ env:
 
 jobs:
   terraform:
-    if: ${{ matrix.image != '' }}
     strategy:
       matrix:
         include:
