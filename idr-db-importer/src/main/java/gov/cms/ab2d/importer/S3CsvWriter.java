@@ -21,27 +21,28 @@ public class S3CsvWriter {
 
     private final S3Client s3;
 
-    private static final int PART_BYTES = 8 * 1024 * 1024; // 8MB
+    private static final int PART_BYTES = 8 * 1024 * 1024;
 
     public void writeSnowflakeToS3(String bucket, String finalKey, ResultSet rs) throws Exception {
         String tmpKey = finalKey + ".tmp";
-        String uploadId = s3.createMultipartUpload(r -> r.bucket(bucket).key(tmpKey).contentType("text/csv")).uploadId();
+        String uploadId = s3.createMultipartUpload(
+                r -> r.bucket(bucket).key(tmpKey).contentType("text/csv")
+        ).uploadId();
 
         List<CompletedPart> parts = new ArrayList<>();
         int partNum = 1;
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream(PART_BYTES);
-
         writeLine(buf, "patient_id,contract,year,month,current_mbi");
 
         try {
             while (rs.next()) {
                 String line = String.join(",",
-                        csvLong(rs.getLong("patient_id")),
-                        csvStr(rs.getString("contract")),
-                        String.valueOf(rs.getInt("year")),
-                        String.valueOf(rs.getInt("month")),
-                        csvStr(rs.getString("current_mbi"))
+                        csvLong(rs.getLong(1)),
+                        csvStr(rs.getString(2)),
+                        String.valueOf(rs.getInt(3)),
+                        String.valueOf(rs.getInt(4)),
+                        csvStr(rs.getString(5))
                 );
                 writeLine(buf, line);
 
@@ -87,7 +88,8 @@ public class S3CsvWriter {
         String esc = v.replace("\"", "\"\"");
         return q ? "\"" + esc + "\"" : esc;
     }
-    private static String csvNullableStr(String v) { return csvStr(v); }
-    private static String csvLong(long v) { return String.valueOf(v); }
-}
 
+    private static String csvLong(long v) {
+        return String.valueOf(v);
+    }
+}

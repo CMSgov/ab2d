@@ -1,7 +1,6 @@
 package gov.cms.ab2d.importer;
 
 import lombok.extern.slf4j.Slf4j;
-import net.snowflake.client.jdbc.SnowflakeBasicDataSource;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -32,11 +31,11 @@ public class SnowflakeCoverageQueryService {
           FROM TABLE(GENERATOR(ROWCOUNT => 3))
         )
         SELECT
-          bene.bene_xref_efctv_sk AS patient_id,
-          elec.bene_cntrct_num    AS contract,
-          YEAR(ms.month_start)    AS year,
-          MONTH(ms.month_start)   AS month,
-          bene.bene_mbi_id        AS current_mbi
+          bene.bene_xref_efctv_sk AS "patient_id",
+          elec.bene_cntrct_num    AS "contract",
+          YEAR(ms.month_start)    AS "year",
+          MONTH(ms.month_start)   AS "month",
+          bene.bene_mbi_id        AS "current_mbi"
         FROM month_series ms
         JOIN CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_BENE_MAPD_ENRLMT elec
           ON elec.bene_enrlmt_bgn_dt <= LAST_DAY(ms.month_start)
@@ -48,7 +47,7 @@ public class SnowflakeCoverageQueryService {
           AND elec.idr_trans_obslt_ts > '9999-12-30'
           AND bene.idr_ltst_trans_flg = 'Y'
           AND bene.bene_xref_efctv_sk != 0
-        ORDER BY patient_id, year, month
+        ORDER BY "patient_id", "year", "month"
         """;
 
     public SnowflakeCoverageQueryService(
