@@ -43,7 +43,7 @@ locals {
   db_user_arn                = module.platform.ssm.core.database_user.arn
   events_sqs_url             = data.aws_sqs_queue.events.url
   kms_master_key_id          = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
-  network_access_logs_bucket = module.platform.network_access_logs_bucket
+  network_access_logs_bucket = module.platform.logging_bucket.bucket
   vpc_id                     = module.platform.vpc_id
 
   # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
