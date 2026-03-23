@@ -94,7 +94,7 @@ public class CoverageV3ImportService {
 
                 connection.commit();
                 log.info(
-                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, historicalRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
+                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
                         stagedRows, upsertRows, deletedOldRows, before, after, bucket, key
                 );
             } catch (Exception e) {
