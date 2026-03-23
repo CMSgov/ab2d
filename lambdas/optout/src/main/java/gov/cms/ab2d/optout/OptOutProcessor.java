@@ -37,7 +37,7 @@ public class OptOutProcessor {
         this.optOutInformationList = new ArrayList<>();
         this.dbHost = System.getenv("DB_HOST");
         this.environment = System.getenv("ENV");
-        var bfdRole = "/opt-out-import/ab2d/" + environment + "/bfd-bucket-role-arn";
+        var bfdRole = "/ab2d/" + environment + "/bene-prefs/sensitive/bfd-bucket-role-arn";
         var dbUser = "/ab2d/" + environment + "/core/sensitive/database_user";
         var dbPassword = "/ab2d/" + environment + "/core/sensitive/database_password";
         parameterStore = ParameterStoreUtil.getParameterStore(bfdRole, dbUser, dbPassword);

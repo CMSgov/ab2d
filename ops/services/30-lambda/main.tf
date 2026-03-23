@@ -31,6 +31,7 @@ locals {
     artifactory = "/ab2d/mgmt/artifactory" #FIXME: Standardize this
     common      = "/ab2d/${local.env}/common"
     core        = "/ab2d/${local.env}/core"
+    bene-prefs  = "/ab2d/${local.env}/bene-prefs"
     eft         = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
     contracts   = "/ab2d/${local.env}/contracts"
     webhooks    = "/ab2d/mgmt/slack-webhooks"

@@ -72,7 +72,7 @@ resource "aws_iam_role_policy" "import_assume_bucket_role" {
       {
         Action   = "sts:AssumeRole"
         Effect   = "Allow"
-        Resource = module.platform.ssm.eft.bfd-bucket-role-arn.value
+        Resource = module.platform.ssm.bene-prefs.bfd-bucket-role-arn.value
       }
     ]
     Version = "2012-10-17"
@@ -87,34 +87,34 @@ resource "aws_iam_role_policy" "import_default_function" {
     Version = "2012-10-17"
     Statement = [
       {
-            Action = [
-              "ssm:GetParameters",
-              "ssm:GetParameter",
-              "sqs:ReceiveMessage",
-              "sqs:GetQueueAttributes",
-              "sqs:DeleteMessage",
-              "logs:PutLogEvents",
-              "logs:CreateLogStream",
-              "logs:CreateLogGroup",
-              "ec2:DescribeNetworkInterfaces",
-              "ec2:DescribeAccountAttributes",
-              "ec2:DeleteNetworkInterface",
-              "ec2:CreateNetworkInterface"
-            ]
-            Effect   = "Allow"
-            Resource = "*"
-          },
-          {
-            Action = [
-              "kms:Encrypt",
-              "kms:Decrypt"
-            ]
-            Effect   = "Allow"
-            Resource = [local.env_key_alias.target_key_arn]
-          }
+        Action = [
+          "ssm:GetParameters",
+          "ssm:GetParameter",
+          "sqs:ReceiveMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:DeleteMessage",
+          "logs:PutLogEvents",
+          "logs:CreateLogStream",
+          "logs:CreateLogGroup",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DescribeAccountAttributes",
+          "ec2:DeleteNetworkInterface",
+          "ec2:CreateNetworkInterface"
         ]
-      })
-     }
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt"
+        ]
+        Effect   = "Allow"
+        Resource = [local.env_key_alias.target_key_arn]
+      }
+    ]
+  })
+}
 
 resource "aws_lambda_function" "import" {
   count = contains(["prod", "test"], local.env) ? 1 : 0
@@ -217,7 +217,7 @@ data "aws_iam_policy_document" "import" {
     condition {
       test     = "ArnEquals"
       variable = "aws:SourceArn"
-      values   = [module.platform.ssm.eft.bfd-sns-topic-arn.value]
+      values   = [module.platform.ssm.bene-prefs.bfd-sns-topic-arn.value]
     }
   }
 }
@@ -234,7 +234,7 @@ resource "aws_sns_topic_subscription" "import" {
 
   endpoint  = aws_sqs_queue.import[0].arn
   protocol  = "sqs"
-  topic_arn = module.platform.ssm.eft.bfd-sns-topic-arn.value
+  topic_arn = nonsensitive(module.platform.ssm.bene-prefs.bfd-sns-topic-arn.value)
 }
 
 resource "aws_lambda_event_source_mapping" "import" {
