@@ -47,10 +47,22 @@ env:
 
 jobs:
   terraform:
+    strategy:
+      matrix:
+        include:
+        - service: contracts
+          dir: ops/services/20-contracts/
+          image_var: contracts_service_image_tag
+          image: ${{inputs.contracts_service_image }}
+        - service: events
+          dir: ops/services/20-events/
+          image_var: events_service_image_tag
+          image: ${{ inputs.events_service_image }}
+
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
     env:
       AWS_ACCOUNT: ${{ secrets.aws_account || (contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT) }}
       AB2D_ENV: ${{ inputs.environment }}
@@ -74,25 +86,21 @@ jobs:
         uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
 
       - name: Tofu init & plan
-        working-directory: ops/services/20-microservices/
+        working-directory: ${{ matrix.dir }}
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
           
           TOFU_VARS=""
-          if [ "$CONTRACTS_IMAGE" != '' ]; then
-            TOFU_VARS="-var=contracts_service_image_tag=$CONTRACTS_IMAGE"
-            echo "**contracts_service_image_tag -> $CONTRACTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ "$EVENTS_IMAGE" != '' ]; then
-            TOFU_VARS="$TOFU_VARS -var=events_service_image_tag=$EVENTS_IMAGE"
-            echo "**events_service_image_tag -> $EVENTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ matrix.image }}" != '' ]; then
+            TOFU_VARS="-var=${{ matrix.image_var }}=${{ matrix.image }}"
+            echo "**${{matrix.image_var }} -> ${{matrix.image}}**" >> $GITHUB_STEP_SUMMARY
           fi
           
           tofu plan $TOFU_VARS -out=tfplan
 
       - name: Tofu apply
         if: ${{ inputs.apply == true }}
-        working-directory: ops/services/20-microservices/
+        working-directory: ${{ matrix.dir }}
         run: |
           tofu apply -input=false tfplan 
