@@ -88,8 +88,12 @@ jobs:
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          echo "**${{ matrix.image_var }} -> ${{matrix.image}}**" >> $GITHUB_STEP_SUMMARY
-          tofu plan -var=${{ matrix.image_var }}=${{ matrix.image }} -out=tfplan
+          TOFU_VARS=""
+          if [-n "${{ matrix.image}}" ]; then
+            TOFU_VARS="-var=${{ matrix.image_var }}=${{ matrix.image }}"
+            echo "**${{ matrix.image_var }} -> ${{matrix.image}}**" >> $GITHUB_STEP_SUMMARY
+          fi
+          tofu plan $TOFU_VARS -out=tfplan
 
       - name: Tofu apply
         if: ${{ inputs.apply == true }}
