@@ -10,8 +10,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.security.PrivateKey;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Properties;
 
 @Slf4j
 public class SnowflakeCoverageQueryService {
@@ -67,17 +69,21 @@ public class SnowflakeCoverageQueryService {
         this.schema = schema;
     }
 
-    public Connection open() throws IOException, SQLException {
-        SnowflakeBasicDataSource ds = new SnowflakeBasicDataSource();
-        ds.setUrl(url);
-        ds.setUser(user);
-        ds.setPrivateKey(loadPrivateKey(privateKeyPem));
-        ds.setAuthenticator("SNOWFLAKE_JWT");
-        ds.setRole(role);
-        ds.setWarehouse(warehouse);
-        ds.setDatabaseName(db);
-        ds.setSchema(schema);
-        return ds.getConnection();
+    public Connection open() throws Exception {
+        Properties props = new Properties();
+        props.put("user", user);
+        props.put("privateKey", loadPrivateKey(privateKeyPem));
+        props.put("authenticator", "SNOWFLAKE_JWT");
+        props.put("role", role);
+        props.put("warehouse", warehouse);
+        props.put("db", db);
+        props.put("schema", schema);
+
+        String jdbcUrl = url.contains("?")
+                ? url + "&authenticator=SNOWFLAKE_JWT"
+                : url + "?authenticator=SNOWFLAKE_JWT";
+
+        return DriverManager.getConnection(jdbcUrl, props);
     }
 
     public PreparedStatement prepare(Connection connection) throws SQLException {
