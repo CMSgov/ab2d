@@ -83,20 +83,23 @@ jobs:
       - name: Install tofu
         uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
 
+      - name: Skipping ${{ matrix.service }}
+        if: ${{ matrix.image == '' }}
+        run: |
+          echo "**Skipping ${{ matrix.service }} plan/apply**" >> $GITHUB_STEP_SUMMARY
+
       - name: Tofu init & plan
+        if: ${{ matrix.image != '' }}
         working-directory: ${{ matrix.dir }}
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          TOFU_VARS=""
-          if [-n "${{ matrix.image}}" ]; then
-            TOFU_VARS="-var=${{ matrix.image_var }}=${{ matrix.image }}"
-            echo "**${{ matrix.image_var }} -> ${{matrix.image}}**" >> $GITHUB_STEP_SUMMARY
-          fi
+          TOFU_VARS="-var=${{ matrix.image_var }}=${{ matrix.image }}"
+          echo "**${{ matrix.image_var }} -> ${{ matrix.image }}**" >> $GITHUB_STEP_SUMMARY
           tofu plan $TOFU_VARS -out=tfplan
 
       - name: Tofu apply
-        if: ${{ inputs.apply == true }}
+        if: ${{ inputs.apply == true && matrix.image != '' }}
         working-directory: ${{ matrix.dir }}
         run: |
           tofu apply -input=false tfplan 
