@@ -134,10 +134,17 @@ public class APIClient {
     }
 
     public HttpResponse<String> exportRequest(String exportType, OffsetDateTime since, FhirVersion version) throws IOException, InterruptedException {
+        return exportRequest(exportType, since, version, null);
+    }
+
+    public HttpResponse<String> exportRequest(String exportType, OffsetDateTime since, FhirVersion version, String typeFilter) throws IOException, InterruptedException {
         Map<Object, Object> map  = new HashMap<>();
         map.put("_outputFormat", exportType);
         if (since != null) {
             map.put("_since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        }
+        if (typeFilter != null) {
+            map.put("_typeFilter", typeFilter);
         }
         return exportRequest(map, version);
     }
