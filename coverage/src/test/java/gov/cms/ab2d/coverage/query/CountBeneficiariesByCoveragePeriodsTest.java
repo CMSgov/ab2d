@@ -29,12 +29,6 @@ class CountBeneficiariesByCoveragePeriodsTest {
         query = new CountBeneficiariesByCoveragePeriods(container.getDataSource());
     }
 
-    static ResultSet execute(String query) throws Exception {
-        val c = container.getDataSource().getConnection();
-        val s = c.createStatement();
-        return s.executeQuery(query);
-    }
-
     @Test
     void test_beneficiary_count_without_optout() {
         val periods = enumerateCoveragePeriods(START_TIME, END_TIME);
@@ -49,8 +43,9 @@ class CountBeneficiariesByCoveragePeriodsTest {
         val periods = enumerateCoveragePeriods(START_TIME, END_TIME);
         assertEquals(1, query.countBeneficiaries("Z0000", periods, true));
         assertEquals(1, query.countBeneficiaries("Z7777", periods, true));
-        assertEquals(0, query.countBeneficiaries("Z8888", periods, true));
         assertEquals(0, query.countBeneficiaries("Z9999", periods, true));
+        // Note: Z8888 is the only contract where its single beneficiary is NOT in the `current_mbi` table
+        assertEquals(1, query.countBeneficiaries("Z8888", periods, true));
     }
 
     @Test

@@ -16,6 +16,7 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -38,11 +39,16 @@ import java.util.concurrent.Future;
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
+import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_EOB;
+import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_NEXT_BUNDLE;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
+
+    // Set to false by default to prevent excess logging; enable explicitly for testing
+    public static final boolean TIME_BFD_REQUESTS = false;
 
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
@@ -78,6 +84,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
+        val bfdRequestTracking = TIME_BFD_REQUESTS
+                ? new BfdRequestTracking(request.getJob())
+                : BfdRequestTracking.NOOP;
         File file = null;
         String anyErrors = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
@@ -85,12 +94,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             file = stream.getFile();
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             for (CoverageSummary patient : request.getCoverageSummary()) {
-                List<IBaseResource> eobs = getEobBundleResources(request, patient);
+                List<IBaseResource> eobs = getEobBundleResources(request, patient, bfdRequestTracking);
                 anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
                 update.incPatientProcessCount();
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
+            bfdRequestTracking.summarizeResponseTimes();
         }
         return anyErrors;
     }
@@ -159,8 +169,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * cannot provide
      */
     @Trace(metricName = "EOBRequest", dispatcher = true)
-    private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request, CoverageSummary patient) {
-
+    private List<IBaseResource> getEobBundleResources(
+            PatientClaimsRequest request,
+            CoverageSummary patient,
+            BfdRequestTracking bfdRequestTracking
+    ) {
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
         Date earliestDate = getEarliestDataDate();
@@ -179,17 +192,25 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime untilTime = getUntilTime(request, sinceTime);
         List<String> serviceDates = request.getServiceDates();
 
+
         try {
 
             // Set header for requests so BFD knows where this request originated from
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+            eobBundle = bfdRequestTracking.executeRequest(
+                REQUEST_EOB,
+                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum())
+            );
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
-                eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
+                val currentEobBundle = eobBundle;
+                eobBundle = bfdRequestTracking.executeRequest(
+                    REQUEST_NEXT_BUNDLE,
+                    () -> bfdClient.requestNextBundleFromServer(request.getVersion(), currentEobBundle, request.getContractNum())
+                );
                 collector.filterAndAddEntries(eobBundle, patient);
             }
 
@@ -288,4 +309,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
         return date;
     }
+
+
+
 }

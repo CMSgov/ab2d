@@ -68,7 +68,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
            where contract = :contract
            and current_mbi is not null
     ) as union_results
-    join current_mbi on union_results.current_mbi = current_mbi.mbi
+    left join current_mbi on union_results.current_mbi = current_mbi.mbi
     where year in (:years)
     and current_mbi is not null
     and share_data is not false
@@ -90,7 +90,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
            and current_mbi is not null
            and patient_id >= :patient_id
     ) as union_results
-    join current_mbi on union_results.current_mbi = current_mbi.mbi
+    left join current_mbi on union_results.current_mbi = current_mbi.mbi
     where year in (:years)
     and current_mbi is not null
     and share_data is not false
