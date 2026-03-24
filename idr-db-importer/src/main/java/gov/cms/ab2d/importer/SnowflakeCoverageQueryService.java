@@ -8,10 +8,7 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.security.PrivateKey;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Properties;
 
 @Slf4j
@@ -86,6 +83,14 @@ public class SnowflakeCoverageQueryService {
     }
 
     public PreparedStatement prepare(Connection connection) throws SQLException {
+        try (PreparedStatement allowlistStatement = connection.prepareStatement("SELECT SYSTEM$ALLOWLIST()");
+             ResultSet allowlistRs = allowlistStatement.executeQuery()) {
+
+            while (allowlistRs.next()) {
+                log.info("Snowflake allowlist: {}", allowlistRs.getString(1));
+            }
+        }
+
         PreparedStatement ps = connection.prepareStatement(SQL);
         ps.setFetchSize(10_000);
         return ps;
