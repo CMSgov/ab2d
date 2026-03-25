@@ -9,6 +9,7 @@ on:
       image_tag: { type: string, description: ECR image tag (skips build if provided) }
       skip_build: { type: boolean, default: false, description: Only deploy }
       skip_deploy: { type: boolean, default: false, description: Only build }
+      skip_deploy_all: { type: boolean, default: true, description: Skip deploying all Terraform resources. UNCHECK ONLY IF YOU WISH TO DEPLOY ALL RESOURCES TO THE TARGET ENVIRONMENT WITH THE CURRENT RUNNING IMAGE. }
   workflow_dispatch:
     inputs:
       module:
@@ -27,6 +28,7 @@ on:
         type: string
       skip_build: { type: boolean, default: false, description: Skip build step }
       skip_deploy: { type: boolean, default: false, description: Skip deploy step }
+      skip_deploy_all: { type: boolean, default: true, description: Skip deploying all Terraform resources }
 
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -191,6 +193,23 @@ jobs:
           tofu plan ${{ steps.module_vars.outputs.plan_vars }} -out=tfplan
           tofu apply -input=false tfplan
           echo "Deployed $MODULE to $AB2D_ENV with tag $IMAGE_TAG" >> $GITHUB_STEP_SUMMARY
+
+  deploy-all:
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    needs: [setup, build]
+    if: ${{ inputs.skip_deploy_all == false }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AB2D_ENV: ${{ needs.setup.outputs.environment }}
+      MODULE: ${{ inputs.module }}
+      IMAGE_TAG: ${{ needs.setup.outputs.should_build == 'true' && needs.build.outputs.image_tag || needs.setup.outputs.image_tag }}
+    steps:
+      - name: Apply all
+        uses: ./.github/workflows/tofu-apply.yml
+        with:
+          environment: ${{ env.AB2D_ENV }}
 
   # Provide overall status
   summary:
