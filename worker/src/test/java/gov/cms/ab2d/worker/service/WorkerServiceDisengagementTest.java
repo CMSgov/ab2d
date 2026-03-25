@@ -103,15 +103,15 @@ class WorkerServiceDisengagementTest extends JobCleanup {
 
         Thread.sleep(6000L); //NOSONAR
 
-        assertEquals(0, workerServiceStub.processingCalls);
+        assertEquals(0, workerServiceStub.processingCalls.get());
 
         // Now confirm that switching workers back on ... works!
         setEngagement(FeatureEngagement.IN_GEAR);
 
         Awaitility.await().atMost(8, TimeUnit.SECONDS).until(() ->
-                workerServiceStub.processingCalls == 1
+                workerServiceStub.processingCalls.get() == 1
         );
-        assertEquals(1, workerServiceStub.processingCalls);
+        assertEquals(1, workerServiceStub.processingCalls.get());
     }
 
     @Test
@@ -130,15 +130,15 @@ class WorkerServiceDisengagementTest extends JobCleanup {
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
         Thread.sleep(10000L); //NOSONAR
 
-        assertEquals(0, workerServiceStub.processingCalls);
+        assertEquals(0, workerServiceStub.processingCalls.get());
 
         // Now confirm that switching workers back on ... works!
         setEngagement(FeatureEngagement.IN_GEAR);
         
         Awaitility.await().atMost(15, TimeUnit.SECONDS).until(() ->
-                workerServiceStub.processingCalls == 2
+                workerServiceStub.processingCalls.get() == 2
         );
-        assertEquals(2, workerServiceStub.processingCalls);
+        assertEquals(2, workerServiceStub.processingCalls.get());
     }
 
     private Job createJob(final PdpClient pdpClient, Contract contract) {
