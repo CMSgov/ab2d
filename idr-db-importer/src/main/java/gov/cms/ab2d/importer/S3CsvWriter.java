@@ -74,8 +74,6 @@ public class S3CsvWriter {
             } catch (Exception ex) {
                 log.warn("Failed to abort multipart upload uploadId={} for s3://{}/{}", uploadId, bucket, tmpKey, ex);
             }
-
-       //     throw e;
         }
     }
 

@@ -74,23 +74,10 @@ public class SnowflakeCoverageQueryService {
         props.put("warehouse", warehouse);
         props.put("db", db);
         props.put("schema", schema);
-
-        String jdbcUrl = url.contains("?")
-                ? url + "&authenticator=SNOWFLAKE_JWT"
-                : url + "?authenticator=SNOWFLAKE_JWT";
-
-        return DriverManager.getConnection(jdbcUrl, props);
+        return DriverManager.getConnection(url, props);
     }
 
     public PreparedStatement prepare(Connection connection) throws SQLException {
-        try (PreparedStatement allowlistStatement = connection.prepareStatement("SELECT SYSTEM$ALLOWLIST()");
-             ResultSet allowlistRs = allowlistStatement.executeQuery()) {
-
-            while (allowlistRs.next()) {
-                log.info("Snowflake allowlist: {}", allowlistRs.getString(1));
-            }
-        }
-
         PreparedStatement ps = connection.prepareStatement(SQL);
         ps.setFetchSize(10_000);
         return ps;
