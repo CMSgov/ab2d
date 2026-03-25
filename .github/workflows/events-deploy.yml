@@ -41,3 +41,4 @@ jobs:
       environment: ${{ inputs.environment }}
       events_service_image: ${{ inputs.image_tag }}
       apply: true
+      service: events

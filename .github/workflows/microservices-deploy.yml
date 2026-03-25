@@ -16,6 +16,11 @@ on:
       events_service_image:
         type: string
         required: false
+      service:
+        description: "Service to deploy (contracts, events, or both)"
+        type: string
+        required: false
+        default: 'both'
 
   workflow_dispatch:  # Manual trigger with dropdowns
     inputs:
@@ -41,21 +46,40 @@ on:
         description: "ab2d-events image"
         type: string
         required: false
+      service:
+        description: "Service to deploy"
+        type: choice
+        options:
+          - both
+          - contracts
+          - events
+        default: both
+        required: false
 
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   terraform:
+    strategy:
+      matrix:
+        include:
+        - service: contracts
+          dir: ops/services/20-contracts/
+          image_var: contracts_service_image_tag
+          image: ${{inputs.contracts_service_image }}
+        - service: events
+          dir: ops/services/20-events/
+          image_var: events_service_image_tag
+          image: ${{ inputs.events_service_image }}
+
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     env:
       AWS_ACCOUNT: ${{ secrets.aws_account || (contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT) }}
       AB2D_ENV: ${{ inputs.environment }}
-      CONTRACTS_IMAGE: ${{ inputs.contracts_service_image }}
-      EVENTS_IMAGE: ${{ inputs.events_service_image }}
 
     steps:
       - name: Checkout Code
@@ -71,28 +95,28 @@ jobs:
         uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
     
       - name: Install tofu
-        uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
+        uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
 
       - name: Tofu init & plan
-        working-directory: ops/services/20-microservices/
+        if: ${{ inputs.service == 'both' || inputs.service == matrix.service }}
+        working-directory: ${{ matrix.dir }}
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          
           TOFU_VARS=""
-          if [ "$CONTRACTS_IMAGE" != '' ]; then
-            TOFU_VARS="-var=contracts_service_image_tag=$CONTRACTS_IMAGE"
-            echo "**contracts_service_image_tag -> $CONTRACTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
+          if [[ -n "${{ matrix.image }}" ]]; then
+            TOFU_VARS="-var=${{ matrix.image_var }}=${{ matrix.image }}"
+            echo "**${{ matrix.image_var }} -> ${{ matrix.image }}**" >> $GITHUB_STEP_SUMMARY
+          else
+            export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$AB2D_ENV-${{ matrix.service }} --service ab2d-$AB2D_ENV-${{ matrix.service }} --query 'taskArns[0]' --output text) 
+            export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$AB2D_ENV-${{ matrix.service }} --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
+            echo "**${{ matrix.image_var }} -> $ACTIVE_IMAGE_TAG**" >> $GITHUB_STEP_SUMMARY
+            TOFU_VARS="-var=${{ matrix.image_var }}=$ACTIVE_IMAGE_TAG"
           fi
-          if [ "$EVENTS_IMAGE" != '' ]; then
-            TOFU_VARS="$TOFU_VARS -var=events_service_image_tag=$EVENTS_IMAGE"
-            echo "**events_service_image_tag -> $EVENTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
-          fi
-          
           tofu plan $TOFU_VARS -out=tfplan
 
       - name: Tofu apply
-        if: ${{ inputs.apply == true }}
-        working-directory: ops/services/20-microservices/
+        if: ${{ inputs.apply == true && (inputs.service == 'both' || inputs.service == matrix.service) }}
+        working-directory: ${{ matrix.dir }}
         run: |
           tofu apply -input=false tfplan 
