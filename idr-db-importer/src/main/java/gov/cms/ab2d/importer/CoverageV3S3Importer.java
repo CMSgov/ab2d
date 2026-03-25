@@ -53,7 +53,7 @@ public class CoverageV3S3Importer {
             log.info("Snowflake query service is not configured for this environment. Skipping coverage_v3 export.");
 
         String fqtn = "v3.coverage_v3";
-        log.info("Starting import of s3://{}/{} into {}", bucket, finalKey, fqtn);
+        log.info("Starting import of s3://{}/{} into {}_staging", bucket, finalKey, fqtn);
         importService.importWithRetry(fqtn, bucket, finalKey, region.id());
     }
 }
