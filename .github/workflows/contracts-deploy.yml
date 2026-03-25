@@ -41,3 +41,4 @@ jobs:
       environment: ${{ inputs.environment }}
       contracts_service_image: ${{ inputs.image_tag }}
       apply: true
+      service: contracts
