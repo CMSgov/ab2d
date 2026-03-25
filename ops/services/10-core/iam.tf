@@ -255,18 +255,55 @@ resource "aws_iam_role" "idr_db_importer_task" {
             "ecs-tasks.amazonaws.com"
           ]
         }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "idr_db_importer_task" {
+  name        = "${module.platform.app}-${module.platform.env}-idr-db-importer-task"
+  description = "IDR DB Importer ECS task access to S3 bucket and KMS key."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3Access"
+        Effect = "Allow"
+        Action = [
+          "s3:AbortMultipartUpload",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          module.idr_db_importer_bucket.arn,
+          "${module.idr_db_importer_bucket.arn}/*"
+        ]
       },
+      {
+        Sid    = "KmsAccessForS3"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ]
+        Resource = module.platform.kms_alias_primary.target_key_arn
+      }
     ]
   })
 }
 
 resource "aws_iam_role_policy_attachment" "idr_db_importer_task" {
   role       = aws_iam_role.idr_db_importer_task.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  policy_arn = aws_iam_policy.idr_db_importer_task.arn
 }
 
 resource "aws_iam_role" "idr_db_importer" {
-  name = "${module.platform.app}-${module.platform.env}-idr-db-importer"
+  name                 = "${module.platform.app}-${module.platform.env}-idr-db-importer"
+  path                 = "/delegatedadmin/developer/"
+  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -297,25 +334,25 @@ resource "aws_iam_policy" "idr_db_importer" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid = "s3import"
+        Sid    = "S3Import"
+        Effect = "Allow"
         Action = [
           "s3:GetObject",
           "s3:ListBucket"
         ]
-        Effect = "Allow"
         Resource = [
           "${module.idr_db_importer_bucket.arn}",
           "${module.idr_db_importer_bucket.arn}/*"
         ]
       },
       {
-        Sid = "sharedKeyAccess"
+        Sid    = "SharedKeyAccess"
+        Effect = "Allow"
         Action = [
           "kms:Decrypt",
-          "kms:GenerateKeyData"
+          "kms:GenerateDataKey"
         ]
-        Effect   = "Allow"
-        Resource = "${module.platform.kms_alias_primary.target_key_arn}"
+        Resource = module.platform.kms_alias_primary.target_key_arn
       }
     ]
   })

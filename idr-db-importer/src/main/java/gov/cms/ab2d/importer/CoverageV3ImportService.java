@@ -35,14 +35,6 @@ public class CoverageV3ImportService {
 
     private static final String TRUNCATE_SQL = "TRUNCATE TABLE %s";
 
-    private static final String COVERAGE_UPSERT_SQL =
-            """
-                    INSERT INTO %s (patient_id, contract, year, month, current_mbi)
-                    SELECT patient_id, contract, year, month, current_mbi
-                    FROM %s
-                    ON CONFLICT (patient_id, contract, year, month, current_mbi)
-                    DO NOTHING""";
-
     private static final String HISTORICAL_SYNC_SQL =
             """
                     INSERT INTO %s (patient_id, contract, year, month, current_mbi)
@@ -76,25 +68,20 @@ public class CoverageV3ImportService {
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws SQLException {
         String stagingFqtn = fqtn + "_staging";
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
+            connection.setAutoCommit(false);
 
             try {
-                long before = queryCount(connection, fqtn);
+                truncate(connection, stagingFqtn);
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
-                int upsertRows = upsert(connection, fqtn, stagingFqtn);
 
                 if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 1) {
                     syncToHistorical(connection, fqtn);
+                    deleteOldCoverageMonths(connection, fqtn);
                 }
-
-                int deletedOldRows = deleteOldCoverageMonths(connection, fqtn);
-
-                truncate(connection, stagingFqtn);
-                long after = queryCount(connection, fqtn);
 
                 connection.commit();
                 log.info(
-                        "Coverage_V3 import success: stagedRows={}, upsertCoverageRows={}, deletedOldRows={}, before={}, after={}, source=s3://{}/{}",
-                        stagedRows, upsertRows, deletedOldRows, before, after, bucket, key
+                        "Coverage_V3 import success: stagedRows={} source=s3://{}/{}", stagedRows, bucket, key
                 );
             } catch (Exception e) {
                 rollback(connection);
@@ -103,7 +90,6 @@ public class CoverageV3ImportService {
                 );
                 throw e;
             }
-            connection.setAutoCommit(true);
         }
     }
 
@@ -142,14 +128,7 @@ public class CoverageV3ImportService {
         }
     }
 
-    private int upsert(Connection conn, String targetFqtn, String stagingFqtn) throws SQLException {
-        String sql = String.format(COVERAGE_UPSERT_SQL, targetFqtn, stagingFqtn);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            return ps.executeUpdate();
-        }
-    }
-
-    private int syncToHistorical(Connection conn, String sourceFqtn) throws SQLException {
+    private void syncToHistorical(Connection conn, String sourceFqtn) throws SQLException {
         String sql = String.format(
                 HISTORICAL_SYNC_SQL,
                 COVERAGE_V3_HISTORICAL_TABLE,
@@ -158,24 +137,15 @@ public class CoverageV3ImportService {
         );
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             log.info("Starting coverage_v3_historical sync");
-            return ps.executeUpdate();
+            ps.executeUpdate();
         }
     }
 
-    private int deleteOldCoverageMonths(Connection conn, String fqtn) throws SQLException {
+    private void deleteOldCoverageMonths(Connection conn, String fqtn) throws SQLException {
         String sql = String.format(DELETE_OLD_MONTHS_SQL, fqtn);
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             log.info("Starting 3-month data cleanup");
-            return ps.executeUpdate();
-        }
-    }
-
-    private long queryCount(Connection conn, String fqtn) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM " + fqtn;
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            rs.next();
-            return rs.getLong(1);
+            ps.executeUpdate();
         }
     }
 

@@ -33,7 +33,7 @@ class CoverageV3ImportServiceTest {
     }
 
     @Test
-    void importWithRetry_runsHistoricalSyncOnFirstDay() throws Exception {
+    void runsHistoricalSyncOnFirstDay() throws Exception {
         LocalDate firstDay = LocalDate.of(2026, 4, 1);
 
         Connection connection = mock(Connection.class);
@@ -107,7 +107,7 @@ class CoverageV3ImportServiceTest {
     }
 
     @Test
-    void importWithRetry_skipsHistoricalSyncWhenNotFirstDay() throws Exception {
+    void skipsHistoricalSyncWhenNotFirstDay() throws Exception {
         LocalDate notFirstDay = LocalDate.of(2026, 4, 2);
 
         Connection connection = mock(Connection.class);
@@ -168,7 +168,6 @@ class CoverageV3ImportServiceTest {
             service.importWithRetry(FQTN, "bucket", "file.csv", "us-east-1");
         }
 
-        verify(deletePs).executeUpdate();
         verify(connection).commit();
         verify(connection, never()).rollback();
         verify(connection, never()).prepareStatement(contains("coverage_v3_historical"));
