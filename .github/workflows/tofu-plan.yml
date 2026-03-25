@@ -104,12 +104,6 @@ jobs:
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           tofu plan
-      - name: tofu plan - web
-        working-directory: ops/services/15-web/
-        run: |
-          tofu init -var=parent_env=$ENV -reconfigure
-          tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan
       - name: tofu plan - contracts
         working-directory: ops/services/20-contracts/
         run: |
