@@ -74,7 +74,12 @@ public class SnowflakeCoverageQueryService {
         props.put("warehouse", warehouse);
         props.put("db", db);
         props.put("schema", schema);
-        return DriverManager.getConnection(url, props);
+
+        String jdbcUrl = url.contains("?")
+                ? url + "&authenticator=SNOWFLAKE_JWT"
+                : url + "?authenticator=SNOWFLAKE_JWT";
+
+        return DriverManager.getConnection(jdbcUrl, props);
     }
 
     public PreparedStatement prepare(Connection connection) throws SQLException {
