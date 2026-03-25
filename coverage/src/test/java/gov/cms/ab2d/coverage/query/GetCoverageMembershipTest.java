@@ -168,6 +168,18 @@ class GetCoverageMembershipTest {
         assertEquals(0, result.size());
     }
 
+    @Test
+    void test_Z8888_with_MBI_not_in_current_mbi_table() {
+        // Note: Z8888 is the only contract where its single beneficiary is NOT in the `current_mbi` table
+        val result = query.getCoverageMembership("Z8888", YEARS, true, DEFAULT_LIMIT);
+        assertEquals("""
+        patientId=5, year=2025, month=7
+        patientId=5, year=2025, month=8
+        patientId=5, year=2025, month=9
+        """,
+        toString(result));
+    }
+
     String toString(List<CoverageMembership> list) {
         val sb = new StringBuilder();
         list.forEach(item -> sb.append(toString(item)).append("\n"));

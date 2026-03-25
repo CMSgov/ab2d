@@ -46,17 +46,17 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           # Now assume the BFD bucket role
-          role-to-assume: arn:aws:iam::${{ secrets.BFD_ACCOUNT_ID }}:role/delegatedadmin/developer/bfd-test-eft-ab2d-ct-bucket-role
+          role-to-assume: arn:aws:iam::${{ secrets.BFD_NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/bfd-test-bene-prefs-ab2d-bucket-access-role
           role-chaining: true
           role-skip-session-tagging: true
       - name: Upload test file to the BFD bucket to trigger lambda function via SNS message
         run: |
           aws s3 cp --no-progress src/test/resources/optOutDummy.txt \
-            s3://bfd-test-eft/bfdeft01/ab2d/in/test-${{ github.run_id }}.txt
+            s3://bfd-test-bene-prefs-ab2d20260225231712701800000001/bfdeft01/ab2d/in/test-${{ github.run_id }}.txt
       - name: Check bucket for response file
         run: |
           sleep 20 # Allow for function to run
-          aws s3 ls s3://bfd-test-eft/bfdeft01/ab2d/out/
+          aws s3 ls s3://bfd-test-bene-prefs-ab2d20260225231712701800000001/bfdeft01/ab2d/out/
           bash src/test/resources/check-latest-out.sh
 
   # TODO Run another job to check database for update

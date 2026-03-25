@@ -76,11 +76,13 @@ VALUES
  ;
 
 -- MBI 'M5' omitted intentionally
+-- MBI 'M7' does not exist in coverage tables
 INSERT INTO current_mbi(mbi, effective_date, share_data)
 VALUES
     ('M1', '2025-01-01', false),
     ('M2', '2025-01-01', true),
     ('M3', '2025-01-01', false),
     ('M4', '2025-01-01', null),
-    ('M6', '2025-01-01', false)
+    ('M6', '2025-01-01', false),
+    ('M7', '2025-01-01', true)
 ;

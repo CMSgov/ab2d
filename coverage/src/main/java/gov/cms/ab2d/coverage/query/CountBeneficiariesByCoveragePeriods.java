@@ -38,7 +38,7 @@ public class CountBeneficiariesByCoveragePeriods extends CoverageV3BaseQuery {
        select * from  v3.coverage_v3_historical
            where contract = :contract
     ) as union_results
-    join current_mbi on union_results.current_mbi = current_mbi.mbi
+    left join current_mbi on union_results.current_mbi = current_mbi.mbi
     where (year,month) in (:historicalAndRecentCoveragePeriods)
         and current_mbi is not null
         and share_data is not false
