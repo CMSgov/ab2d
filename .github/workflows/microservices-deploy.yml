@@ -110,6 +110,7 @@ jobs:
           else
             export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$AB2D_ENV-${{ matrix.service }} --service ab2d-$AB2D_ENV-${{ matrix.service }} --query 'taskArns[0]' --output text) 
             export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$AB2D_ENV-${{ matrix.service }} --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
+            echo "**${{ matrix.image_var }} -> $ACTIVE_IMAGE_TAG**" >> $GITHUB_STEP_SUMMARY
             TOFU_VARS="-var=${{ matrix.image_var }}=$ACTIVE_IMAGE_TAG"
           fi
           tofu plan $TOFU_VARS -out=tfplan
