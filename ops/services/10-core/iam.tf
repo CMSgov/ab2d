@@ -271,8 +271,10 @@ resource "aws_iam_policy" "idr_db_importer_task" {
         Sid    = "S3Access"
         Effect = "Allow"
         Action = [
+          "s3:AbortMultipartUpload",
           "s3:GetObject",
           "s3:PutObject",
+          "s3:DeleteObject",
           "s3:ListBucket"
         ]
         Resource = [

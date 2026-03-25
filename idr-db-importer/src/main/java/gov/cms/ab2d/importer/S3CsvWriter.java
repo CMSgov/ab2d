@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
 import java.io.ByteArrayOutputStream;
@@ -64,8 +65,17 @@ public class S3CsvWriter {
 
         } catch (Exception e) {
             log.warn("Aborting multipart upload uploadId={} for s3://{}/{}", uploadId, bucket, tmpKey, e);
-            s3.abortMultipartUpload(r -> r.bucket(bucket).key(tmpKey).uploadId(uploadId));
-            throw e;
+
+            try {
+                s3.abortMultipartUpload(r -> r.bucket(bucket).key(tmpKey).uploadId(uploadId));
+            } catch (NoSuchKeyException ex) {
+                log.warn("Multipart upload temp key already missing during abort for s3://{}/{} uploadId={}",
+                        bucket, tmpKey, uploadId);
+            } catch (Exception ex) {
+                log.warn("Failed to abort multipart upload uploadId={} for s3://{}/{}", uploadId, bucket, tmpKey, ex);
+            }
+
+       //     throw e;
         }
     }
 
