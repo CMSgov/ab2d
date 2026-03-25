@@ -40,3 +40,23 @@ data "aws_ssm_parameter" "ab2d_db_user" {
 data "aws_ssm_parameter" "idr_db_importer_bucket" {
   name = "/ab2d/${local.env}/core/nonsensitive/idr-db-importer-bucket"
 }
+
+data "aws_ssm_parameter" "idr_snowflake_user" {
+  count = local.env == "prod" ? 1 : 0
+  name = "/ab2d/${local.env}/core/sensitive/idr_service_id_name"
+}
+
+data "aws_ssm_parameter" "idr_snowflake_role" {
+  count = local.env == "prod" ? 1 : 0
+  name = "/ab2d/${local.env}/core/sensitive/idr_role_name"
+}
+
+data "aws_ssm_parameter" "idr_snowflake_warehouse" {
+  count = local.env == "prod" ? 1 : 0
+  name = "/ab2d/${local.env}/core/sensitive/idr_warehouse_name"
+}
+
+data "aws_ssm_parameter" "idr_private_key" {
+  count = local.env == "prod" ? 1 : 0
+  name = "/ab2d/${local.env}/core/sensitive/idr_private_key"
+}
