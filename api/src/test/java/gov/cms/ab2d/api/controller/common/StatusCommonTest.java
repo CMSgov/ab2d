@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.OffsetDateTime;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -56,6 +57,11 @@ class StatusCommonTest {
     req.setScheme("http");
     req.setServerName("localhost");
     req.setServerPort(8080);
+  }
+
+  @AfterEach
+  void afterEach() {
+    RequestContextHolder.resetRequestAttributes();
   }
 
   @Test

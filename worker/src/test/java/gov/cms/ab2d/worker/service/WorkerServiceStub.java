@@ -7,11 +7,13 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.job.service.JobService;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class WorkerServiceStub implements WorkerService {
 
     private final JobService jobService;
     private final PropertiesService propertiesService;
-    public int processingCalls = 0;
+    public AtomicInteger processingCalls = new AtomicInteger(0);
 
     public WorkerServiceStub(JobService jobService, PropertiesService propertiesService) {
         this.jobService = jobService;
@@ -20,7 +22,7 @@ public class WorkerServiceStub implements WorkerService {
 
     @Override
     public Job process(String jobId) {
-        processingCalls += 1;
+        processingCalls.incrementAndGet();
         Job job = jobService.getJobByJobUuid(jobId);
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setStatusMessage(null);

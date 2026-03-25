@@ -85,10 +85,10 @@ class WorkerServiceTest extends JobCleanup {
         createJob(pdpClient, contract);
 
         Awaitility.await().atMost(8, TimeUnit.SECONDS).until(() ->
-                workerServiceStub.processingCalls == 1
+                workerServiceStub.processingCalls.get() == 1
         );
 
-        assertEquals(1, workerServiceStub.processingCalls);
+        assertEquals(1, workerServiceStub.processingCalls.get());
     }
 
     @Test
@@ -101,10 +101,10 @@ class WorkerServiceTest extends JobCleanup {
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
         Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() ->
-                workerServiceStub.processingCalls == 2
+                workerServiceStub.processingCalls.get() == 2
         );
 
-        assertEquals(2, workerServiceStub.processingCalls);
+        assertEquals(2, workerServiceStub.processingCalls.get());
     }
 
     private Job createJob(final PdpClient pdpClient, Contract contract) {

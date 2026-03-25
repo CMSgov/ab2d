@@ -41,22 +41,22 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class PatientClaimsCollectorTest {
+class PatientClaimsCollectorTest {
 
-    private final static SimpleDateFormat SDF = new SimpleDateFormat("MM/dd/yyyy");
     private static final Date EPOCH = Date.from(ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, AB2D_ZONE).toInstant());
-    private final static Long PATIENT_ID = -199900000022040L;
+    private static final Long PATIENT_ID = -199900000022040L;
 
     private static final OffsetDateTime EARLY_ATT_DATE = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private static final OffsetDateTime LATER_ATT_DATE = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
 
-    static {
-        SDF.setTimeZone(FilterOutByDate.TIMEZONE);
-    }
-
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
     private static final IBaseBundle BUNDLE = EobTestDataUtil.createBundle(EOB.copy());
 
+    private static Date parseDate(String date) throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        sdf.setTimeZone(FilterOutByDate.TIMEZONE);
+        return sdf.parse(date);
+    }
     private final Token noOpToken = new Token() {
         @Override
         public boolean link() {
@@ -212,8 +212,8 @@ public class PatientClaimsCollectorTest {
 
             // Old billable period date and older attestation date should return nothing
             ExplanationOfBenefit eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
-            eob.getBillablePeriod().setStart(SDF.parse("10/13/1970"));
-            eob.getBillablePeriod().setEnd(SDF.parse("10/13/1970"));
+            eob.getBillablePeriod().setStart(parseDate("10/13/1970"));
+            eob.getBillablePeriod().setEnd(parseDate("10/13/1970"));
             IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
 
             PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now().minusYears(100), null, null, null,"client", "job",
@@ -236,8 +236,8 @@ public class PatientClaimsCollectorTest {
 
             // Old billable period date and older attestation date should return nothing
             ExplanationOfBenefit eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
-            eob.getBillablePeriod().setStart(SDF.parse("12/29/2019"));
-            eob.getBillablePeriod().setEnd(SDF.parse("12/30/2019"));
+            eob.getBillablePeriod().setStart(parseDate("12/29/2019"));
+            eob.getBillablePeriod().setEnd(parseDate("12/30/2019"));
             IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
 
             PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now().minusYears(100), null, null, null,"client", "job",
@@ -260,8 +260,8 @@ public class PatientClaimsCollectorTest {
 
             // Valid billable period and old attestation date
             ExplanationOfBenefit eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
-            eob.getBillablePeriod().setStart(SDF.parse("01/02/2020"));
-            eob.getBillablePeriod().setEnd(SDF.parse("01/03/2020"));
+            eob.getBillablePeriod().setStart(parseDate("01/02/2020"));
+            eob.getBillablePeriod().setEnd(parseDate("01/03/2020"));
             IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
 
             PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now().minusYears(100), null, null,null, "client", "job",
@@ -284,8 +284,8 @@ public class PatientClaimsCollectorTest {
 
             // Valid billable period and attestation day of today
             ExplanationOfBenefit eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
-            eob.getBillablePeriod().setStart(SDF.parse("01/02/2020"));
-            eob.getBillablePeriod().setEnd(SDF.parse("01/03/2020"));
+            eob.getBillablePeriod().setStart(parseDate("01/02/2020"));
+            eob.getBillablePeriod().setEnd(parseDate("01/03/2020"));
             IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
 
             PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now(), null, null, null,"client", "job",
@@ -322,8 +322,8 @@ public class PatientClaimsCollectorTest {
                     null, List.of(TestUtil.getOpenRange()));
 
             ExplanationOfBenefit eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
-            eob.getBillablePeriod().setStart(SDF.parse("01/02/2020"));
-            eob.getBillablePeriod().setEnd(SDF.parse("01/03/2020"));
+            eob.getBillablePeriod().setStart(parseDate("01/02/2020"));
+            eob.getBillablePeriod().setEnd(parseDate("01/03/2020"));
             IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
             ReflectionTestUtils.setField(oldBundle, "entry", null);
 

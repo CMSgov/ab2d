@@ -3,12 +3,18 @@ package gov.cms.ab2d.api.controller.common;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 class CommonTest {
+
+  @AfterEach
+  void afterEach() {
+    RequestContextHolder.resetRequestAttributes();
+  }
 
   @Test
   void testShouldReplaceWithHttps() {

@@ -126,7 +126,7 @@ class JobServiceTest extends JobCleanup {
 
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
-    public void setup() {
+    void setup() {
         MockitoAnnotations.openMocks(this);
         jobService = new JobServiceImpl(jobRepository, jobOutputService, sqsEventClient, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
@@ -137,9 +137,10 @@ class JobServiceTest extends JobCleanup {
     }
 
     @AfterEach
-    public void cleanup() {
+    void cleanup() {
         jobCleanup();
         dataSetup.cleanup();
+        SecurityContextHolder.clearContext();
     }
 
     static void setupRegularClientSecurityContext() {
