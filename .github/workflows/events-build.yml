@@ -38,7 +38,7 @@ env:
 
 jobs:
   build:
-    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
     env:
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
     outputs:
