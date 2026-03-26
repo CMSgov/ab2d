@@ -34,7 +34,6 @@ ext {
     testutilsVersion = project.version
     retrieveVersion = project.version
     optoutVersion = project.version
-    attributionDataShareVersion = project.version
 
 
     sourcesRepo = 'ab2d-maven-repo'
