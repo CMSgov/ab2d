@@ -23,6 +23,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -101,16 +103,30 @@ class CoverageServiceRepositoryTest {
     @DisplayName("Calculate the number of beneficiaries when OptOut is disabled")
     @Test
     void countBeneficiariesByPeriodsWithoutOptOutTest() {
+        insertCurrentMbi("mbi-1231", true);
+        insertCurrentMbi("mbi-4561", true);
+        insertCurrentMbi("mbi-7891", true);
         Assertions.assertEquals(3, coverageServiceRepository.countBeneficiariesByPeriods(List.of(period1Jan.getId()), "TST-12"));
     }
 
-    @DisplayName("Calculate the number of beneficiaries when OptOut is enabled")
+    @DisplayName("Calculate the number of beneficiaries when OptOut is enabled and share_data is false")
     @Test
     void countBeneficiariesByPeriodsWithOptOutTest() {
         Mockito.when(mockPropertiesService.isToggleOn(OPT_OUT_ON, false)).thenReturn(true);
-       //The expected number is 3, and is the same as in previous test, since switching shared_data from false to true is only available in OptOutLambda.
-        //Here all beneficiaries have shared_data equals false by default.
+        insertCurrentMbi("mbi-1231", false);
+        insertCurrentMbi("mbi-4561", false);
+        insertCurrentMbi("mbi-7891", false);
         Assertions.assertEquals(0, coverageServiceRepository.countBeneficiariesByPeriods(List.of(period1Jan.getId()), "TST-12"));
+    }
+
+    @DisplayName("Calculate the number of beneficiaries when OptOut is enabled and share_data is null")
+    @Test
+    void countBeneficiariesByPeriodsWithNullShareDataTest() {
+        Mockito.when(mockPropertiesService.isToggleOn(OPT_OUT_ON, false)).thenReturn(true);
+        insertCurrentMbi("mbi-1231", null);
+        insertCurrentMbi("mbi-4561", null);
+        insertCurrentMbi("mbi-7891", null);
+        Assertions.assertEquals(3, coverageServiceRepository.countBeneficiariesByPeriods(List.of(period1Jan.getId()), "TST-12"));
     }
 
     @Test
@@ -180,5 +196,19 @@ class CoverageServiceRepositoryTest {
         Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageSearchRepo.delete(search.get());
         return coverageService.startSearch(search.get(), "testing").get().getCoverageSearchEvent();
+    }
+
+    private void insertCurrentMbi(String mbi, Boolean shareData) {
+        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+        template.update(
+                "delete from current_mbi where mbi = :mbi",
+                new MapSqlParameterSource().addValue("mbi", mbi)
+        );
+        template.update(
+                "insert into current_mbi (mbi, share_data) values (:mbi, :shareData)",
+                new MapSqlParameterSource()
+                        .addValue("mbi", mbi)
+                        .addValue("shareData", shareData)
+        );
     }
 }

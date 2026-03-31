@@ -99,10 +99,13 @@ public class CoverageServiceRepository {
      * Return a count of all beneficiaries who aggred to share their data associated with an {@link CoveragePeriod}
      * from any event. For those beneficiaries opt_out_flag equals false in the coverage table.
      */
-
-    private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage c " +
-            " join current_mbi m on  c.current_mbi=m.mbi" +
-            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) AND share_data is not false and current_mbi is not null";
+    private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT =
+            "SELECT COUNT(DISTINCT c.beneficiary_id) FROM coverage c " +
+                    " LEFT JOIN current_mbi m ON c.current_mbi = m.mbi " +
+                    " WHERE c.bene_coverage_period_id IN(:ids) " +
+                    "   AND c.contract = :contract " +
+                    "   AND c.year IN (:years) " +
+                    "   AND m.share_data is not false";
 
     /**
      * Delete all coverage associated with a single update from BFD {@link CoverageSearchEvent}
@@ -168,10 +171,13 @@ public class CoverageServiceRepository {
             " LIMIT :limit";
 
     private static final String SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR =
-            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
-                    " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi " +
-                    " WHERE contract = :contract and year IN (:years) and share_data is not false and current_mbi is not null" +
-                    " ORDER BY beneficiary_id " +
+            "SELECT c.beneficiary_id, c.current_mbi, c.historic_mbis, c.year, c.month " +
+                    " FROM coverage c " +
+                    " LEFT JOIN current_mbi m ON c.current_mbi = m.mbi " +
+                    " WHERE c.contract = :contract " +
+                    "   AND c.year IN (:years) " +
+                    "   AND m.share_data is not false " +
+                    " ORDER BY c.beneficiary_id " +
                     " LIMIT :limit";
 
     /**
@@ -190,10 +196,14 @@ public class CoverageServiceRepository {
             " LIMIT :limit";
 
     private static final String SELECT_OPTOUT_COVERAGE_WITH_CURSOR =
-            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
-                    " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi" +
-                    " WHERE contract = :contract and year IN (:years) and  current_mbi is not null and share_data is not false AND beneficiary_id >= :cursor " +
-                    " ORDER BY beneficiary_id " +
+            "SELECT c.beneficiary_id, c.current_mbi, c.historic_mbis, c.year, c.month " +
+                    " FROM coverage c " +
+                    " LEFT JOIN current_mbi m ON c.current_mbi = m.mbi " +
+                    " WHERE c.contract = :contract " +
+                    "   AND c.year IN (:years) " +
+                    "   AND m.share_data is not false " +
+                    "   AND c.beneficiary_id >= :cursor " +
+                    " ORDER BY c.beneficiary_id " +
                     " LIMIT :limit";
 
     /**
