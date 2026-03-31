@@ -195,21 +195,15 @@ jobs:
           echo "Deployed $MODULE to $AB2D_ENV with tag $IMAGE_TAG" >> $GITHUB_STEP_SUMMARY
 
   deploy-all:
-    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     needs: [setup, build]
     if: ${{ inputs.skip_deploy_all == false }}
     permissions:
       contents: read
       id-token: write
-    env:
-      AB2D_ENV: ${{ needs.setup.outputs.environment }}
-      MODULE: ${{ inputs.module }}
-      IMAGE_TAG: ${{ needs.setup.outputs.should_build == 'true' && needs.build.outputs.image_tag || needs.setup.outputs.image_tag }}
-    steps:
-      - name: Apply all
-        uses: ./.github/workflows/tofu-apply.yml
-        with:
-          environment: ${{ env.AB2D_ENV }}
+    uses: ./.github/workflows/tofu-apply.yml
+    with:
+      environment: ${{ needs.setup.outputs.environment }}
+    secrets: inherit
 
   # Provide overall status
   summary:
