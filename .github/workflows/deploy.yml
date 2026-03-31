@@ -45,7 +45,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     permissions:
       contents: read
       id-token: write

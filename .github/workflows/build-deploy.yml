@@ -71,7 +71,7 @@ jobs:
 
   # Build job - only runs when needed
   build:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     needs: setup
     if: needs.setup.outputs.should_build == 'true'
     permissions:
@@ -125,7 +125,7 @@ jobs:
 
   # Deploy job - only runs when needed
   deploy:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     needs: [setup, build]
     if: |
       always() && needs.setup.outputs.should_deploy == 'true' && 
@@ -195,7 +195,7 @@ jobs:
           echo "Deployed $MODULE to $AB2D_ENV with tag $IMAGE_TAG" >> $GITHUB_STEP_SUMMARY
 
   deploy-all:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     needs: [setup, build]
     if: ${{ inputs.skip_deploy_all == false }}
     permissions:
