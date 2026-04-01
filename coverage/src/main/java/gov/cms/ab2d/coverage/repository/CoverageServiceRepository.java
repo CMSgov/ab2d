@@ -2,17 +2,16 @@ package gov.cms.ab2d.coverage.repository;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-import gov.cms.ab2d.coverage.model.CoverageCount;
-import gov.cms.ab2d.coverage.model.CoverageJobStatus;
-import gov.cms.ab2d.coverage.model.CoverageMembership;
-import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
-import gov.cms.ab2d.coverage.model.CoveragePagingResult;
-import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.stereotype.Repository;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,14 +22,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.IntStream;
-import javax.sql.DataSource;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.stereotype.Repository;
-
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
@@ -39,17 +30,17 @@ import static java.util.stream.Collectors.toList;
 /**
  * Vanilla SQL interface with the coverage table. The class is designed to be performant and work with the
  * partitioning strategies in the database. Partitioning is mainly done to speed up bulk inserts.
- *
+ * <p>
  * IMPORTANT: The coverage table is partitioned by contract and then by year.
- *
+ * <p>
  * With Postgres, this means that all queries to the coverage table must contain contract or year, otherwise those queries
  * will trigger a full table scan.
- *
+ * <p>
  * Indexes on the "coverage" table to speed up queries
- *
- *      - beneficiary_id, contract, year, month, bene_coverage_search_event_id
- *      - beneficiary_coverage_period_id, beneficiary_id, contract, year
- *      - beneficiary_coverage_search_event_id, beneficiary_id, contract, year
+ * <p>
+ * - beneficiary_id, contract, year, month, bene_coverage_search_event_id
+ * - beneficiary_coverage_period_id, beneficiary_id, contract, year
+ * - beneficiary_coverage_search_event_id, beneficiary_id, contract, year
  */
 @Slf4j
 @Repository
@@ -65,157 +56,125 @@ public class CoverageServiceRepository {
     /**
      * Assign a beneficiary as being a member of a contract during a year and month {@link CoveragePeriod}
      * and record what update from BFD this record is associated with {@link CoverageSearchEvent}.
-     *
+     * <p>
      * Insertion will break if a patient is tied to the same contract, year, month, and search event more than once.
      * Likewise for coverage period.
-     *
+     * <p>
      * The contract and year must be included to take advantage of partitioning. The month is used
      * to improve indexing.
      */
-    private static final String INSERT_COVERAGE = "INSERT INTO coverage " +
-            "(bene_coverage_period_id, bene_coverage_search_event_id, contract, year, month, beneficiary_id, current_mbi, historic_mbis) " +
-            "VALUES(?,?,?,?,?,?,?,?)";
+    private static final String INSERT_COVERAGE = "INSERT INTO coverage " + "(bene_coverage_period_id, bene_coverage_search_event_id, contract, year, month, beneficiary_id, current_mbi, historic_mbis) " + "VALUES(?,?,?,?,?,?,?,?)";
 
     /**
      * Return a count of all beneficiaries associated with an {@link CoveragePeriod} by a specific update from BFD
      * {@link CoverageSearchEvent}.
-     *
+     * <p>
      * The count is not distinct because constraints will break if a patient is assigned to the same
      * {@link CoverageSearchEvent}
-     *
+     * <p>
      * The contract and year must be included to take advantage of the partitions and prevent a table scan
      */
-    private static final String SELECT_COVERAGE_BY_SEARCH_COUNT = "SELECT COUNT(*) FROM coverage " +
-            " WHERE bene_coverage_search_event_id = :id AND contract = :contract AND year IN (:years) and current_mbi is not null";
+    private static final String SELECT_COVERAGE_BY_SEARCH_COUNT = "SELECT COUNT(*) FROM coverage " + " WHERE bene_coverage_search_event_id = :id AND contract = :contract AND year IN (:years) and current_mbi is not null";
 
     /**
      * Return a count of all beneficiaries associated with an {@link CoveragePeriod}
      * from any event.
      */
-    private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
-            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) and current_mbi is not null";
+    private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" + " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) and current_mbi is not null";
 
     /**
      * Return a count of all beneficiaries who aggred to share their data associated with an {@link CoveragePeriod}
      * from any event. For those beneficiaries opt_out_flag equals false in the coverage table.
      */
-
-    private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage c " +
-            " join current_mbi m on  c.current_mbi=m.mbi" +
-            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) AND share_data is not false and current_mbi is not null";
+    private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT = """
+        SELECT COUNT(DISTINCT c.beneficiary_id) FROM coverage c
+        LEFT JOIN current_mbi m ON c.current_mbi = m.mbi
+        WHERE c.bene_coverage_period_id IN (:ids)
+          AND c.contract = :contract
+          AND c.year IN (:years)
+          AND m.share_data is not false
+        """;
 
     /**
      * Delete all coverage associated with a single update from BFD {@link CoverageSearchEvent}
-     *
+     * <p>
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
      */
-    private static final String DELETE_SEARCH = "DELETE FROM coverage cov " +
-            "WHERE cov.bene_coverage_search_event_id = :searchEvent" +
-            "   AND contract = :contract AND year IN (:years)";
+    private static final String DELETE_SEARCH = "DELETE FROM coverage cov " + "WHERE cov.bene_coverage_search_event_id = :searchEvent" + "   AND contract = :contract AND year IN (:years)";
 
     /**
      * Delete all coverage associated with a list of updates from BFD {@link CoverageSearchEvent}
-     *
+     * <p>
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
      */
-    private static final String DELETE_PREVIOUS_SEARCHES = "DELETE FROM coverage cov " +
-            "WHERE cov.bene_coverage_search_event_id IN (:searchEvents)" +
-            "   AND contract = :contract AND year IN (:years)";
+    private static final String DELETE_PREVIOUS_SEARCHES = "DELETE FROM coverage cov " + "WHERE cov.bene_coverage_search_event_id IN (:searchEvents)" + "   AND contract = :contract AND year IN (:years)";
 
     /**
      * List out the patients present in one {@link CoverageSearchEvent} but not present in another {@link CoverageSearchEvent}
-     *
+     * <p>
      * Every time a {@link CoveragePeriod} is updated after the first time coverage is pulled from BFD, this query is
      * run to determine the drift in enrollment over time. The results of this query are inserted into a records
      * table as part of the {@link CoverageDeltaRepository}
-     *
+     * <p>
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
      */
-    static final String SELECT_DELTA =
-            "SELECT cov1.bene_coverage_period_id, cov1.beneficiary_id, :type as entryType, CURRENT_TIMESTAMP as created" +
-            " FROM coverage cov1" +
-            " WHERE cov1.bene_coverage_search_event_id = :search1 AND NOT EXISTS" +
-                " (SELECT cov2.beneficiary_id FROM coverage cov2" +
-                " WHERE cov1.beneficiary_id = cov2.beneficiary_id and bene_coverage_search_event_id = :search2 )";
+    static final String SELECT_DELTA = "SELECT cov1.bene_coverage_period_id, cov1.beneficiary_id, :type as entryType, CURRENT_TIMESTAMP as created" + " FROM coverage cov1" + " WHERE cov1.bene_coverage_search_event_id = :search1 AND NOT EXISTS" + " (SELECT cov2.beneficiary_id FROM coverage cov2" + " WHERE cov1.beneficiary_id = cov2.beneficiary_id and bene_coverage_search_event_id = :search2 )";
 
     /**
      * Count the number of beneficiaries shared between two updates from {@link CoverageSearchEvent} for the same
      * {@link CoveragePeriod}.
-     *
+     * <p>
      * This number summarizes the detailed information provided by the {@link #SELECT_DELTA} query.
-     *
+     * <p>
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
      */
-    private static final String SELECT_INTERSECTION = "SELECT COUNT(*) FROM (" +
-            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search1 AND contract = :contract AND year IN (:years) and current_mbi is not null" +
-            " INTERSECT " +
-            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search2 AND contract = :contract AND year IN (:years) and current_mbi is not null" +
-            ") I";
+    private static final String SELECT_INTERSECTION = "SELECT COUNT(*) FROM (" + " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search1 AND contract = :contract AND year IN (:years) and current_mbi is not null" + " INTERSECT " + " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search2 AND contract = :contract AND year IN (:years) and current_mbi is not null" + ") I";
 
     /**
      * Select a limited number of records from the coverage table associated with a specific contract. This is the
      * first call to get records, all subsequent calls require a cursor.
-     *
+     * <p>
      * Without a limit this query will typically return millions of results maybe even tens of millions.
-     *
+     * <p>
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
      */
-    private static final String SELECT_COVERAGE_WITHOUT_CURSOR =
-            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
-            " FROM coverage " +
-            " WHERE contract = :contract and year IN (:years) and current_mbi is not null" +
-            " ORDER BY beneficiary_id " +
-            " LIMIT :limit";
+    private static final String SELECT_COVERAGE_WITHOUT_CURSOR = "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " + " FROM coverage " + " WHERE contract = :contract and year IN (:years) and current_mbi is not null" + " ORDER BY beneficiary_id " + " LIMIT :limit";
 
-    private static final String SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR =
-            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
-                    " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi " +
-                    " WHERE contract = :contract and year IN (:years) and share_data is not false and current_mbi is not null" +
-                    " ORDER BY beneficiary_id " +
-                    " LIMIT :limit";
+    private static final String SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR = """
+        SELECT c.beneficiary_id, c.current_mbi, c.historic_mbis, c.year, c.month
+        FROM coverage c
+        LEFT JOIN current_mbi m ON c.current_mbi = m.mbi
+        WHERE c.contract = :contract
+          AND c.year IN (:years)
+          AND m.share_data is not false
+        ORDER BY c.beneficiary_id
+        LIMIT :limit
+        """;
 
     /**
      * Select a limited number of records starting from a beneficiary (cursor)
      * from the coverage table associated with a specific contract.
-     *
+     * <p>
      * This is used to page through the enrollment related to a contract and starts where the last page ended.
-     *
+     * <p>
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
      */
-    private static final String SELECT_COVERAGE_WITH_CURSOR =
-            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
-            " FROM coverage " +
-            " WHERE contract = :contract and year IN (:years) and current_mbi is not null AND beneficiary_id >= :cursor " +
-            " ORDER BY beneficiary_id " +
-            " LIMIT :limit";
+    private static final String SELECT_COVERAGE_WITH_CURSOR = "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " + " FROM coverage " + " WHERE contract = :contract and year IN (:years) and current_mbi is not null AND beneficiary_id >= :cursor " + " ORDER BY beneficiary_id " + " LIMIT :limit";
 
-    private static final String SELECT_OPTOUT_COVERAGE_WITH_CURSOR =
-            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
-                    " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi" +
-                    " WHERE contract = :contract and year IN (:years) and  current_mbi is not null and share_data is not false AND beneficiary_id >= :cursor " +
-                    " ORDER BY beneficiary_id " +
-                    " LIMIT :limit";
+    private static final String SELECT_OPTOUT_COVERAGE_WITH_CURSOR = "SELECT c.beneficiary_id, c.current_mbi, c.historic_mbis, c.year, c.month " + " FROM coverage c " + " LEFT JOIN current_mbi m ON c.current_mbi = m.mbi " + " WHERE c.contract = :contract " + "   AND c.year IN (:years) " + "   AND m.share_data is not false " + "   AND c.beneficiary_id >= :cursor " + " ORDER BY c.beneficiary_id " + " LIMIT :limit";
 
     /**
      * Given a list of contracts, for each contract and all {@link CoveragePeriod}s that contract has been active for,
      * count the number of beneficiaries covered by the contract and report those results.
-     *
+     * <p>
      * Results are split by {@link CoverageSearchEvent} to detect when duplicate enrollment is present.
-     *
+     * <p>
      * The results contain the ContractNumber, year, month, {@link CoveragePeriod} id,
      * and {@link CoverageSearchEvent} id
-     *
+     * <p>
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
      */
-    private static final String SELECT_COUNT_CONTRACT =
-            " SELECT coverage.contract, coverage.year, coverage.month, coverage.bene_coverage_period_id," +
-                    " coverage.bene_coverage_search_event_id, COUNT(*) as bene_count " +
-            " FROM coverage INNER JOIN bene_coverage_period bcp ON coverage.bene_coverage_period_id = bcp.id " +
-            " WHERE bcp.status = 'SUCCESSFUL' AND coverage.contract IN (:contracts)  and coverage.current_mbi is not null AND coverage.year IN (:years) " +
-            " GROUP BY coverage.contract, coverage.year, coverage.month, " +
-                    " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id " +
-            " ORDER BY coverage.contract, coverage.year, coverage.month, " +
-                    " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id ";
+    private static final String SELECT_COUNT_CONTRACT = " SELECT coverage.contract, coverage.year, coverage.month, coverage.bene_coverage_period_id," + " coverage.bene_coverage_search_event_id, COUNT(*) as bene_count " + " FROM coverage INNER JOIN bene_coverage_period bcp ON coverage.bene_coverage_period_id = bcp.id " + " WHERE bcp.status = 'SUCCESSFUL' AND coverage.contract IN (:contracts)  and coverage.current_mbi is not null AND coverage.year IN (:years) " + " GROUP BY coverage.contract, coverage.year, coverage.month, " + " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id " + " ORDER BY coverage.contract, coverage.year, coverage.month, " + " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id ";
 
     private static String vacuumCoverage = "VACUUM coverage";
 
@@ -224,8 +183,7 @@ public class CoverageServiceRepository {
     private final CoverageSearchEventRepository coverageSearchEventRepo;
     private final PropertiesService propertiesService;
 
-    public CoverageServiceRepository(DataSource dataSource, CoveragePeriodRepository coveragePeriodRepo,
-                                     CoverageSearchEventRepository coverageSearchEventRepo, PropertiesService propertiesService) {
+    public CoverageServiceRepository(DataSource dataSource, CoveragePeriodRepository coveragePeriodRepo, CoverageSearchEventRepository coverageSearchEventRepo, PropertiesService propertiesService) {
         this.dataSource = dataSource;
         this.coverageSearchEventRepo = coverageSearchEventRepo;
         this.coveragePeriodRepo = coveragePeriodRepo;
@@ -235,7 +193,7 @@ public class CoverageServiceRepository {
     /**
      * Count the number of beneficiaries in the coverage table which are associated with a specific
      * search of BFD {@link CoverageSearchEvent}.
-     *
+     * <p>
      * Coverage is only associated with {@link CoverageJobStatus#IN_PROGRESS} search events. So submitting any other search event
      * will result in no coverage being reported.
      *
@@ -246,31 +204,26 @@ public class CoverageServiceRepository {
     @Trace
     public int countBySearchEvent(CoverageSearchEvent searchEvent) {
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("id", searchEvent.getId())
-                .addValue(CONTRACT_STRING, searchEvent.getCoveragePeriod().getContractNumber())
-                .addValue(YEARS_STRING, YEARS);
+        SqlParameterSource parameters = new MapSqlParameterSource().addValue("id", searchEvent.getId()).addValue(CONTRACT_STRING, searchEvent.getCoveragePeriod().getContractNumber()).addValue(YEARS_STRING, YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
-        return template.queryForList(SELECT_COVERAGE_BY_SEARCH_COUNT, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for " +
-                        "the coverage search event"));
+        return template.queryForList(SELECT_COVERAGE_BY_SEARCH_COUNT, parameters, Integer.class).stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for " + "the coverage search event"));
     }
 
     /**
      * Compare the beneficiaries in two searches and count the number of beneficiaries shared between the searches. This
      * query should only be used when comparing the number of beneficaries for the two most recent {@link CoverageSearchEvent}s
      * associated with a {@link CoveragePeriod}.
-     *
+     * <p>
      * This is used to calculate the difference between an old set of enrollment for a given contract, year, and month,
      * and the most recent update.
-     *
+     * <p>
      * This query only makes sense when both {@link CoverageSearchEvent}s provided are
      * associated with the same {@link CoveragePeriod}. Any other usage will cause misleading results.
-     *
+     * <p>
      * This query should only be
-     *
+     * <p>
      * Coverage is only associated with {@link CoverageJobStatus#IN_PROGRESS} search events. So submitting any other search event
      * will result in no data for the comparison.
      *
@@ -282,47 +235,36 @@ public class CoverageServiceRepository {
     @Trace
     public int countIntersection(CoverageSearchEvent searchEvent1, CoverageSearchEvent searchEvent2) {
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("search1", searchEvent1.getId())
-                .addValue("search2", searchEvent2.getId())
-                .addValue(CONTRACT_STRING, searchEvent1.getCoveragePeriod().getContractNumber())
-                .addValue(YEARS_STRING, YEARS);
+        SqlParameterSource parameters = new MapSqlParameterSource().addValue("search1", searchEvent1.getId()).addValue("search2", searchEvent2.getId()).addValue(CONTRACT_STRING, searchEvent1.getCoveragePeriod().getContractNumber()).addValue(YEARS_STRING, YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
-        return template.queryForList(SELECT_INTERSECTION, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any" +
-                        "of the search events provided"));
+        return template.queryForList(SELECT_INTERSECTION, parameters, Integer.class).stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any" + "of the search events provided"));
     }
 
     /**
      * Calculate the unique number of beneficiaries associated with a period of enrollment.
      *
      * @param coveragePeriodIds list of coverage periods {@link CoveragePeriod}s associated with an
-     * @param contractNum a five character String representing an
+     * @param contractNum       a five character String representing an
      * @return total number of unique beneficiaries
      */
     @Trace
     public int countBeneficiariesByPeriods(List<Integer> coveragePeriodIds, String contractNum) {
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("ids", coveragePeriodIds)
-                .addValue(CONTRACT_STRING, contractNum)
-                .addValue(YEARS_STRING, YEARS);
+        SqlParameterSource parameters = new MapSqlParameterSource().addValue("ids", coveragePeriodIds).addValue(CONTRACT_STRING, contractNum).addValue(YEARS_STRING, YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
         //If OptOut is enabled, count beneficiaries who agreed to share their data
         String query = (propertiesService.isToggleOn("OptOutOn", false)) ? SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT : SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT;
 
-        return template.queryForList(query, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
-                                "of the coverage periods provided"));
+        return template.queryForList(query, parameters, Integer.class).stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " + "of the coverage periods provided"));
     }
 
     /**
      * Calculate exact numbers of beneficiaries enrolled for each month of a contract for each provided contract and return
      * a list of results {@link CoverageCount}.
-     *
+     * <p>
      * This method provides the statistics necessary to verify that the coverage data in the database meets business
      * requirements.
      *
@@ -332,9 +274,7 @@ public class CoverageServiceRepository {
     @Trace
     public List<CoverageCount> countByContractCoverage(List<ContractForCoverageDTO> contracts) {
         List<String> contractNumbers = contracts.stream().map(ContractForCoverageDTO::getContractNumber).collect(toList());
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("contracts", contractNumbers)
-                .addValue(YEARS_STRING, YEARS);
+        SqlParameterSource parameters = new MapSqlParameterSource().addValue("contracts", contractNumbers).addValue(YEARS_STRING, YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
@@ -343,20 +283,19 @@ public class CoverageServiceRepository {
 
     /**
      * Mark benficiaries as enrolled in a contract for a specific search event, contract, month, and year using plain JDBC.
-     *
+     * <p>
      * The enrollment is related to a search against BFD {@link CoverageSearchEvent} that we've done for a contract,
      * month, and year. We may have other older enrollment from previous searches against BFD
      * also in the database when this insertion is done.
      *
      * @param searchEvent the search event to add coverage in relation to
-     * @param beneIds Collection of beneficiary ids to be added as a batch
+     * @param beneIds     Collection of beneficiary ids to be added as a batch
      * @throws RuntimeException if insertion fails due to a syntax or timeout issue with Postgres.
      */
     @Trace
     public void insertBatches(CoverageSearchEvent searchEvent, Iterable<Identifiers> beneIds) {
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(INSERT_COVERAGE)) {
+        try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(INSERT_COVERAGE)) {
 
             int processingCount = 0;
 
@@ -403,8 +342,7 @@ public class CoverageServiceRepository {
      *
      * @throws SQLException on failure to add single beneficiary to batch
      */
-    private void prepareCoverageInsertion(PreparedStatement statement, String contractNum, int year, int month,
-                                          CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {
+    private void prepareCoverageInsertion(PreparedStatement statement, String contractNum, int year, int month, CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {
         // Fields uniquely identifying a search
         statement.setInt(1, searchEvent.getCoveragePeriod().getId());
         statement.setLong(2, searchEvent.getId());
@@ -431,7 +369,7 @@ public class CoverageServiceRepository {
     /**
      * Delete all coverage information related to the results of a single coverage period
      * defined by an offset into the past.
-     *
+     * <p>
      * An offset of 0 finds the current IN_PROGRESS search event and deletes all coverage information associated
      * with that event.
      *
@@ -439,16 +377,12 @@ public class CoverageServiceRepository {
      */
     public void deleteCurrentSearch(CoveragePeriod period) {
 
-        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findByPeriodDesc(period.getId(), 100)
-                .stream().filter(event -> event.getNewStatus() == CoverageJobStatus.IN_PROGRESS).findFirst();
+        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findByPeriodDesc(period.getId(), 100).stream().filter(event -> event.getNewStatus() == CoverageJobStatus.IN_PROGRESS).findFirst();
 
         // Only delete previous search if a previous search exists.
         // For performance reasons this is done via jdbc
         if (searchEvent.isPresent()) {
-            MapSqlParameterSource parameterSource = new MapSqlParameterSource()
-                    .addValue("searchEvent", searchEvent.get().getId())
-                    .addValue(CONTRACT_STRING, period.getContractNumber())
-                    .addValue(YEARS_STRING, YEARS);
+            MapSqlParameterSource parameterSource = new MapSqlParameterSource().addValue("searchEvent", searchEvent.get().getId()).addValue(CONTRACT_STRING, period.getContractNumber()).addValue(YEARS_STRING, YEARS);
 
             NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
             template.update(DELETE_SEARCH, parameterSource);
@@ -459,7 +393,7 @@ public class CoverageServiceRepository {
 
     /**
      * Delete all coverage information related to the results of any search in the past beyond an offset.
-     *
+     * <p>
      * Ex. if you want to delete all past enrollment besides the most recent search
      *
      * @param period coverage period to remove
@@ -471,17 +405,13 @@ public class CoverageServiceRepository {
         List<CoverageSearchEvent> events = coverageSearchEventRepo.findByPeriodDesc(period.getId(), 100);
 
         // Get all in progress events after offset and delete any enrollment associated with them
-        List<Long> inProgressEvents = events.stream().filter(event -> event.getNewStatus() == CoverageJobStatus.IN_PROGRESS)
-                .skip(offset).map(CoverageSearchEvent::getId).collect(toList());
+        List<Long> inProgressEvents = events.stream().filter(event -> event.getNewStatus() == CoverageJobStatus.IN_PROGRESS).skip(offset).map(CoverageSearchEvent::getId).collect(toList());
 
         // Only delete previous search if a previous search exists.
         // For performance reasons this is done via jdbc
         if (!inProgressEvents.isEmpty()) {
 
-            MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource()
-                    .addValue("searchEvents", inProgressEvents)
-                    .addValue(CONTRACT_STRING, period.getContractNumber())
-                    .addValue(YEARS_STRING, YEARS);
+            MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource().addValue("searchEvents", inProgressEvents).addValue(CONTRACT_STRING, period.getContractNumber()).addValue(YEARS_STRING, YEARS);
 
             NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
             template.update(DELETE_PREVIOUS_SEARCHES, sqlParameterSource);
@@ -493,42 +423,42 @@ public class CoverageServiceRepository {
     /**
      * Page through coverage records in database by beneficiary and aggregate those records into a single object
      * for beneficiary.
-     *
+     * <p>
      * The paging request will contain a contract, a page size (number of beneficiaries to pull), and a cursor with the
      * last patient pulled.
-     *
+     * <p>
      * The coverage table contains more than one coverage record per beneficiary. Each coverage record corresponds
      * to a beneficiary belonging to a contract for a specific month and year. These records must be aggregated
      * for each patient that has ever been a member of the contract to calculate a list of date ranges for their
      * membership.
-     *
+     * <p>
      * The paging is done by beneficiary, not by enrollment record. A beneficiary may have dozens of enrollment records
      * in the database.
-     *
+     * <p>
      * For example if
-     *
-     *      1. The page size is 10, and
-     *      2. A contract has been active for two years
+     * <p>
+     * 1. The page size is 10, and
+     * 2. A contract has been active for two years
      * Then each beneficiary could have a record for every month they were active in the contract. Assuming each beneficiary
      * was active for every month of the contract that would be (10 beneficiaries) * (24 months per beneficiary) = 240 records
-     *
+     * <p>
      * Internally the pageCoverage method will pull more beneficiaries' records than it needs for a complete page and then
      * truncate the results down to the expected page size.
-     *
+     * <p>
      * The page coverage method will also include the cursor with the result for the next page of beneficiaries.
-     *
+     * <p>
      * Step by step what is involved in this method:
-     *
+     * <p>
      * 1. Check that contract has enrollment for all necessary months before retrieving a {@link CoveragePagingRequest#getPageSize()}.
-     *    If a contract does not have enrollment for every month except the current month, then it violates a business requirement
-     *    {@link #getExpectedCoveragePeriods(CoveragePagingRequest)}
+     * If a contract does not have enrollment for every month except the current month, then it violates a business requirement
+     * {@link #getExpectedCoveragePeriods(CoveragePagingRequest)}
      * 2. Calculate number of coverage records which correspond to page size patients to pull from database. There should be
-     *    at most one coverage record per beneficiary per month the contract has been active
-     *    (pageSize * months * beneficiaries) {@link #getCoverageLimit(int, long)}
+     * at most one coverage record per beneficiary per month the contract has been active
+     * (pageSize * months * beneficiaries) {@link #getCoverageLimit(int, long)}
      * 3. Conduct query to receive coverage records for a {@link #getCoverageLimit(int, long)} of enrollment information
-     *    without processing the results. Each record in the results contains all known identifiers associated
-     *    with a patient and specifies a  month and year that the beneficiaries
-     *    are a member of the contract {@link #queryCoverageMembership(CoveragePagingRequest, long)}
+     * without processing the results. Each record in the results contains all known identifiers associated
+     * with a patient and specifies a  month and year that the beneficiaries
+     * are a member of the contract {@link #queryCoverageMembership(CoveragePagingRequest, long)}
      * 4. Group the previous queries' results by patient {@link #aggregateEnrollmentByPatient(int, List)}
      * 5. For each patient condense enrollment down to a single set of date ranges {@link #summarizeCoverageMembership(ContractForCoverageDTO, Map.Entry)}
      * 6. Determine whether another page of results is necessary
@@ -549,8 +479,7 @@ public class CoverageServiceRepository {
         // A missing period = one month of enrollment missing for the contract
         List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllByContractNumber(contract.getContractNumber());
         if (coveragePeriods.size() != expectedCoveragePeriods) {
-            throw new IllegalArgumentException("at least one coverage period missing from enrollment table for contract "
-                    + page.getContract().getContractNumber());
+            throw new IllegalArgumentException("at least one coverage period missing from enrollment table for contract " + page.getContract().getContractNumber());
         }
 
         // Determine how many records to pull back
@@ -560,18 +489,13 @@ public class CoverageServiceRepository {
         List<CoverageMembership> enrollment = queryCoverageMembership(page, limit);
 
         // Guarantee ordering of results to the order that the beneficiaries were returned from SQL
-        Map<Long, List<CoverageMembership>> enrollmentByBeneficiary =
-                aggregateEnrollmentByPatient(expectedCoveragePeriods, enrollment);
+        Map<Long, List<CoverageMembership>> enrollmentByBeneficiary = aggregateEnrollmentByPatient(expectedCoveragePeriods, enrollment);
 
         // Only summarize page size beneficiaries worth of information and report it
-        List<CoverageSummary> beneficiarySummaries = enrollmentByBeneficiary.entrySet().stream()
-                .limit(page.getPageSize())
-                .map(membershipEntry -> summarizeCoverageMembership(contract, membershipEntry))
-                .collect(toList());
+        List<CoverageSummary> beneficiarySummaries = enrollmentByBeneficiary.entrySet().stream().limit(page.getPageSize()).map(membershipEntry -> summarizeCoverageMembership(contract, membershipEntry)).collect(toList());
 
         // Get the patient to start from next time
-        Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
-                enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
+        Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor = enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
 
         // Build the next request if there is a next patient
         CoveragePagingRequest request = null;
@@ -586,7 +510,7 @@ public class CoverageServiceRepository {
     /**
      * Query the database for enrollment for beneficiaries but do not aggregate the data
      *
-     * @param page request with cursor and contract
+     * @param page  request with cursor and contract
      * @param limit number of records to pull back
      * @return records pulled back
      */
@@ -594,10 +518,7 @@ public class CoverageServiceRepository {
 
         Optional<Long> pageCursor = page.getCursor();
 
-        MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource()
-                .addValue(CONTRACT_STRING, page.getContractNumber())
-                .addValue(YEARS_STRING, YEARS)
-                .addValue("limit", limit);
+        MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource().addValue(CONTRACT_STRING, page.getContractNumber()).addValue(YEARS_STRING, YEARS).addValue("limit", limit);
 
         pageCursor.ifPresent(cursor -> sqlParameterSource.addValue("cursor", cursor));
 
@@ -607,12 +528,10 @@ public class CoverageServiceRepository {
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
         if (pageCursor.isPresent()) {
             String queryWithCursor = (isOptOutOn) ? SELECT_OPTOUT_COVERAGE_WITH_CURSOR : SELECT_COVERAGE_WITH_CURSOR;
-            enrollment = template.query(queryWithCursor, sqlParameterSource,
-                    CoverageServiceRepository::asMembership);
+            enrollment = template.query(queryWithCursor, sqlParameterSource, CoverageServiceRepository::asMembership);
         } else {
             String queryWithoutCursor = (isOptOutOn) ? SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR : SELECT_COVERAGE_WITHOUT_CURSOR;
-            enrollment = template.query(queryWithoutCursor, sqlParameterSource,
-                    CoverageServiceRepository::asMembership);
+            enrollment = template.query(queryWithoutCursor, sqlParameterSource, CoverageServiceRepository::asMembership);
         }
         return enrollment;
     }
@@ -620,7 +539,7 @@ public class CoverageServiceRepository {
     /**
      * Get the number of enrollment entries expected per patient assuming each patient is
      * a member of the contract since it was attested for.
-     *
+     * <p>
      * Basically expect one record per patient per month, tack on an additional patient to buffer the results.
      *
      * @return the maximum number of entries required from the database to a pageSize worth of beneficiaries
@@ -642,8 +561,7 @@ public class CoverageServiceRepository {
         // We have a coverage period for each month
         // January 1st - March 1st
         startTime = startTime.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
-        ZonedDateTime endTime = jobStartTime.atZoneSameInstant(AB2D_ZONE)
-                .plusMonths(1).truncatedTo(ChronoUnit.DAYS).plusSeconds(1);
+        ZonedDateTime endTime = jobStartTime.atZoneSameInstant(AB2D_ZONE).plusMonths(1).truncatedTo(ChronoUnit.DAYS).plusSeconds(1);
         return (int) ChronoUnit.MONTHS.between(startTime, endTime);
     }
 
@@ -653,12 +571,9 @@ public class CoverageServiceRepository {
         // Guarantee insertion order. Could use functional API in future.
         for (CoverageMembership coverageMembership : enrollment) {
             // If not present add to mapping
-            final long patientId = coverageMembership.getIdentifiers().isV3()
-                ? coverageMembership.getIdentifiers().getPatientIdV3()
-                : coverageMembership.getIdentifiers().getBeneficiaryId();
+            final long patientId = coverageMembership.getIdentifiers().isV3() ? coverageMembership.getIdentifiers().getPatientIdV3() : coverageMembership.getIdentifiers().getBeneficiaryId();
 
-            enrollmentByBeneficiary.putIfAbsent(patientId,
-                    new ArrayList<>(expectedCoveragePeriods));
+            enrollmentByBeneficiary.putIfAbsent(patientId, new ArrayList<>(expectedCoveragePeriods));
             enrollmentByBeneficiary.get(patientId).add(coverageMembership);
         }
 
@@ -700,8 +615,7 @@ public class CoverageServiceRepository {
     /**
      * Summarize the coverage of one beneficiary for
      */
-    public static CoverageSummary summarizeCoverageMembership(ContractForCoverageDTO contract,
-                                                        Map.Entry<Long, List<CoverageMembership>> membershipInfo) {
+    public static CoverageSummary summarizeCoverageMembership(ContractForCoverageDTO contract, Map.Entry<Long, List<CoverageMembership>> membershipInfo) {
 
         List<CoverageMembership> membershipMonths = membershipInfo.getValue();
         Identifiers identifiers = membershipInfo.getValue().get(0).getIdentifiers();
@@ -746,20 +660,18 @@ public class CoverageServiceRepository {
         return LocalDate.of(result.getYear(), result.getMonth(), 1);
     }
 
-    private static FilterOutByDate.DateRange asDateRange(LocalDate localStartDate, LocalDate localEndDate)  {
-        return FilterOutByDate.getDateRange(localStartDate.getMonthValue(), localStartDate.getYear(),
-                localEndDate.getMonthValue(), localEndDate.getYear());
+    private static FilterOutByDate.DateRange asDateRange(LocalDate localStartDate, LocalDate localEndDate) {
+        return FilterOutByDate.getDateRange(localStartDate.getMonthValue(), localStartDate.getYear(), localEndDate.getMonthValue(), localEndDate.getYear());
     }
 
     /**
      * Clean up indexes between major changes in coverage to keep queries performant.
-     *
+     * <p>
      * Calling this method introduces significant overhead so make sure it is only called after significant events.
      */
     @Trace
     public void vacuumCoverage() {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(vacuumCoverage)) {
+        try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(vacuumCoverage)) {
             statement.execute();
         } catch (SQLException exception) {
             throw new RuntimeException("Could not vacuum coverage table", exception);
