@@ -72,12 +72,13 @@ public class CoverageV3ImportService {
         String stagingFqtn = fqtn + "_staging";
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
             connection.setAutoCommit(false);
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("SET statement_timeout TO '30min'");
+            }
 
             try {
                 truncate(connection, stagingFqtn);
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
-
-                deleteFileFromS3(bucket, key, region);
 
                 if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 1) {
                     syncToHistorical(connection, fqtn);
@@ -85,6 +86,7 @@ public class CoverageV3ImportService {
                 }
 
                 connection.commit();
+                deleteFileFromS3(bucket, key, region);
                 log.info(
                         "Coverage_V3 import success: stagedRows={} source=s3://{}/{}", stagedRows, bucket, key
                 );
