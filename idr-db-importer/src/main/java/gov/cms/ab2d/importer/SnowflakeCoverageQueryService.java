@@ -8,11 +8,19 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.security.PrivateKey;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Properties;
 
 @Slf4j
 public class SnowflakeCoverageQueryService {
+
+    @FunctionalInterface
+    public interface PrivateKeyLoader {
+        PrivateKey load(String pem) throws Exception;
+    }
 
     private final String url;
     private final String user;
@@ -21,6 +29,7 @@ public class SnowflakeCoverageQueryService {
     private final String warehouse;
     private final String db;
     private final String schema;
+    private final PrivateKeyLoader privateKeyLoader;
 
     private static final String SQL = """
         WITH month_series AS (
@@ -56,6 +65,28 @@ public class SnowflakeCoverageQueryService {
             String db,
             String schema
     ) {
+        this(
+                url,
+                user,
+                privateKeyPem,
+                role,
+                warehouse,
+                db,
+                schema,
+                SnowflakeCoverageQueryService::loadPrivateKeyFromPem
+        );
+    }
+
+    SnowflakeCoverageQueryService(
+            String url,
+            String user,
+            String privateKeyPem,
+            String role,
+            String warehouse,
+            String db,
+            String schema,
+            PrivateKeyLoader privateKeyLoader
+    ) {
         this.url = url;
         this.user = user;
         this.privateKeyPem = privateKeyPem;
@@ -63,12 +94,13 @@ public class SnowflakeCoverageQueryService {
         this.warehouse = warehouse;
         this.db = db;
         this.schema = schema;
+        this.privateKeyLoader = privateKeyLoader;
     }
 
     public Connection open() throws Exception {
         Properties props = new Properties();
         props.put("user", user);
-        props.put("privateKey", loadPrivateKey(privateKeyPem));
+        props.put("privateKey", privateKeyLoader.load(privateKeyPem));
         props.put("authenticator", "SNOWFLAKE_JWT");
         props.put("role", role);
         props.put("warehouse", warehouse);
@@ -88,7 +120,7 @@ public class SnowflakeCoverageQueryService {
         return ps;
     }
 
-    private PrivateKey loadPrivateKey(String pem) throws IOException {
+    private static PrivateKey loadPrivateKeyFromPem(String pem) throws IOException {
         try (PEMParser parser = new PEMParser(new StringReader(pem))) {
             Object object = parser.readObject();
             if (object instanceof PrivateKeyInfo privateKeyInfo) {

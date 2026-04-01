@@ -3,6 +3,10 @@ package gov.cms.ab2d.importer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -11,9 +15,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -37,29 +41,19 @@ class CoverageV3ImportServiceTest {
         LocalDate firstDay = LocalDate.of(2026, 4, 1);
 
         Connection connection = mock(Connection.class);
-        PreparedStatement countPs1 = mock(PreparedStatement.class);
         PreparedStatement importPs = mock(PreparedStatement.class);
-        PreparedStatement upsertPs = mock(PreparedStatement.class);
         PreparedStatement historicalPs = mock(PreparedStatement.class);
         PreparedStatement deletePs = mock(PreparedStatement.class);
         PreparedStatement truncatePs = mock(PreparedStatement.class);
-        PreparedStatement countPs2 = mock(PreparedStatement.class);
-        ResultSet countRs1 = mock(ResultSet.class);
         ResultSet importRs = mock(ResultSet.class);
-        ResultSet countRs2 = mock(ResultSet.class);
 
-        AtomicInteger countSqlCalls = new AtomicInteger();
+        S3Client s3Client = mock(S3Client.class);
+        S3ClientBuilder s3ClientBuilder = mock(S3ClientBuilder.class);
 
         when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
             String sql = invocation.getArgument(0, String.class);
-            if (sql.startsWith("SELECT COUNT(*) FROM")) {
-                return countSqlCalls.getAndIncrement() == 0 ? countPs1 : countPs2;
-            }
             if (sql.startsWith("SELECT aws_s3.table_import_from_s3")) {
                 return importPs;
-            }
-            if (sql.contains("FROM " + STAGING_FQTN)) {
-                return upsertPs;
             }
             if (sql.contains("coverage_v3_historical")) {
                 return historicalPs;
@@ -73,35 +67,34 @@ class CoverageV3ImportServiceTest {
             throw new IllegalArgumentException("Unexpected SQL: " + sql);
         });
 
-        when(countPs1.executeQuery()).thenReturn(countRs1);
-        when(countRs1.next()).thenReturn(true);
-        when(countRs1.getLong(1)).thenReturn(5L);
-
         when(importPs.executeQuery()).thenReturn(importRs);
         when(importRs.next()).thenReturn(true);
         when(importRs.getString(1)).thenReturn("10 rows imported");
 
-        when(upsertPs.executeUpdate()).thenReturn(7);
         when(historicalPs.executeUpdate()).thenReturn(3);
         when(deletePs.executeUpdate()).thenReturn(2);
 
-        when(countPs2.executeQuery()).thenReturn(countRs2);
-        when(countRs2.next()).thenReturn(true);
-        when(countRs2.getLong(1)).thenReturn(10L);
+        when(s3ClientBuilder.region(any(Region.class))).thenReturn(s3ClientBuilder);
+        when(s3ClientBuilder.credentialsProvider(any(DefaultCredentialsProvider.class))).thenReturn(s3ClientBuilder);
+        when(s3ClientBuilder.build()).thenReturn(s3Client);
 
         try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class);
-             MockedStatic<LocalDate> localDate = mockStatic(LocalDate.class)) {
+             MockedStatic<LocalDate> localDate = mockStatic(LocalDate.class);
+             MockedStatic<S3Client> s3ClientStatic = mockStatic(S3Client.class)) {
 
             driverManager.when(() -> DriverManager.getConnection("jdbc:test", "user", "password"))
                     .thenReturn(connection);
             localDate.when(() -> LocalDate.now(ZoneOffset.UTC)).thenReturn(firstDay);
+            s3ClientStatic.when(S3Client::builder).thenReturn(s3ClientBuilder);
 
             service.importWithRetry(FQTN, "bucket", "file.csv", "us-east-1");
         }
 
+        verify(truncatePs).execute();
+        verify(importPs).executeQuery();
+        verify(s3Client).deleteObject(any(java.util.function.Consumer.class));
         verify(historicalPs).executeUpdate();
         verify(deletePs).executeUpdate();
-        verify(truncatePs).execute();
         verify(connection).commit();
         verify(connection, never()).rollback();
     }
@@ -111,31 +104,17 @@ class CoverageV3ImportServiceTest {
         LocalDate notFirstDay = LocalDate.of(2026, 4, 2);
 
         Connection connection = mock(Connection.class);
-        PreparedStatement countPs1 = mock(PreparedStatement.class);
         PreparedStatement importPs = mock(PreparedStatement.class);
-        PreparedStatement upsertPs = mock(PreparedStatement.class);
-        PreparedStatement deletePs = mock(PreparedStatement.class);
         PreparedStatement truncatePs = mock(PreparedStatement.class);
-        PreparedStatement countPs2 = mock(PreparedStatement.class);
-        ResultSet countRs1 = mock(ResultSet.class);
         ResultSet importRs = mock(ResultSet.class);
-        ResultSet countRs2 = mock(ResultSet.class);
 
-        AtomicInteger countSqlCalls = new AtomicInteger();
+        S3Client s3Client = mock(S3Client.class);
+        S3ClientBuilder s3ClientBuilder = mock(S3ClientBuilder.class);
 
         when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
             String sql = invocation.getArgument(0, String.class);
-            if (sql.startsWith("SELECT COUNT(*) FROM")) {
-                return countSqlCalls.getAndIncrement() == 0 ? countPs1 : countPs2;
-            }
             if (sql.startsWith("SELECT aws_s3.table_import_from_s3")) {
                 return importPs;
-            }
-            if (sql.contains("FROM " + STAGING_FQTN)) {
-                return upsertPs;
-            }
-            if (sql.startsWith("DELETE FROM")) {
-                return deletePs;
             }
             if (sql.startsWith("TRUNCATE TABLE")) {
                 return truncatePs;
@@ -143,57 +122,100 @@ class CoverageV3ImportServiceTest {
             throw new IllegalArgumentException("Unexpected SQL: " + sql);
         });
 
-        when(countPs1.executeQuery()).thenReturn(countRs1);
-        when(countRs1.next()).thenReturn(true);
-        when(countRs1.getLong(1)).thenReturn(5L);
+        when(importPs.executeQuery()).thenReturn(importRs);
+        when(importRs.next()).thenReturn(true);
+        when(importRs.getString(1)).thenReturn("10 rows imported");
+
+        when(s3ClientBuilder.region(any(Region.class))).thenReturn(s3ClientBuilder);
+        when(s3ClientBuilder.credentialsProvider(any(DefaultCredentialsProvider.class))).thenReturn(s3ClientBuilder);
+        when(s3ClientBuilder.build()).thenReturn(s3Client);
+
+        try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class);
+             MockedStatic<LocalDate> localDate = mockStatic(LocalDate.class);
+             MockedStatic<S3Client> s3ClientStatic = mockStatic(S3Client.class)) {
+
+            driverManager.when(() -> DriverManager.getConnection("jdbc:test", "user", "password"))
+                    .thenReturn(connection);
+            localDate.when(() -> LocalDate.now(ZoneOffset.UTC)).thenReturn(notFirstDay);
+            s3ClientStatic.when(S3Client::builder).thenReturn(s3ClientBuilder);
+
+            service.importWithRetry(FQTN, "bucket", "file.csv", "us-east-1");
+        }
+
+        verify(truncatePs).execute();
+        verify(importPs).executeQuery();
+        verify(s3Client).deleteObject(any(java.util.function.Consumer.class));
+        verify(connection).commit();
+        verify(connection, never()).rollback();
+        verify(connection, never()).prepareStatement(contains("coverage_v3_historical"));
+        verify(connection, never()).prepareStatement(startsWith("DELETE FROM"));
+    }
+
+    @Test
+    void importWithRetry_deletesFileFromS3AfterImport() throws Exception {
+        LocalDate notFirstDay = LocalDate.of(2026, 4, 2);
+
+        Connection connection = mock(Connection.class);
+        PreparedStatement importPs = mock(PreparedStatement.class);
+        PreparedStatement truncatePs = mock(PreparedStatement.class);
+        ResultSet importRs = mock(ResultSet.class);
+
+        S3Client s3Client = mock(S3Client.class);
+        S3ClientBuilder s3ClientBuilder = mock(S3ClientBuilder.class);
+
+        when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0, String.class);
+            if (sql.startsWith("SELECT aws_s3.table_import_from_s3")) {
+                return importPs;
+            }
+            if (sql.startsWith("TRUNCATE TABLE")) {
+                return truncatePs;
+            }
+            throw new IllegalArgumentException("Unexpected SQL: " + sql);
+        });
 
         when(importPs.executeQuery()).thenReturn(importRs);
         when(importRs.next()).thenReturn(true);
         when(importRs.getString(1)).thenReturn("10 rows imported");
 
-        when(upsertPs.executeUpdate()).thenReturn(7);
-        when(deletePs.executeUpdate()).thenReturn(2);
-
-        when(countPs2.executeQuery()).thenReturn(countRs2);
-        when(countRs2.next()).thenReturn(true);
-        when(countRs2.getLong(1)).thenReturn(10L);
+        when(s3ClientBuilder.region(Region.of("us-east-1"))).thenReturn(s3ClientBuilder);
+        when(s3ClientBuilder.credentialsProvider(any(DefaultCredentialsProvider.class))).thenReturn(s3ClientBuilder);
+        when(s3ClientBuilder.build()).thenReturn(s3Client);
 
         try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class);
-             MockedStatic<LocalDate> localDate = mockStatic(LocalDate.class)) {
+             MockedStatic<LocalDate> localDate = mockStatic(LocalDate.class);
+             MockedStatic<S3Client> s3ClientStatic = mockStatic(S3Client.class)) {
 
             driverManager.when(() -> DriverManager.getConnection("jdbc:test", "user", "password"))
                     .thenReturn(connection);
             localDate.when(() -> LocalDate.now(ZoneOffset.UTC)).thenReturn(notFirstDay);
+            s3ClientStatic.when(S3Client::builder).thenReturn(s3ClientBuilder);
 
             service.importWithRetry(FQTN, "bucket", "file.csv", "us-east-1");
         }
 
+        verify(s3Client).deleteObject(any(java.util.function.Consumer.class));
         verify(connection).commit();
         verify(connection, never()).rollback();
-        verify(connection, never()).prepareStatement(contains("coverage_v3_historical"));
     }
 
     @Test
     void importWithRetry_rollsBackWhenImportFails() throws Exception {
         Connection connection = mock(Connection.class);
-        PreparedStatement countPs = mock(PreparedStatement.class);
         PreparedStatement importPs = mock(PreparedStatement.class);
-        ResultSet countRs = mock(ResultSet.class);
+        PreparedStatement truncatePs = mock(PreparedStatement.class);
 
         when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
             String sql = invocation.getArgument(0, String.class);
-            if (sql.startsWith("SELECT COUNT(*) FROM")) {
-                return countPs;
-            }
             if (sql.startsWith("SELECT aws_s3.table_import_from_s3")) {
                 return importPs;
+            }
+            if (sql.startsWith("TRUNCATE TABLE")) {
+                return truncatePs;
             }
             throw new IllegalArgumentException("Unexpected SQL: " + sql);
         });
 
-        when(countPs.executeQuery()).thenReturn(countRs);
-        when(countRs.next()).thenReturn(true);
-        when(countRs.getLong(1)).thenReturn(5L);
         when(importPs.executeQuery()).thenThrow(new RuntimeException("boom"));
 
         try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class)) {

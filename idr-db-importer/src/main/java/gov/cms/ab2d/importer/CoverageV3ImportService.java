@@ -6,6 +6,9 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -73,6 +76,8 @@ public class CoverageV3ImportService {
             try {
                 truncate(connection, stagingFqtn);
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
+
+                deleteFileFromS3(bucket, key, region);
 
                 if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 1) {
                     syncToHistorical(connection, fqtn);
@@ -154,6 +159,23 @@ public class CoverageV3ImportService {
             conn.rollback();
         } catch (Exception ex) {
             log.warn("Rollback failed", ex);
+        }
+    }
+
+    private void deleteFileFromS3(String bucket, String key, String region) {
+        Region awsRegion = Region.of(region);
+
+        try (S3Client s3Client = S3Client.builder()
+                .region(awsRegion)
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .build()) {
+
+            s3Client.deleteObject(builder -> builder
+                    .bucket(bucket)
+                    .key(key)
+            );
+
+            log.info("Deleted imported file from S3: s3://{}/{}", bucket, key);
         }
     }
 }
