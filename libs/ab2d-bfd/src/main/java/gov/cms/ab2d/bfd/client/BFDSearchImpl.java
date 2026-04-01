@@ -63,6 +63,7 @@ public class BFDSearchImpl implements BFDSearch {
 
         if (version == FhirVersion.R4V3) {
             url.append("&_source=NCH");
+            url.append("&_security:not=42CFRPart2");
         }
         else {
             url.append("&excludeSAMHSA=true");
