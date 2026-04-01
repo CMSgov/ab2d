@@ -1,11 +1,13 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.coverage.service.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.worker.service.WorkerService;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.slf4j.MDC;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.messaging.Message;
@@ -36,10 +38,12 @@ public class JobHandler implements MessageHandler {
      */
     private final LockRegistry lockRegistry;
     private final WorkerService workerService;
+    private final CoverageV3Service coverageV3Service;
 
-    public JobHandler(LockRegistry lockRegistry, WorkerService workerService) {
+    public JobHandler(LockRegistry lockRegistry, WorkerService workerService, CoverageV3Service coverageV3Service) {
         this.lockRegistry = lockRegistry;
         this.workerService = workerService;
+        this.coverageV3Service = coverageV3Service;
     }
 
     @Override
@@ -70,6 +74,13 @@ public class JobHandler implements MessageHandler {
 
                 try {
 
+                    try {
+                        val success = coverageV3Service.copyFromStagingTable(getContractNumber(submittedJob));
+                        log.info("copyFromStagingTable success = {}", success);
+                    } catch (Exception e) {
+                        log.error("Error executing copyFromStagingTable", e);
+                    }
+
                     // Attempt to start (mark an eob job as in progress) an eob job.
                     // A job may not be started if the workers are busy or if coverage metadata needs an update.
                     Job job = workerService.process(jobId);
@@ -93,6 +104,10 @@ public class JobHandler implements MessageHandler {
 
     private String getJobId(Map<String, Object> submittedJob) {
         return String.valueOf(submittedJob.get("job_uuid"));
+    }
+
+    private String getContractNumber(Map<String, Object> submittedJob) {
+        return String.valueOf(submittedJob.get("contract_number"));
     }
 
 }
