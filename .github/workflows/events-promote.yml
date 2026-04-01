@@ -28,7 +28,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
 
     steps:
       - name: Authenticate to non-prod AWS account
