@@ -40,7 +40,7 @@ public class CoverageV3StagingHelper extends CoverageV3BaseQuery {
     private static final String COPY_FROM_STAGING_TO_COVERAGE_V3 =
     """
     with inserted_rows as (
-        insert into v3.coverage_v3_staging_copy select * from v3.coverage_v3 where contract = :contract returning *
+        insert into v3.coverage_v3_staging_copy select * from v3.coverage_v3_copy where contract = :contract returning *
     )
     select count(*) from inserted_rows;
     """;
