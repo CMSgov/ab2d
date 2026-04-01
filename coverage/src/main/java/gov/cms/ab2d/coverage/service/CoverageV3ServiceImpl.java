@@ -99,7 +99,10 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     @Override
     public boolean copyFromStagingTable(String contract) {
         val stagingHelper = new CoverageV3StagingHelper(dataSource);
-        val rowsInStaging = stagingHelper.getCoveragePeriodCountForCoverageV3Staging(contract);
+        val rowsInStaging = executeTimedQuery(
+            format("getCoveragePeriodCountForCoverageV3Staging contract=%s", contract),
+            () -> stagingHelper.getCoveragePeriodCountForCoverageV3Staging(contract)
+        );
         log.info("Found {} rows in staging table for contract {}", rowsInStaging, contract);
         if (rowsInStaging == 0) {
             return true;
@@ -131,7 +134,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         );
         log.info("Coverage table now contains {} rows for contract {}", rowsInCoverageAfterCopy, contract);
 
-        if (rowsInStaging != rowsInCoverageAfterCopy) {
+        if (!rowsInStaging.equals(rowsInCoverageAfterCopy)) {
             log.error("Row count in staging ({}) != row count in coverage ({}) for contract {}",
                 rowsInStaging,
                 rowsInCoverageBeforeCopy,
@@ -146,7 +149,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
             () -> stagingHelper.deleteFromStagingAndGetRowsDeleted(contract)
         );
 
-        if (rowsInStagingDeleted != rowsInCoverageAfterCopy) {
+        if (!rowsInStagingDeleted.equals(rowsInCoverageAfterCopy)) {
             log.error("Row count deleted from staging ({}) != row count in coverage ({}) for contract {}",
                 rowsInStagingDeleted,
                 rowsInCoverageAfterCopy,

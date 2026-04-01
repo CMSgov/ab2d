@@ -362,7 +362,7 @@ class TestRunner {
             if (!found) {
                 if (version == R4V3) {
                     // TODO Revert in AB2D-7173
-                    log.warn("[V3] ERROR -- No acceptable ID string was found, received {}", idString);
+                    log.debug("[V3] ERROR -- No acceptable ID string was found, received {}", idString);
                 } else {
                     fail("No acceptable ID string was found, received " + idString);
                 }
@@ -413,7 +413,7 @@ class TestRunner {
 
         if (fhirVersion == R4V3) {
             // TODO Revert in AB2D-7173
-            log.warn("[V3] ERROR -- type.coding array length = {}; expected length is >= 3", codingJson.length());
+            log.debug("[V3] ERROR -- type.coding array length = {}; expected length is >= 3", codingJson.length());
         } else {
             assertTrue(codingJson.length() >= 3);
         }
