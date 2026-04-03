@@ -72,9 +72,9 @@ public class CoverageV3ImportService {
         String stagingFqtn = fqtn + "_staging";
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
             connection.setAutoCommit(false);
-            try (Statement statement = connection.createStatement()) {
-                statement.execute("SET statement_timeout TO '30min'");
-            }
+//            try (Statement statement = connection.createStatement()) {
+//                statement.execute("SET statement_timeout TO '30min'");
+//            }
 
             try {
                 truncate(connection, stagingFqtn);
@@ -146,6 +146,7 @@ public class CoverageV3ImportService {
         );
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             log.info("Starting coverage_v3_historical sync");
+            ps.setQueryTimeout(1800);
             ps.executeUpdate();
         }
     }
