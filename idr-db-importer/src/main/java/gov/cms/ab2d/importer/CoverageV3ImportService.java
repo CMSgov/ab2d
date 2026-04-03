@@ -78,9 +78,10 @@ public class CoverageV3ImportService {
 
             try {
                 truncate(connection, stagingFqtn);
+                verifyFileExists(bucket, key, region);
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
 
-                if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 1) {
+                if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 3) {
                     syncToHistorical(connection, fqtn);
                     deleteOldCoverageMonths(connection, fqtn);
                 }
@@ -161,6 +162,19 @@ public class CoverageV3ImportService {
             conn.rollback();
         } catch (Exception ex) {
             log.warn("Rollback failed", ex);
+        }
+    }
+
+    private void verifyFileExists(String bucket, String key, String region) {
+        Region awsRegion = Region.of(region);
+
+        try (S3Client s3Client = S3Client.builder()
+                .region(awsRegion)
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .build()) {
+
+            s3Client.headObject(builder -> builder.bucket(bucket).key(key));
+            log.info("Verified file exists in S3 before import: s3://{}/{}", bucket, key);
         }
     }
 
