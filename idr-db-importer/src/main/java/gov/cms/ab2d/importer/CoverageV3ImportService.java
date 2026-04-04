@@ -72,9 +72,9 @@ public class CoverageV3ImportService {
         String stagingFqtn = fqtn + "_staging";
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
             connection.setAutoCommit(false);
-//            try (Statement statement = connection.createStatement()) {
-//                statement.execute("SET statement_timeout TO '30min'");
-//            }
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("SET statement_timeout TO '30min'");
+            }
 
             try {
                 truncate(connection, stagingFqtn);
