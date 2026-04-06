@@ -15,7 +15,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.13</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>gov.cms.ab2d</groupId>
@@ -38,7 +38,6 @@
         <spring-cloud-aws.version>3.4.0</spring-cloud-aws.version>
         <postgresql.version>42.7.7</postgresql.version>
 
-
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.10</jacoco.version>
         <maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
@@ -53,6 +52,9 @@
         <contract-client.version>2.1.2</contract-client.version>
         <sns-client.version>1.1.6</sns-client.version>
 
+        <!-- Security patches -->
+        <spring-security.version>6.5.9</spring-security.version>
+
         <!-- Dependency versions -->
         <commons-compress.version>1.28.0</commons-compress.version>
         <commons-io.version>2.19.0</commons-io.version>
@@ -60,6 +62,26 @@
         <!-- // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated -->
         <commons-lang3.version>3.18.0</commons-lang3.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>tools.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>3.1.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- patch for util
+            todo: change when new HAPI release updates version natively
+            -->
+            <dependency>
+                <groupId>ca.uhn.hapi.fhir</groupId>
+                <artifactId>org.hl7.fhir.utilities</artifactId>
+                <version>6.9.4</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>

@@ -2,7 +2,7 @@
 plugins {
     id 'java'
     id 'jacoco'
-    id 'org.springframework.boot' version '3.2.8'
+    id 'org.springframework.boot' version '3.5.13'
     id 'com.jfrog.artifactory' version '4.32.0' apply false
     id "org.sonarqube" version "4.1.0.3113"
     id "gov.cms.ab2d.plugin" version "1.0.2"

@@ -37,7 +37,7 @@ ext {
 
     commonsLangVersion='3.18.0'
     lombokVersion = '1.18.38'
-    springBootVersion='3.5.7'
+    springBootVersion='3.5.13'
     springCloudAwsVersion='3.4.0'
     hapiVersion = '8.4.0'
     newRelicVersion='8.4.0'
