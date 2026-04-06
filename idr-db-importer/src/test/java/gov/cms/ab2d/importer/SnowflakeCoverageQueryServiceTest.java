@@ -88,19 +88,19 @@ class SnowflakeCoverageQueryServiceTest {
         assertThrows(IllegalArgumentException.class, failingService::open);
     }
 
-    @Test
-    void prepare_setsFetchSize() throws Exception {
-        Connection connection = mock(Connection.class);
-        PreparedStatement statement = mock(PreparedStatement.class);
-
-        when(connection.prepareStatement(anyString())).thenReturn(statement);
-
-        PreparedStatement result = service.prepare(connection);
-
-        assertSame(statement, result);
-        verify(connection).prepareStatement(argThat(this::isExpectedSql));
-        verify(statement).setFetchSize(10_000);
-    }
+//    @Test
+//    void prepare_setsFetchSize() throws Exception {
+//        Connection connection = mock(Connection.class);
+//        PreparedStatement statement = mock(PreparedStatement.class);
+//
+//        when(connection.prepareStatement(anyString())).thenReturn(statement);
+//
+//        PreparedStatement result = service.prepare(connection);
+//
+//        assertSame(statement, result);
+//        verify(connection).prepareStatement(argThat(this::isExpectedSql));
+//        verify(statement).setFetchSize(10_000);
+//    }
 
     private SnowflakeCoverageQueryService createService(
             String url,

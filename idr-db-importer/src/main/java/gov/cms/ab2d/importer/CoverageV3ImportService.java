@@ -81,9 +81,9 @@ public class CoverageV3ImportService {
                 verifyFileExists(bucket, key, region);
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
 
-                if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 3) {
+                if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 1) {
                     syncToHistorical(connection, fqtn);
-                    deleteOldCoverageMonths(connection, fqtn);
+    //                deleteOldCoverageMonths(connection, fqtn);
                 }
 
                 connection.commit();
