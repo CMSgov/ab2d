@@ -58,7 +58,7 @@ public class SnowflakeCoverageQueryService {
 
     private static final String SQL = """
     WITH month_series AS (
-      SELECT DATEADD(month, seq4(), DATE '2020-07-01')::DATE AS month_start
+      SELECT DATEADD(month, seq4(), DATE '2021-01-01')::DATE AS month_start
       FROM TABLE(GENERATOR(ROWCOUNT => 6))
     )
     SELECT
