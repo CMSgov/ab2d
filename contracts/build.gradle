@@ -24,11 +24,6 @@ ext {
 
 allprojects {
     apply plugin: "org.cyclonedx.bom"
-    configurations.configureEach {
-        resolutionStrategy {
-            force 'org.apache.commons:commons-compress:1.28.0'
-        }
-    }
     dependencies {
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
         implementation "gov.cms.ab2d:ab2d-events-client:${eventClientVersion}"
