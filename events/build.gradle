@@ -14,11 +14,11 @@ version="2.0.0"
 group = "gov.cms.ab2d"
 
 ext {
-    springBootVersion= '3.5.7'
+    springBootVersion= '3.5.13'
     springCloudAwsVersion = '3.4.0'
     liquibaseVersion='5.0.0'
     jacksonVersion='2.20.0'
-    testContainerVersion='1.20.6'
+    testContainerVersion='1.21.4'
     eventClientVersion='3.3.9'
     lombokVersion = '1.18.38'
     commonsLangVersion='3.18.0' // // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
@@ -28,6 +28,9 @@ allprojects {
     apply plugin: 'gov.cms.ab2d.plugin'
     apply plugin: "org.cyclonedx.bom"
     apply plugin: 'org.springframework.boot'
+    configurations.all {
+        resolutionStrategy.force 'org.apache.commons:commons-compress:1.28.0'
+    }
     dependencies {
         implementation "com.squareup.okhttp3:okhttp:5.0.0"
         implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
