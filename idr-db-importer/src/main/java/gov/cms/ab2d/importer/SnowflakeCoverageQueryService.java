@@ -74,6 +74,7 @@ public class SnowflakeCoverageQueryService {
     JOIN CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_BENE_HSTRY bene
       ON elec.bene_sk = bene.bene_sk
     WHERE elec.bene_cntrct_num LIKE 'S%'
+      AND elec.bene_enrlmt_pgm_type_cd IN (2, 3)
       AND elec.idr_ltst_trans_flg = 'Y'
       AND elec.idr_trans_obslt_ts > '9999-12-30'
       AND bene.idr_ltst_trans_flg = 'Y'
