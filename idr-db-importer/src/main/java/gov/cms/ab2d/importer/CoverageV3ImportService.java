@@ -120,7 +120,7 @@ public class CoverageV3ImportService {
 
     private int executeImport(Connection conn, String fqtn, String bucket, String key, String region) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(IMPORT_SQL)) {
-            ps.setQueryTimeout(1800);
+            ps.setQueryTimeout(7200);
             ps.setString(1, fqtn);
             ps.setString(2, COLUMNS);
             ps.setString(3, COPY_OPTIONS);
