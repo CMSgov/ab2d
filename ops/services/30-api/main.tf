@@ -8,7 +8,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -69,7 +69,7 @@ locals {
   hpms_url_arn                 = module.platform.ssm.core.hpms_url.arn
   kms_master_key_id            = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   microservices_url            = lookup(module.platform.ssm.microservices, "url", { value : "none" }).value
-  network_access_logs_bucket   = module.platform.network_access_logs_bucket
+  network_access_logs_bucket   = module.platform.splunk_logging_bucket.bucket
   new_relic_app_name           = module.platform.ssm.common.new_relic_app_name.value
   new_relic_license_key_arn    = module.platform.ssm.common.new_relic_license_key.arn
   private_subnet_ids           = keys(module.platform.private_subnets)
@@ -218,12 +218,12 @@ resource "aws_security_group_rule" "efs_ingress" {
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   platform = module.platform
 }
 
 module "service" {
-  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=5f8a3f518faa00de1231c52c433c0867388e5b4e"
+  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   platform        = module.platform
   cluster_arn     = module.cluster.this.arn
   image           = local.api_image_uri
