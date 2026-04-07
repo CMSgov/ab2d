@@ -14,7 +14,7 @@ module "data_db_writer_instance" {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -121,12 +121,12 @@ data "aws_sqs_queue" "events" {
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   platform = module.platform
 }
 
 module "service" {
-  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=5525d2439d724a24588412b3faaa2d2d6f4c2552"
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
 
   cluster_arn                       = module.cluster.this.arn
   cpu                               = local.ecs_task_def_cpu_worker

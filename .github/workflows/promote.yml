@@ -33,7 +33,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
     env:
       TAG_NAME: ${{ inputs.tag_name }}
       SOURCE_REPO: ab2d
