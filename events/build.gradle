@@ -2,7 +2,7 @@
 plugins {
     id 'java'
     id 'jacoco'
-    id 'org.springframework.boot' version '3.2.8'
+    id 'org.springframework.boot' version '3.5.13'
     id 'com.jfrog.artifactory' version '4.32.0' apply false
     id "org.sonarqube" version "4.1.0.3113"
     id "gov.cms.ab2d.plugin" version "1.0.2"
@@ -10,16 +10,16 @@ plugins {
     id 'org.cyclonedx.bom' version '2.0.0' apply true
 }
 
-version="2.0.0"
+version="2.0.1"
 group = "gov.cms.ab2d"
 
 ext {
-    springBootVersion= '3.5.7'
+    springBootVersion= '3.5.13'
     springCloudAwsVersion = '3.4.0'
     liquibaseVersion='5.0.0'
     jacksonVersion='2.20.0'
-    testContainerVersion='1.20.6'
-    eventClientVersion='3.3.9'
+    testContainerVersion='1.21.4'
+    eventClientVersion='3.3.10'
     lombokVersion = '1.18.38'
     commonsLangVersion='3.18.0' // // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
 }
