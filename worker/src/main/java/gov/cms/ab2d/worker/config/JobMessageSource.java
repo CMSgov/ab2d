@@ -12,7 +12,7 @@ public class JobMessageSource extends JdbcPollingChannelAdapter {
 
     private static final String QUERY_GET_NEXT_UNPROCESSED_JOB =
     """
-    SELECT id, job_uuid, status, contract_number
+    SELECT id, job_uuid, status, contract_number, fhir_version
     FROM job
     WHERE status = 'SUBMITTED'
         AND (SELECT count(lock_key)

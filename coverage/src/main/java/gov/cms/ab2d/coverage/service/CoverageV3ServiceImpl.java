@@ -4,7 +4,7 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.query.CountBeneficiariesByCoveragePeriods;
-import gov.cms.ab2d.coverage.query.CoverageV3StagingHelper;
+import gov.cms.ab2d.coverage.query.CoverageV3StagingService;
 import gov.cms.ab2d.coverage.query.GetCoverageMembership;
 import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
@@ -37,10 +37,12 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     private final DataSource dataSource;
     private final PropertiesService propertiesService;
+    private final CoverageV3StagingService coverageV3StagingService;
 
-    public CoverageV3ServiceImpl(DataSource dataSource, PropertiesService propertiesService) {
+    public CoverageV3ServiceImpl(DataSource dataSource, PropertiesService propertiesService, CoverageV3StagingService coverageV3StagingService) {
         this.dataSource = dataSource;
         this.propertiesService = propertiesService;
+        this.coverageV3StagingService = coverageV3StagingService;
     }
 
     @Override
@@ -97,68 +99,17 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
-    public boolean copyFromStagingTable(String contract) {
-        val stagingHelper = new CoverageV3StagingHelper(dataSource);
-        val rowsInStaging = executeTimedQuery(
-            format("getCoveragePeriodCountForCoverageV3Staging contract=%s", contract),
-            () -> stagingHelper.getCoveragePeriodCountForCoverageV3Staging(contract)
-        );
-        log.info("Found {} rows in staging table for contract {}", rowsInStaging, contract);
-        if (rowsInStaging == 0) {
-            return true;
-        }
+    @Transactional
+    public synchronized boolean copyFromStagingTables(String contract) {
+        return coverageV3StagingService.copyFromStagingTables(contract);
+    }
 
-        val rowsInCoverageBeforeCopy = executeTimedQuery(
-            format("getCoveragePeriodCountForCoverageV3 contract=%s", contract),
-            () -> stagingHelper.getCoveragePeriodCountForCoverageV3(contract)
-        );
-        log.info("Found {} rows in coverage table for contract {}", rowsInCoverageBeforeCopy, contract);
+    @Override
+    public synchronized boolean copyFromHistoricalStagingTables() {
+        // TODO check for v3 jobs running
+        // TODO acquire lock?
 
-        log.info("Preparing to delete rows in coverage table for contract {}...", contract);
-        val rowsInCoverageDeleted = executeTimedQuery(
-            format("deleteFromCoverageAndGetRowsDeleted contract=%s", contract),
-            () -> stagingHelper.deleteFromCoverageAndGetRowsDeleted(contract)
-        );
-        log.info("Deleted {} rows in coverage table for contract {}", rowsInCoverageDeleted, contract);
-
-        log.info("Preparing to copy rows from staging to coverage for contract {}...", contract);
-        val rowsInserted = executeTimedQuery(
-            format("copyFromStagingToCoverage contract=%s", contract),
-            () -> stagingHelper.copyFromStagingToCoverage(contract)
-        );
-        log.info("Copied {} rows from staging to coverage for contract {}", rowsInserted, contract);
-
-        val rowsInCoverageAfterCopy = executeTimedQuery(
-            format("getCoveragePeriodCountForCoverageV3 contract=%s", contract),
-            () -> stagingHelper.getCoveragePeriodCountForCoverageV3(contract)
-        );
-        log.info("Coverage table now contains {} rows for contract {}", rowsInCoverageAfterCopy, contract);
-
-        if (!rowsInStaging.equals(rowsInCoverageAfterCopy)) {
-            log.error("Row count in staging ({}) != row count in coverage ({}) for contract {}",
-                rowsInStaging,
-                rowsInCoverageBeforeCopy,
-                contract
-            );
-            return false;
-        }
-
-        log.info("Preparing to delete rows in staging for contract {}", contract);
-        val rowsInStagingDeleted = executeTimedQuery(
-            format("deleteFromStagingAndGetRowsDeleted contract=%s", contract),
-            () -> stagingHelper.deleteFromStagingAndGetRowsDeleted(contract)
-        );
-
-        if (!rowsInStagingDeleted.equals(rowsInCoverageAfterCopy)) {
-            log.error("Row count deleted from staging ({}) != row count in coverage ({}) for contract {}",
-                rowsInStagingDeleted,
-                rowsInCoverageAfterCopy,
-                contract
-            );
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
     @Override
@@ -198,7 +149,8 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return propertiesService.isToggleOn("OptOutOn", false);
     }
 
-    private <T> T executeTimedQuery(String queryDescription, Supplier<T> supplier) {
+    // TODO move this into a utility class
+    public static <T> T executeTimedQuery(String queryDescription, Supplier<T> supplier) {
         val start = LocalDateTime.now();
         val result = supplier.get();
         val end = LocalDateTime.now();

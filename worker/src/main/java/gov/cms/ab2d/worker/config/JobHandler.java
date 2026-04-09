@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.coverage.service.CoverageV3Service;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
@@ -44,6 +45,7 @@ public class JobHandler implements MessageHandler {
         this.lockRegistry = lockRegistry;
         this.workerService = workerService;
         this.coverageV3Service = coverageV3Service;
+
     }
 
     @Override
@@ -75,7 +77,7 @@ public class JobHandler implements MessageHandler {
                 try {
 
                     try {
-                        val success = coverageV3Service.copyFromStagingTable(getContractNumber(submittedJob));
+                        val success = coverageV3Service.copyFromStagingTables(getContractNumber(submittedJob));
                         log.info("copyFromStagingTable success = {}", success);
                     } catch (Exception e) {
                         log.error("Error executing copyFromStagingTable", e);
@@ -108,6 +110,10 @@ public class JobHandler implements MessageHandler {
 
     private String getContractNumber(Map<String, Object> submittedJob) {
         return String.valueOf(submittedJob.get("contract_number"));
+    }
+
+    private FhirVersion getFhirVersion(Map<String, Object> submittedJob) {
+        return FhirVersion.valueOf(String.valueOf(submittedJob.get("fhir_version")));
     }
 
 }
