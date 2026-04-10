@@ -61,7 +61,12 @@ public class CoverageV3ImportService {
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
 
                 connection.commit();
-                deleteFileFromS3(bucket, key);
+
+                try {
+                    deleteFileFromS3(bucket, key);
+                } catch (Exception e) {
+                    log.warn("Failed to delete imported file s3://{}/{}, may need manual cleanup", bucket, key, e);
+                }
 
                 log.info(
                         "Coverage_V3 import success: stagedRows={} source=s3://{}/{}",
