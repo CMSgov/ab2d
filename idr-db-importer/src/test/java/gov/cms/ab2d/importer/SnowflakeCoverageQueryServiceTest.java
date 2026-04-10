@@ -40,7 +40,7 @@ class SnowflakeCoverageQueryServiceTest {
     }
 
     @Test
-    void open_buildsJdbcUrlWithoutQueryParamsAndPassesProperties() throws Exception {
+    void buildsJdbcUrlWithoutQueryParamsAndPassesProperties() throws Exception {
         Connection connection = mock(Connection.class);
 
         try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class)) {
@@ -59,7 +59,7 @@ class SnowflakeCoverageQueryServiceTest {
     }
 
     @Test
-    void open_buildsJdbcUrlWithExistingQueryParams() throws Exception {
+    void buildsJdbcUrlWithExistingQueryParams() throws Exception {
         SnowflakeCoverageQueryService serviceWithQuery = createService(URL_WITH_QUERY, privateKeyLoader);
         Connection connection = mock(Connection.class);
 
@@ -77,7 +77,7 @@ class SnowflakeCoverageQueryServiceTest {
     }
 
     @Test
-    void open_throwsWhenPrivateKeyLoaderFails() {
+    void throwsWhenPrivateKeyLoaderFails() {
         SnowflakeCoverageQueryService failingService = createService(
                 BASE_URL,
                 pem -> {
@@ -88,19 +88,19 @@ class SnowflakeCoverageQueryServiceTest {
         assertThrows(IllegalArgumentException.class, failingService::open);
     }
 
-//    @Test
-//    void prepare_setsFetchSize() throws Exception {
-//        Connection connection = mock(Connection.class);
-//        PreparedStatement statement = mock(PreparedStatement.class);
-//
-//        when(connection.prepareStatement(anyString())).thenReturn(statement);
-//
-//        PreparedStatement result = service.prepare(connection);
-//
-//        assertSame(statement, result);
-//        verify(connection).prepareStatement(argThat(this::isExpectedSql));
-//        verify(statement).setFetchSize(10_000);
-//    }
+    @Test
+    void setsFetchSize() throws Exception {
+        Connection connection = mock(Connection.class);
+        PreparedStatement statement = mock(PreparedStatement.class);
+
+        when(connection.prepareStatement(anyString())).thenReturn(statement);
+
+        PreparedStatement result = service.prepare(connection);
+
+        assertSame(statement, result);
+        verify(connection).prepareStatement(argThat(this::isExpectedSql));
+        verify(statement).setFetchSize(10_000);
+    }
 
     private SnowflakeCoverageQueryService createService(
             String url,
