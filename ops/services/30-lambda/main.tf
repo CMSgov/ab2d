@@ -12,7 +12,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -91,6 +91,9 @@ resource "aws_lambda_function" "slack_lambda" {
   handler       = "data_load_lambda.load_data"
   runtime       = "python3.12"
   timeout       = 600
+  architectures = [
+    "arm64",
+  ]
   environment {
     variables = {
       SLACK_WEBHOOK_URL = local.slack_webhook_ab2d_slack_alerts
@@ -110,6 +113,9 @@ resource "aws_lambda_function" "metrics_transform" {
   runtime          = "java11"
   memory_size      = 256
   timeout          = 600
+  architectures = [
+    "arm64",
+  ]
   environment {
     variables = {
       environment        = local.benv
@@ -128,6 +134,9 @@ resource "aws_lambda_function" "audit" {
   handler          = "gov.cms.ab2d.audit.AuditEventHandler"
   runtime          = "java11"
   timeout          = 600
+  architectures = [
+    "arm64",
+  ]
   vpc_config {
     security_group_ids = [local.efs_security_group_id, aws_security_group.audit_lambda.id]
     subnet_ids         = local.node_subnet_ids
@@ -224,6 +233,9 @@ resource "aws_lambda_function" "audit_svc_monitoring" {
   runtime       = "python3.12"
   timeout       = 600
   description   = "Lambda function that monitors the Audit srvice lambda and sends alert to slack"
+  architectures = [
+    "arm64",
+  ]
   tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
   environment {
     variables = {
@@ -266,6 +278,9 @@ resource "aws_lambda_function" "coverage_count" {
   runtime          = "java11"
   timeout          = 600
   memory_size      = 1024
+  architectures = [
+    "arm64",
+  ]
   environment {
     variables = {
       environment       = local.benv
@@ -309,6 +324,9 @@ resource "aws_lambda_function" "database_management" {
   runtime          = "java11"
   timeout          = 600
   memory_size      = 256
+  architectures = [
+    "arm64",
+  ]
   vpc_config {
     security_group_ids = [local.db_sg_id, aws_security_group.database_lambda.id]
     subnet_ids         = local.node_subnet_ids
@@ -339,6 +357,9 @@ resource "aws_lambda_function" "hpms_counts" {
   runtime          = "java11"
   timeout          = 600
   memory_size      = 256
+  architectures = [
+    "arm64",
+  ]
   vpc_config {
     security_group_ids = [local.microservices_lb, data.aws_security_group.microservices_lambda.id]
     subnet_ids         = local.node_subnet_ids
