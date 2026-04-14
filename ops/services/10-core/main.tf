@@ -34,7 +34,7 @@ locals {
   region_name        = module.platform.primary_region.name
   vpc_id             = module.platform.vpc_id
   splunk_alert_email = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
-  slack_queue_env    = local.parent_env
+  slack_queue_env    = local.parent_env == "test" || local.parent_env == "dev" ? "test" : "prod"
 }
 
 resource "aws_s3_bucket" "main_bucket" {
