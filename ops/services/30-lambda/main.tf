@@ -88,7 +88,7 @@ resource "aws_lambda_function" "slack_lambda" {
   filename      = data.archive_file.python_lambda_package.output_path
   function_name = "${local.service_prefix}-slack-alerts"
   role          = aws_iam_role.slack_lambda.arn
-  handler       = "data_load_lambda.load_data"
+  handler       = "slack_lambda.lambda_handler"
   runtime       = "python3.12"
   timeout       = 600
   architectures = [
@@ -232,7 +232,7 @@ resource "aws_lambda_function" "audit_svc_monitoring" {
   role          = aws_iam_role.microservices_lambda.arn
   runtime       = "python3.12"
   timeout       = 600
-  description   = "Lambda function that monitors the Audit srvice lambda and sends alert to slack"
+  description   = "Lambda function that monitors the Audit service lambda and sends alert to slack"
   architectures = [
     "arm64",
   ]
