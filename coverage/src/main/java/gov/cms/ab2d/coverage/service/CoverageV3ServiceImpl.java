@@ -10,6 +10,8 @@ import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.integration.support.locks.LockRegistry;
+import org.springframework.integration.support.locks.RenewableLockRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
@@ -39,7 +43,10 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     private final PropertiesService propertiesService;
     private final CoverageV3StagingService coverageV3StagingService;
 
-    public CoverageV3ServiceImpl(DataSource dataSource, PropertiesService propertiesService, CoverageV3StagingService coverageV3StagingService) {
+    public CoverageV3ServiceImpl(
+            DataSource dataSource,
+            PropertiesService propertiesService,
+            CoverageV3StagingService coverageV3StagingService) {
         this.dataSource = dataSource;
         this.propertiesService = propertiesService;
         this.coverageV3StagingService = coverageV3StagingService;
@@ -100,17 +107,19 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     @Override
     @Transactional
-    public synchronized boolean copyFromStagingTables(String contract) {
-        return coverageV3StagingService.copyFromStagingTables(contract);
+    public boolean moveFromStagingToRecentCoverage(String contract) {
+        return coverageV3StagingService.copyFromStagingTablesToRecent(contract);
     }
 
     @Override
-    public synchronized boolean copyFromHistoricalStagingTables() {
+    @Transactional
+    public boolean moveFromStagingToHistoricalCoverage(String contract) {
         // TODO check for v3 jobs running
         // TODO acquire lock?
 
-        return false;
+	    return coverageV3StagingService.copyFromStagingTablesToHistorical(contract);
     }
+
 
     @Override
     public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {

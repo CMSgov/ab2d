@@ -25,7 +25,7 @@ class CoverageV3StagingServiceTest {
 		int count = syncService.getCoveragePeriodCountForCoverageV3("Z1234");
 		System.out.println(count);
 
-		syncService.copyFromStagingTables("Z1234");
+		syncService.copyFromStagingTablesToRecent("Z1234");
 
 		int newCount = syncService.getCoveragePeriodCountForCoverageV3("Z1234");
 		System.out.println(newCount);

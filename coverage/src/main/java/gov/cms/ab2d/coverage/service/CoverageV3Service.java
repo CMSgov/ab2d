@@ -7,7 +7,6 @@ import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 public interface CoverageV3Service {
     int countBeneficiariesByCoveragePeriod(CoverageV3Periods coveragePeriods, String contract);
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
-    boolean copyFromStagingTables(String contract);
-    boolean copyFromHistoricalStagingTables();
-
+    boolean moveFromStagingToRecentCoverage(String contract);
+    boolean moveFromStagingToHistoricalCoverage(String contract);
 }

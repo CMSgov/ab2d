@@ -77,7 +77,7 @@ public class JobHandler implements MessageHandler {
                 try {
 
                     try {
-                        val success = coverageV3Service.copyFromStagingTables(getContractNumber(submittedJob));
+                        val success = coverageV3Service.moveFromStagingToRecentCoverage(getContractNumber(submittedJob));
                         log.info("copyFromStagingTable success = {}", success);
                     } catch (Exception e) {
                         log.error("Error executing copyFromStagingTable", e);

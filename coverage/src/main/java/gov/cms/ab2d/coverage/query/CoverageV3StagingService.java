@@ -1,5 +1,6 @@
 package gov.cms.ab2d.coverage.query;
 
+import gov.cms.ab2d.coverage.service.CoverageV3LockWrapper;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.dao.support.DataAccessUtils;
@@ -15,10 +16,12 @@ import static java.lang.String.format;
 @Slf4j
 public class CoverageV3StagingService extends CoverageV3BaseQuery {
 
-    public CoverageV3StagingService(DataSource dataSource) {
-        super(dataSource);
-    }
+    private final CoverageV3LockWrapper lockWrapper;
 
+    public CoverageV3StagingService(DataSource dataSource, CoverageV3LockWrapper lockWrapper) {
+        super(dataSource);
+        this.lockWrapper = lockWrapper;
+    }
 
 //    private static final String COVERAGE_V3_TABLE = "v3.coverage_v3_copy";
 //    private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging_copy";
@@ -48,7 +51,7 @@ public class CoverageV3StagingService extends CoverageV3BaseQuery {
     """.formatted(COVERAGE_V3_TABLE, COVERAGE_V3_STAGING_TABLE);
 
     @Transactional
-    public synchronized boolean copyFromStagingTables(String contract) {
+    public boolean copyFromStagingTablesToRecent(String contract) {
         val stagingHelper = new CoverageV3StagingService(dataSource);
         val rowsInStaging = executeTimedQuery(
                 format("getCoveragePeriodCountForCoverageV3Staging contract=%s", contract),
@@ -58,6 +61,8 @@ public class CoverageV3StagingService extends CoverageV3BaseQuery {
         if (rowsInStaging == 0) {
             return true;
         }
+
+        // TODO acquire lock here
 
         val rowsInCoverageBeforeCopy = executeTimedQuery(
                 format("getCoveragePeriodCountForCoverageV3 contract=%s", contract),
@@ -112,6 +117,11 @@ public class CoverageV3StagingService extends CoverageV3BaseQuery {
         }
 
         log.info("Coverage data successfully copied from staging table for contract {}", contract);
+        return true;
+    }
+
+    @Transactional
+    public boolean copyFromStagingTablesToHistorical(String contract) {
         return true;
     }
 
