@@ -68,7 +68,7 @@ jobs:
         uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
 
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
 
       - name: Tofu plan and apply - Worker
         working-directory: ops/services/30-worker/
