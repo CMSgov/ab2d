@@ -165,7 +165,7 @@ resource "aws_security_group_rule" "load_balancer_access_nat" {
 }
 
 resource "aws_security_group_rule" "pdp" { #TODO: Consider updating this to formally yield to the web acls informed by the ip sets below
-  for_each = nonsensitive(local.pdp_map)
+  for_each = !module.platform.is_ephemeral_env ? nonsensitive(local.pdp_map) : tomap({})
 
   type              = "ingress"
   description       = "${replace(each.key, "-", " ")}: ${each.value["contracts"]}"

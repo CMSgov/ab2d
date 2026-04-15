@@ -210,7 +210,7 @@ resource "aws_iam_role" "idr_db_importer_task_execution" {
 }
 
 resource "aws_iam_policy" "idr_db_importer_task_execution" {
-  name = "${local.app}-${local.parent_env}-idr-db-importer-task-execution"
+  name = "${local.app}-${local.env}-idr-db-importer-task-execution"
 
   policy = jsonencode({
     Version = "2012-10-17"

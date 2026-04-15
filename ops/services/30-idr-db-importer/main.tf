@@ -71,7 +71,7 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
             value = local.env
           }
         ],
-          local.env == "prod" ? [
+        local.env == "prod" ? [
           {
             name  = "IDR_SNOWFLAKE_URL"
             value = "jdbc:snowflake://cms-idr.privatelink.snowflakecomputing.com"
@@ -146,7 +146,7 @@ resource "aws_scheduler_schedule" "idr_db_importer" {
 }
 
 resource "aws_iam_role" "idr_db_importer_eventbridge_scheduler" {
-  name = "idr-db-importer-cron-scheduler-role"
+  name = "${local.service_prefix}-idr-db-importer-cron-scheduler-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -163,7 +163,7 @@ resource "aws_iam_role" "idr_db_importer_eventbridge_scheduler" {
 }
 
 resource "aws_iam_policy" "idr_db_importer_eventbridge_scheduler" {
-  name = "idr-db-importer-cron-scheduler-policy"
+  name = "${local.service_prefix}-idr-db-importer-cron-scheduler-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
