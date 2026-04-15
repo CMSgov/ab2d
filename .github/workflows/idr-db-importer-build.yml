@@ -64,7 +64,7 @@ jobs:
           echo "AWS_ACCOUNT_NAME=test" >> $GITHUB_ENV
 
       - name: Assume role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-${{ env.AWS_ACCOUNT_NAME }}-github-actions

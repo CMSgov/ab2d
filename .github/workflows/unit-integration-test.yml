@@ -64,7 +64,7 @@ jobs:
             SONAR_TOKEN=/sonarqube/token
 
       - name: Assume role in AB2D dev account
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
