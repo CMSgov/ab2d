@@ -9,7 +9,6 @@ import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,13 +36,13 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
     }
 
     // TODO REVERT BACK WHEN DEPLOYING TO DEV
-    //private static final String COVERAGE_V3_TABLE = "v3.coverage_v3_copy";
-    //private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging_copy";
+    private static final String COVERAGE_V3_TABLE_RECENT = "v3.coverage_v3_copy";
+    private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging_copy";
+    private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical_copy";
 
-
-    private static final String COVERAGE_V3_TABLE_RECENT = "v3.coverage_v3";
-    private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical";
-    private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging";
+    //private static final String COVERAGE_V3_TABLE_RECENT = "v3.coverage_v3";
+    //private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical";
+    //private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging";
 
     private static final String RECORD_COUNT_BY_CONTRACT =
         "select count(*) from %s where contract = :contract";

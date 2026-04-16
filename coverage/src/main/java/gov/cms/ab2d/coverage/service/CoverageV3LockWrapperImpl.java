@@ -1,5 +1,6 @@
 package gov.cms.ab2d.coverage.service;
 
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
@@ -10,6 +11,7 @@ import javax.sql.DataSource;
 import java.util.concurrent.locks.Lock;
 
 @Component
+@Slf4j
 public class CoverageV3LockWrapperImpl implements CoverageV3LockWrapper {
 
     private static final String COVERAGE_V3_LOCK_NAME_PREFIX = "COVERAGE_V3_LOCK_";
