@@ -28,7 +28,7 @@ public class CoverageV3ScheduledSync {
 		}
 	}
 
-	@Scheduled(cron = "0 0 * * *") // every day at 12am
+	@Scheduled(cron = "0 0 0 * * *") // every day at 12am
 	public void moveToHistoricalForAllContracts() {
 		val contracts = syncService.getContractsWithRecentCoverage();
 		for (String contract : contracts) {
