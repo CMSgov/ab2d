@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
@@ -20,6 +21,7 @@ import static gov.cms.ab2d.coverage.service.CoverageV3ServiceImpl.executeTimedQu
 import static java.lang.String.format;
 
 @Slf4j
+@Component
 public class CoverageV3SyncService extends CoverageV3BaseQuery {
 
     private final CoverageV3LockWrapper lockWrapper;
