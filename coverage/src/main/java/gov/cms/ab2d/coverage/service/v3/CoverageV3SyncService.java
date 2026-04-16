@@ -1,4 +1,4 @@
-package gov.cms.ab2d.coverage.service;
+package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.contracts.model.Contract;
@@ -16,7 +16,7 @@ import javax.sql.DataSource;
 
 import java.util.List;
 
-import static gov.cms.ab2d.coverage.service.CoverageV3ServiceImpl.executeTimedQuery;
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.executeTimedQuery;
 import static java.lang.String.format;
 
 @Slf4j

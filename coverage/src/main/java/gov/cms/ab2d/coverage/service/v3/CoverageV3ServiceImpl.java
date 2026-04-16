@@ -1,11 +1,13 @@
-package gov.cms.ab2d.coverage.service;
+package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.*;
+import gov.cms.ab2d.coverage.model.v3.CoverageV3Count;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.query.CountBeneficiariesByCoveragePeriods;
 import gov.cms.ab2d.coverage.query.GetCoverageMembership;
 import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
+import gov.cms.ab2d.coverage.query.GetCoverageV3Count;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -98,6 +100,11 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         }
 
         return new CoveragePagingResult(beneficiarySummaries, request);
+    }
+
+    @Override
+    public Map<String, List<CoverageV3Count>>  getCoverageCount() {
+        return new GetCoverageV3Count(dataSource).coverageCounts();
     }
 
     @Override

@@ -10,13 +10,15 @@ import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.coverage.service.CoverageV3Service;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.util.CoverageV3Utils;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
+import gov.cms.ab2d.worker.processor.coverage.check.v3.CoverageV3PresentCheck;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -70,6 +72,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final PropertiesService propertiesService;
     private final ContractToContractCoverageMapping mapping;
     private final CoverageSnapshotService coverageSnapshotService;
+
 
     //CHECKSTYLE.OFF
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
@@ -755,10 +758,34 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    void verifyCoverageV3() {
-        // TODO CoveragePresentCheck
-        // TODO CoverageUpToDateCheck
+    @Override
+    public void verifyCoverageV3() {
+        val issues = new ArrayList<String>();
+
+        // Only filter contracts that matter
+        List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts()
+            .stream()
+            .filter(contract -> !contract.isTestContract())
+            .filter(contract -> contractNotBeingUpdated(issues, contract))
+            .map(Contract::toDTO)
+            .toList();
+
+        val coverageCounts = coverageV3Service.getCoverageCount();
+
+        long passingContracts = enabledContracts.stream()
+            .filter(new CoverageV3PresentCheck(coverageV3Service, coverageCounts, issues))
+            .count();
+
+        String message = String.format("Verified that %d contracts pass all coverage checks out of %d",
+                passingContracts, enabledContracts.size());
+        log.info(message);
+
+        if (!issues.isEmpty()) {
+            throw new CoverageVerificationException(message, issues);
+        }
+
     }
+
 
     /**
      * Check that a contract is not currently having its enrollment updated. The verification steps are only valid

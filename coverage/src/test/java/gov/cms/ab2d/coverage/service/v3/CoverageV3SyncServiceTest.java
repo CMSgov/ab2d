@@ -1,4 +1,4 @@
-package gov.cms.ab2d.coverage.service;
+package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;

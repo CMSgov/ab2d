@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.coverage.service.CoverageV3LockWrapper;
-import gov.cms.ab2d.coverage.service.CoverageV3Service;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3LockWrapper;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
