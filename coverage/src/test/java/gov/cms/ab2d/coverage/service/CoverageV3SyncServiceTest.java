@@ -52,7 +52,7 @@ class CoverageV3SyncServiceTest {
 //		int newNewCount = stagingService.getCoveragePeriodCountForCoverageV3Staging("Z1234");
 //		System.out.println(newNewCount);
 
-		stagingService.copyFromStagingTablesToRecent("Z0000");
+		stagingService.copyFromStagingTablesToRecent("Z0000", false);
 
 
 		int rowsInsertedForZ0001 = stagingService.moveToHistoricalInternal("Z0000");
