@@ -116,8 +116,8 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
     // Return false if lock can't be acquired or job is running for contract
     // Throw exception is data integrity assertions fail
     @Transactional
-    public boolean copyFromStagingTablesToRecent(String contract) {
-        if (getContractsWithActiveV3Jobs().contains(contract)) {
+    public boolean copyFromStagingTablesToRecent(String contract, boolean skipActiveJobCheck) {
+        if (!skipActiveJobCheck && getContractsWithActiveV3Jobs().contains(contract)) {
             log.info("[V3] Contract has an active V3 job; returning");
             return false;
         }
@@ -199,8 +199,8 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
     }
 
     @Transactional
-    public boolean moveToHistorical(String contract) {
-        if (getContractsWithActiveV3Jobs().contains(contract)) {
+    public boolean moveToHistorical(String contract,  boolean skipActiveJobCheck) {
+        if (!skipActiveJobCheck && getContractsWithActiveV3Jobs().contains(contract)) {
             log.info("[V3] Contract has an active V3 job; returning");
             return false;
         }

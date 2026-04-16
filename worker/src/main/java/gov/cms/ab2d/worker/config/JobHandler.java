@@ -82,11 +82,16 @@ public class JobHandler implements MessageHandler {
 
                 try {
 
+                    var syncCoverageV3Successful = true;
                     try {
-                        trySyncCoverageV3(submittedJob);
+                        syncCoverageV3Successful = trySyncCoverageV3(submittedJob);
                     } catch (Exception e) {
                         log.error("Error calling trySyncCoverageV3", e);
                         throw e;
+                    }
+
+                    if (!syncCoverageV3Successful) {
+                        throw new IllegalStateException("trySyncCoverageV3 returned false after several attempts");
                     }
 
                     // Attempt to start (mark an eob job as in progress) an eob job.
@@ -131,7 +136,7 @@ public class JobHandler implements MessageHandler {
         val contract = getContractNumber(submittedJob);
         var movedOldCoverage = false;
         var movedOldCoverageAttempts = 1;
-        while (movedOldCoverageAttempts <= 5 && !(movedOldCoverage=coverageV3Service.moveOldCoverageToHistoricalCoverage(contract))) {
+        while (movedOldCoverageAttempts <= 5 && !(movedOldCoverage=coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, true))) {
             log.info("Sleeping 5 seconds for movedOldCoverage");
             Thread.sleep(5000);
             movedOldCoverageAttempts++;
@@ -144,7 +149,7 @@ public class JobHandler implements MessageHandler {
 
         var movedFromStaging = false;
         var movedFromStagingAttempts = 1;
-        while (movedFromStagingAttempts <= 5 && !(movedFromStaging=coverageV3Service.moveFromStagingToRecentCoverage(contract))) {
+        while (movedFromStagingAttempts <= 5 && !(movedFromStaging=coverageV3Service.moveFromStagingToRecentCoverage(contract, true))) {
             log.info("Sleeping 5 seconds for movedFromStaging");
             Thread.sleep(5000);
             movedFromStagingAttempts++;

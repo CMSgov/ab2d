@@ -21,7 +21,7 @@ public class CoverageV3ScheduledSync {
 		val contracts = syncService.getContractsWithRecentCoverage();
 		for (String contract : contracts) {
 			try {
-				syncService.copyFromStagingTablesToRecent(contract);
+				syncService.copyFromStagingTablesToRecent(contract, false);
 			} catch (Exception e) {
 				log.info("Error calling copyFromStagingTablesToRecent for contract {}", contract);
 			}
@@ -33,7 +33,7 @@ public class CoverageV3ScheduledSync {
 		val contracts = syncService.getContractsWithRecentCoverage();
 		for (String contract : contracts) {
 			try {
-				syncService.moveToHistorical(contract);
+				syncService.moveToHistorical(contract, false);
 			} catch (Exception e) {
 				log.info("Error calling moveToHistorical for contract {}", contract);
 			}
