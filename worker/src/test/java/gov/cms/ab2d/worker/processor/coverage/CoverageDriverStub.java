@@ -131,6 +131,6 @@ public class CoverageDriverStub implements CoverageDriver {
 
     @Override
     public void verifyCoverageV3() {
-        // Intentional
+        // do nothing
     }
 }
