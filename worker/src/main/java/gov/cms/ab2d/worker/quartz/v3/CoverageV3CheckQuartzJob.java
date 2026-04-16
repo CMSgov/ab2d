@@ -53,21 +53,20 @@ public class CoverageV3CheckQuartzJob extends QuartzJobBean {
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
         if (propertiesService.isToggleOn(MAINTENANCE_MODE, false)) {
-            log.info("Skipping enrollment verification because AB2D is already in maintenance mode");
+            log.info("[V3] Skipping enrollment verification because AB2D is already in maintenance mode");
         }
 
         try {
             driver.verifyCoverageV3();
         } catch (CoverageVerificationException exception) {
-            log.error("coverage is invalid or not able to be verified {}", exception.getAlertMessage());
-
-            logManager.alert(COVERAGE_VERIFICATION_FAILURE + " Coverage verification failed:\n" + exception.getAlertMessage(), List.of(PRODUCTION));
+            log.error("[V3] coverage is invalid or not able to be verified {}", exception.getAlertMessage());
+            logManager.alert("[V3] " + COVERAGE_VERIFICATION_FAILURE + " Coverage verification failed:\n" + exception.getAlertMessage(), List.of(PRODUCTION));
 
             throw new JobExecutionException(exception);
         } catch (Exception exception) {
-            log.error("Encountered unexpected failure attempting to verify coverage", exception);
+            log.error("[V3] Encountered unexpected failure attempting to verify coverage", exception);
 
-            logManager.alert(COVERAGE_VERIFICATION_ABORTED + " could not verify coverage due to " + exception.getClass()
+            logManager.alert("[V3] " + COVERAGE_VERIFICATION_ABORTED + " could not verify coverage due to " + exception.getClass()
                     + ":\n" + exception.getMessage(), List.of(PRODUCTION));
 
             throw new JobExecutionException(exception);

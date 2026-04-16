@@ -536,13 +536,13 @@ public class CoverageDriverImpl implements CoverageDriver {
         final ZonedDateTime startDateTime = getStartDateTime(contract);
         final CoverageV3Periods coverageV3Periods = CoverageV3Utils.enumerateCoveragePeriods(startDateTime, endTime);
 
-        log.info("counting number of beneficiaries for {} coverage periods for job {}",
+        log.info("[V3] counting number of beneficiaries for {} coverage periods for job {}",
                 coverageV3Periods.getHistoricalCoverage().size() + coverageV3Periods.getRecentCoverage().size(),
                 job.getJobUuid()
         );
 
         int count = coverageV3Service.countBeneficiariesByCoveragePeriod(coverageV3Periods, contract.getContractNumber());
-        log.info("number of beneficiaries for job {}: {}", job.getJobUuid(), count);
+        log.info("[V3] number of beneficiaries for job {}: {}", job.getJobUuid(), count);
         return count;
     }
 

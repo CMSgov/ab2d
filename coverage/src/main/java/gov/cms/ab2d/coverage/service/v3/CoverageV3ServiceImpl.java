@@ -164,7 +164,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         val end = LocalDateTime.now();
         val duration = ChronoUnit.MILLIS.between(start, end);
         val durationSeconds = duration / 1000.0;
-        log.info("Query completed in {}s: {}", durationSeconds, queryDescription);
+        log.info("[V3] Query completed in {}s: {}", durationSeconds, queryDescription);
         return result;
     }
 
