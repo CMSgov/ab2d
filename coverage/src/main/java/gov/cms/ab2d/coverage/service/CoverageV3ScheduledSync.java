@@ -4,9 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 @Slf4j
-@Component
+@Service
 public class CoverageV3ScheduledSync {
 
 	private final CoverageV3SyncService syncService;

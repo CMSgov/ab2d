@@ -6,12 +6,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.util.concurrent.locks.Lock;
 
-@Component
 @Slf4j
+@Service
 public class CoverageV3LockWrapperImpl implements CoverageV3LockWrapper {
 
     private static final String COVERAGE_V3_LOCK_NAME_PREFIX = "COVERAGE_V3_LOCK_";
