@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.coverage.service.CoverageV3LockWrapper;
 import gov.cms.ab2d.coverage.service.CoverageV3Service;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
@@ -40,12 +41,17 @@ public class JobHandler implements MessageHandler {
     private final LockRegistry lockRegistry;
     private final WorkerService workerService;
     private final CoverageV3Service coverageV3Service;
+    private final CoverageV3LockWrapper coverageV3LockWrapper;
 
-    public JobHandler(LockRegistry lockRegistry, WorkerService workerService, CoverageV3Service coverageV3Service) {
+    public JobHandler(
+            LockRegistry lockRegistry,
+            WorkerService workerService,
+            CoverageV3Service coverageV3Service,
+            CoverageV3LockWrapper coverageV3LockWrapper) {
         this.lockRegistry = lockRegistry;
         this.workerService = workerService;
         this.coverageV3Service = coverageV3Service;
-
+        this.coverageV3LockWrapper = coverageV3LockWrapper;
     }
 
     @Override
@@ -77,10 +83,10 @@ public class JobHandler implements MessageHandler {
                 try {
 
                     try {
-                        val success = coverageV3Service.moveFromStagingToRecentCoverage(getContractNumber(submittedJob));
-                        log.info("copyFromStagingTable success = {}", success);
+                        trySyncCoverageV3(submittedJob);
                     } catch (Exception e) {
-                        log.error("Error executing copyFromStagingTable", e);
+                        log.error("Error calling trySyncCoverageV3", e);
+                        throw e;
                     }
 
                     // Attempt to start (mark an eob job as in progress) an eob job.
@@ -114,6 +120,43 @@ public class JobHandler implements MessageHandler {
 
     private FhirVersion getFhirVersion(Map<String, Object> submittedJob) {
         return FhirVersion.valueOf(String.valueOf(submittedJob.get("fhir_version")));
+    }
+
+    private boolean trySyncCoverageV3(Map<String, Object> submittedJob) throws InterruptedException {
+        val fhirVersion = getFhirVersion(submittedJob);
+        if (fhirVersion != FhirVersion.R4V3) {
+            return true;
+        }
+
+        val contract = getContractNumber(submittedJob);
+        var movedOldCoverage = false;
+        var movedOldCoverageAttempts = 1;
+        while (movedOldCoverageAttempts <= 5 && !(movedOldCoverage=coverageV3Service.moveOldCoverageToHistoricalCoverage(contract))) {
+            log.info("Sleeping 5 seconds for movedOldCoverage");
+            Thread.sleep(5000);
+            movedOldCoverageAttempts++;
+        }
+
+        if (!movedOldCoverage) {
+            log.info("Unable to complete movedOldCoverage step");
+            return false;
+        }
+
+        var movedFromStaging = false;
+        var movedFromStagingAttempts = 1;
+        while (movedFromStagingAttempts <= 5 && !(movedFromStaging=coverageV3Service.moveFromStagingToRecentCoverage(contract))) {
+            log.info("Sleeping 5 seconds for movedFromStaging");
+            Thread.sleep(5000);
+            movedFromStagingAttempts++;
+        }
+
+        if (!movedFromStaging) {
+            log.info("Unable to complete movedFromStaging step");
+            return false;
+        }
+
+        return true;
+
     }
 
 }

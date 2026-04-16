@@ -8,5 +8,5 @@ public interface CoverageV3Service {
     int countBeneficiariesByCoveragePeriod(CoverageV3Periods coveragePeriods, String contract);
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
     boolean moveFromStagingToRecentCoverage(String contract);
-    boolean moveFromStagingToHistoricalCoverage(String contract);
+    boolean moveOldCoverageToHistoricalCoverage(String contract);
 }

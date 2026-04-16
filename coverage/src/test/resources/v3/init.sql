@@ -131,3 +131,18 @@ VALUES
     ('M6', '2025-01-01', false),
     ('M7', '2025-01-01', true)
 ;
+
+
+CREATE TABLE IF NOT EXISTS job
+(
+    job_uuid character varying(255) NOT NULL,
+    status character varying(32)  NOT NULL,
+    fhir_version character varying(255)  NOT NULL,
+    contract_number character varying(255) NOT NULL
+);
+
+INSERT INTO job(job_uuid, status, fhir_version, contract_number)
+VALUES
+    ('111A', 'SUBMITTED', 'R4V3', 'Z0001'),
+    ('111B', 'SUBMITTED', 'R4V3', 'Z0002')
+;
