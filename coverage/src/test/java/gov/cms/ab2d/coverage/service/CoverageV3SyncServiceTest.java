@@ -1,8 +1,7 @@
-package gov.cms.ab2d.coverage.query;
+package gov.cms.ab2d.coverage.service;
 
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
-import gov.cms.ab2d.coverage.service.CoverageV3LockWrapperImpl;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

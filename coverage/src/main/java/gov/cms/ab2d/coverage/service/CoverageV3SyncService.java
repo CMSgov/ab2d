@@ -1,8 +1,8 @@
-package gov.cms.ab2d.coverage.query;
+package gov.cms.ab2d.coverage.service;
 
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.contracts.model.Contract;
-import gov.cms.ab2d.coverage.service.CoverageV3LockWrapper;
+import gov.cms.ab2d.coverage.query.CoverageV3BaseQuery;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.dao.support.DataAccessUtils;

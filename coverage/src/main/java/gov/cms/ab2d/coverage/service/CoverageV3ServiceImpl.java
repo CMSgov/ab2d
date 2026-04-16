@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.query.CountBeneficiariesByCoveragePeriods;
-import gov.cms.ab2d.coverage.query.CoverageV3SyncService;
 import gov.cms.ab2d.coverage.query.GetCoverageMembership;
 import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;

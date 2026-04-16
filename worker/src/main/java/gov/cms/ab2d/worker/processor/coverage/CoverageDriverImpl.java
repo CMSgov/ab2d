@@ -755,6 +755,11 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    void verifyCoverageV3() {
+        // TODO CoveragePresentCheck
+        // TODO CoverageUpToDateCheck
+    }
+
     /**
      * Check that a contract is not currently having its enrollment updated. The verification steps are only valid
      * for contracts not currently being updated

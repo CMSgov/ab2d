@@ -1,4 +1,4 @@
-package gov.cms.ab2d.coverage.query;
+package gov.cms.ab2d.coverage.service;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
