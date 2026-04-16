@@ -34,7 +34,7 @@ locals {
   region_name        = module.platform.primary_region.name
   vpc_id             = module.platform.vpc_id
   splunk_alert_email = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
-  slack_queue_env    = local.env == "test" || local.env == "dev" ? "test" : "prod"
+  slack_queue_env    = local.parent_env == "test" || local.parent_env == "dev" ? "test" : "prod"
 }
 
 resource "aws_s3_bucket" "main_bucket" {
@@ -374,7 +374,7 @@ module "idr_db_importer_bucket" {
 
   additional_bucket_policies = [data.aws_iam_policy_document.idr_db_importer_additional_bucket_policy.json]
   app                        = module.platform.app
-  env                        = module.platform.env
+  env                        = local.parent_env
   name                       = "${module.platform.app}-${module.platform.env}-idr-db-importer"
   ssm_parameter              = "/ab2d/${module.platform.env}/core/nonsensitive/idr-db-importer-bucket"
 }

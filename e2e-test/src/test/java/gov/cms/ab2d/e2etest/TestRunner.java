@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import javax.crypto.SecretKey;
@@ -113,6 +114,10 @@ class TestRunner {
     private static final OffsetDateTime earliest = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
+
+    private final AtomicInteger v3IdErrorCount = new AtomicInteger(0);
+
+    private final AtomicInteger v3CodingErrorCount = new AtomicInteger(0);
 
     enum PdpContract {
         // Use PDP-100 for testing V1/V2
@@ -362,7 +367,12 @@ class TestRunner {
             if (!found) {
                 if (version == R4V3) {
                     // TODO Revert in AB2D-7173
-                    log.debug("[V3] ERROR -- No acceptable ID string was found, received {}", idString);
+                    String msg = "[V3] ERROR -- No acceptable ID string was found, received {}";
+                    if (v3IdErrorCount.getAndIncrement() < 5) {
+                        log.warn(msg, idString);
+                    } else {
+                        log.debug(msg, idString);
+                    }
                 } else {
                     fail("No acceptable ID string was found, received " + idString);
                 }
@@ -413,7 +423,12 @@ class TestRunner {
 
         if (fhirVersion == R4V3) {
             // TODO Revert in AB2D-7173
-            log.debug("[V3] ERROR -- type.coding array length = {}; expected length is >= 3", codingJson.length());
+            String msg = "[V3] ERROR -- type.coding array length = {}; expected length is >= 3";
+            if (v3CodingErrorCount.getAndIncrement() < 5) {
+                log.warn(msg, codingJson.length());
+            } else {
+                log.debug(msg, codingJson.length());
+            }
         } else {
             assertTrue(codingJson.length() >= 3);
         }
