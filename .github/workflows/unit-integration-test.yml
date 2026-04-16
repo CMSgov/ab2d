@@ -32,7 +32,7 @@ jobs:
             grep -P "${workflow_files_re}" \
           && echo "files=true" >> $GITHUB_OUTPUT || echo "files=" >> $GITHUB_OUTPUT
   test:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
     needs: workflow
     if: needs.workflow.outputs.files || github.event_name == 'push'
     env:
