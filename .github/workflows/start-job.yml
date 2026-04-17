@@ -8,10 +8,7 @@ on:
         description: 'AB2D environment'
         type: choice
         options:
-          - dev
-          - test
-          - sandbox
-          - prod
+          - ephemeral-prod
         required: true
         default: 'test'
       contractNumber:
@@ -62,33 +59,11 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          # AB2D_ENV is now strictly one of: dev, test, sandbox, prod
           PARENT_ENV="${AB2D_ENV}"
           echo "PARENT_ENV=${PARENT_ENV}" >> $GITHUB_ENV
-          
-          # do not allow V3 jobs in sandbox or prod
-          if [[ "$PARENT_ENV" == "sandbox" || "$PARENT_ENV" == "prod" ]]; then
-            if [[ "$FHIR_VERSION" == "R4V3" ]]; then
-              echo "Error: V3 jobs are not allowed in the $PARENT_ENV environment."
-              exit 1
-            fi
-            AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
-          else
-            AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
-          fi
-          
+          AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
           echo "AWS_ACCOUNT=${AWS_ACCOUNT}" >> $GITHUB_ENV
-          
-          if [[ "$PARENT_ENV" == "dev" ]]; then
-            DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
-          elif [[ "$PARENT_ENV" == "test" ]]; then
-            DEFAULT_API_URL_PREFIX="https://test.ab2d.cms.gov"
-          elif [[ "$PARENT_ENV" == "sandbox" ]]; then
-            DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
-          elif [[ "$PARENT_ENV" == "prod" ]]; then
-            DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
-          fi
-   
+          DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
 
       - name: Assume AWS role
@@ -136,5 +111,6 @@ jobs:
           fi
 
           SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
-          psql -t --command="${SQL_INSERT_RECORD}"
-          echo "Inserted record with job UUID = $JOB_ID"
+          echo "$SQL_INSERT_RECORD"
+#          psql -t --command="${SQL_INSERT_RECORD}"
+#          echo "Inserted record with job UUID = $JOB_ID"
