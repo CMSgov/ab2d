@@ -17,10 +17,10 @@ public class CoverageV3ScheduledSync {
 
 	@Scheduled(cron= "0 0 * * * ?") // every hour
 	public void copyFromStagingTablesToRecentForAllContracts() {
+		log.info("Calling copyFromStagingTablesToRecentForAllContracts()");
 		val contracts = syncService.getContractsWithRecentCoverage();
 		for (String contract : contracts) {
 			try {
-				log.info("Calling copyFromStagingTablesToRecentForAllContracts()");
 				syncService.copyFromStagingTablesToRecent(contract, false);
 			} catch (Exception e) {
 				log.error("Error calling copyFromStagingTablesToRecent for contract {}", contract);
@@ -30,10 +30,10 @@ public class CoverageV3ScheduledSync {
 
 	@Scheduled(cron = "0 0 0 * * *") // every day at 12am
 	public void moveToHistoricalForAllContracts() {
+		log.info("Calling moveToHistoricalForAllContracts()");
 		val contracts = syncService.getContractsWithRecentCoverage();
 		for (String contract : contracts) {
 			try {
-				log.info("Calling moveToHistoricalForAllContracts()");
 				syncService.moveToHistorical(contract, false);
 			} catch (Exception e) {
 				// TODO need to introduce retry - and possibly a way to trigger this via properties value
