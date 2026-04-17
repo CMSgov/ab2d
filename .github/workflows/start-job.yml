@@ -1,5 +1,5 @@
 name: Start job
-run-name: start-job ${{ inputs.environment }} ${{ inputs.contractNumber }}
+run-name: start-job ephemeral-prod ${{ inputs.contractNumber }}
 
 on:
   workflow_dispatch: # Allow manual trigger
