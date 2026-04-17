@@ -76,7 +76,7 @@ jobs:
 
   # Build job - only runs when needed
   build:
-    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
     needs: setup
     if: needs.setup.outputs.should_build == 'true'
     permissions:

@@ -17,7 +17,7 @@ env:
 
 jobs:
   sonarqube:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
 
     steps:
       - name: Checkout code
