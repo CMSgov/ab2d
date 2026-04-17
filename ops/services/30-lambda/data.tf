@@ -43,13 +43,6 @@ data "aws_security_group" "microservices_lambda" {
   name = "${local.service_prefix}-microservices-lambda"
 }
 
-data "aws_security_group" "microservices_lb" {
-  filter {
-    name   = "tag:Name"
-    values = ["${local.service_prefix}-microservices-lb"]
-  }
-}
-
 data "aws_security_group" "efs_sg" {
   filter {
     name   = "tag:Name"
