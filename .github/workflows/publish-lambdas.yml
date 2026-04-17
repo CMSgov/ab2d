@@ -26,7 +26,7 @@ jobs:
     defaults:
       run:
         working-directory: ./lambdas
-    runs-on: codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
     outputs:
       build_version: ${{ steps.publish_lambdas.outputs.build_version }}
     env:
