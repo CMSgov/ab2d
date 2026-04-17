@@ -18,7 +18,7 @@ public class CoverageV3ScheduledSync {
 	@Scheduled(cron= "0 0 * * * ?") // every hour
 	public void copyFromStagingTablesToRecentForAllContracts() {
 		log.info("Calling copyFromStagingTablesToRecentForAllContracts()");
-		val contracts = syncService.getContractsWithRecentCoverage();
+		val contracts = syncService.getContractsWithRecentCoverage(); // TODO replace this with getContractsWithCoverageInStagingTable
 		for (String contract : contracts) {
 			try {
 				syncService.copyFromStagingTablesToRecent(contract, false);
