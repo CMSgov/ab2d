@@ -565,6 +565,33 @@ public class CoverageServiceRepository {
         return (int) ChronoUnit.MONTHS.between(startTime, endTime);
     }
 
+    public static void main(String[] args) {
+        // Contract: S5884
+        // Attestation date: "2021-01-28 19:06:52+00"
+
+        OffsetDateTime jobStartTime = OffsetDateTime.now().minusDays(1);
+
+        //2007-12-03T10:15:30+01:00[Europe/Paris]
+        ZonedDateTime startTime = ZonedDateTime.parse("2021-01-28T19:06:52+00");
+        if (startTime.isBefore(AB2D_EPOCH)) {
+            startTime = AB2D_EPOCH;
+        }
+
+        // MONTHS.between is exclusive and only counts full months so
+        // January 15th - February 1st would return 0 and not 2 like it needs
+        // We have a coverage period for each month
+        // January 1st - March 1st
+        startTime = startTime.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+        ZonedDateTime endTime = jobStartTime.atZoneSameInstant(AB2D_ZONE).plusMonths(1).truncatedTo(ChronoUnit.DAYS).plusSeconds(1);
+        System.out.println("startTime = " + startTime);
+        System.out.println("endTime = " + endTime);
+
+        int expectedCoveragePeriods = (int) ChronoUnit.MONTHS.between(startTime, endTime);
+
+        System.out.println("Expected coverage periods = " + expectedCoveragePeriods);
+
+    }
+
     public static Map<Long, List<CoverageMembership>> aggregateEnrollmentByPatient(int expectedCoveragePeriods, List<CoverageMembership> enrollment) {
         Map<Long, List<CoverageMembership>> enrollmentByBeneficiary = new LinkedHashMap<>();
 
