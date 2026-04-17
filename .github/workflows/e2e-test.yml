@@ -89,7 +89,12 @@ jobs:
             OKTA_CLIENT_PASSWORD=/ab2d/mgmt/okta/sensitive/test-pdp-100-secret
             SECONDARY_USER_OKTA_CLIENT_ID=/ab2d/mgmt/okta/sensitive/test-pdp-1000-id
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/ab2d/mgmt/okta/sensitive/test-pdp-1000-secret
-
+      - name: diagnostic
+        run: |
+          getent hosts test.ab2d.cms.gov
+          curl --v --max-time 10 https://test.ab2d.cms.gov/health || true
+          getent hosts test.idp.idm.cms.gov
+          curl -v --max-time 10 https://test.idp.idm.cms.gov/ || true
       - name: Run e2e-test
         env:
          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SBX' }}
