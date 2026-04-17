@@ -117,6 +117,7 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
     // Throw exception is data integrity assertions fail
     @Transactional
     public boolean copyFromStagingTablesToRecent(String contract, boolean skipActiveJobCheck) {
+        // TODO skip Z contracts
         if (!skipActiveJobCheck && getContractsWithActiveV3Jobs().contains(contract)) {
             log.info("[V3] Contract has an active V3 job; returning");
             return false;
@@ -200,6 +201,7 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
 
     @Transactional
     public boolean moveToHistorical(String contract,  boolean skipActiveJobCheck) {
+        // TODO skip Z contracts
         if (!skipActiveJobCheck && getContractsWithActiveV3Jobs().contains(contract)) {
             log.info("[V3] Contract has an active V3 job; returning");
             return false;
