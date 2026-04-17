@@ -73,7 +73,12 @@ jobs:
           KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
           aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
-
+      - name: DNS Diag
+        run: |
+          cat /etc/resolv.conf
+          getent hosts sandbox.fhir.bfd.cmscloud.gov || true
+          getent hosts github.com || true
+          nslookup sandbox.fhir.bfd.cmscloud.gov || true
       - name: Run e2e-bfd-test
         env:
           AB2D_BFD_URL: 'https://sandbox.fhir.bfd.cmscloud.gov'
