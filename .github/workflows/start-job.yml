@@ -59,7 +59,7 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          PARENT_ENV="${AB2D_ENV}"
+          PARENT_ENV="prod"
           echo "PARENT_ENV=${PARENT_ENV}" >> $GITHUB_ENV
           AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
           echo "AWS_ACCOUNT=${AWS_ACCOUNT}" >> $GITHUB_ENV
