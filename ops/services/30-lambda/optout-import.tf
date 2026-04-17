@@ -124,7 +124,7 @@ resource "aws_lambda_function" "import" {
   s3_key            = data.aws_s3_object.import[local.env].key
   s3_object_version = data.aws_s3_object.import[local.env].version_id
   architectures = [
-    "x86_64",
+    "arm64",
   ]
   description                    = "Ingests the most recent beneficiary opt-out list from BFD"
   function_name                  = "${local.service_prefix}-opt-out-import"
