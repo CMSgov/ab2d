@@ -63,7 +63,7 @@ locals {
   slack_webhook_ab2d_slack_alerts = module.platform.ssm.webhooks.ab2d-slack-alerts.value
   contracts_service_url           = module.platform.ssm.contracts.url.value
 
-  microservices_lb = data.aws_security_group.microservices_lb.id
+  microservices_lb = aws_security_group.microservices_lb.id
   cloudfront_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 
 
@@ -82,6 +82,22 @@ locals {
 provider "artifactory" {
   url          = module.platform.ssm.artifactory.url.value
   access_token = module.platform.ssm.artifactory.token.value
+}
+
+resource "aws_security_group" "microservices_lb" {
+  name   = "${local.service_prefix}-microservices-lb"
+  vpc_id = module.platform.vpc_id
+
+  tags = { Name = "${local.service_prefix}-microservices-lb" }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "lambda_sg_ingress_access" {
+  from_port                    = 80
+  to_port                      = 80
+  ip_protocol                  = "tcp"
+  description                  = "inbound access for lambda to microservices"
+  referenced_security_group_id = data.aws_security_group.microservices_lambda.id
+  security_group_id            = aws_security_group.microservices_lb.id
 }
 
 resource "aws_lambda_function" "slack_lambda" {

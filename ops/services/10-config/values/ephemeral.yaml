@@ -15,6 +15,9 @@ copy:
   - /ab2d/${env}/core/sensitive/okta_jwt_issuer
   - /ab2d/${env}/worker/nonsensitive/bfd_keystore_location
   - /ab2d/${env}/worker/sensitive/bfd_keystore_password
+  - /ab2d/${env}/worker/sensitive/bfd_keystore_base64
+  - /ab2d/${env}/worker/nonsensitive/bfd_truststore_cert
+  - /ab2d/${env}/worker/nonsensitive/bfd_v3_truststore_cert
   - /ab2d/${env}/api/sensitive/tls_private_key
   - /ab2d/${env}/api/nonsensitive/tls_public_cert
 values:
