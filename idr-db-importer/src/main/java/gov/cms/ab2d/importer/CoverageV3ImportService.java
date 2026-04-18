@@ -45,17 +45,13 @@ public class CoverageV3ImportService {
             backoff = @Backoff(delay = 1000, multiplier = 2.0)
     )
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws SQLException {
-      //  String stagingFqtn = fqtn + "_staging";
-        String stagingFqtn = fqtn + "_historical";
+        String stagingFqtn = fqtn + "_staging";
 
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
             connection.setAutoCommit(false);
-            try (Statement statement = connection.createStatement()) {
-                statement.execute("SET statement_timeout TO '120min'");
-            }
 
             try {
-           //     truncate(connection, stagingFqtn);
+                truncate(connection, stagingFqtn);
                 verifyFileExists(bucket, key);
 
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
@@ -101,7 +97,7 @@ public class CoverageV3ImportService {
 
     private int executeImport(Connection conn, String fqtn, String bucket, String key, String region) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(IMPORT_SQL)) {
-            ps.setQueryTimeout(7200);
+            ps.setQueryTimeout(1800);
             ps.setString(1, fqtn);
             ps.setString(2, COLUMNS);
             ps.setString(3, COPY_OPTIONS);
