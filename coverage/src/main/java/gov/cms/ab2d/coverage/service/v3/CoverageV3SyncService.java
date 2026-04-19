@@ -112,6 +112,10 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
 
+    private static final String GET_CONTRACTS_IN_STAGING_TABLE =
+        "select distinct contract from %s"
+        .formatted(COVERAGE_V3_STAGING_TABLE);
+
     // Return true if nothing in staging OR copy is successful
     // Return false if lock can't be acquired or job is running for contract
     // Throw exception is data integrity assertions fail
@@ -235,7 +239,12 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
         return template.queryForList(GET_CONTRACTS_WITH_COVERAGE_IN_STAGING, String.class);
     }
 
-    public List<String> getContractsWithRecentCoverage() {
+    public List<String> getContractsInRecentCoverageTable() {
+        val template = new JdbcTemplate(this.dataSource);
+        return template.queryForList(GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE, String.class);
+    }
+
+    public List<String> getContractsInCoverageStagingTable() {
         val template = new JdbcTemplate(this.dataSource);
         return template.queryForList(GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE, String.class);
     }

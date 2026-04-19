@@ -18,7 +18,7 @@ public class CoverageV3ScheduledSync {
 	@Scheduled(cron= "0 0 * * * ?") // every hour
 	public void copyFromStagingTablesToRecentForAllContracts() {
 		log.info("Calling copyFromStagingTablesToRecentForAllContracts()");
-		val contracts = syncService.getContractsWithRecentCoverage(); // TODO replace this with getContractsWithCoverageInStagingTable
+		val contracts = syncService.getContractsInCoverageStagingTable();
 		for (String contract : contracts) {
 			try {
 				syncService.copyFromStagingTablesToRecent(contract, false);
@@ -31,7 +31,7 @@ public class CoverageV3ScheduledSync {
 	@Scheduled(cron = "0 0 0 * * *") // every day at 12am
 	public void moveToHistoricalForAllContracts() {
 		log.info("Calling moveToHistoricalForAllContracts()");
-		val contracts = syncService.getContractsWithRecentCoverage();
+		val contracts = syncService.getContractsInRecentCoverageTable();
 		for (String contract : contracts) {
 			try {
 				syncService.moveToHistorical(contract, false);
