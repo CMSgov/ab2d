@@ -112,5 +112,5 @@ jobs:
 
           SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
           echo "$SQL_INSERT_RECORD"
-#          psql -t --command="${SQL_INSERT_RECORD}"
-#          echo "Inserted record with job UUID = $JOB_ID"
+          psql -t --command="${SQL_INSERT_RECORD}"
+          echo "Inserted record with job UUID = $JOB_ID"
