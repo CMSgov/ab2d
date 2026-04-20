@@ -8,7 +8,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -43,7 +43,7 @@ locals {
   db_user_arn                = module.platform.ssm.core.database_user.arn
   events_sqs_url             = data.aws_sqs_queue.events.url
   kms_master_key_id          = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
-  network_access_logs_bucket = module.platform.network_access_logs_bucket
+  network_access_logs_bucket = module.platform.splunk_logging_bucket.bucket
   vpc_id                     = module.platform.vpc_id
 
   # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
@@ -60,7 +60,7 @@ locals {
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   platform = module.platform
 }
 
@@ -177,7 +177,7 @@ resource "aws_sns_topic_subscription" "events" {
 }
 
 module "events_service" {
-  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=5525d2439d724a24588412b3faaa2d2d6f4c2552"
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
 
   cluster_arn           = module.cluster.this.id
   cpu                   = 512

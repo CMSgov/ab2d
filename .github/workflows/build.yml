@@ -22,7 +22,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
     env:
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
       MODULE: ${{ inputs.module }}

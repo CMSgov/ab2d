@@ -12,7 +12,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -63,7 +63,7 @@ locals {
   slack_webhook_ab2d_slack_alerts = module.platform.ssm.webhooks.ab2d-slack-alerts.value
   contracts_service_url           = module.platform.ssm.contracts.url.value
 
-  microservices_lb = data.aws_security_group.microservices_lb.id
+  microservices_lb = aws_security_group.microservices_lb.id
   cloudfront_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 
 
@@ -84,13 +84,32 @@ provider "artifactory" {
   access_token = module.platform.ssm.artifactory.token.value
 }
 
+resource "aws_security_group" "microservices_lb" {
+  name   = "${local.service_prefix}-microservices-lb"
+  vpc_id = module.platform.vpc_id
+
+  tags = { Name = "${local.service_prefix}-microservices-lb" }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "lambda_sg_ingress_access" {
+  from_port                    = 80
+  to_port                      = 80
+  ip_protocol                  = "tcp"
+  description                  = "inbound access for lambda to microservices"
+  referenced_security_group_id = data.aws_security_group.microservices_lambda.id
+  security_group_id            = aws_security_group.microservices_lb.id
+}
+
 resource "aws_lambda_function" "slack_lambda" {
   filename      = data.archive_file.python_lambda_package.output_path
   function_name = "${local.service_prefix}-slack-alerts"
   role          = aws_iam_role.slack_lambda.arn
-  handler       = "data_load_lambda.load_data"
+  handler       = "slack_lambda.lambda_handler"
   runtime       = "python3.12"
   timeout       = 600
+  architectures = [
+    "arm64",
+  ]
   environment {
     variables = {
       SLACK_WEBHOOK_URL = local.slack_webhook_ab2d_slack_alerts
@@ -110,6 +129,9 @@ resource "aws_lambda_function" "metrics_transform" {
   runtime          = "java11"
   memory_size      = 256
   timeout          = 600
+  architectures = [
+    "arm64",
+  ]
   environment {
     variables = {
       environment        = local.benv
@@ -128,6 +150,9 @@ resource "aws_lambda_function" "audit" {
   handler          = "gov.cms.ab2d.audit.AuditEventHandler"
   runtime          = "java11"
   timeout          = 600
+  architectures = [
+    "arm64",
+  ]
   vpc_config {
     security_group_ids = [local.efs_security_group_id, aws_security_group.audit_lambda.id]
     subnet_ids         = local.node_subnet_ids
@@ -223,7 +248,10 @@ resource "aws_lambda_function" "audit_svc_monitoring" {
   role          = aws_iam_role.microservices_lambda.arn
   runtime       = "python3.12"
   timeout       = 600
-  description   = "Lambda function that monitors the Audit srvice lambda and sends alert to slack"
+  description   = "Lambda function that monitors the Audit service lambda and sends alert to slack"
+  architectures = [
+    "arm64",
+  ]
   tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
   environment {
     variables = {
@@ -266,6 +294,9 @@ resource "aws_lambda_function" "coverage_count" {
   runtime          = "java11"
   timeout          = 600
   memory_size      = 1024
+  architectures = [
+    "arm64",
+  ]
   environment {
     variables = {
       environment       = local.benv
@@ -309,6 +340,9 @@ resource "aws_lambda_function" "database_management" {
   runtime          = "java11"
   timeout          = 600
   memory_size      = 256
+  architectures = [
+    "arm64",
+  ]
   vpc_config {
     security_group_ids = [local.db_sg_id, aws_security_group.database_lambda.id]
     subnet_ids         = local.node_subnet_ids
@@ -339,6 +373,9 @@ resource "aws_lambda_function" "hpms_counts" {
   runtime          = "java11"
   timeout          = 600
   memory_size      = 256
+  architectures = [
+    "arm64",
+  ]
   vpc_config {
     security_group_ids = [local.microservices_lb, data.aws_security_group.microservices_lambda.id]
     subnet_ids         = local.node_subnet_ids

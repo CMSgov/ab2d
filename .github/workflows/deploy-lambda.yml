@@ -38,7 +38,7 @@ env:
 
 jobs:
   deploy:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
 
@@ -56,7 +56,7 @@ jobs:
         uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
   
       - name: Install tofu
-        uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
+        uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
 
       - name: Tofu plan and apply
         working-directory: ops/services/30-lambda/

@@ -46,32 +46,37 @@ jobs:
     steps:
       - name: Determine workflow logic
         id: logic
+        env:
+          INPUT_IMAGE_TAG: ${{ inputs.image_tag }}
+          MODULE: ${{ inputs.module }}
+          SKIP_DEPLOY: ${{ inputs.skip_deploy }}
+          ENVIRONMENT: ${{ inputs.environment }}
         run: |
           # Determine if we should build
-          if [[ "${{ inputs.skip_build }}" == "true" || -n "${{ inputs.image_tag }}" ]]; then
+          if [[ "${{ inputs.skip_build }}" == "true" || -n "$INPUT_IMAGE_TAG" ]]; then
             echo "should_build=false" >> $GITHUB_OUTPUT
-            echo "image_tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+            echo "image_tag=$INPUT_IMAGE_TAG" >> $GITHUB_OUTPUT
           else
             echo "should_build=true" >> $GITHUB_OUTPUT
             # Generate image tag for build
             SHA_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
             BRANCH_NAME_FORMATTED=${GITHUB_REF_NAME//\//-}
-            TAG="ab2d-${{ inputs.module }}-$BRANCH_NAME_FORMATTED-$SHA_SHORT"
+            TAG="ab2d-$MODULE-$BRANCH_NAME_FORMATTED-$SHA_SHORT"
             echo "image_tag=$TAG" >> $GITHUB_OUTPUT
           fi
           
           # Determine if we should deploy
-          if [[ "${{ inputs.skip_deploy }}" == "true" || -z "${{ inputs.environment }}" ]]; then
+          if [[ "${{ inputs.skip_deploy }}" == "true" || -z "$ENVIRONMENT" ]]; then
             echo "should_deploy=false" >> $GITHUB_OUTPUT
             echo "environment=" >> $GITHUB_OUTPUT
           else
             echo "should_deploy=true" >> $GITHUB_OUTPUT
-            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
           fi
 
   # Build job - only runs when needed
   build:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
     needs: setup
     if: needs.setup.outputs.should_build == 'true'
     permissions:
@@ -125,7 +130,7 @@ jobs:
 
   # Deploy job - only runs when needed
   deploy:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     needs: [setup, build]
     if: |
       always() && needs.setup.outputs.should_deploy == 'true' && 
@@ -141,7 +146,7 @@ jobs:
       - name: Set AWS account based on environment
         id: aws_config
         run: |
-          if [[ "${{ env.AB2D_ENV }}" == "dev" || "${{ env.AB2D_ENV }}" == "test" ]]; then
+          if [[ "$AB2D_ENV" == "dev" || "$AB2D_ENV" == "test" ]]; then
             echo "aws_account=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
           else
             echo "aws_account=${{ secrets.PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
@@ -161,12 +166,12 @@ jobs:
         uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
 
       - name: Install tofu
-        uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
+        uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
 
       - name: Set module-specific variables
         id: module_vars
         run: |
-          case "${{ env.MODULE }}" in
+          case "$MODULE" in
             worker)
               echo "working_dir=ops/services/30-worker/" >> $GITHUB_OUTPUT
               echo "plan_vars=-var=worker_service_image_tag=\"$IMAGE_TAG\"" >> $GITHUB_OUTPUT
@@ -180,7 +185,7 @@ jobs:
               echo "plan_vars=" >> $GITHUB_OUTPUT
               ;;
             *)
-              echo "Error: Unknown module ${{ env.MODULE }}"
+              echo "Error: Unknown module $MODULE"
               exit 1
               ;;
           esac
@@ -195,21 +200,15 @@ jobs:
           echo "Deployed $MODULE to $AB2D_ENV with tag $IMAGE_TAG" >> $GITHUB_STEP_SUMMARY
 
   deploy-all:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     needs: [setup, build]
     if: ${{ inputs.skip_deploy_all == false }}
     permissions:
       contents: read
       id-token: write
-    env:
-      AB2D_ENV: ${{ needs.setup.outputs.environment }}
-      MODULE: ${{ inputs.module }}
-      IMAGE_TAG: ${{ needs.setup.outputs.should_build == 'true' && needs.build.outputs.image_tag || needs.setup.outputs.image_tag }}
-    steps:
-      - name: Apply all
-        uses: ./.github/workflows/tofu-apply.yml
-        with:
-          environment: ${{ env.AB2D_ENV }}
+    uses: ./.github/workflows/tofu-apply.yml
+    with:
+      environment: ${{ needs.setup.outputs.environment }}
+    secrets: inherit
 
   # Provide overall status
   summary:
@@ -218,9 +217,11 @@ jobs:
     if: always()
     steps:
       - name: Workflow Summary
+        env:
+          MODULE: ${{ inputs.module }}
         run: |
           echo "Workflow Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- Module: ${{ inputs.module }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Module: $MODULE" >> $GITHUB_STEP_SUMMARY
           echo "- Build: ${{ needs.setup.outputs.should_build == 'true' && (needs.build.result || 'skipped') || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Deploy : ${{ needs.setup.outputs.should_deploy == 'true' && (needs.deploy.result || 'skipped') || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Environment : ${{ needs.setup.outputs.environment || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
