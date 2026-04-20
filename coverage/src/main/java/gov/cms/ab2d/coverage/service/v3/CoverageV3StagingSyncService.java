@@ -1,6 +1,8 @@
 package gov.cms.ab2d.coverage.service.v3;
 
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.query.CoverageV3BaseQuery;
 import lombok.extern.slf4j.Slf4j;
@@ -15,24 +17,33 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.sql.DataSource;
 
 import java.util.List;
+import java.util.Optional;
 
+import static gov.cms.ab2d.common.util.PropertyConstants.IDR_IMPORTER_STATUS_IN_PROGRESS;
+import static gov.cms.ab2d.common.util.PropertyConstants.IDR_IMPORTER_STATUS_PROPERTY;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.executeTimedQuery;
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.isTestContract;
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3StagingSource.CRON_JOB;
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3StagingSyncResult.*;
 import static java.lang.String.format;
 
 @Slf4j
 @Component
-public class CoverageV3SyncService extends CoverageV3BaseQuery {
+public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
 
     private final CoverageV3LockWrapper lockWrapper;
     private final PdpClientService pdpClientService;
+    private final PropertiesService propertiesService;
 
-    public CoverageV3SyncService(
+    public CoverageV3StagingSyncService(
             DataSource dataSource,
             CoverageV3LockWrapper lockWrapper,
-            PdpClientService pdpClientService) {
+            PdpClientService pdpClientService,
+            PropertiesService propertiesService) {
         super(dataSource);
         this.lockWrapper = lockWrapper;
         this.pdpClientService = pdpClientService;
+        this.propertiesService = propertiesService;
     }
 
     // TODO REVERT BACK WHEN DEPLOYING TO DEV
@@ -112,16 +123,17 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
 
-    private static final String GET_CONTRACTS_IN_STAGING_TABLE =
-        "select distinct contract from %s"
-        .formatted(COVERAGE_V3_STAGING_TABLE);
 
     // Return true if nothing in staging OR copy is successful
     // Return false if lock can't be acquired or job is running for contract
     // Throw exception is data integrity assertions fail
     @Transactional
     public boolean copyFromStagingTablesToRecent(String contract, boolean skipActiveJobCheck) {
-        // TODO skip Z contracts
+        // Skip Z contracts
+        if (isTestContract(contract)) {
+            return true;
+        }
+
         if (!skipActiveJobCheck && getContractsWithActiveV3Jobs().contains(contract)) {
             log.info("[V3] Contract has an active V3 job; returning");
             return false;
@@ -205,7 +217,11 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
 
     @Transactional
     public boolean moveToHistorical(String contract,  boolean skipActiveJobCheck) {
-        // TODO skip Z contracts
+        // Skip Z contracts
+        if (isTestContract(contract)) {
+            return true;
+        }
+
         if (!skipActiveJobCheck && getContractsWithActiveV3Jobs().contains(contract)) {
             log.info("[V3] Contract has an active V3 job; returning");
             return false;
@@ -234,11 +250,6 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
         }
     }
 
-    public List<String> getContractsWithCoverageInStaging() {
-        val template = new JdbcTemplate(this.dataSource);
-        return template.queryForList(GET_CONTRACTS_WITH_COVERAGE_IN_STAGING, String.class);
-    }
-
     public List<String> getContractsInRecentCoverageTable() {
         val template = new JdbcTemplate(this.dataSource);
         return template.queryForList(GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE, String.class);
@@ -246,9 +257,10 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
 
     public List<String> getContractsInCoverageStagingTable() {
         val template = new JdbcTemplate(this.dataSource);
-        return template.queryForList(GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE, String.class);
+        return template.queryForList(GET_CONTRACTS_WITH_COVERAGE_IN_STAGING, String.class);
     }
 
+    // TODO should this be used for coverage checks?
     public List<String> getEnabledContracts() {
         return pdpClientService.getAllEnabledContracts().stream().map(Contract::getContractNumber).toList();
     }
@@ -260,42 +272,59 @@ public class CoverageV3SyncService extends CoverageV3BaseQuery {
 
    int getCoveragePeriodCountForCoverageV3(final String contract) {
         val formattedQuery = format(RECORD_COUNT_BY_CONTRACT, COVERAGE_V3_TABLE_RECENT);
-        return executeQuery(contract, formattedQuery);
+        return executeQueryForContract(contract, formattedQuery);
     }
 
    int getCoveragePeriodCountForCoverageV3Staging(final String contract) {
         val formattedQuery = format(RECORD_COUNT_BY_CONTRACT, COVERAGE_V3_STAGING_TABLE);
-        return executeQuery(contract, formattedQuery);
+        return executeQueryForContract(contract, formattedQuery);
     }
 
     int copyFromStagingToCoverage(final String contract) {
-        return executeQuery(contract, COPY_FROM_STAGING_TO_COVERAGE_V3);
+        return executeQueryForContract(contract, COPY_FROM_STAGING_TO_COVERAGE_V3);
     }
 
     int moveToHistoricalInternal(final String contract) {
         val formattedQuery = format(HISTORICAL_SYNC_FOR_CONTRACT, contract);
-        return executeQuery(contract, formattedQuery);
+        return executeQueryForContract(contract, formattedQuery);
     }
 
     int deleteMonthsOldCoverage(final String contract) {
         val formattedQuery = format(DELETE_OLD_MONTHS_SQL_FOR_CONTRACT, contract);
-        return executeQuery(contract, formattedQuery);
+        return executeQueryForContract(contract, formattedQuery);
     }
 
     int deleteFromCoverageAndGetRowsDeleted(String contract) {
         val formattedQuery = format(DELETE_RECORDS_FOR_CONTRACT_AND_GET_ROWS_DELETED, COVERAGE_V3_TABLE_RECENT);
-        return executeQuery(contract, formattedQuery);
+        return executeQueryForContract(contract, formattedQuery);
     }
 
     int deleteFromStagingAndGetRowsDeleted(String contract) {
         val formattedQuery = format(DELETE_RECORDS_FOR_CONTRACT_AND_GET_ROWS_DELETED, COVERAGE_V3_STAGING_TABLE);
-        return executeQuery(contract, formattedQuery);
+        return executeQueryForContract(contract, formattedQuery);
     }
 
-    int executeQuery(final String contract, final String query) {
+    int executeQueryForContract(final String contract, final String query) {
         val parameters = new MapSqlParameterSource().addValue("contract", contract);
         val template = new NamedParameterJdbcTemplate(this.dataSource);
         return DataAccessUtils.intResult(template.queryForList(query, parameters, Integer.class));
+    }
+
+    Optional<CoverageV3StagingSyncResult> check(String contract, CoverageV3StagingSource source) {
+        if (isTestContract(contract)) {
+            return Optional.of(NO_COVERAGE_FOUND_FOR_CONTRACT);
+        } else if (source == CRON_JOB && getContractsWithActiveV3Jobs().contains(contract)) {
+            return Optional.of(JOB_IN_PROGRESS_FOR_CONTRACT);
+        } else if (idrExporterInProgress()) {
+            return Optional.of(IDR_IMPORTER_IN_PROGRESS);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    boolean idrExporterInProgress() {
+        val idrImporterStatus = propertiesService.getProperty(IDR_IMPORTER_STATUS_PROPERTY, "");
+        return IDR_IMPORTER_STATUS_IN_PROGRESS.equals(idrImporterStatus);
     }
 
 }

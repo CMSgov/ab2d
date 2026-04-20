@@ -18,6 +18,7 @@ import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -30,20 +31,14 @@ import static java.util.stream.Collectors.toList;
 @Transactional
 public class CoverageV3ServiceImpl implements CoverageV3Service {
 
-    /**
-     * If true, throw exception if number of expected coverage period is not equal to actual number.
-     * In production, this should be set to true.
-     */
-    public static final boolean THROW_EXCEPTION_FOR_COVERAGE_PERIOD_MISMATCH = false;
-
     private final DataSource dataSource;
     private final PropertiesService propertiesService;
-    private final CoverageV3SyncService coverageV3SyncService;
+    private final CoverageV3StagingSyncService coverageV3SyncService;
 
     public CoverageV3ServiceImpl(
             DataSource dataSource,
             PropertiesService propertiesService,
-            CoverageV3SyncService coverageV3SyncService) {
+            CoverageV3StagingSyncService coverageV3SyncService) {
         this.dataSource = dataSource;
         this.propertiesService = propertiesService;
         this.coverageV3SyncService = coverageV3SyncService;
@@ -51,7 +46,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     @Override
     public CoveragePagingResult pageCoverage(final CoveragePagingRequest page) {
-
         final ContractForCoverageDTO contract = page.getContract();
         final int expectedCoveragePeriods = CoverageServiceRepository.getExpectedCoveragePeriods(page);
 
@@ -61,14 +55,12 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         // A missing period = one month of enrollment missing for the contract
         final List<YearMonthRecord> coveragePeriods = getCoveragePeriodsByContract(page.getContractNumber());
         if (coveragePeriods.size() != expectedCoveragePeriods) {
-            if (THROW_EXCEPTION_FOR_COVERAGE_PERIOD_MISMATCH) {
-                throw new IllegalArgumentException(
-                        "at least one coverage period missing from enrollment table for contract "
-                                + page.getContract().getContractNumber()
-                );
-            } else {
-                log.warn("Expected coverage periods = {}; Actual coverage periods = {}", expectedCoveragePeriods, coveragePeriods.size());
-
+            val contractNumber = page.getContract().getContractNumber();
+            val message = "[V3] Expected coverage periods (%d) and actual coverage periods (%d) do not match for contract %s"
+                .formatted(expectedCoveragePeriods, coveragePeriods.size(), contractNumber);
+            log.warn(message);
+            if (!contractNumber.startsWith("Z")) {
+                throw new IllegalArgumentException(message);
             }
         }
 
@@ -157,7 +149,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return propertiesService.isToggleOn("OptOutOn", false);
     }
 
-    // TODO move this into a utility class?
     public static <T> T executeTimedQuery(String queryDescription, Supplier<T> supplier) {
         val start = LocalDateTime.now();
         val result = supplier.get();
@@ -166,6 +157,10 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         val durationSeconds = duration / 1000.0;
         log.info("[V3] Query completed in {}s: {}", durationSeconds, queryDescription);
         return result;
+    }
+
+    public static boolean isTestContract(String contract) {
+        return contract.toUpperCase(Locale.ROOT).startsWith("Z");
     }
 
 }

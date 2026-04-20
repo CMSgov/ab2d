@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class CoverageV3ScheduledSync {
 
-	private final CoverageV3SyncService syncService;
+	private final CoverageV3StagingSyncService syncService;
 
-	public CoverageV3ScheduledSync(CoverageV3SyncService syncService) {
+	public CoverageV3ScheduledSync(CoverageV3StagingSyncService syncService) {
 		this.syncService = syncService;
 	}
 
@@ -41,6 +41,7 @@ public class CoverageV3ScheduledSync {
 			}
 		}
 	}
+
 
 
 }

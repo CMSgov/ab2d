@@ -19,7 +19,7 @@ class CoverageV3SyncServiceTest {
 	@Container
 	private static final CoverageV3PostgresContainer container = new CoverageV3PostgresContainer();
 
-	CoverageV3SyncService stagingService;
+	CoverageV3StagingSyncService stagingService;
 
 	@BeforeEach
 	void setup() {
@@ -35,7 +35,7 @@ class CoverageV3SyncServiceTest {
 		};
 
 		val pdpClientService = Mockito.mock(PdpClientService.class);
-		stagingService = new CoverageV3SyncService(container.getDataSource(), wrapper, pdpClientService);
+		stagingService = new CoverageV3StagingSyncService(container.getDataSource(), wrapper, pdpClientService);
 	}
 
 	@Test
