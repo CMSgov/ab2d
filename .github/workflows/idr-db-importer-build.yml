@@ -69,6 +69,10 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-${{ env.AWS_ACCOUNT_NAME }}-github-actions
 
+      - name: Install common module
+        working-directory: .
+        run: mvn install -pl common -am -DskipTests -q
+
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
         run: gradle clean test --info

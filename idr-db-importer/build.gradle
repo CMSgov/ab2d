@@ -12,7 +12,7 @@ description = 'AB2D S3 to Database importer'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
