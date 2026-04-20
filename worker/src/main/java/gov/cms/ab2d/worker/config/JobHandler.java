@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.coverage.service.v3.CoverageV3LockWrapper;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3StagingSource;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3StagingSource.JOB_HANDLER;
 
 
 /**
@@ -133,10 +135,17 @@ public class JobHandler implements MessageHandler {
             return true;
         }
 
+        // TODO update handling here and retry here
+
         val contract = getContractNumber(submittedJob);
+        coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, JOB_HANDLER);
+        coverageV3Service.moveFromStagingToRecentCoverage(contract, JOB_HANDLER);
+        return true;
+
+        /*
         var movedOldCoverage = false;
         var movedOldCoverageAttempts = 1;
-        while (movedOldCoverageAttempts <= 5 && !(movedOldCoverage=coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, true))) {
+        while (movedOldCoverageAttempts <= 5 && !(movedOldCoverage=coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, JOB_HANDLER))) {
             log.info("Sleeping 5 seconds for movedOldCoverage");
             Thread.sleep(5000);
             movedOldCoverageAttempts++;
@@ -149,7 +158,7 @@ public class JobHandler implements MessageHandler {
 
         var movedFromStaging = false;
         var movedFromStagingAttempts = 1;
-        while (movedFromStagingAttempts <= 5 && !(movedFromStaging=coverageV3Service.moveFromStagingToRecentCoverage(contract, true))) {
+        while (movedFromStagingAttempts <= 5 && !(movedFromStaging=coverageV3Service.moveFromStagingToRecentCoverage(contract, JOB_HANDLER))) {
             log.info("Sleeping 5 seconds for movedFromStaging");
             Thread.sleep(5000);
             movedFromStagingAttempts++;
@@ -161,7 +170,7 @@ public class JobHandler implements MessageHandler {
         }
 
         return true;
-
+        */
     }
 
 }

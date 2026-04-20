@@ -2,7 +2,6 @@ package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.query.CoverageV3BaseQuery;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +23,10 @@ import static gov.cms.ab2d.common.util.PropertyConstants.IDR_IMPORTER_STATUS_PRO
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.executeTimedQuery;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.isTestContract;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3StagingSource.CRON_JOB;
-import static gov.cms.ab2d.coverage.service.v3.CoverageV3StagingSyncResult.*;
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult.*;
 import static java.lang.String.format;
 
+// TODO create an interface for this class
 @Slf4j
 @Component
 public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
@@ -51,9 +51,9 @@ public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
     private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging_copy";
     private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical_copy";
 
-    //private static final String COVERAGE_V3_TABLE_RECENT = "v3.coverage_v3";
-    //private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical";
-    //private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging";
+//    private static final String COVERAGE_V3_TABLE_RECENT = "v3.coverage_v3";
+//    private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical";
+//    private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging";
 
     private static final String RECORD_COUNT_BY_CONTRACT =
         "select count(*) from %s where contract = :contract";
@@ -128,15 +128,10 @@ public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
     // Return false if lock can't be acquired or job is running for contract
     // Throw exception is data integrity assertions fail
     @Transactional
-    public boolean copyFromStagingTablesToRecent(String contract, boolean skipActiveJobCheck) {
-        // Skip Z contracts
-        if (isTestContract(contract)) {
-            return true;
-        }
-
-        if (!skipActiveJobCheck && getContractsWithActiveV3Jobs().contains(contract)) {
-            log.info("[V3] Contract has an active V3 job; returning");
-            return false;
+    public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3StagingSource source) {
+        val result = checkBeforeAcquiringLock(contract, source);
+        if (result.isPresent()) {
+            return result.get();
         }
 
         val rowsInStaging = executeTimedQuery(
@@ -145,7 +140,7 @@ public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
         );
         log.info("[V3] Found {} rows in staging table for contract {}", rowsInStaging, contract);
         if (rowsInStaging == 0) {
-            return true;
+            return NO_COVERAGE_FOUND_FOR_CONTRACT;
         }
 
         val lock = lockWrapper.getCoverageLock(contract);
@@ -184,7 +179,8 @@ public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
                         rowsInCoverageBeforeCopy,
                         contract
                     );
-                    throw new IllegalStateException("[V3] Row count in staging != row count in coverage for contract " + contract);
+                    //throw new IllegalStateException("[V3] Row count in staging != row count in coverage for contract " + contract);
+                    return SYNC_FAILED_FOR_CONTRACT;
                 }
 
                 log.info("[V3] Preparing to delete rows in staging for contract {}", contract);
@@ -199,14 +195,15 @@ public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
                         rowsInCoverageAfterCopy,
                         contract
                     );
-                    throw new IllegalStateException("Row count deleted from staging != row count in coverage for contract " + contract);
+                    //throw new IllegalStateException("Row count deleted from staging != row count in coverage for contract " + contract);
+                    return SYNC_FAILED_FOR_CONTRACT;
                 }
 
                 log.info("[V3] Coverage data successfully copied from staging table for contract {}", contract);
-                return true;
+                return SYNC_SUCCESSFUL_FOR_CONTRACT;
             } else {
                 log.info("[V3] Unable to acquire lock for contract {}", contract);
-                return false;
+                return UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT;
             }
         } finally {
             if (locked) {
@@ -216,15 +213,10 @@ public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
     }
 
     @Transactional
-    public boolean moveToHistorical(String contract,  boolean skipActiveJobCheck) {
-        // Skip Z contracts
-        if (isTestContract(contract)) {
-            return true;
-        }
-
-        if (!skipActiveJobCheck && getContractsWithActiveV3Jobs().contains(contract)) {
-            log.info("[V3] Contract has an active V3 job; returning");
-            return false;
+    public CoverageV3SyncResult moveToHistorical(String contract, CoverageV3StagingSource source) {
+        val result = checkBeforeAcquiringLock(contract, source);
+        if (result.isPresent()) {
+            return result.get();
         }
 
         val lock = lockWrapper.getCoverageLock(contract);
@@ -234,14 +226,19 @@ public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
                 int rowsMoved = moveToHistoricalInternal(contract);
                 log.info("[V3] Moved {} rows to historical coverage table for contract {}", rowsMoved, contract);
                 if (rowsMoved == 0) {
-                    return true;
+                    return NO_COVERAGE_FOUND_FOR_CONTRACT;
                 }
                 int rowsDeleted = deleteMonthsOldCoverage(contract);
                 log.info("[V3] Deleted {} rows from recent coverage table for contract {}", rowsDeleted, contract);
-                return true;
+
+                if (rowsDeleted != rowsMoved) {
+                    return SYNC_FAILED_FOR_CONTRACT;
+                } else {
+                    return SYNC_SUCCESSFUL_FOR_CONTRACT;
+                }
             } else {
                 log.info("[V3] Unable to acquire lock for contract {}", contract);
-                return false;
+                return UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT;
             }
         } finally {
             if (locked) {
@@ -310,12 +307,14 @@ public class CoverageV3StagingSyncService extends CoverageV3BaseQuery {
         return DataAccessUtils.intResult(template.queryForList(query, parameters, Integer.class));
     }
 
-    Optional<CoverageV3StagingSyncResult> check(String contract, CoverageV3StagingSource source) {
+    Optional<CoverageV3SyncResult> checkBeforeAcquiringLock(String contract, CoverageV3StagingSource source) {
         if (isTestContract(contract)) {
             return Optional.of(NO_COVERAGE_FOUND_FOR_CONTRACT);
         } else if (source == CRON_JOB && getContractsWithActiveV3Jobs().contains(contract)) {
+            log.info("[V3] Contract has an active V3 job; returning");
             return Optional.of(JOB_IN_PROGRESS_FOR_CONTRACT);
         } else if (idrExporterInProgress()) {
+            log.info("[V3] IDR importer is in progress; returning");
             return Optional.of(IDR_IMPORTER_IN_PROGRESS);
         } else {
             return Optional.empty();

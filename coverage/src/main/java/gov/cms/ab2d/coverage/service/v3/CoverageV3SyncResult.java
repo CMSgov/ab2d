@@ -1,6 +1,6 @@
 package gov.cms.ab2d.coverage.service.v3;
 
-public enum CoverageV3StagingSyncResult {
+public enum CoverageV3SyncResult {
 	NO_COVERAGE_FOUND_FOR_CONTRACT,
 	JOB_IN_PROGRESS_FOR_CONTRACT,
 	SYNC_SUCCESSFUL_FOR_CONTRACT,

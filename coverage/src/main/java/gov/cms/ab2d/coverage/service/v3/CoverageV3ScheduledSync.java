@@ -5,6 +5,8 @@ import lombok.val;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3StagingSource.CRON_JOB;
+
 @Slf4j
 @Service
 public class CoverageV3ScheduledSync {
@@ -21,7 +23,7 @@ public class CoverageV3ScheduledSync {
 		val contracts = syncService.getContractsInCoverageStagingTable();
 		for (String contract : contracts) {
 			try {
-				syncService.copyFromStagingTablesToRecent(contract, false);
+				syncService.copyFromStagingTablesToRecent(contract, CRON_JOB);
 			} catch (Exception e) {
 				log.error("Error calling copyFromStagingTablesToRecent for contract {}", contract);
 			}
@@ -34,7 +36,7 @@ public class CoverageV3ScheduledSync {
 		val contracts = syncService.getContractsInRecentCoverageTable();
 		for (String contract : contracts) {
 			try {
-				syncService.moveToHistorical(contract, false);
+				syncService.moveToHistorical(contract, CRON_JOB);
 			} catch (Exception e) {
 				// TODO need to introduce retry - and possibly a way to trigger this via properties value
 				log.error("Error calling moveToHistorical for contract {}", contract);

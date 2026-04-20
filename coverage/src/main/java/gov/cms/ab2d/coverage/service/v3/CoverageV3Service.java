@@ -11,7 +11,7 @@ import java.util.Map;
 public interface CoverageV3Service {
     int countBeneficiariesByCoveragePeriod(CoverageV3Periods coveragePeriods, String contract);
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
-    boolean moveFromStagingToRecentCoverage(String contract, boolean skipActiveJobCheck);
-    boolean moveOldCoverageToHistoricalCoverage(String contract, boolean skipActiveJobCheck);
+    CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3StagingSource source);
+    CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3StagingSource source);
     Map<String, List<CoverageV3Count>> getCoverageCount();
 }

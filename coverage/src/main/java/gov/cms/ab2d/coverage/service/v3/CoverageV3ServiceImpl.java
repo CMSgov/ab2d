@@ -101,14 +101,14 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     @Override
     @Transactional
-    public boolean moveFromStagingToRecentCoverage(String contract,  boolean skipActiveJobCheck) {
-        return coverageV3SyncService.copyFromStagingTablesToRecent(contract, skipActiveJobCheck);
+    public CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3StagingSource source) {
+        return coverageV3SyncService.copyFromStagingTablesToRecent(contract, source);
     }
 
     @Override
     @Transactional
-    public boolean moveOldCoverageToHistoricalCoverage(String contract, boolean skipActiveJobCheck) {
-	    return coverageV3SyncService.moveToHistorical(contract, skipActiveJobCheck);
+    public CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3StagingSource source) {
+	    return coverageV3SyncService.moveToHistorical(contract, source);
     }
 
 
