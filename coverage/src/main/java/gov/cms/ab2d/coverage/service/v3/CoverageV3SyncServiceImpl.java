@@ -47,6 +47,12 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical"  + DEV_MODIFIER;
     private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging"        + DEV_MODIFIER;
 
+    // TODO REVERT - TEMPORARY ONLY FOR DEPLOYING TO DEV
+    boolean isTestContract(String contract) {
+        return false;
+        //return contract.toUpperCase(Locale.ROOT).startsWith("Z");
+    }
+
     private static final String RECORD_COUNT_BY_CONTRACT =
         "select count(*) from %s where contract = :contract";
 
@@ -114,6 +120,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     private static final String GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE =
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
+
 
 
     // Return true if nothing in staging OR copy is successful
@@ -300,9 +307,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return DataAccessUtils.intResult(template.queryForList(query, parameters, Integer.class));
     }
 
-    boolean isTestContract(String contract) {
-        return contract.toUpperCase(Locale.ROOT).startsWith("Z");
-    }
+
 
     boolean contractHasJobInProgress(String contract) {
         return getContractsWithActiveV3Jobs().contains(contract);
