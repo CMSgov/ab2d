@@ -90,7 +90,6 @@ public class CoverageV3ScheduledSync {
 
 		int attempts = 0;
 		CoverageV3SyncResult result = null;
-		Exception exception = null;
 		do {
 			attempts++;
 			result = supplier.get();
@@ -105,10 +104,6 @@ public class CoverageV3ScheduledSync {
 			}
 		}
 		while (attempts <= maxNumAttempts);
-
-		if (exception != null) {
-			throw exception;
-		}
 
 		return result;
 	}
