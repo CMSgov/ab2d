@@ -2,12 +2,12 @@ name: CodeQL
 
 on:
   push:
-    branches: [ "main" ]
-
+    branches: [ "main", "codeql-fix" ]
+    
 jobs:
   analyze:
     name: CodeQL scan
-    runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
 
     permissions:
       contents: read
