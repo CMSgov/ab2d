@@ -266,11 +266,6 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     private CoveragePagingResult createInitialPagingResult(final ContractData contractData) {
-        // TODO V3 determine if coverage periods are being loaded that predate a contract's attestation date
-        // e.g. S5884 attestation date is 2021-01-28 19:06:52+00
-        // Expected coverage periods is 64 (from 2021-01-01T00:00Z to 2026-05-16T00:00:01-04:00[America/New_York])
-        // Actual coverage periods in database is 78 (dating back from 2020-01)
-
         if (contractData.getJob().getFhirVersion() == FhirVersion.R4V3) {
             val request = CoveragePagingRequest.ofV3(
                 eobJobPatientQueuePageSize,
@@ -293,10 +288,6 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     private CoveragePagingResult nextPagingResult(CoveragePagingRequest request) {
-        // TODO V3 determine if coverage periods are being loaded that predate a contract's attestation date
-        // e.g. S5884 attestation date is 2021-01-28 19:06:52+00
-        // Expected coverage periods is 64 (from 2021-01-01T00:00Z to 2026-05-16T00:00:01-04:00[America/New_York])
-        // Actual coverage periods in database is 78 (dating back from 2020-01)
         if (request.isV3()) {
             return coverageDriver.pageCoverageV3(request);
         } else {

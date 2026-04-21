@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.coverage.service.v3.CoverageV3LockWrapper;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
-import gov.cms.ab2d.coverage.service.v3.CoverageV3StagingSource;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -23,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
-import static gov.cms.ab2d.coverage.service.v3.CoverageV3StagingSource.JOB_HANDLER;
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncSource.JOB_HANDLER;
 
 
 /**

@@ -1,7 +1,6 @@
 package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +23,7 @@ class CoverageV3SyncServiceTest {
 	@Container
 	private static final CoverageV3PostgresContainer container = new CoverageV3PostgresContainer();
 
-	CoverageV3StagingSyncService stagingService;
+	CoverageV3SyncServiceImpl stagingService;
 	PropertiesService propertiesService;
 
 	@BeforeEach
@@ -40,8 +39,7 @@ class CoverageV3SyncServiceTest {
 			}
 		};
 
-		val pdpClientService = Mockito.mock(PdpClientService.class);
-		stagingService = new CoverageV3StagingSyncService(container.getDataSource(), wrapper, pdpClientService, propertiesService);
+		stagingService = new CoverageV3SyncServiceImpl(container.getDataSource(), wrapper, propertiesService);
 	}
 
 	@Test
@@ -58,7 +56,7 @@ class CoverageV3SyncServiceTest {
 //		int newNewCount = stagingService.getCoveragePeriodCountForCoverageV3Staging("Z1234");
 //		System.out.println(newNewCount);
 
-		stagingService.copyFromStagingTablesToRecent("Z0000", CoverageV3StagingSource.CRON_JOB);
+		stagingService.copyFromStagingTablesToRecent("Z0000", CoverageV3SyncSource.CRON_JOB);
 
 
 		int rowsInsertedForZ0001 = stagingService.moveToHistoricalInternal("Z0000");

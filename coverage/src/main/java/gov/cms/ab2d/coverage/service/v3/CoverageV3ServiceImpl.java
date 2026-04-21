@@ -33,12 +33,12 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     private final DataSource dataSource;
     private final PropertiesService propertiesService;
-    private final CoverageV3StagingSyncService coverageV3SyncService;
+    private final CoverageV3SyncServiceImpl coverageV3SyncService;
 
     public CoverageV3ServiceImpl(
             DataSource dataSource,
             PropertiesService propertiesService,
-            CoverageV3StagingSyncService coverageV3SyncService) {
+            CoverageV3SyncServiceImpl coverageV3SyncService) {
         this.dataSource = dataSource;
         this.propertiesService = propertiesService;
         this.coverageV3SyncService = coverageV3SyncService;
@@ -101,13 +101,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     @Override
     @Transactional
-    public CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3StagingSource source) {
+    public CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3SyncSource source) {
         return coverageV3SyncService.copyFromStagingTablesToRecent(contract, source);
     }
 
     @Override
     @Transactional
-    public CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3StagingSource source) {
+    public CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source) {
 	    return coverageV3SyncService.moveToHistorical(contract, source);
     }
 
@@ -157,10 +157,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         val durationSeconds = duration / 1000.0;
         log.info("[V3] Query completed in {}s: {}", durationSeconds, queryDescription);
         return result;
-    }
-
-    public static boolean isTestContract(String contract) {
-        return contract.toUpperCase(Locale.ROOT).startsWith("Z");
     }
 
 }
