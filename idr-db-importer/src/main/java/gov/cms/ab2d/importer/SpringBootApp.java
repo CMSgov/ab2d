@@ -13,7 +13,7 @@ import org.springframework.retry.annotation.EnableRetry;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_IDR_IMPORTER_STATUS;
 
-@SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.importer", "gov.cms.ab2d.common"})
+@SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.importer", "gov.cms.ab2d.common.properties"})
 @EntityScan(basePackages = "gov.cms.ab2d.common.model")
 @EnableJpaRepositories(basePackages = "gov.cms.ab2d.common.repository")
 @Slf4j
