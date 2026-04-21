@@ -54,7 +54,7 @@ public class CoverageV3ScheduledSync {
 	}
 
 	// every day at 6:30am and 6:30pm -- staggered to not run during copyFromStagingTablesToRecentForAllContracts()
-	@Scheduled(cron= "30 6,18 * * *")
+	@Scheduled(cron= "0 30 6,18 * * *")
 	public void moveToHistoricalForAllContracts() {
 		log.info("[V3] Calling moveToHistoricalForAllContracts()");
 		val contracts = syncService.getContractsInRecentCoverageTable();

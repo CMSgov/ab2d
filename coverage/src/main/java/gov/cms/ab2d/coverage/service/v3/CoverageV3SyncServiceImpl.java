@@ -114,9 +114,6 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
 
 
-    // Return true if nothing in staging OR copy is successful
-    // Return false if lock can't be acquired or job is running for contract
-    // Throw exception is data integrity assertions fail
     @Transactional
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
         if (isTestContract(contract)) {
