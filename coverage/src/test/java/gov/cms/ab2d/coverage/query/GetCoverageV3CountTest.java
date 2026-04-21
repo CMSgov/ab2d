@@ -20,10 +20,4 @@ class GetCoverageV3CountTest {
 		query = new GetCoverageV3Count(container.getDataSource());
 	}
 
-	@Test
-	void test() {
-		val result = query.coverageCounts();
-		// TODO
-	}
-
 }
