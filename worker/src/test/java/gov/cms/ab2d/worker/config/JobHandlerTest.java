@@ -51,6 +51,8 @@ class JobHandlerTest {
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
         List<Map<String, Object>> payload = List.of(jobMap);
 
