@@ -69,7 +69,7 @@ public class CoverageV3ScheduledSync {
 				);
 
 				if (result == JOB_IN_PROGRESS_FOR_CONTRACT) {
-					log.info("[V3] Contract {} has a job in progress; Skipping moveToHistorical({})", contract);
+					log.info("[V3] Contract {} has a job in progress; Skipping moveToHistorical", contract);
 				} else if (result == SYNC_FAILED_FOR_CONTRACT) {
 					log.error("[V3] Historical sync failed for {}", contract);
 				} else if (result == UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT) {
