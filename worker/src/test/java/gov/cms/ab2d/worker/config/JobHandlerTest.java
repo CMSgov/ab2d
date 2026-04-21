@@ -97,6 +97,8 @@ class JobHandlerTest {
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
         List<Map<String, Object>> payload = List.of(jobMap);
 
@@ -122,6 +124,8 @@ class JobHandlerTest {
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
         List<Map<String, Object>> payload = List.of(jobMap);
         GenericMessage<List<Map<String, Object>>> message = new GenericMessage<>(payload);
@@ -154,18 +158,26 @@ class JobHandlerTest {
 
         Map<String, Object> first = new HashMap<>() {{
             put("job_uuid", "first job id");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
 
         Map<String, Object> second = new HashMap<>() {{
             put("job_uuid", "second job id");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
 
         Map<String, Object> third = new HashMap<>() {{
             put("job_uuid", "third job id");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
 
         Map<String, Object> fourth = new HashMap<>() {{
             put("job_uuid", "fourth job id");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
 
         List<Map<String, Object>> payload = List.of(first, second, third, fourth);
@@ -177,4 +189,5 @@ class JobHandlerTest {
         verify(workerService, times(1)).getEngagement();
         verify(workerService, times(3)).process(anyString());
     }
+
 }
