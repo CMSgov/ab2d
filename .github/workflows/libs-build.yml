@@ -14,7 +14,7 @@ defaults:
 
 jobs:
   build:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
     env:
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
       AWS_REGION: ${{ vars.AWS_REGION }}
