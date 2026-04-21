@@ -4,8 +4,10 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.OutputCaptureExtension;
@@ -26,49 +28,18 @@ class CoverageV3SyncServiceTest {
 	CoverageV3SyncServiceImpl stagingService;
 	PropertiesService propertiesService;
 
+	@Mock
+	ApplicationContext appContext;
+
+	@Mock
+	Lock lock;
+
+	@Mock
+	CoverageV3LockWrapper lockWrapper;
+
 	@BeforeEach
 	void setup() {
-		val appContext = Mockito.mock(ApplicationContext.class);
-
-		CoverageV3LockWrapperImpl wrapper = new CoverageV3LockWrapperImpl(appContext, container.getDataSource()) {
-
-			@Override
-			public Lock getCoverageLock(String contract) {
-				val lock = Mockito.mock(Lock.class);
-				return lock;
-			}
-		};
-
-		stagingService = new CoverageV3SyncServiceImpl(container.getDataSource(), wrapper, propertiesService);
-	}
-
-	@Test
-	void test() {
-
-		int count = stagingService.getCoveragePeriodCountForCoverageV3("Z1234");
-		System.out.println(count);
-
-//		stagingService.copyFromStagingTablesToRecent("Z1234");
-
-//		int newCount = stagingService.getCoveragePeriodCountForCoverageV3("Z1234");
-//		System.out.println(newCount);
-//
-//		int newNewCount = stagingService.getCoveragePeriodCountForCoverageV3Staging("Z1234");
-//		System.out.println(newNewCount);
-
-		stagingService.copyFromStagingTablesToRecent("Z0000", CoverageV3SyncSource.CRON_JOB);
-
-
-		int rowsInsertedForZ0001 = stagingService.moveToHistoricalInternal("Z0000");
-		System.out.println(rowsInsertedForZ0001);
-
-		int rowsDeletedForZ0001 = stagingService.deleteMonthsOldCoverage("Z0000");
-		System.out.println(rowsDeletedForZ0001);
-
-		List<String> contractsWithActiveV3Jobs = stagingService.getContractsWithActiveV3Jobs();
-		System.out.println(contractsWithActiveV3Jobs);
-
-
+		stagingService = new CoverageV3SyncServiceImpl(container.getDataSource(), lockWrapper, propertiesService);
 	}
 
 

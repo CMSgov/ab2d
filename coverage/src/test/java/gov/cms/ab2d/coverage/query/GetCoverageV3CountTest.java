@@ -22,11 +22,8 @@ class GetCoverageV3CountTest {
 
 	@Test
 	void test() {
-
 		val result = query.coverageCounts();
-
-		System.out.println(result);
-
+		// TODO
 	}
 
 }
