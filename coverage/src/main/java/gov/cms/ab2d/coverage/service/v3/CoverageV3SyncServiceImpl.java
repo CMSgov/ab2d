@@ -14,7 +14,6 @@ import javax.sql.DataSource;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.IDR_IMPORTER_STATUS_IN_PROGRESS;
 import static gov.cms.ab2d.common.util.PropertyConstants.IDR_IMPORTER_STATUS_PROPERTY;
@@ -40,18 +39,10 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         this.propertiesService = propertiesService;
     }
 
-    // TODO REMOVE - TEMPORARY ONLY FOR DEPLOYING TO DEV
-    private static final String DEV_MODIFIER = "_copy";
 
-    private static final String COVERAGE_V3_TABLE_RECENT = "v3.coverage_v3"                 + DEV_MODIFIER;
-    private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical"  + DEV_MODIFIER;
-    private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging"        + DEV_MODIFIER;
-
-    // TODO REVERT - TEMPORARY ONLY FOR DEPLOYING TO DEV
-    boolean isTestContract(String contract) {
-        return false;
-        //return contract.toUpperCase(Locale.ROOT).startsWith("Z");
-    }
+    private static final String COVERAGE_V3_TABLE_RECENT = "v3.coverage_v3";
+    private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical";
+    private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging";
 
     private static final String RECORD_COUNT_BY_CONTRACT =
         "select count(*) from %s where contract = :contract";
@@ -130,7 +121,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
         if (isTestContract(contract)) {
             return NO_COVERAGE_FOUND_FOR_CONTRACT;
-        } else if (idrExporterInProgress()) {
+        } else if (idrImporterInProgress()) {
             return IDR_IMPORTER_IN_PROGRESS;
         } else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
             return JOB_IN_PROGRESS_FOR_CONTRACT;
@@ -252,6 +243,8 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         }
     }
 
+
+
     public List<String> getContractsInRecentCoverageTable() {
         val template = new JdbcTemplate(this.dataSource);
         return template.queryForList(GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE, String.class);
@@ -307,15 +300,19 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return DataAccessUtils.intResult(template.queryForList(query, parameters, Integer.class));
     }
 
-
+    boolean isTestContract(String contract) {
+        return contract.toUpperCase(Locale.ROOT).startsWith("Z");
+    }
 
     boolean contractHasJobInProgress(String contract) {
         return getContractsWithActiveV3Jobs().contains(contract);
     }
 
-    boolean idrExporterInProgress() {
+    boolean idrImporterInProgress() {
         val idrImporterStatus = propertiesService.getProperty(IDR_IMPORTER_STATUS_PROPERTY, "");
         return IDR_IMPORTER_STATUS_IN_PROGRESS.equals(idrImporterStatus);
     }
+
+
 
 }

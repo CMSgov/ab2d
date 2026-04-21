@@ -14,4 +14,5 @@ public interface CoverageV3Service {
     CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3SyncSource source);
     CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source);
     Map<String, List<CoverageV3Count>> getCoverageCount();
+    boolean idrImportInProgress();
 }

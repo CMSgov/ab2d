@@ -766,7 +766,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts()
             .stream()
             .filter(contract -> !contract.isTestContract())
-            .filter(contract -> contractNotBeingUpdated(issues, contract))
+            .filter(contract -> contractNotBeingUpdatedV3(issues, contract))
             .map(Contract::toDTO)
             .toList();
 
@@ -784,6 +784,15 @@ public class CoverageDriverImpl implements CoverageDriver {
             throw new CoverageVerificationException(message, issues);
         }
 
+    }
+
+    private boolean contractNotBeingUpdatedV3(List<String> issues, Contract contract) {
+        if (coverageV3Service.idrImportInProgress()) {
+            issues.add("[V3] Contract " + contract.getContractNumber() + " is being updated now so coverage verification will be done later");
+            return false;
+        }
+
+        return true;
     }
 
 

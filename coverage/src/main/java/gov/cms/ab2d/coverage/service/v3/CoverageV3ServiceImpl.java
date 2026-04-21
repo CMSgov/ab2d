@@ -100,6 +100,11 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
+    public boolean idrImportInProgress() {
+        return coverageV3SyncService.idrImporterInProgress();
+    }
+
+    @Override
     @Transactional
     public CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3SyncSource source) {
         return coverageV3SyncService.copyFromStagingTablesToRecent(contract, source);
