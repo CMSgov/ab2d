@@ -58,6 +58,11 @@ jobs:
           params: |
             OKTA_CLIENT_ID=/ab2d/mgmt/okta/sensitive/test-pdp-100-id
             OKTA_CLIENT_PASSWORD=/ab2d/mgmt/okta/sensitive/test-pdp-100-secret
+      - name: Diagnostic
+        env:
+          ENV: ${{inputs.environment || 'test' }}
+        run: |
+          curl -v --max-time 10 "https://${ENV}.ab2d.cms.gov/health" || true
       - name: Run Inferno
         id: run
         env:
