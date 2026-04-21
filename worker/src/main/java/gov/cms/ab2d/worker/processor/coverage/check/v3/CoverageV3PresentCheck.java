@@ -15,13 +15,6 @@ import java.util.Map;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
 
-/**
- * Check that each coverage period has some enrollment in the database. If no coverage found then something
- * went wrong saving or deleting coverage.
- *
- * Ignores the current month of the contract because sometimes the enrollment hasn't arrived during the current month
- * until late in the month.
- */
 @Slf4j
 public class CoverageV3PresentCheck extends CoverageV3CheckPredicate {
 
