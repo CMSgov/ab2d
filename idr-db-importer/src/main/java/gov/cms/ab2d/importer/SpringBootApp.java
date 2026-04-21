@@ -7,11 +7,15 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.retry.annotation.EnableRetry;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_IDR_IMPORTER_STATUS;
 
 @SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.importer", "gov.cms.ab2d.common"})
+@EntityScan(basePackages = "gov.cms.ab2d.common.model")
+@EnableJpaRepositories(basePackages = "gov.cms.ab2d.common.repository")
 @Slf4j
 @RequiredArgsConstructor
 @EnableRetry
