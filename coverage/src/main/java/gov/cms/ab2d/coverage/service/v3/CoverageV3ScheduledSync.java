@@ -53,8 +53,8 @@ public class CoverageV3ScheduledSync {
 		}
 	}
 
-	//@Scheduled(cron = "0 0 0 * * *") // every day at 12am
-	@Scheduled(cron= "0 15 * * * ?") // every hour at 15 past -- TODO revert
+	// every day at 6:30am and 6:30pm -- staggered to not run during copyFromStagingTablesToRecentForAllContracts()
+	@Scheduled(cron= "30 6,18 * * *")
 	public void moveToHistoricalForAllContracts() {
 		log.info("[V3] Calling moveToHistoricalForAllContracts()");
 		val contracts = syncService.getContractsInRecentCoverageTable();

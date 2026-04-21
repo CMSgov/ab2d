@@ -1,9 +1,7 @@
 package gov.cms.ab2d.coverage.query;
 
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
-import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
