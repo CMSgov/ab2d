@@ -225,7 +225,6 @@ public class ContractProcessorImpl implements ContractProcessor {
 
 
         loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
-        log.info("Adding {} to PATIENT_REQUEST_QUEUED for {}", current.size(), jobUuid);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
         // Do not replace with for each, continue is meant to force patients to wait to be queued
@@ -242,7 +241,6 @@ public class ContractProcessorImpl implements ContractProcessor {
             current = nextPagingResult(current.getNextRequest().get());
             loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
 
-            log.info("Adding {} to PATIENT_REQUEST_QUEUED for {}", current.size(), jobUuid);
             jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
             processFinishedRequests(contractData);
