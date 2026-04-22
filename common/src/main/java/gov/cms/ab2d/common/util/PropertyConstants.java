@@ -40,4 +40,9 @@ public final class PropertyConstants {
 
     public static final String V3_ALLOWLISTED_CONTRACTS = "v3.allowlisted.contracts";
 
+    public static final String IDR_IMPORTER_STATUS_PROPERTY = "v3.idr-importer.status";
+
+    public static final String IDR_IMPORTER_STATUS_IN_PROGRESS = "import_in_progress";
+
+
 }

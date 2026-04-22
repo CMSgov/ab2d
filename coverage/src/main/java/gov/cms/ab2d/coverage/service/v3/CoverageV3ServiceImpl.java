@@ -1,11 +1,13 @@
-package gov.cms.ab2d.coverage.service;
+package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.*;
+import gov.cms.ab2d.coverage.model.v3.CoverageV3Count;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.query.CountBeneficiariesByCoveragePeriods;
 import gov.cms.ab2d.coverage.query.GetCoverageMembership;
 import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
+import gov.cms.ab2d.coverage.query.GetCoverageV3Count;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -16,6 +18,7 @@ import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -28,23 +31,21 @@ import static java.util.stream.Collectors.toList;
 @Transactional
 public class CoverageV3ServiceImpl implements CoverageV3Service {
 
-    /**
-     * If true, throw exception if number of expected coverage period is not equal to actual number.
-     * In production, this should be set to true.
-     */
-    public static final boolean THROW_EXCEPTION_FOR_COVERAGE_PERIOD_MISMATCH = false;
-
     private final DataSource dataSource;
     private final PropertiesService propertiesService;
+    private final CoverageV3SyncServiceImpl coverageV3SyncService;
 
-    public CoverageV3ServiceImpl(DataSource dataSource, PropertiesService propertiesService) {
+    public CoverageV3ServiceImpl(
+            DataSource dataSource,
+            PropertiesService propertiesService,
+            CoverageV3SyncServiceImpl coverageV3SyncService) {
         this.dataSource = dataSource;
         this.propertiesService = propertiesService;
+        this.coverageV3SyncService = coverageV3SyncService;
     }
 
     @Override
     public CoveragePagingResult pageCoverage(final CoveragePagingRequest page) {
-
         final ContractForCoverageDTO contract = page.getContract();
         final int expectedCoveragePeriods = CoverageServiceRepository.getExpectedCoveragePeriods(page);
 
@@ -54,14 +55,12 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         // A missing period = one month of enrollment missing for the contract
         final List<YearMonthRecord> coveragePeriods = getCoveragePeriodsByContract(page.getContractNumber());
         if (coveragePeriods.size() != expectedCoveragePeriods) {
-            if (THROW_EXCEPTION_FOR_COVERAGE_PERIOD_MISMATCH) {
-                throw new IllegalArgumentException(
-                        "at least one coverage period missing from enrollment table for contract "
-                                + page.getContract().getContractNumber()
-                );
-            } else {
-                log.warn("Expected coverage periods = {}; Actual coverage periods = {}", expectedCoveragePeriods, coveragePeriods.size());
-
+            val contractNumber = page.getContract().getContractNumber();
+            val message = "[V3] Expected coverage periods (%d) and actual coverage periods (%d) do not match for contract %s"
+                .formatted(expectedCoveragePeriods, coveragePeriods.size(), contractNumber);
+            log.warn(message);
+            if (!contractNumber.startsWith("Z")) {
+                throw new IllegalArgumentException(message);
             }
         }
 
@@ -95,6 +94,30 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return new CoveragePagingResult(beneficiarySummaries, request);
     }
 
+    @Override
+    public Map<String, List<CoverageV3Count>>  getCoverageCount() {
+        return new GetCoverageV3Count(dataSource).coverageCounts();
+    }
+
+    @Override
+    public boolean idrImportInProgress() {
+        return coverageV3SyncService.idrImporterInProgress();
+    }
+
+    @Override
+    @Transactional
+    public CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3SyncSource source) {
+        return coverageV3SyncService.copyFromStagingTablesToRecent(contract, source);
+    }
+
+    @Override
+    @Transactional
+    public CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source) {
+	    return coverageV3SyncService.moveToHistorical(contract, source);
+    }
+
+
+    @Override
     public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {
         return executeTimedQuery(
             format("countBeneficiariesByCoveragePeriod historicalCoverage=%s; recentCoverage=%s; contract=%s",
@@ -131,13 +154,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return propertiesService.isToggleOn("OptOutOn", false);
     }
 
-    private <T> T executeTimedQuery(String queryDescription, Supplier<T> supplier) {
+    public static <T> T executeTimedQuery(String queryDescription, Supplier<T> supplier) {
         val start = LocalDateTime.now();
         val result = supplier.get();
         val end = LocalDateTime.now();
         val duration = ChronoUnit.MILLIS.between(start, end);
         val durationSeconds = duration / 1000.0;
-        log.info("Query completed in {}s: {}", durationSeconds, queryDescription);
+        log.info("[V3] Query completed in {}s: {}", durationSeconds, queryDescription);
         return result;
     }
 

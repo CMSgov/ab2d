@@ -10,15 +10,16 @@ import javax.sql.DataSource;
  */
 public class JobMessageSource extends JdbcPollingChannelAdapter {
 
-    private static final String QUERY_GET_NEXT_UNPROCESSED_JOB = "                  " +
-                                    "    SELECT id, job_uuid, status                " +
-                                    "      FROM job                                 " +
-                                    "     WHERE status = 'SUBMITTED'                " +
-                                    "       AND (SELECT count(lock_key)             " +
-                                    "              FROM int_lock                    " +
-                                    "             WHERE lock_key = job_uuid) = 0    " +
-                                    "  ORDER BY created_at;                         ";
-
+    private static final String QUERY_GET_NEXT_UNPROCESSED_JOB =
+    """
+    SELECT id, job_uuid, status, contract_number, fhir_version
+    FROM job
+    WHERE status = 'SUBMITTED'
+        AND (SELECT count(lock_key)
+            FROM int_lock
+            WHERE lock_key = job_uuid) = 0
+    ORDER BY created_at;
+    """;
 
     public JobMessageSource(DataSource dataSource) {
         super(dataSource, QUERY_GET_NEXT_UNPROCESSED_JOB);
