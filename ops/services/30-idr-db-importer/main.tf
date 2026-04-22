@@ -47,15 +47,15 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
         [
           {
             name  = "AB2D_DB_DATABASE"
-            value = data.aws_ssm_parameter.ab2d_db_database.value
+            valueFrom = data.aws_ssm_parameter.ab2d_db_database.arn
           },
           {
             name  = "AB2D_DB_HOST"
-            value = data.aws_ssm_parameter.ab2d_db_host.value
+            valueFrom = data.aws_ssm_parameter.ab2d_db_host.arn
           },
           {
             name  = "AB2D_DB_PASSWORD"
-            value = data.aws_ssm_parameter.ab2d_db_password.value
+            valueFrom = data.aws_ssm_parameter.ab2d_db_password.arn
           },
           {
             name  = "AB2D_DB_PORT"
@@ -85,7 +85,7 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
           },
           {
             name  = "IDR_SNOWFLAKE_PRIVATE_KEY"
-            value = data.aws_ssm_parameter.idr_private_key[0].value
+            valueFrom = data.aws_ssm_parameter.idr_private_key[0].arn
           },
           {
             name  = "IDR_SNOWFLAKE_ROLE"
@@ -93,7 +93,7 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
           },
           {
             name  = "IDR_SNOWFLAKE_WAREHOUSE"
-            value = data.aws_ssm_parameter.idr_snowflake_warehouse[0].value
+            valueFrom = data.aws_ssm_parameter.idr_snowflake_warehouse[0].arn
           },
           {
             name  = "IDR_SNOWFLAKE_DB"
