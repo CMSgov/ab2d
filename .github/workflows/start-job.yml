@@ -32,6 +32,10 @@ on:
         description: 'Until date to use for a job. Accepted date format for V2 is 2020-02-13T00:00:00.000-05:00'
         type: string
         required: false
+      serviceDates:
+        description: 'service-date param value to use for a job. V3 only. Example FHIR date param format is gt2026-01-01'
+        type: string
+        required: false
       apiUrlPrefix:
         description: 'Origin of request for a job. May correspond to actual AB2D API URL or not. Leave blank to populate default value.'
         type: string
@@ -50,6 +54,7 @@ jobs:
       FHIR_VERSION: ${{ inputs.fhirVersion }}
       SINCE: ${{ inputs.since }}
       UNTIL: ${{ inputs.until }}
+      SERVICE_DATES: ${{ inputs.serviceDates }}
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
       AB2D_ENV: ${{ inputs.environment }}
 
@@ -104,6 +109,13 @@ jobs:
             export UNTIL="'${UNTIL}'"
           else
             export UNTIL="null"
+          fi
+
+          # V3 only for service-date param
+          if [[ "$FHIR_VERSION" == "R4V3" && -n "$SERVICE_DATES" ]]; then
+            export SERVICE_DATES="'${SERVICE_DATES}'"
+          else
+            export SERVICE_DATES="null"
           fi
 
           if [[ -z "${API_URL_PREFIX}" ]]; then
