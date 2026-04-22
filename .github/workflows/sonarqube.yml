@@ -31,7 +31,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-non-prod-${{github.run_id}}-${{github.run_attempt}}
     needs: workflow
     if: needs.workflow.outputs.files || github.event_name == 'push'
     env:
