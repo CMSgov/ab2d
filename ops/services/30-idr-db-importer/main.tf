@@ -74,7 +74,7 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
             value = local.env
           }
         ],
-        local.env == "prod" ? [
+        module.platform.parent_env == "prod" ? [
           {
             name  = "IDR_SNOWFLAKE_URL"
             value = "jdbc:snowflake://cms-idr.privatelink.snowflakecomputing.com"
