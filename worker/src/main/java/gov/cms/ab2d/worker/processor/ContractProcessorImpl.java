@@ -240,6 +240,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             // Queue a batch of patients
             current = nextPagingResult(current.getNextRequest().get());
             loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
+
             jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
             processFinishedRequests(contractData);
