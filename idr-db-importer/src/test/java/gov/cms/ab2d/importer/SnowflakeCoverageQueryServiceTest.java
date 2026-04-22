@@ -88,7 +88,7 @@ class SnowflakeCoverageQueryServiceTest {
         assertThrows(IllegalArgumentException.class, failingService::open);
     }
 
-  //  @Test
+    @Test
     void setsFetchSize() throws Exception {
         Connection connection = mock(Connection.class);
         PreparedStatement statement = mock(PreparedStatement.class);
