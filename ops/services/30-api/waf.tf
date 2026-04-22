@@ -20,7 +20,7 @@ module "aws_waf" {
 
   associated_resource_arn = aws_lb.ab2d_api.arn
   rate_limit              = 3000
-  ip_sets = local.is_sandbox ? [] : [
+  ip_sets = [
     one(data.aws_wafv2_ip_set.external_services).arn
   ]
 }
