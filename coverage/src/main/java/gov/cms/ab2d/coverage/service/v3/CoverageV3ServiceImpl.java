@@ -66,9 +66,11 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
         // Determine how many records to pull back
         final long limit = CoverageServiceRepository.getCoverageLimit(page.getPageSize(), expectedCoveragePeriods);
+        log.info("[V3] coverage limit = {}", limit);
 
         // Query coverage membership from database and collect it
         final List<CoverageMembership> enrollment = queryCoverageMembership(page, limit);
+        log.info("[V3] List<CoverageMembership> enrollment size = {}", enrollment.size());
 
         // Guarantee ordering of results to the order that the beneficiaries were returned from SQL
         final Map<Long, List<CoverageMembership>> enrollmentByBeneficiary =
@@ -79,6 +81,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                 .limit(page.getPageSize())
                 .map(membershipEntry -> CoverageServiceRepository.summarizeCoverageMembership(contract, membershipEntry))
                 .collect(toList());
+        log.info("List<CoverageSummary> beneficiarySummaries size = {}", beneficiarySummaries.size());
 
         // Get the patient to start from next time
         final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
