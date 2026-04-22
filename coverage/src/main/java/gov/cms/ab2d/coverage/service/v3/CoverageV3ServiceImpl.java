@@ -81,11 +81,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                 .limit(page.getPageSize())
                 .map(membershipEntry -> CoverageServiceRepository.summarizeCoverageMembership(contract, membershipEntry))
                 .collect(toList());
-        log.info("List<CoverageSummary> beneficiarySummaries size = {}", beneficiarySummaries.size());
+        log.info("[V3] List<CoverageSummary> beneficiarySummaries size = {}", beneficiarySummaries.size());
 
         // Get the patient to start from next time
         final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
                 enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
+
+        log.info("[V3] nextCursor is present? {}", nextCursor.isPresent());
 
         // Build the next request if there is a next patient
         CoveragePagingRequest request = null;
