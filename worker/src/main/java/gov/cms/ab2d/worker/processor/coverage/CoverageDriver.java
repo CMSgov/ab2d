@@ -88,4 +88,5 @@ public interface CoverageDriver {
      * @throws CoverageVerificationException if verification fails for at least one contract
      */
     void verifyCoverage();
+    void verifyCoverageV3();
 }

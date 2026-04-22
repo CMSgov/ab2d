@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.coverage.service.v3.CoverageV3LockWrapper;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
@@ -32,6 +34,12 @@ class JobHandlerTest {
     @Mock
     private LockRegistry lockRegistry;
 
+    @Mock
+    private CoverageV3Service coverageV3Service;
+
+    @Mock
+    private CoverageV3LockWrapper coverageV3LockWrapper;
+    
     @DisplayName("Job is not started if worker is set to neutral")
     @Test
     void processingNotTriggeredInNeutral() {
@@ -39,10 +47,12 @@ class JobHandlerTest {
         ReentrantLock lock = new ReentrantLock();
         when(workerService.getEngagement()).thenReturn(FeatureEngagement.NEUTRAL);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
         List<Map<String, Object>> payload = List.of(jobMap);
 
@@ -60,7 +70,7 @@ class JobHandlerTest {
         ReentrantLock lock = new ReentrantLock();
         when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
 
         List<Map<String, Object>> payload = List.of();
 
@@ -85,10 +95,12 @@ class JobHandlerTest {
         when(lockRegistry.obtain(anyString())).thenReturn(lock);
         when(workerService.process(anyString())).thenReturn(submittedJob);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
         List<Map<String, Object>> payload = List.of(jobMap);
 
@@ -110,10 +122,12 @@ class JobHandlerTest {
         when(lockRegistry.obtain(anyString())).thenReturn(lock);
         when(workerService.process(anyString())).thenThrow(ResourceNotFoundException.class);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
         List<Map<String, Object>> payload = List.of(jobMap);
         GenericMessage<List<Map<String, Object>>> message = new GenericMessage<>(payload);
@@ -142,22 +156,30 @@ class JobHandlerTest {
 
         when(workerService.process(anyString())).thenReturn(submittedJob, submittedJob, startedJob, startedJob);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
 
         Map<String, Object> first = new HashMap<>() {{
             put("job_uuid", "first job id");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
 
         Map<String, Object> second = new HashMap<>() {{
             put("job_uuid", "second job id");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
 
         Map<String, Object> third = new HashMap<>() {{
             put("job_uuid", "third job id");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
 
         Map<String, Object> fourth = new HashMap<>() {{
             put("job_uuid", "fourth job id");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "STU3");
         }};
 
         List<Map<String, Object>> payload = List.of(first, second, third, fourth);
@@ -169,6 +191,5 @@ class JobHandlerTest {
         verify(workerService, times(1)).getEngagement();
         verify(workerService, times(3)).process(anyString());
     }
+
 }
-
-
