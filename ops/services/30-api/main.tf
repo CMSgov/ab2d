@@ -370,7 +370,7 @@ resource "aws_lb" "ab2d_api" {
 
   subnets = local.public_subnet_ids
 
-  enable_deletion_protection       = contains(["prod", "sandbox", "test", "dev"], local.env)
+  enable_deletion_protection       = true
   enable_cross_zone_load_balancing = true
   drop_invalid_header_fields       = true
 

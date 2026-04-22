@@ -117,7 +117,7 @@ resource "aws_lb" "internal_lb" {
   security_groups    = [aws_security_group.internal_lb.id]
   subnets            = keys(module.platform.private_subnets)
 
-  enable_deletion_protection       = !module.platform.is_ephemeral_env
+  enable_deletion_protection       = true
   enable_cross_zone_load_balancing = true
   drop_invalid_header_fields       = true
 
