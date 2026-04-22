@@ -34,8 +34,8 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = data.aws_iam_role.idr_db_importer_task.arn
   runtime_platform {
-      cpu_architecture = "ARM64"
-      operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+    operating_system_family = "LINUX"
   }
   container_definitions = nonsensitive(jsonencode([
     {
@@ -43,19 +43,33 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
       name                   = local.service
       readonlyRootFilesystem = true
 
+      secrets = concat([
+        {
+          name      = "AB2D_DB_PASSWORD"
+          valueFrom = data.aws_ssm_parameter.ab2d_db_password.arn
+        }
+        ],
+        module.platform.parent_env == "prod" ? [
+          {
+            name      = "IDR_SNOWFLAKE_PRIVATE_KEY"
+            valueFrom = data.aws_ssm_parameter.idr_private_key[0].arn
+          },
+          {
+            name      = "IDR_SNOWFLAKE_WAREHOUSE"
+            valueFrom = data.aws_ssm_parameter.idr_snowflake_warehouse[0].arn
+          }
+        ] : []
+      )
+
       environment = concat(
         [
           {
             name  = "AB2D_DB_DATABASE"
-            valueFrom = data.aws_ssm_parameter.ab2d_db_database.arn
+            value = data.aws_ssm_parameter.ab2d_db_database.value
           },
           {
             name  = "AB2D_DB_HOST"
-            valueFrom = data.aws_ssm_parameter.ab2d_db_host.arn
-          },
-          {
-            name  = "AB2D_DB_PASSWORD"
-            valueFrom = data.aws_ssm_parameter.ab2d_db_password.arn
+            value = data.aws_ssm_parameter.ab2d_db_host.value
           },
           {
             name  = "AB2D_DB_PORT"
@@ -84,16 +98,8 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
             value = data.aws_ssm_parameter.idr_snowflake_user[0].value
           },
           {
-            name  = "IDR_SNOWFLAKE_PRIVATE_KEY"
-            valueFrom = data.aws_ssm_parameter.idr_private_key[0].arn
-          },
-          {
             name  = "IDR_SNOWFLAKE_ROLE"
             value = data.aws_ssm_parameter.idr_snowflake_role[0].value
-          },
-          {
-            name  = "IDR_SNOWFLAKE_WAREHOUSE"
-            valueFrom = data.aws_ssm_parameter.idr_snowflake_warehouse[0].arn
           },
           {
             name  = "IDR_SNOWFLAKE_DB"
