@@ -77,7 +77,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                 CoverageServiceRepository.aggregateEnrollmentByPatient(expectedCoveragePeriods, enrollment);
         log.info("[V3] enrollmentByBeneficiary size = {}", enrollmentByBeneficiary.size());
 
-
         // Only summarize page size beneficiaries worth of information and report it
         final List<CoverageSummary> beneficiarySummaries = enrollmentByBeneficiary.entrySet().stream()
                 .limit(page.getPageSize())
