@@ -1,15 +1,25 @@
 package gov.cms.ab2d.coverage.query;
 
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageMembership;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.C;
 
-import java.util.Arrays;
-import java.util.List;
+import java.sql.Array;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -179,6 +189,75 @@ class GetCoverageMembershipTest {
         """,
         toString(result));
     }
+
+    @Test
+    void testSummarizeMembership() {
+        val contract = "Z0000";
+        val contractDTO = new ContractForCoverageDTO();
+        contractDTO.setContractNumber(contract);
+
+        List<CoverageMembership> result = query.getCoverageMembership("Z0000", YEARS, false, DEFAULT_LIMIT);
+        Map<Long, List<CoverageMembership>> map = new HashMap<>();
+        for (CoverageMembership coverageMembership : result) {
+            long patientId=coverageMembership.getIdentifiers().getPatientIdV3();
+            map.putIfAbsent(patientId, new ArrayList<>());
+            map.get(patientId).add(coverageMembership);
+        }
+
+        for (Map.Entry<Long, List<CoverageMembership>> entry : map.entrySet()) {
+            val patientId = entry.getKey();
+            CoverageSummary coverageSummary = CoverageServiceRepository.summarizeCoverageMembership(contractDTO, entry);
+            System.out.println();
+        }
+
+    }
+
+    @Test
+    void testAggregate() throws Exception {
+        val contract = "Z0000";
+        val contractDto = new ContractForCoverageDTO();
+        contractDto.setContractNumber(contract);
+
+        final String AGGREGATE_TEST_QUERY =
+        """
+            select patient_id, current_mbi, array_agg(array[month,year]) as coverage_dates
+            from v3.coverage_v3_historical
+            where contract = :contract
+            group by patient_id, current_mbi
+            order by patient_id, current_mbi
+        """;
+
+        val parameters = new MapSqlParameterSource()
+                .addValue("contract", contract);
+        val template = new NamedParameterJdbcTemplate(container.getDataSource());
+
+        val rowMapper = new RowMapper<Object>() {
+            @Override
+            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                int patientId = rs.getInt(1);
+                val currentMbi = rs.getString(2);
+                val identifiers = Identifiers.ofV3(patientId, currentMbi);
+                Array array = rs.getArray(3);
+                Integer[][] intArray = (Integer[][]) array.getArray();
+                List<CoverageMembership> membershipList = new ArrayList<>();
+                for (Integer[] item : intArray) {
+                    int month = item[0];
+                    int year = item[1];
+                    System.out.printf("contract=%s; patient=%s; month=%d; year=%d;%n", contract, patientId, month, year);
+                    membershipList.add(new CoverageMembership(identifiers, year, month));
+                }
+
+                val result = CoverageServiceRepository.summarizeCoverageMembership(contractDto, membershipList);
+
+                return result;
+            }
+        };
+
+        val result = template.query(AGGREGATE_TEST_QUERY, parameters, rowMapper);
+        System.out.println();
+
+    }
+
 
     String toString(List<CoverageMembership> list) {
         val sb = new StringBuilder();
