@@ -44,5 +44,6 @@ public final class PropertyConstants {
 
     public static final String IDR_IMPORTER_STATUS_IN_PROGRESS = "import_in_progress";
 
+    public static final String V3_IDR_IMPORTER_STATUS = "v3.idr-importer.status";
 
 }
