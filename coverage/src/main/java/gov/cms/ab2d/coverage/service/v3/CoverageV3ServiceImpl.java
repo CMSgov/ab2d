@@ -89,26 +89,11 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
                 enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
 
-
-        val requiresNextCursor = limit == enrollment.size();
-        var nextCursor2 = -1L;
-        if (requiresNextCursor) {
-            nextCursor2 = enrollment.get(enrollment.size()-1).getIdentifiers().getPatientIdV3();
-        }
-
-        log.info("[V3] nextCursor2 = {}", nextCursor2);
-
         // Build the next request if there is a next patient
         CoveragePagingRequest request = null;
         if (nextCursor.isPresent()) {
             Map.Entry<Long, List<CoverageMembership>> nextCursorBeneficiary = nextCursor.get();
-            val nextCursor1 = nextCursorBeneficiary.getKey();
-            log.info("nextCursor1 == nextCursor2? {}", nextCursor1 == nextCursor2);
-            //request = new CoveragePagingRequest(page.getPageSize(), nextCursorBeneficiary.getKey(), contract, page.getJobStartTime());
-        }
-
-        if (requiresNextCursor) {
-            request = new CoveragePagingRequest(page.getPageSize(), nextCursor2, contract, page.getJobStartTime());
+            request = CoveragePagingRequest.ofV3(page.getPageSize(), nextCursorBeneficiary.getKey(), contract, page.getJobStartTime());
         }
 
         return new CoveragePagingResult(beneficiarySummaries, request);
