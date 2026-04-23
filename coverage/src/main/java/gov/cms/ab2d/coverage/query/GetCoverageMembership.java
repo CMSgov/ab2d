@@ -98,6 +98,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
     limit :limit
     """;
 
+
     public List<CoverageMembership> getCoverageMembership(
             final String contract,
             final List<Integer> years,
