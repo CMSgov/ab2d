@@ -110,14 +110,21 @@ class FileDownloadCommonTest {
         assertTrue(output.getOut().contains("Invalid job UUID provided: '../" + TEST_JOB_UUID + "'"));
 
     }
+    @Test
+    void testSanitizeFilename_CRLF() {
+        String filenameWithCR = "test\rfilename.ndjson";
+        String filenameWithLF = "test\nfilename.ndjson";
+
+        assertThrows(ResourceNotFoundException.class, () -> FileDownloadCommon.sanitizeFilename(filenameWithCR));
+        assertThrows(ResourceNotFoundException.class, () -> FileDownloadCommon.sanitizeFilename(filenameWithLF));
+    }
 
     @Test
     void test_sanitize_invalid_file(CapturedOutput output) {
-        // invalid UUID
         assertThrows(ResourceNotFoundException.class, () -> {
-            FileDownloadCommon.sanitizeJobUuid("../" + TEST_FILE);
+            FileDownloadCommon.sanitizeFilename("../" + TEST_FILE);
         });
-        assertTrue(output.getOut().contains("Invalid job UUID provided: '../" + TEST_FILE + "'"));
+        assertTrue(output.getOut().contains("Invalid filename provided: '../" + TEST_FILE + "'"));
 
     }
 
