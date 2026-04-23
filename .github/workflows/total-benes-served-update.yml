@@ -41,6 +41,16 @@ jobs:
 
       - name: Conduct update of total benes served
         run: |
+          COUNT_QUERY="SELECT statistic_value FROM ab2d.ab2d_statistics WHERE statistic_name = 'total_benes_served';"
+
+          echo "Procedure started"
+          COUNT_BEFORE=$(psql -t --command="${COUNT_QUERY}" | xargs)
+          echo "Count before: ${COUNT_BEFORE}"
+
           SQL_TOTAL_BENE_SERVED=$(envsubst < .github/workflows/resources/total-benes-served.sql)
           psql -t --command="${SQL_TOTAL_BENE_SERVED}"
-          echo "Complete"
+
+          COUNT_AFTER=$(psql -t --command="${COUNT_QUERY}" | xargs)
+          echo "Count after: ${COUNT_AFTER}"
+          echo "Difference: $((COUNT_AFTER - COUNT_BEFORE))"
+          echo "Procedure completed"
