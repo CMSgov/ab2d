@@ -10,7 +10,7 @@ ENV JVM_MIN_RAM=20.0
 ENV JVM_MAX_RAM=80.0
 
 #Update Packages
-RUN yum update -y --security
+RUN apk update && apk upgrade --no-cache
 
 #JAVA commands
 CMD java \
