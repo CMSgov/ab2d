@@ -107,7 +107,9 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
             //request = new CoveragePagingRequest(page.getPageSize(), nextCursorBeneficiary.getKey(), contract, page.getJobStartTime());
         }
 
-        request = new CoveragePagingRequest(page.getPageSize(), nextCursor2, contract, page.getJobStartTime());
+        if (requiresNextCursor) {
+            request = new CoveragePagingRequest(page.getPageSize(), nextCursor2, contract, page.getJobStartTime());
+        }
 
         return new CoveragePagingResult(beneficiarySummaries, request);
     }
