@@ -75,6 +75,8 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         // Guarantee ordering of results to the order that the beneficiaries were returned from SQL
         final Map<Long, List<CoverageMembership>> enrollmentByBeneficiary =
                 CoverageServiceRepository.aggregateEnrollmentByPatient(expectedCoveragePeriods, enrollment);
+        log.info("[V3] enrollmentByBeneficiary size = {}", enrollmentByBeneficiary.size());
+
 
         // Only summarize page size beneficiaries worth of information and report it
         final List<CoverageSummary> beneficiarySummaries = enrollmentByBeneficiary.entrySet().stream()
@@ -87,14 +89,25 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
                 enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
 
-        log.info("[V3] nextCursor is present? {}", nextCursor.isPresent());
+
+        val requiresNextCursor = limit == enrollment.size();
+        var nextCursor2 = -1L;
+        if (requiresNextCursor) {
+            nextCursor2 = enrollment.get(enrollment.size()-1).getIdentifiers().getPatientIdV3();
+        }
+
+        log.info("[V3] nextCursor2 = {}", nextCursor2);
 
         // Build the next request if there is a next patient
         CoveragePagingRequest request = null;
         if (nextCursor.isPresent()) {
             Map.Entry<Long, List<CoverageMembership>> nextCursorBeneficiary = nextCursor.get();
-            request = new CoveragePagingRequest(page.getPageSize(), nextCursorBeneficiary.getKey(), contract, page.getJobStartTime());
+            val nextCursor1 = nextCursorBeneficiary.getKey();
+            log.info("nextCursor1 == nextCursor2? {}", nextCursor1 == nextCursor2);
+            //request = new CoveragePagingRequest(page.getPageSize(), nextCursorBeneficiary.getKey(), contract, page.getJobStartTime());
         }
+
+        request = new CoveragePagingRequest(page.getPageSize(), nextCursor2, contract, page.getJobStartTime());
 
         return new CoveragePagingResult(beneficiarySummaries, request);
     }
