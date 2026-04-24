@@ -27,7 +27,7 @@
 
     <properties>
         <project.root>${basedir}</project.root>
-        <java.version>17</java.version>
+        <java.version>25</java.version>
         <hapi.version>8.4.0</hapi.version>
         <mockito.core.version>5.16.1</mockito.core.version>
         <okhttp3.version>5.0.0</okhttp3.version>
@@ -39,7 +39,7 @@
         <postgresql.version>42.7.7</postgresql.version>
 
         <!-- Maven plugin versions -->
-        <jacoco.version>0.8.10</jacoco.version>
+        <jacoco.version>0.8.14</jacoco.version>
         <maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
@@ -197,6 +197,13 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <parameters>true</parameters>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
