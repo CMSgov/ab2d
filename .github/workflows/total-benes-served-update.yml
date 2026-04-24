@@ -3,9 +3,8 @@ run-name: total-benes-served-update prod
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - AB2D-7008/total-benes-served-update-workflow
+  schedule:
+    - cron: '0 4 * * 3,5'  # Tuesday and Thursday at 11pm EST (UTC-5)
 
 permissions:
   contents: read
