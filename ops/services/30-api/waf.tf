@@ -8,6 +8,23 @@ data "aws_wafv2_ip_set" "external_services" {
   scope = "REGIONAL"
 }
 
+resource "aws_wafv2_ip_set" "api_customers" {
+  count = local.add_waf ? 1 : 0
+  name               = "${local.service_prefix}-api-customers"
+  description        = "IP ranges for customers of this API"
+  scope              = "REGIONAL"
+  ip_address_version = "IPV4"
+
+  # Addresses will be managed outside of terraform.
+  addresses = []
+
+  lifecycle {
+    ignore_changes = [
+      addresses,
+    ]
+  }
+}
+
 module "aws_waf" {
   count = local.add_waf ? 1 : 0
 
@@ -15,7 +32,7 @@ module "aws_waf" {
 
   app  = "ab2d"
   env  = local.env
-  name = "ab2d-${local.env}-api"
+  name = "${local.service_prefix}-api"
 
   scope        = "REGIONAL"
   content_type = "APPLICATION_JSON"
@@ -23,6 +40,7 @@ module "aws_waf" {
   associated_resource_arn = aws_lb.ab2d_api.arn
   rate_limit              = 3000
   ip_sets = [
-    one(data.aws_wafv2_ip_set.external_services).arn
-  ]
+      one(data.aws_wafv2_ip_set.external_services).arn,
+      one(aws_wafv2_ip_set.api_customers).arn
+      ]
 }
