@@ -67,6 +67,7 @@ public class BFDSearchImpl implements BFDSearch {
         }
         else {
             url.append("&excludeSAMHSA=true");
+            url.append("&type=carrier,dme,hha,hospice,inpatient,outpatient,snf");
         }
 
         if (since != null) {
