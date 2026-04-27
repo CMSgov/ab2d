@@ -15,7 +15,7 @@ locals {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app
@@ -33,12 +33,33 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = data.aws_iam_role.idr_db_importer_task.arn
-
+  runtime_platform {
+    cpu_architecture        = "ARM64"
+    operating_system_family = "LINUX"
+  }
   container_definitions = nonsensitive(jsonencode([
     {
       image                  = "${local.image_repo_uri}:${var.image_tag}"
       name                   = local.service
       readonlyRootFilesystem = true
+
+      secrets = concat([
+        {
+          name      = "AB2D_DB_PASSWORD"
+          valueFrom = data.aws_ssm_parameter.ab2d_db_password.arn
+        }
+        ],
+        module.platform.parent_env == "prod" ? [
+          {
+            name      = "IDR_SNOWFLAKE_PRIVATE_KEY"
+            valueFrom = data.aws_ssm_parameter.idr_private_key[0].arn
+          },
+          {
+            name      = "IDR_SNOWFLAKE_WAREHOUSE"
+            valueFrom = data.aws_ssm_parameter.idr_snowflake_warehouse[0].arn
+          }
+        ] : []
+      )
 
       environment = concat(
         [
@@ -49,10 +70,6 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
           {
             name  = "AB2D_DB_HOST"
             value = data.aws_ssm_parameter.ab2d_db_host.value
-          },
-          {
-            name  = "AB2D_DB_PASSWORD"
-            value = data.aws_ssm_parameter.ab2d_db_password.value
           },
           {
             name  = "AB2D_DB_PORT"
@@ -71,7 +88,7 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
             value = local.env
           }
         ],
-        local.env == "prod" ? [
+        module.platform.parent_env == "prod" ? [
           {
             name  = "IDR_SNOWFLAKE_URL"
             value = "jdbc:snowflake://cms-idr.privatelink.snowflakecomputing.com"
@@ -81,16 +98,8 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
             value = data.aws_ssm_parameter.idr_snowflake_user[0].value
           },
           {
-            name  = "IDR_SNOWFLAKE_PRIVATE_KEY"
-            value = data.aws_ssm_parameter.idr_private_key[0].value
-          },
-          {
             name  = "IDR_SNOWFLAKE_ROLE"
             value = data.aws_ssm_parameter.idr_snowflake_role[0].value
-          },
-          {
-            name  = "IDR_SNOWFLAKE_WAREHOUSE"
-            value = data.aws_ssm_parameter.idr_snowflake_warehouse[0].value
           },
           {
             name  = "IDR_SNOWFLAKE_DB"

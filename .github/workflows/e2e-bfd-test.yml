@@ -27,7 +27,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     env:
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
@@ -73,7 +73,6 @@ jobs:
           KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
           aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
-
       - name: Run e2e-bfd-test
         env:
           AB2D_BFD_URL: 'https://prod-sbx.fhir.bfd.cmscloud.local'

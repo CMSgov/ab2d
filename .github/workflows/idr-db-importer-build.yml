@@ -45,7 +45,7 @@ env:
 
 jobs:
   build:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ inputs.is_prod && 'prod' || 'non-prod'}}-${{github.run_id}}-${{github.run_attempt}}
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
 
@@ -68,6 +68,18 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-${{ env.AWS_ACCOUNT_NAME }}-github-actions
+
+      - name: Set Artifactory credentials
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+
+      - name: Install common module
+        working-directory: .
+        run: mvn install -pl common -am -DskipTests -q -s settings.xml -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}

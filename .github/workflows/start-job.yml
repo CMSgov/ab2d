@@ -46,7 +46,7 @@ permissions:
 
 jobs:
   start-job:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
 
     env:
       CONTRACT_NUMBER: ${{ inputs.contractNumber }}
