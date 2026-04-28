@@ -11,17 +11,16 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLOutput;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-public class GetCoverageMembership extends CoverageV3BaseQuery {
+public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
 
     private final CoverageMembershipRowMapper mapper;
-    public GetCoverageMembership(DataSource dataSource) {
+    public GetAggregatedCoverageMembership(DataSource dataSource) {
         super(dataSource);
         this.mapper = new CoverageMembershipRowMapper();
     }
