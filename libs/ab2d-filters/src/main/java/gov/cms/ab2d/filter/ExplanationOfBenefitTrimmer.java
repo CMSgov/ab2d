@@ -9,16 +9,31 @@ public class ExplanationOfBenefitTrimmer {
     /**
      * Return the trimmed version of the EOB. Currently, only R4 & DSTU3 are supported
      *
-     * @param resource - the resource
+     * @param resource    - the resource
+     * @param fhirVersion - the FHIR version
      * @return - the trimmed resource
      */
     public static IBaseResource getBenefit(IBaseResource resource, FhirVersion fhirVersion) {
+        return getBenefit(resource, fhirVersion, false);
+    }
+
+    /**
+     * Return the trimmed version of the EOB. Currently, only R4 & DSTU3 are supported.
+     *
+     * @param resource    - the resource
+     * @param fhirVersion - the FHIR version
+     * @param useInPlace  - when true, R4V3 uses in-place mutation instead of copy-based construction
+     * @return - the trimmed resource
+     */
+    public static IBaseResource getBenefit(IBaseResource resource, FhirVersion fhirVersion, boolean useInPlace) {
         if (resource == null) {
             return null;
         }
 
         if (fhirVersion == FhirVersion.R4V3) {
-            return ExplanationOfBenefitTrimmerR4V3.getBenefit(resource);
+            return useInPlace
+                    ? ExplanationOfBenefitTrimmerR4V3.getBenefitInPlace(resource)
+                    : ExplanationOfBenefitTrimmerR4V3.getBenefit(resource);
         }
 
         return switch (resource.getStructureFhirVersionEnum()) {

@@ -159,6 +159,100 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     }
 
     /**
+     * Mutates the given ExplanationOfBenefit in-place, removing unauthorized fields and
+     * filtering contained/careTeam/supportingInfo/insurance without allocating new copies
+     * of each sub-object. Functionally equivalent to {@link #getBenefit(IBaseResource)} but
+     * with significantly fewer object allocations and no GC pressure from .copy() calls.
+     *
+     * @param resource - the original ExplanationOfBenefit (will be mutated directly)
+     * @return the same instance, sanitized
+     */
+    public static IBaseResource getBenefitInPlace(IBaseResource resource) {
+        if (resource == null) return null;
+        ExplanationOfBenefit benefit = (ExplanationOfBenefit) resource;
+
+        // Compute all filtered collections before mutating, since lookups depend on original contained
+        List<ExplanationOfBenefit.CareTeamComponent> filteredCareTeam = getCareTeamsByRoleCodes(benefit, roleCodes);
+
+        List<Resource> npiContained = filteredCareTeam.stream()
+                .flatMap(ct -> getProviderContainedForCareTeam(benefit, ct).stream())
+                .filter(res -> extractIdentifiers(res).stream()
+                        .anyMatch(id -> NPI_SYSTEM.equals(id.getSystem())))
+                .toList();
+
+        List<Resource> withRenderingExtensions = filteredCareTeam.stream()
+                .flatMap(ct -> getProviderContainedForCareTeam(benefit, ct).stream())
+                .filter(DomainResource.class::isInstance)
+                .map(DomainResource.class::cast)
+                .filter(dr -> dr.getExtension().stream()
+                        .filter(ext -> RENDERING_EXT_URLS.contains(ext.getUrl()))
+                        .anyMatch(ext -> ext.getValue() instanceof CodeableConcept cc
+                                && cc.getCoding().stream().anyMatch(Coding::hasCode)))
+                .collect(Collectors.toList());
+
+        List<Resource> filteredContained = new ArrayList<>();
+        filteredContained.addAll(npiContained);
+        filteredContained.addAll(withRenderingExtensions);
+
+        List<ExplanationOfBenefit.SupportingInformationComponent> filteredSupportingInfo = new ArrayList<>();
+        filteredSupportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), NL_RECORD_IDENTIFICATION));
+        filteredSupportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), C4BB_SUPPORTING_INFO_TYPE_SYSTEM, MS_DRG_SYSTEM, "drg"));
+
+        List<ExplanationOfBenefit.InsuranceComponent> filteredInsurance = buildInsuranceInPlace(benefit);
+
+        benefit.setContained(filteredContained);
+        benefit.setSupportingInfo(filteredSupportingInfo);
+        benefit.setCareTeam(filteredCareTeam);
+        benefit.setInsurance(filteredInsurance);
+
+        // Clear dropped top-level fields
+        benefit.setPatientTarget(null);
+        benefit.setCreated(null);
+        benefit.setEnterer(null);
+        benefit.setEntererTarget(null);
+        benefit.setInsurer(null);
+        benefit.setInsurerTarget(null);
+        benefit.setProviderTarget(null);
+        benefit.setReferral(null);
+        benefit.setReferralTarget(null);
+        benefit.setFacilityTarget(null);
+        benefit.setClaim(null);
+        benefit.setClaimTarget(null);
+        benefit.setClaimResponse(null);
+        benefit.setClaimResponseTarget(null);
+        benefit.setDisposition(null);
+        benefit.setPrescription(null);
+        benefit.setPrescriptionTarget(null);
+        benefit.setOriginalPrescription(null);
+        benefit.setOriginalPrescriptionTarget(null);
+        benefit.setPrecedenceElement(null);
+        benefit.setPriority(null);
+        benefit.setFundsReserveRequested(null);
+        benefit.setFundsReserve(null);
+        benefit.setFormCode(null);
+        benefit.setBenefitPeriod(null);
+        benefit.setPayee(null);
+        benefit.setAccident(null);
+        benefit.setPayment(null);
+        benefit.setForm(null);
+        benefit.setExtension(null);
+        benefit.setModifierExtension(null);
+        benefit.setPreAuthRef(null);
+        benefit.setPreAuthRefPeriod(null);
+        benefit.setRelated(null);
+        benefit.setAddItem(null);
+        benefit.setProcessNote(null);
+        benefit.setBenefitBalance(null);
+        benefit.setAdjudication(null);
+        benefit.setTotal(null);
+
+        // Mutate items in-place (reuses existing method)
+        cleanOutUnNeededData(benefit);
+
+        return benefit;
+    }
+
+    /**
      * Copy data from the old EOB to the new EOB. Had to do it piecemeal because
      * ExplanationOfBenefit.copy() resulted in a stack overvlow
      *
@@ -401,6 +495,18 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         return benefit.getContained().stream()
                 .filter(r -> containedId.equals(r.getIdPart()))
                 .findFirst();
+    }
+
+    private static List<ExplanationOfBenefit.InsuranceComponent> buildInsuranceInPlace(ExplanationOfBenefit benefit) {
+        List<ExplanationOfBenefit.InsuranceComponent> result = new ArrayList<>();
+        for (ExplanationOfBenefit.InsuranceComponent src : benefit.getInsurance()) {
+            if (src == null) continue;
+            ExplanationOfBenefit.InsuranceComponent dst = new ExplanationOfBenefit.InsuranceComponent();
+            dst.setCoverage(src.getCoverage());
+            dst.setFocal(src.getFocal());
+            result.add(dst);
+        }
+        return result;
     }
 
     private static List<ExplanationOfBenefit.InsuranceComponent> copyInsuranceWithFocalAndCoverage(ExplanationOfBenefit benefit) {
