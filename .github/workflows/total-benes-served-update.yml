@@ -1,0 +1,55 @@
+name: total-benes-served-update
+run-name: total-benes-served-update prod
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * 3,5'  # Tuesday and Thursday at 11pm EST (UTC-5)
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  total-benes-served-update:
+    runs-on: codebuild-ab2d-prod-${{ github.run_id }}-${{ github.run_attempt }}
+
+    env:
+      AB2D_ENV: prod
+      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
+
+      - name: Set env vars from AWS params in AB2D account
+        uses: ./.github/workflows/actions/set-database-params
+        with:
+          aws_region: ${{ vars.AWS_REGION }}
+          environment: prod
+
+      - name: Install psql
+        run: |
+          sudo dnf install postgresql16 -y
+
+      - name: Conduct update of total benes served
+        run: |
+          COUNT_QUERY="SELECT statistic_value FROM ab2d.ab2d_statistics WHERE statistic_name = 'total_benes_served';"
+
+          echo "Procedure started"
+          COUNT_BEFORE=$(psql -t --command="${COUNT_QUERY}" | xargs)
+          echo "Count before: ${COUNT_BEFORE}"
+
+          SQL_TOTAL_BENE_SERVED=$(envsubst < .github/workflows/resources/total-benes-served.sql)
+          psql -t --command="${SQL_TOTAL_BENE_SERVED}"
+
+          COUNT_AFTER=$(psql -t --command="${COUNT_QUERY}" | xargs)
+          echo "Count after: ${COUNT_AFTER}"
+          echo "Difference: $((COUNT_AFTER - COUNT_BEFORE))"
+          echo "Procedure completed"
