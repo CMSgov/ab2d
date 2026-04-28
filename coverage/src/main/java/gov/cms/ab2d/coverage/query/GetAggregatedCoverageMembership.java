@@ -1,0 +1,193 @@
+package gov.cms.ab2d.coverage.query;
+
+import com.google.common.collect.Sets;
+import gov.cms.ab2d.coverage.model.CoverageMembership;
+import gov.cms.ab2d.coverage.model.Identifiers;
+import lombok.val;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+
+import javax.sql.DataSource;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+
+public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
+
+    private final CoverageMembershipRowMapper mapper;
+    public GetAggregatedCoverageMembership(DataSource dataSource) {
+        super(dataSource);
+        this.mapper = new CoverageMembershipRowMapper();
+    }
+
+    private static final String SELECT_COVERAGE_WITHOUT_OPTOUT_WITHOUT_CURSOR =
+    """
+    select patient_id, current_mbi, year, month from (
+        select * from v3.coverage_v3
+           where contract = :contract
+           and current_mbi is not null
+        union
+        select * from v3.coverage_v3_historical
+           where contract = :contract
+           and current_mbi is not null
+        order by patient_id, year asc, month asc
+        limit :limit
+    )
+    where year in (:years)
+    order by patient_id asc, year asc, month asc
+    """;
+
+    private static final String SELECT_COVERAGE_WITHOUT_OPTOUT_WITH_CURSOR =
+    """
+    select patient_id, current_mbi, year, month from (
+        select * from v3.coverage_v3
+           where contract = :contract
+           and current_mbi is not null
+           and patient_id >= :patient_id
+        union
+        select * from v3.coverage_v3_historical
+           where contract = :contract
+           and current_mbi is not null
+           and patient_id >= :patient_id
+        order by patient_id, year asc, month asc
+        limit :limit
+    )
+    where year in (:years)
+    order by patient_id asc, year asc, month asc
+    """;
+
+    private static final String SELECT_COVERAGE_WITH_OPTOUT_WITHOUT_CURSOR =
+    """
+    select patient_id, current_mbi, year, month from
+    (
+       select * from v3.coverage_v3
+           where contract = :contract
+           and current_mbi is not null
+       union
+       select * from  v3.coverage_v3_historical
+           where contract = :contract
+           and current_mbi is not null
+    ) as union_results
+    left join current_mbi on union_results.current_mbi = current_mbi.mbi
+    where year in (:years)
+    and current_mbi is not null
+    and share_data is not false
+    order by patient_id asc, year asc, month asc
+    limit :limit
+    """;
+
+    private static final String SELECT_COVERAGE_WITH_OPTOUT_WITH_CURSOR =
+    """
+    select patient_id, current_mbi, year, month from
+    (
+       select * from v3.coverage_v3
+           where contract = :contract
+           and current_mbi is not null
+           and patient_id >= :patient_id
+       union
+       select * from  v3.coverage_v3_historical
+           where contract = :contract
+           and current_mbi is not null
+           and patient_id >= :patient_id
+    ) as union_results
+    left join current_mbi on union_results.current_mbi = current_mbi.mbi
+    where year in (:years)
+    and current_mbi is not null
+    and share_data is not false
+    order by patient_id asc, year asc, month asc
+    limit :limit
+    """;
+
+
+    public List<CoverageMembership> getCoverageMembership(
+            final String contract,
+            final List<Integer> years,
+            final boolean optOutOn,
+            final long limit
+    ) {
+        return getCoverageMembership(contract, years, optOutOn, limit, null);
+    }
+
+    public List<CoverageMembership> getCoverageMembership(
+            final String contract,
+            final List<Integer> years,
+            final boolean optOutOn,
+            final long limit,
+            final Long cursorPatientId
+    ) {
+
+        val hasCursor = cursorPatientId != null;
+        final String query;
+        if (optOutOn) {
+            if (hasCursor) {
+                query = SELECT_COVERAGE_WITH_OPTOUT_WITH_CURSOR;
+            } else {
+                query = SELECT_COVERAGE_WITH_OPTOUT_WITHOUT_CURSOR;
+            }
+        } else {
+            if (hasCursor) {
+                query = SELECT_COVERAGE_WITHOUT_OPTOUT_WITH_CURSOR;
+            } else {
+                query = SELECT_COVERAGE_WITHOUT_OPTOUT_WITHOUT_CURSOR;
+            }
+        }
+
+        val parameters = new MapSqlParameterSource()
+                .addValue("contract", contract)
+                .addValue("years", years)
+                .addValue("limit", limit);
+
+        if (hasCursor) {
+            parameters.addValue("patient_id", cursorPatientId);
+        }
+
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+        return template.query(query, parameters, this.mapper);
+    }
+
+    private static class CoverageMembershipRowMapper implements RowMapper<CoverageMembership> {
+        @Override
+        public CoverageMembership mapRow(ResultSet rs, int rowNum) throws SQLException {
+            val patientId = rs.getLong(1);
+            val currentMbi = rs.getString(2);
+            val year = rs.getInt(3);
+            val month = rs.getInt(4);
+            val identifiers = Identifiers.ofV3(patientId, currentMbi);
+            return new CoverageMembership(identifiers, year, month);
+        }
+    }
+
+    public static void main(String[] args) {
+        val optOutPatientIdExample=1234567890L;
+
+        val start = LocalDateTime.now();
+
+        Set<Long> optOuts = new HashSet<>(2922);
+        for (int i = 0; i < 2922; i++) {
+            optOuts.add(new Random().nextLong());
+        }
+        optOuts.add(optOutPatientIdExample);
+
+        Set<Long> patientIds = new HashSet<>(5000);
+        for (int i = 0; i < 5000; i++) {
+            patientIds.add(new Random().nextLong());
+        }
+        patientIds.add(optOutPatientIdExample);
+
+        Sets.SetView<Long> patientsWhoOptedOut = Sets.intersection(patientIds, optOuts);
+
+        val end = LocalDateTime.now();
+
+        System.out.println("start = "+start);
+        System.out.println("end =   "+end);
+        System.out.println(patientsWhoOptedOut);
+
+
+    }
+
+}

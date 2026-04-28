@@ -1,5 +1,6 @@
 package gov.cms.ab2d.coverage.query;
 
+import com.google.common.collect.Sets;
 import gov.cms.ab2d.coverage.model.CoverageMembership;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import lombok.val;
@@ -10,7 +11,12 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLOutput;
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 public class GetCoverageMembership extends CoverageV3BaseQuery {
 
@@ -156,4 +162,33 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
             return new CoverageMembership(identifiers, year, month);
         }
     }
+
+    public static void main(String[] args) {
+        val optOutPatientIdExample=1234567890L;
+
+        val start = LocalDateTime.now();
+
+        Set<Long> optOuts = new HashSet<>(2922);
+        for (int i = 0; i < 2922; i++) {
+            optOuts.add(new Random().nextLong());
+        }
+        optOuts.add(optOutPatientIdExample);
+
+        Set<Long> patientIds = new HashSet<>(5000);
+        for (int i = 0; i < 5000; i++) {
+            patientIds.add(new Random().nextLong());
+        }
+        patientIds.add(optOutPatientIdExample);
+
+        Sets.SetView<Long> patientsWhoOptedOut = Sets.intersection(patientIds, optOuts);
+
+        val end = LocalDateTime.now();
+
+        System.out.println("start = "+start);
+        System.out.println("end =   "+end);
+        System.out.println(patientsWhoOptedOut);
+
+
+    }
+
 }
