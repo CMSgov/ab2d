@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.GzipCompressUtils;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
@@ -74,6 +75,9 @@ class ContractProcessorInvalidPatientTest {
     private BFDClient bfdClient;
 
     @Mock
+    private PropertiesService propertiesService;
+
+    @Mock
     private ContractToContractCoverageMapping mapping;
 
     private ContractWorkerClientMock contractWorkerClient;
@@ -112,7 +116,7 @@ class ContractProcessorInvalidPatientTest {
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);
-        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger, searchConfig);
+        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger, searchConfig, propertiesService);
         JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(JOB_ID);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
