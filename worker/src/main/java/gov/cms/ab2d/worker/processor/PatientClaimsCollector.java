@@ -48,11 +48,6 @@ public class PatientClaimsCollector {
         this(claimsRequest, earliestDate, false);
     }
 
-    public PatientClaimsCollector(PatientClaimsRequest claimsRequest, Date earliestDate) {
-        // set useInPlace=false by default
-        this(claimsRequest, earliestDate, false);
-    }
-
     public PatientClaimsCollector(PatientClaimsRequest claimsRequest, Date earliestDate, boolean useInPlace) {
         this.claimsRequest = claimsRequest;
 
@@ -62,7 +57,6 @@ public class PatientClaimsCollector {
         this.useInPlace = useInPlace;
 
         this.eobs = new ArrayList<>();
-        this.useInPlace = useInPlace;
     }
 
     public List<IBaseResource> getEobs() {
