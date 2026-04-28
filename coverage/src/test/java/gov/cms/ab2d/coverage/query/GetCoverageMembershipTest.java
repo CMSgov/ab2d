@@ -6,9 +6,11 @@ import gov.cms.ab2d.coverage.model.CoverageMembership;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -206,29 +208,69 @@ class GetCoverageMembershipTest {
 
         for (Map.Entry<Long, List<CoverageMembership>> entry : map.entrySet()) {
             val patientId = entry.getKey();
+            val coverageMembrership = entry.getValue();
+            //CoverageSummary coverageSummary = CoverageServiceRepository.summarizeCoverageMembership(contractDTO, entry);
             CoverageSummary coverageSummary = CoverageServiceRepository.summarizeCoverageMembership(contractDTO, entry);
-            System.out.println();
+            for (FilterOutByDate.DateRange dateRange : coverageSummary.getDateRanges()) {
+                System.out.println(toString(dateRange));
+            }
         }
+
+    }
+
+    private static String toString(FilterOutByDate.DateRange range) {
+        return String.format("start=%s end=%s", range.getStart(), range.getEnd());
+    }
+
+    @Test
+    void testDynamicTable() {
+
+        val parameters = new MapSqlParameterSource();
+
+        val template = new NamedParameterJdbcTemplate(container.getDataSource());
+
+//        val query = "SELECT table_name FROM information_schema.tables";
+        val query = "select * from v3.coverage_v3_Z0000";
+
+        template.query(query, parameters, new RowMapper<Object>() {
+            @Override
+            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                val contract = rs.getString(1);
+                val patient_id = rs.getString(2);
+                val current_mbi = rs.getString(3);
+
+//                val result = rs.getString(1);
+//                System.out.println(result);
+                return null;
+            }
+        });
 
     }
 
     @Test
     void testAggregate() throws Exception {
+        val years = List.of(2020,2021,2022,2023,2024,2025,2026);
         val contract = "Z0000";
         val contractDto = new ContractForCoverageDTO();
         contractDto.setContractNumber(contract);
 
         final String AGGREGATE_TEST_QUERY =
         """
-            select patient_id, current_mbi, array_agg(array[month,year]) as coverage_dates
+            select patient_id, current_mbi, array_agg(array[year,month]) as coverage_dates
             from v3.coverage_v3_historical
-            where contract = :contract
+            left join current_mbi on current_mbi = current_mbi.mbi
+            where year in (:years)
+                and contract = :contract
+                and current_mbi is not null
+                and share_data is not false
             group by patient_id, current_mbi
             order by patient_id, current_mbi
         """;
 
         val parameters = new MapSqlParameterSource()
-                .addValue("contract", contract);
+                .addValue("contract", contract)
+                .addValue("years", years);
+
         val template = new NamedParameterJdbcTemplate(container.getDataSource());
 
         val rowMapper = new RowMapper<Object>() {
@@ -241,15 +283,18 @@ class GetCoverageMembershipTest {
                 Integer[][] intArray = (Integer[][]) array.getArray();
                 List<CoverageMembership> membershipList = new ArrayList<>();
                 for (Integer[] item : intArray) {
-                    int month = item[0];
-                    int year = item[1];
-                    System.out.printf("contract=%s; patient=%s; month=%d; year=%d;%n", contract, patientId, month, year);
+                    int year = item[0];
+                    int month = item[1];
+                    System.out.printf("contract=%s; patient=%s; year=%d; month=%d;%n", contract, patientId, year, month);
                     membershipList.add(new CoverageMembership(identifiers, year, month));
                 }
 
-                val result = CoverageServiceRepository.summarizeCoverageMembership(contractDto, membershipList);
+                val coverageSummary = CoverageServiceRepository.summarizeCoverageMembership(contractDto, membershipList);
 
-                return result;
+
+//                !FilterOutByDate.valid(resource, attTime, earliestDate, dateRanges);
+
+                return coverageSummary;
             }
         };
 
