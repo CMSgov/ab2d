@@ -15,4 +15,5 @@ public interface CoverageV3Service {
     CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source);
     Map<String, List<CoverageV3Count>> getCoverageCount();
     boolean idrImportInProgress();
+    void createAggregatedAttributionTable(String contract);
 }

@@ -136,11 +136,15 @@ public class JobHandler implements MessageHandler {
         }
 
         val contract = getContractNumber(submittedJob);
+        // Note: `moveOldCoverageToHistoricalCoverage` is mostly irrelevant now that v3.coverage_v3_history_summary exists
         coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, JOB_HANDLER);
         val result = coverageV3Service.moveFromStagingToRecentCoverage(contract, JOB_HANDLER);
         if (result == CoverageV3SyncResult.SYNC_SUCCESSFUL_FOR_CONTRACT ||
             result == CoverageV3SyncResult.NO_COVERAGE_FOUND_FOR_CONTRACT ||
             result == CoverageV3SyncResult.IDR_IMPORTER_IN_PROGRESS) {
+
+            coverageV3Service.createAggregatedAttributionTable(contract);
+
             return true;
         }
 
