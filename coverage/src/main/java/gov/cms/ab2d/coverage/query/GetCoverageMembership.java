@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLOutput;
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -161,34 +162,6 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
             val identifiers = Identifiers.ofV3(patientId, currentMbi);
             return new CoverageMembership(identifiers, year, month);
         }
-    }
-
-    public static void main(String[] args) {
-        val optOutPatientIdExample=1234567890L;
-
-        val start = LocalDateTime.now();
-
-        Set<Long> optOuts = new HashSet<>(2922);
-        for (int i = 0; i < 2922; i++) {
-            optOuts.add(new Random().nextLong());
-        }
-        optOuts.add(optOutPatientIdExample);
-
-        Set<Long> patientIds = new HashSet<>(5000);
-        for (int i = 0; i < 5000; i++) {
-            patientIds.add(new Random().nextLong());
-        }
-        patientIds.add(optOutPatientIdExample);
-
-        Sets.SetView<Long> patientsWhoOptedOut = Sets.intersection(patientIds, optOuts);
-
-        val end = LocalDateTime.now();
-
-        System.out.println("start = "+start);
-        System.out.println("end =   "+end);
-        System.out.println(patientsWhoOptedOut);
-
-
     }
 
 }
