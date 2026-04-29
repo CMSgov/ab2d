@@ -115,6 +115,11 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
+    public void createAggregatedAttributionTable(String contract) {
+        new GetAggregatedCoverageMembership(dataSource).createAggregatedAttributionTable(contract);
+    }
+
+    @Override
     @Transactional
     public CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3SyncSource source) {
         return coverageV3SyncService.copyFromStagingTablesToRecent(contract, source);
