@@ -163,6 +163,10 @@ public class CoverageServiceRepository {
 
     private static final String SELECT_OPTOUT_COVERAGE_WITH_CURSOR = "SELECT c.beneficiary_id, c.current_mbi, c.historic_mbis, c.year, c.month " + " FROM coverage c " + " LEFT JOIN current_mbi m ON c.current_mbi = m.mbi " + " WHERE c.contract = :contract " + "   AND c.year IN (:years) " + "   AND m.share_data is not false " + "   AND c.beneficiary_id >= :cursor " + " ORDER BY c.beneficiary_id " + " LIMIT :limit";
 
+    public static void main(String[] args) {
+        System.out.println(SELECT_OPTOUT_COVERAGE_WITH_CURSOR);
+    }
+
     /**
      * Given a list of contracts, for each contract and all {@link CoveragePeriod}s that contract has been active for,
      * count the number of beneficiaries covered by the contract and report those results.

@@ -4,10 +4,7 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Count;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
-import gov.cms.ab2d.coverage.query.CountBeneficiariesByCoveragePeriods;
-import gov.cms.ab2d.coverage.query.GetCoverageMembership;
-import gov.cms.ab2d.coverage.query.GetCoveragePeriodsByContract;
-import gov.cms.ab2d.coverage.query.GetCoverageV3Count;
+import gov.cms.ab2d.coverage.query.*;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -54,6 +51,9 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         // wrong with the enrollment data.
         // A missing period = one month of enrollment missing for the contract
         final List<YearMonthRecord> coveragePeriods = getCoveragePeriodsByContract(page.getContractNumber());
+        // TODO logging this to verify this is called every time -- why does v1/v2 perform this check constantly?
+        // TODO: perform this check only once?
+        log.info("coveragePeriods.size() = {}; expectedCoveragePeriods = {}", coveragePeriods.size(), expectedCoveragePeriods);
         if (coveragePeriods.size() != expectedCoveragePeriods) {
             val contractNumber = page.getContract().getContractNumber();
             val message = "[V3] Expected coverage periods (%d) and actual coverage periods (%d) do not match for contract %s"
@@ -65,10 +65,12 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         }
 
         // Determine how many records to pull back
-        final long limit = CoverageServiceRepository.getCoverageLimit(page.getPageSize(), expectedCoveragePeriods);
+        //final long limit = CoverageServiceRepository.getCoverageLimit(page.getPageSize(), expectedCoveragePeriods);
+        final long limit = 1000;
         log.info("[V3] coverage limit = {}", limit);
 
         // Query coverage membership from database and collect it
+        /*
         final List<CoverageMembership> enrollment = queryCoverageMembership(page, limit);
         log.info("[V3] List<CoverageMembership> enrollment size = {}", enrollment.size());
 
@@ -82,17 +84,21 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                 .limit(page.getPageSize())
                 .map(membershipEntry -> CoverageServiceRepository.summarizeCoverageMembership(contract, membershipEntry))
                 .collect(toList());
+         */
+        val beneficiarySummaries = queryAggregatedCoverageMembership(page, limit);
         log.info("[V3] List<CoverageSummary> beneficiarySummaries size = {}", beneficiarySummaries.size());
 
+        val fetchedLessThanLimit = beneficiarySummaries.size() == limit;
+
         // Get the patient to start from next time
-        final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
-                enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
+//        final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
+//                enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
 
         // Build the next request if there is a next patient
         CoveragePagingRequest request = null;
-        if (nextCursor.isPresent()) {
-            Map.Entry<Long, List<CoverageMembership>> nextCursorBeneficiary = nextCursor.get();
-            request = CoveragePagingRequest.ofV3(page.getPageSize(), nextCursorBeneficiary.getKey(), contract, page.getJobStartTime());
+        if (!fetchedLessThanLimit) {
+            val nextCursor = beneficiarySummaries.get(beneficiarySummaries.size()-1).getIdentifiers().getPatientIdV3();
+            request = CoveragePagingRequest.ofV3(page.getPageSize(), nextCursor, contract, page.getJobStartTime());
         }
 
         return new CoveragePagingResult(beneficiarySummaries, request);
@@ -131,6 +137,17 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
             ),
             () -> new CountBeneficiariesByCoveragePeriods(dataSource)
                     .countBeneficiaries(contract, periods, isOptOutOn())
+        );
+    }
+
+    private List<CoverageSummary> queryAggregatedCoverageMembership(CoveragePagingRequest page, long limit) {
+        return executeTimedQuery(
+            format("queryAggregatedCoverageMembership page=%s", page),
+            () -> new GetAggregatedCoverageMembership(dataSource).fetchAggregatedData(
+                    page.getContract(),
+                    limit,
+                    page.getCursor()
+            )
         );
     }
 
