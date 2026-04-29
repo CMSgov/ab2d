@@ -124,9 +124,9 @@ VALUES
 -- MBI 'M7' does not exist in coverage tables
 INSERT INTO current_mbi(mbi, effective_date, share_data)
 VALUES
-    ('M1', '2025-01-01', false),
+    ('M1', '2025-01-01', true), -- TODO: revert to false
     ('M2', '2025-01-01', true),
-    ('M3', '2025-01-01', false),
+    ('M3', '2025-01-01', true), -- TODO: revert to false
     ('M4', '2025-01-01', null),
     ('M6', '2025-01-01', false),
     ('M7', '2025-01-01', true)
@@ -188,34 +188,35 @@ BEGIN
     RAISE NOTICE 'Done. Processed % contracts total.', total;
 END $$;
 
-DO $$
-DECLARE
-    c text;
-    total int := 0;
-BEGIN
-    FOR c IN
-        SELECT DISTINCT contract
-        FROM v3.coverage_v3
-        ORDER BY contract
-    LOOP
 
-        EXECUTE format('CREATE TABLE IF NOT EXISTS v3.coverage_v3_%s AS
-        (
-            select contract, patient_id, current_mbi, array_agg(array[year,month]) as recent_coverage_summaries
-                from (
-                    select * from v3.coverage_v3
-                    where contract=''%s''
-                    order by year asc, month asc
-                )
-                group by contract, patient_id, current_mbi
-                order by contract, patient_id asc, current_mbi
-        )', c, c);
-
-        total := total + 1;
-        RAISE NOTICE 'Processed contract % (% total)', c, total;
-
-        COMMIT;  -- frees temp space after each contract to fit in 32GB RAM
-    END LOOP;
-
-    RAISE NOTICE 'Done. Processed % contracts total.', total;
-END $$;
+--DO $$
+--DECLARE
+--    c text;
+--    total int := 0;
+--BEGIN
+--    FOR c IN
+--        SELECT DISTINCT contract
+--        FROM v3.coverage_v3
+--        ORDER BY contract
+--    LOOP
+--
+--        EXECUTE format('CREATE TABLE IF NOT EXISTS v3.coverage_v3_%s AS
+--        (
+--            select contract, patient_id, current_mbi, array_agg(array[year,month]) as recent_coverage_summaries
+--                from (
+--                    select * from v3.coverage_v3
+--                    where contract=''%s''
+--                    order by year asc, month asc
+--                )
+--                group by contract, patient_id, current_mbi
+--                order by contract, patient_id asc, current_mbi
+--        )', c, c);
+--
+--        total := total + 1;
+--        RAISE NOTICE 'Processed contract % (% total)', c, total;
+--
+--        COMMIT;  -- frees temp space after each contract to fit in 32GB RAM
+--    END LOOP;
+--
+--    RAISE NOTICE 'Done. Processed % contracts total.', total;
+--END $$;
