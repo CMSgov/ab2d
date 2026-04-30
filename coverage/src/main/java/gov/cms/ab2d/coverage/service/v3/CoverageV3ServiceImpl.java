@@ -44,25 +44,31 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     @Override
     public CoveragePagingResult pageCoverage(final CoveragePagingRequest page) {
         final ContractForCoverageDTO contract = page.getContract();
-        final int expectedCoveragePeriods = CoverageServiceRepository.getExpectedCoveragePeriods(page);
 
-        // Make sure all coverage periods are present so that there isn't any missing coverage data
-        // Do not remove this check because it is a fail safe to guarantee that there isn't something majorly
-        // wrong with the enrollment data.
-        // A missing period = one month of enrollment missing for the contract
-        final List<YearMonthRecord> coveragePeriods = getCoveragePeriodsByContract(page.getContractNumber());
-        // TODO logging this to verify this is called every time -- why does v1/v2 perform this check constantly?
-        // TODO: perform this check only once?
-        log.info("coveragePeriods.size() = {}; expectedCoveragePeriods = {}", coveragePeriods.size(), expectedCoveragePeriods);
-        if (coveragePeriods.size() != expectedCoveragePeriods) {
-            val contractNumber = page.getContract().getContractNumber();
-            val message = "[V3] Expected coverage periods (%d) and actual coverage periods (%d) do not match for contract %s"
-                .formatted(expectedCoveragePeriods, coveragePeriods.size(), contractNumber);
-            log.warn(message);
-            if (!contractNumber.startsWith("Z")) {
-                throw new IllegalArgumentException(message);
+        // perform coverage periods check only once (expected vs actual coverage periods) instead for every batch
+        // on subsequent batches, page.getCursor() will be populated -- only on first batch will it be absent
+        if (page.getCursor().isEmpty()) {
+            final int expectedCoveragePeriods = CoverageServiceRepository.getExpectedCoveragePeriods(page);
+
+            // Make sure all coverage periods are present so that there isn't any missing coverage data
+            // Do not remove this check because it is a fail safe to guarantee that there isn't something majorly
+            // wrong with the enrollment data.
+            // A missing period = one month of enrollment missing for the contract
+            final List<YearMonthRecord> coveragePeriods = getCoveragePeriodsByContract(page.getContractNumber());
+            // TODO logging this to verify this is called every time -- why does v1/v2 perform this check constantly?
+            // TODO: perform this check only once?
+            log.info("coveragePeriods.size() = {}; expectedCoveragePeriods = {}", coveragePeriods.size(), expectedCoveragePeriods);
+            if (coveragePeriods.size() != expectedCoveragePeriods) {
+                val contractNumber = page.getContract().getContractNumber();
+                val message = "[V3] Expected coverage periods (%d) and actual coverage periods (%d) do not match for contract %s"
+                        .formatted(expectedCoveragePeriods, coveragePeriods.size(), contractNumber);
+                log.warn(message);
+                if (!contractNumber.startsWith("Z")) {
+                    throw new IllegalArgumentException(message);
+                }
             }
         }
+
 
         // Determine how many records to pull back
         //final long limit = CoverageServiceRepository.getCoverageLimit(page.getPageSize(), expectedCoveragePeriods);
