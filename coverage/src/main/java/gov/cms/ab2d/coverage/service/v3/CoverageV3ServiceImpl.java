@@ -88,7 +88,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         val beneficiarySummaries = queryAggregatedCoverageMembership(page, limit);
         log.info("[V3] List<CoverageSummary> beneficiarySummaries size = {}", beneficiarySummaries.size());
 
-        val fetchedLessThanLimit = beneficiarySummaries.size() == limit;
+        val fetchedLessThanLimit = beneficiarySummaries.size() < limit;
 
         // Get the patient to start from next time
 //        final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
