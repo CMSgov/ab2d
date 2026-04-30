@@ -1,8 +1,8 @@
 plugins {
     id 'java'
-    id 'com.jfrog.artifactory' version '4.29.0' apply false
-    id "org.sonarqube" version "5.1.0.4882"
-    id 'org.cyclonedx.bom' version '2.0.0' apply true
+    id 'com.jfrog.artifactory' version '5.2.5' apply false
+    id "org.sonarqube" version "6.0.1.5171"
+    id 'org.cyclonedx.bom' version '3.0.0' apply true
 }
 version = "1.1.4"
 group = "gov.cms.ab2d"
@@ -70,6 +70,11 @@ subprojects {
     apply plugin: 'jacoco'
     apply plugin: "org.cyclonedx.bom"
 
+    dependencies {
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.9.2'
+//        testRuntimeOnly 'net.bytebuddy:byte-buddy:1.18.8'
+//        testRuntimeOnly 'net.bytebuddy:byte-buddy-agent:1.18.8'
+    }
     ext {
         //override this in subprojects using ext.set("zipName", '{new value}')
         zipName = project.name
@@ -102,20 +107,11 @@ subprojects {
                 repoKey = "${deployerRepo}"
                 username = project.artifactory_user
                 password = project.artifactory_password
-                maven = true
             }
             defaults {
                 publications('mavenJava')
                 publishArtifacts = true
                 publishBuildInfo = false
-            }
-        }
-        resolve {
-            repository {
-                repoKey = "${resolverRepo}"
-                username = project.artifactory_user
-                password = project.artifactory_password
-                maven = true
             }
         }
     }
@@ -132,7 +128,7 @@ subprojects {
     }
 
     jacoco {
-        toolVersion = "0.8.12"
+        toolVersion = "0.8.14"
         reportsDirectory = layout.buildDirectory.dir("$buildDir/reports/jacoco")
     }
 
@@ -144,27 +140,16 @@ subprojects {
 dependencies {
 }
 
-allprojects {
+subprojects {
     cyclonedxBom {
-        // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
-        includeConfigs = ["runtimeClasspath"]
-        // skipConfigs is a list of configuration names to exclude when generating the BOM
-        skipConfigs = ["compileClasspath", "testCompileClasspath"]
-        // Specified the type of project being built. Defaults to 'library'
-        projectType = "library"
-        // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
-        schemaVersion = "1.4"
-        // Boms destination directory (defaults to build/reports)
-        destination = file("build/reports")
-        // The file name for the generated BOMs (before the file format suffix). Defaults to 'bom'
-        outputName = "bom"
-        // The file format generated, can be xml, json or all for generating both
-        outputFormat = "all"
         // Exclude BOM Serial Number
         includeBomSerialNumber = false
         // Override component version
         componentVersion = "2.0.0"
     }
+}
+
+allprojects {
 
     tasks.register('lookForArtifacts') {
         doLast {
@@ -175,11 +160,13 @@ allprojects {
     }
 
     repositories {
-        maven {
-            url = "${artifactoryLoc}/${sourcesRepo}"
-            credentials {
-                username = project.artifactory_user
-                password = project.artifactory_password
+        [sourcesRepo, resolverRepo].unique().each { repoKey ->
+            maven {
+                url = "${artifactoryLoc}/${repoKey}"
+                credentials {
+                    username = project.artifactory_user
+                    password = project.artifactory_password
+                }
             }
         }
         mavenCentral()

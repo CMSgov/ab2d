@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import gov.cms.ab2d.testutils.TestContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.ReflectionUtils;
@@ -18,7 +19,6 @@ import org.mockito.Mockito;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,10 +32,14 @@ class InvokeTest {
             .registerModule(new JavaTimeModule());
 
     @BeforeEach
-    public void before() {
-        setEnv("IS_LOCALSTACK", "true");
+    void before() {
+        System.setProperty("IS_LOCALSTACK", "true");
     }
 
+    @AfterEach
+    void after() {
+        System.clearProperty("IS_LOCALSTACK");
+    }
     @Test
     void invokeTestOk() throws Exception {
         invoke("ab2d-dev-test", "OK", "2022-09-14T19:03:51.523+0100");
@@ -71,13 +75,13 @@ class InvokeTest {
         trigger.setNamespace("test");
         metricAlarm.setTrigger(trigger);
         SNSEvent event = new SNSEvent();
-        SNSEvent.SNSRecord record = new SNSEvent.SNSRecord();
+        SNSEvent.SNSRecord snsRecord = new SNSEvent.SNSRecord();
         SNSEvent.SNS sns = new SNSEvent.SNS();
         sns.setMessage(objectMapper.writeValueAsString(metricAlarm));
-        record.setSns(sns);
-        event.setRecords(List.of(record));
+        snsRecord.setSns(sns);
+        event.setRecords(List.of(snsRecord));
         Context context = new TestContext();
-        Field sqs = ReflectionUtils.findFields(CloudwatchEventHandler.class, (f) -> f.getName()
+        Field sqs = ReflectionUtils.findFields(CloudwatchEventHandler.class,f -> f.getName()
                         .equals("amazonSQS"), ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
                 .stream()
                 .findFirst()
@@ -104,27 +108,13 @@ class InvokeTest {
 
     @Test
     void setupTestLocalstack() throws NoSuchMethodException {
-        setEnv("IS_LOCALSTACK", "true");
-        assertEquals("true", System.getenv("IS_LOCALSTACK"));
+        System.setProperty("IS_LOCALSTACK", "true");
+        assertEquals("true", System.getProperty("IS_LOCALSTACK"));
         CloudwatchEventHandler handler = new CloudwatchEventHandler();
         Method setup = ReflectionUtils.makeAccessible(CloudwatchEventHandler.class.getDeclaredMethod("setup"));
         assertDoesNotThrow(() -> {
             ReflectionUtils.invokeMethod(setup, handler);
         });
     }
-
-    public static void setEnv(String key, String value) {
-        try {
-            Map<String, String> env = System.getenv();
-            Class<?> cl = env.getClass();
-            Field field = cl.getDeclaredField("m");
-            field.setAccessible(true);
-            Map<String, String> writableEnv = (Map<String, String>) field.get(env);
-            writableEnv.put(key, value);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to set environment variable", e);
-        }
-    }
-
 
 }

@@ -126,7 +126,7 @@ resource "aws_lambda_function" "metrics_transform" {
   function_name    = "${local.service_prefix}-metrics-transform"
   role             = aws_iam_role.metrics_transform.arn
   handler          = "gov.cms.ab2d.metrics.CloudwatchEventHandler"
-  runtime          = "java11"
+  runtime          = "java25"
   memory_size      = 256
   timeout          = 600
   architectures = [
@@ -370,7 +370,7 @@ resource "aws_lambda_function" "hpms_counts" {
   role             = aws_iam_role.lambda_sns_role.arn
   handler          = "gov.cms.ab2d.retrievehpmscounts.HPMSCountsHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["retrieve-hpms-counts"].sha256)
-  runtime          = "java11"
+  runtime          = "java25"
   timeout          = 600
   memory_size      = 256
   architectures = [
