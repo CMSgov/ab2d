@@ -85,8 +85,10 @@ subprojects {
         publishing {
             publications {
                 mavenJava(MavenPublication) {
-                    artifact(tasks.named('buildZip')) {
-                        extension = 'zip'
+                    if (tasks.findByName('buildZip')) {
+                        artifact(tasks.named('buildZip')) {
+                            extension = 'zip'
+                        }
                     }
                 }
             }
