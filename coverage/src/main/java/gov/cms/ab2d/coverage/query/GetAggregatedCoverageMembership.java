@@ -82,6 +82,18 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
 
     private static final String AGGREGATED_TABLE_ROW_COUNT = "select count(*) from v3.coverage_v3_aggregated_{0};";
 
+    private static final String GET_DISTINCT_COVERAGE_PERIOD_COUNT =
+    """
+    SELECT COUNT(*) FROM
+    (
+        SELECT DISTINCT json_array_elements(to_json(recent_coverage_summaries))::TEXT
+        FROM v3.coverage_v3_aggregated_{0}
+        UNION
+        SELECT DISTINCT json_array_elements(to_json(historical_coverage_summaries))::TEXT
+        from v3.coverage_v3_aggregated_{0}
+    )
+    """;
+
     private static final String FETCH_AGGREGATED_DATA_WITHOUT_CURSOR =
     """
     SELECT patient_id,
@@ -152,8 +164,10 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         return jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
     }
 
-
-
+    public int getCoveragePeriodsInAggregatedTable(String contract) {
+        val query = MessageFormat.format(GET_DISTINCT_COVERAGE_PERIOD_COUNT, contract);
+        return DataAccessUtils.intResult(jdbcTemplate.getJdbcOperations().queryForList(query, Integer.class));
+    }
 
     private static class AggregatedDataRowMapper implements RowMapper<CoverageSummary> {
 
