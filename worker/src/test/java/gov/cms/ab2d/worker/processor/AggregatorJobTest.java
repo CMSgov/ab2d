@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
@@ -68,6 +69,9 @@ class AggregatorJobTest {
     @Mock
     private SQSEventClient logManager;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private PropertiesService propertiesService;
+
     private static final String STREAMING = "streaming";
     private static final String FINISHED = "finished";
 
@@ -76,7 +80,7 @@ class AggregatorJobTest {
         SearchConfig searchConfig = new SearchConfig(tempDir.getAbsolutePath(), STREAMING,
                 FINISHED, 0, 0, 1, 2);
 
-        processor = new PatientClaimsProcessorImpl(bfdClient, logManager, searchConfig);
+        processor = new PatientClaimsProcessorImpl(bfdClient, logManager, searchConfig, propertiesService);
     }
 
     @Test
