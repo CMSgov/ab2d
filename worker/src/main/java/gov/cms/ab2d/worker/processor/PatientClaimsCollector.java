@@ -57,6 +57,7 @@ public class PatientClaimsCollector {
         this.useInPlace = useInPlace;
 
         this.eobs = new ArrayList<>();
+        this.useInPlace = useInPlace;
     }
 
     public List<IBaseResource> getEobs() {
