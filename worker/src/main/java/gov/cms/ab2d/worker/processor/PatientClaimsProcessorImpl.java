@@ -27,6 +27,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -48,7 +50,23 @@ import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.RE
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     // Set to false by default to prevent excess logging; enable explicitly for testing
-    public static final boolean TIME_BFD_REQUESTS = false;
+    // TODO revert back to false after testing in ephemeral environment
+    public static final boolean TIME_BFD_REQUESTS = true;
+
+    // Null when the JVM does not support per-thread allocation tracking
+    private static final com.sun.management.ThreadMXBean THREAD_BEAN;
+    static {
+        com.sun.management.ThreadMXBean bean = null;
+        try {
+            java.lang.management.ThreadMXBean tb = ManagementFactory.getThreadMXBean();
+            if (tb instanceof com.sun.management.ThreadMXBean sunBean
+                    && sunBean.isThreadAllocatedMemorySupported()
+                    && sunBean.isThreadAllocatedMemoryEnabled()) {
+                bean = sunBean;
+            }
+        } catch (Exception ignored) { }
+        THREAD_BEAN = bean;
+    }
 
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
@@ -310,6 +328,22 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return date;
     }
 
+    private static long threadAllocBytes() {
+        return THREAD_BEAN != null
+                ? THREAD_BEAN.getThreadAllocatedBytes(Thread.currentThread().getId())
+                : -1;
+    }
 
+    private static long[] gcSnapshot() {
+        long count = 0;
+        long timeMs = 0;
+        for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
+            long c = gc.getCollectionCount();
+            long t = gc.getCollectionTime();
+            if (c >= 0) count  += c;
+            if (t >= 0) timeMs += t;
+        }
+        return new long[]{count, timeMs};
+    }
 
 }
