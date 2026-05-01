@@ -5,6 +5,7 @@ import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
@@ -27,6 +28,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -39,6 +42,7 @@ import java.util.concurrent.Future;
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
+import static gov.cms.ab2d.common.util.PropertyConstants.EOB_V3_IN_PLACE;
 import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_EOB;
 import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_NEXT_BUNDLE;
 
@@ -50,9 +54,25 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     // Set to false by default to prevent excess logging; enable explicitly for testing
     public static final boolean TIME_BFD_REQUESTS = false;
 
+    // Null when the JVM does not support per-thread allocation tracking
+    private static final com.sun.management.ThreadMXBean THREAD_BEAN;
+    static {
+        com.sun.management.ThreadMXBean bean = null;
+        try {
+            java.lang.management.ThreadMXBean tb = ManagementFactory.getThreadMXBean();
+            if (tb instanceof com.sun.management.ThreadMXBean sunBean
+                    && sunBean.isThreadAllocatedMemorySupported()
+                    && sunBean.isThreadAllocatedMemoryEnabled()) {
+                bean = sunBean;
+            }
+        } catch (Exception ignored) { }
+        THREAD_BEAN = bean;
+    }
+
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
     private final SearchConfig searchConfig;
+    private final PropertiesService propertiesService;
 
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
@@ -87,6 +107,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         val bfdRequestTracking = TIME_BFD_REQUESTS
                 ? new BfdRequestTracking(request.getJob())
                 : BfdRequestTracking.NOOP;
+
+        boolean useInPlace   = propertiesService.isToggleOn(EOB_V3_IN_PLACE, false);
+        long    allocBefore  = threadAllocBytes();
+        long[]  gcBefore     = gcSnapshot();
+        long    nsBefore     = System.nanoTime();
+
         File file = null;
         String anyErrors = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
@@ -102,6 +128,22 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
             bfdRequestTracking.summarizeResponseTimes();
         }
+
+        long   elapsedMs        = (System.nanoTime() - nsBefore) / 1_000_000;
+        long   allocDeltaKB     = allocBefore >= 0 ? (threadAllocBytes() - allocBefore) / 1024 : -1;
+        long[] gcAfter          = gcSnapshot();
+        long   gcEvents         = gcAfter[0] - gcBefore[0];
+        long   gcTimeDeltaMs    = gcAfter[1] - gcBefore[1];
+        int    patients         = request.getCoverageSummary().size();
+        long   heapUsedMB       = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
+
+        log.info("eob.processing.metrics job={} contract={} patients={} inPlace={} "
+                        + "allocKB={} allocKBPerPatient={} gcEvents={} gcTimeDeltaMs={} heapUsedMB={} elapsedMs={}",
+                request.getJob(), request.getContractNum(), patients, useInPlace,
+                allocDeltaKB,
+                patients > 0 && allocDeltaKB >= 0 ? allocDeltaKB / patients : -1,
+                gcEvents, gcTimeDeltaMs, heapUsedMB, elapsedMs);
+
         return anyErrors;
     }
 
@@ -179,7 +221,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         Date earliestDate = getEarliestDataDate();
 
         // Aggregate claims into a single list
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
+        boolean useInPlace = propertiesService.isToggleOn(EOB_V3_IN_PLACE, false);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate, useInPlace);
 
         final long patientIdentifier = (request.getVersion() == FhirVersion.R4V3)
             ? patient.getIdentifiers().getPatientIdV3()
@@ -310,6 +353,22 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return date;
     }
 
+    private static long threadAllocBytes() {
+        return THREAD_BEAN != null
+                ? THREAD_BEAN.getThreadAllocatedBytes(Thread.currentThread().getId())
+                : -1;
+    }
 
+    private static long[] gcSnapshot() {
+        long count = 0;
+        long timeMs = 0;
+        for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
+            long c = gc.getCollectionCount();
+            long t = gc.getCollectionTime();
+            if (c >= 0) count  += c;
+            if (t >= 0) timeMs += t;
+        }
+        return new long[]{count, timeMs};
+    }
 
 }
