@@ -10,7 +10,6 @@ configurations.configureEach {
     exclude group: 'javax.validation', module: 'validation-api'
     exclude group: 'org.mock-server'
     exclude group: 'io.netty'
-    exclude group: 'org.hibernate'
     exclude group: 'org.projectlombok'
     exclude group: 'org.apache.tomcat.embed'
     exclude group: 'org.springframework'
@@ -22,7 +21,6 @@ configurations.configureEach {
     exclude group: 'com.squareup.okhttp3'
     exclude group: 'commons-codec'
     exclude group: 'com.squareup.okio'
-    exclude group: 'org.testcontainers'
 }
 
 dependencies {
@@ -63,11 +61,14 @@ test {
     useJUnitPlatform()
 }
 tasks.register('buildZip', Zip) {
-
     from compileJava
     from processResources
     into('lib') {
         from configurations.runtimeClasspath
+        exclude 'aws-java-sdk-core-*.jar'
+        exclude 'jackson-databind-*.jar'
+        exclude 'jackson-annotations-*.jar'
+        exclude 'hibernate-*.jar'
     }
     archiveFileName = 'retrieve-hpms-counts.zip'
 }
