@@ -42,8 +42,10 @@ public class PatientClaimsCollector {
     private int rawEobs;
 
     private final List<IBaseResource> eobs;
+    private final boolean useInPlace; // Test Anna's EOB filter change
 
-    public PatientClaimsCollector(PatientClaimsRequest claimsRequest, Date earliestDate) {
+
+    public PatientClaimsCollector(PatientClaimsRequest claimsRequest, Date earliestDate, boolean useInPlace) {
         this.claimsRequest = claimsRequest;
 
         long epochMilli = claimsRequest.getAttTime().toInstant().toEpochMilli();
@@ -51,6 +53,7 @@ public class PatientClaimsCollector {
         this.earliestDate = earliestDate;
 
         this.eobs = new ArrayList<>();
+        this.useInPlace = useInPlace;
     }
 
     public List<IBaseResource> getEobs() {
@@ -98,7 +101,7 @@ public class PatientClaimsCollector {
                 .filter(resource -> FilterEob.filter(resource, patient.getDateRanges(), earliestDate,
                         attestationDate, claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST).isPresent())
                 // Filter out unnecessary fields
-                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource, claimsRequest.getVersion()))
+                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource, claimsRequest.getVersion(), useInPlace))
                 // Make sure patients are the same
                 .filter(resource -> matchingPatient(resource, patient))
                 // Make sure update date is after since date
