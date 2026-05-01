@@ -57,10 +57,6 @@ tasks.register('buildZip', Zip) {
     from processResources
     into('lib') {
         from configurations.runtimeClasspath
-        exclude 'aws-java-sdk-core-*.jar'
-        exclude 'jackson-databind-*.jar'
-        exclude 'jackson-annotations-*.jar'
-        exclude 'lombok-*.jar'
     }
     archiveFileName = 'metrics-lambda.zip'
 }
