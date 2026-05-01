@@ -15,8 +15,7 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.Locale;
 
-import static gov.cms.ab2d.common.util.PropertyConstants.IDR_IMPORTER_STATUS_IN_PROGRESS;
-import static gov.cms.ab2d.common.util.PropertyConstants.IDR_IMPORTER_STATUS_PROPERTY;
+import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.executeTimedQuery;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncSource.CRON_JOB;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult.*;
@@ -305,9 +304,10 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return getContractsWithActiveV3Jobs().contains(contract);
     }
 
-    boolean idrImporterInProgress() {
-        val idrImporterStatus = propertiesService.getProperty(IDR_IMPORTER_STATUS_PROPERTY, "");
-        return IDR_IMPORTER_STATUS_IN_PROGRESS.equals(idrImporterStatus);
+    @Override
+    public boolean idrImporterInProgress() {
+        val idrImporterStatus = propertiesService.getProperty(V3_IDR_IMPORTER_STATUS, "");
+        return V3_IDR_IMPORTER_STATUS_IN_PROGRESS.equals(idrImporterStatus);
     }
 
 
