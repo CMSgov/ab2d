@@ -6,7 +6,10 @@ import org.hl7.fhir.r4.model.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -174,29 +177,35 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         // Compute all filtered collections before mutating, since lookups depend on original contained
         List<ExplanationOfBenefit.CareTeamComponent> filteredCareTeam = getCareTeamsByRoleCodes(benefit, roleCodes);
 
-        List<Resource> npiContained = filteredCareTeam.stream()
-                .flatMap(ct -> getProviderContainedForCareTeam(benefit, ct).stream())
-                .filter(res -> extractIdentifiers(res).stream()
-                        .anyMatch(id -> NPI_SYSTEM.equals(id.getSystem())))
-                .toList();
+        // Build lookup map once — avoids O(N×M) repeated linear scans of the contained list
+        Map<String, Resource> containedById = new HashMap<>(benefit.getContained().size() * 2);
+        for (Resource r : benefit.getContained()) {
+            if (r.getIdPart() != null) containedById.put(r.getIdPart(), r);
+        }
 
-        List<Resource> withRenderingExtensions = filteredCareTeam.stream()
-                .flatMap(ct -> getProviderContainedForCareTeam(benefit, ct).stream())
-                .filter(DomainResource.class::isInstance)
-                .map(DomainResource.class::cast)
-                .filter(dr -> dr.getExtension().stream()
-                        .filter(ext -> RENDERING_EXT_URLS.contains(ext.getUrl()))
-                        .anyMatch(ext -> ext.getValue() instanceof CodeableConcept cc
-                                && cc.getCoding().stream().anyMatch(Coding::hasCode)))
-                .collect(Collectors.toList());
+        // Single pass: collect contained resources satisfying either criterion; LinkedHashSet deduplicates
+        LinkedHashSet<Resource> filteredContainedSet = new LinkedHashSet<>();
+        for (ExplanationOfBenefit.CareTeamComponent ct : filteredCareTeam) {
+            if (!ct.hasProvider() || !ct.getProvider().hasReference()) continue;
+            String ref = ct.getProvider().getReference();
+            String id = ref.startsWith("#") ? ref.substring(1) : ref;
+            Resource r = containedById.get(id);
+            if (r == null) continue;
 
-        List<Resource> filteredContained = new ArrayList<>();
-        filteredContained.addAll(npiContained);
-        filteredContained.addAll(withRenderingExtensions);
+            boolean hasNpi = extractIdentifiers(r).stream()
+                    .anyMatch(ident -> NPI_SYSTEM.equals(ident.getSystem()));
+            boolean hasRenderingExt = r instanceof DomainResource dr
+                    && dr.getExtension().stream()
+                    .filter(ext -> RENDERING_EXT_URLS.contains(ext.getUrl()))
+                    .anyMatch(ext -> ext.getValue() instanceof CodeableConcept cc
+                            && cc.getCoding().stream().anyMatch(Coding::hasCode));
 
-        List<ExplanationOfBenefit.SupportingInformationComponent> filteredSupportingInfo = new ArrayList<>();
-        filteredSupportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), NL_RECORD_IDENTIFICATION));
-        filteredSupportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), C4BB_SUPPORTING_INFO_TYPE_SYSTEM, MS_DRG_SYSTEM, "drg"));
+            if (hasNpi || hasRenderingExt) filteredContainedSet.add(r);
+        }
+        List<Resource> filteredContained = new ArrayList<>(filteredContainedSet);
+
+        List<ExplanationOfBenefit.SupportingInformationComponent> filteredSupportingInfo =
+                filterSupportingInfo(benefit.getSupportingInfo());
 
         List<ExplanationOfBenefit.InsuranceComponent> filteredInsurance = buildInsuranceInPlace(benefit);
 
@@ -246,8 +255,10 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         benefit.setAdjudication(null);
         benefit.setTotal(null);
 
-        // Mutate items in-place (reuses existing method)
-        cleanOutUnNeededData(benefit);
+        // Mutate items in-place without creating a new list
+        if (benefit.getItem() != null) {
+            benefit.getItem().forEach(ExplanationOfBenefitTrimmerR4V3::cleanOutItemComponent);
+        }
 
         return benefit;
     }
@@ -353,6 +364,45 @@ public class ExplanationOfBenefitTrimmerR4V3 {
                     .map(ExplanationOfBenefitTrimmerR4V3::cleanOutItemComponent)
                     .toList());
         }
+    }
+
+    private static boolean matchesNlRecord(ExplanationOfBenefit.SupportingInformationComponent si) {
+        CodeableConcept code = si.getCode();
+        if (code == null) return false;
+        for (Coding c : code.getCoding()) {
+            if (NL_RECORD_IDENTIFICATION.equalsIgnoreCase(c.getSystem())) return true;
+        }
+        return false;
+    }
+
+    private static boolean matchesDrg(ExplanationOfBenefit.SupportingInformationComponent si) {
+        CodeableConcept category = si.getCategory();
+        if (category == null || !category.hasCoding()) return false;
+        boolean isDrgCategory = false;
+        for (Coding c : category.getCoding()) {
+            if (c != null && C4BB_SUPPORTING_INFO_TYPE_SYSTEM.equals(c.getSystem())
+                    && "drg".equals(c.getCode())) {
+                isDrgCategory = true;
+                break;
+            }
+        }
+        if (!isDrgCategory) return false;
+        CodeableConcept codeConcept = si.getCode();
+        if (codeConcept == null || !codeConcept.hasCoding()) return false;
+        for (Coding c : codeConcept.getCoding()) {
+            if (c != null && MS_DRG_SYSTEM.equals(c.getSystem()) && c.hasCode()) return true;
+        }
+        return false;
+    }
+
+    private static List<ExplanationOfBenefit.SupportingInformationComponent> filterSupportingInfo(
+            List<ExplanationOfBenefit.SupportingInformationComponent> supportingInfo) {
+        if (supportingInfo == null) return new ArrayList<>();
+        List<ExplanationOfBenefit.SupportingInformationComponent> result = new ArrayList<>();
+        for (ExplanationOfBenefit.SupportingInformationComponent si : supportingInfo) {
+            if (matchesNlRecord(si) || matchesDrg(si)) result.add(si);
+        }
+        return result;
     }
 
     /**
