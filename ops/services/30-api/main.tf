@@ -218,7 +218,7 @@ resource "aws_security_group_rule" "efs_ingress" {
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=cbd07ee078ecd379a32125b8354bd1ecaf5c275d"
   platform = module.platform
 }
 

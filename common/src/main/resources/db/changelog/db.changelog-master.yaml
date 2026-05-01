@@ -185,3 +185,7 @@ databaseChangeLog:
       file: db/changelog/v2026/add_service_dates_column.sql
   - include:    
       file: db/changelog/v2026/add_v3_tables_partitions.sql
+  - include:
+      file: db/changelog/v2026/add_v3_idr_importer_progress_status.sql
+  - include:
+      file: db/changelog/v2026/add_eob_v3_inplace_property.sql
