@@ -42,11 +42,9 @@ public class PatientClaimsCollector {
     private int rawEobs;
 
     private final List<IBaseResource> eobs;
-    private final boolean useInPlace; // Test Anna's EOB filter change
-
+    private final boolean useInPlace;
 
     public PatientClaimsCollector(PatientClaimsRequest claimsRequest, Date earliestDate) {
-        // set useInPlace=false by default
         this(claimsRequest, earliestDate, false);
     }
 
@@ -56,9 +54,9 @@ public class PatientClaimsCollector {
         long epochMilli = claimsRequest.getAttTime().toInstant().toEpochMilli();
         this.attestationDate = new Date(epochMilli);
         this.earliestDate = earliestDate;
+        this.useInPlace = useInPlace;
 
         this.eobs = new ArrayList<>();
-        this.useInPlace = useInPlace;
     }
 
     public List<IBaseResource> getEobs() {

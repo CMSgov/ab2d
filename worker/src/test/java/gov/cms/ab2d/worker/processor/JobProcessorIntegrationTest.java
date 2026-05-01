@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.contracts.model.Contract;
@@ -146,6 +147,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @Mock
     private BFDClient mockBfdClient;
 
+    @Autowired
+    private PropertiesService propertiesService;
+
     @TempDir
     File tmpEfsMountDir;
 
@@ -198,7 +202,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         SearchConfig searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(),
                 STREAMING_DIR, FINISHED_DIR, 0, 0, MULTIPLIER, NUMBER_PATIENT_REQUESTS_PER_THREAD);
 
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, sqsEventClient, searchConfig);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, sqsEventClient, searchConfig, propertiesService);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
 
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();

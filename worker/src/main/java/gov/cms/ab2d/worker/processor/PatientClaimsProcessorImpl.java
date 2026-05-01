@@ -70,6 +70,21 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         THREAD_BEAN = bean;
     }
 
+    // Null when the JVM does not support per-thread allocation tracking
+    private static final com.sun.management.ThreadMXBean THREAD_BEAN;
+    static {
+        com.sun.management.ThreadMXBean bean = null;
+        try {
+            java.lang.management.ThreadMXBean tb = ManagementFactory.getThreadMXBean();
+            if (tb instanceof com.sun.management.ThreadMXBean sunBean
+                    && sunBean.isThreadAllocatedMemorySupported()
+                    && sunBean.isThreadAllocatedMemoryEnabled()) {
+                bean = sunBean;
+            }
+        } catch (Exception ignored) { }
+        THREAD_BEAN = bean;
+    }
+
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
     private final SearchConfig searchConfig;
@@ -139,11 +154,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         long   heapUsedMB       = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
 
         log.info("eob.processing.metrics job={} contract={} patients={} inPlace={} "
-                + "allocKB={} allocKBPerPatient={} gcEvents={} gcTimeDeltaMs={} heapUsedMB={} elapsedMs={}",
-        request.getJob(), request.getContractNum(), patients, useInPlace,
-        allocDeltaKB,
-        patients > 0 && allocDeltaKB >= 0 ? allocDeltaKB / patients : -1,
-        gcEvents, gcTimeDeltaMs, heapUsedMB, elapsedMs);
+                        + "allocKB={} allocKBPerPatient={} gcEvents={} gcTimeDeltaMs={} heapUsedMB={} elapsedMs={}",
+                request.getJob(), request.getContractNum(), patients, useInPlace,
+                allocDeltaKB,
+                patients > 0 && allocDeltaKB >= 0 ? allocDeltaKB / patients : -1,
+                gcEvents, gcTimeDeltaMs, heapUsedMB, elapsedMs);
 
         return anyErrors;
     }
