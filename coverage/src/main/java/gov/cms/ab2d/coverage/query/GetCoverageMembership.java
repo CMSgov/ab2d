@@ -1,5 +1,6 @@
 package gov.cms.ab2d.coverage.query;
 
+import com.google.common.collect.Sets;
 import gov.cms.ab2d.coverage.model.CoverageMembership;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import lombok.val;
@@ -10,7 +11,13 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLOutput;
+import java.text.MessageFormat;
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 public class GetCoverageMembership extends CoverageV3BaseQuery {
 
@@ -98,6 +105,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
     limit :limit
     """;
 
+
     public List<CoverageMembership> getCoverageMembership(
             final String contract,
             final List<Integer> years,
@@ -155,4 +163,5 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
             return new CoverageMembership(identifiers, year, month);
         }
     }
+
 }

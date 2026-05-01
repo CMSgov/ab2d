@@ -15,4 +15,9 @@ public interface CoverageV3Service {
     CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source);
     Map<String, List<CoverageV3Count>> getCoverageCount();
     boolean idrImportInProgress();
+    void createAggregatedAttributionTable(String contract);
+    // NOTE: Assumes job has been kicked off and aggregated table exists
+    int getAggregatedTableRowCount(String contract);
+    // NOTE: Assumes job has been kicked off and aggregated table exists
+    int getCoveragePeriodsInAggregatedTable(String contract);
 }

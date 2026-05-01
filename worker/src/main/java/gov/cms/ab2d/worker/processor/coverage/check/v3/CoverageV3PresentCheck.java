@@ -6,6 +6,7 @@ import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -50,7 +51,10 @@ public class CoverageV3PresentCheck extends CoverageV3CheckPredicate {
             int month = attestationTime.getMonthValue();
 
             final boolean hasEnrollment = coverageCounts.stream()
-                    .anyMatch(coverageCount -> coverageCount.getYear() == year && coverageCount.getMonth() == month);
+                    .anyMatch(coverageCount -> {
+	                    val matches = coverageCount.getYear() == year && coverageCount.getMonth() == month;
+                        return matches;
+                    });
 
             if (!hasEnrollment) {
                 logIssue(contract, year, month, noEnrollment);

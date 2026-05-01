@@ -52,7 +52,38 @@ import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.RE
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     // Set to false by default to prevent excess logging; enable explicitly for testing
-    public static final boolean TIME_BFD_REQUESTS = false;
+    // TODO revert back to false after testing in ephemeral environment
+    public static final boolean TIME_BFD_REQUESTS = true;
+
+    // Null when the JVM does not support per-thread allocation tracking
+    private static final com.sun.management.ThreadMXBean THREAD_BEAN;
+    static {
+        com.sun.management.ThreadMXBean bean = null;
+        try {
+            java.lang.management.ThreadMXBean tb = ManagementFactory.getThreadMXBean();
+            if (tb instanceof com.sun.management.ThreadMXBean sunBean
+                    && sunBean.isThreadAllocatedMemorySupported()
+                    && sunBean.isThreadAllocatedMemoryEnabled()) {
+                bean = sunBean;
+            }
+        } catch (Exception ignored) { }
+        THREAD_BEAN = bean;
+    }
+
+    // Null when the JVM does not support per-thread allocation tracking
+    private static final com.sun.management.ThreadMXBean THREAD_BEAN;
+    static {
+        com.sun.management.ThreadMXBean bean = null;
+        try {
+            java.lang.management.ThreadMXBean tb = ManagementFactory.getThreadMXBean();
+            if (tb instanceof com.sun.management.ThreadMXBean sunBean
+                    && sunBean.isThreadAllocatedMemorySupported()
+                    && sunBean.isThreadAllocatedMemoryEnabled()) {
+                bean = sunBean;
+            }
+        } catch (Exception ignored) { }
+        THREAD_BEAN = bean;
+    }
 
     // Null when the JVM does not support per-thread allocation tracking
     private static final com.sun.management.ThreadMXBean THREAD_BEAN;
