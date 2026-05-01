@@ -222,7 +222,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         Date earliestDate = getEarliestDataDate();
 
         // Aggregate claims into a single list
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
+        boolean useInPlace = propertiesService.isToggleOn(EOB_V3_IN_PLACE, false);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate, useInPlace);
 
         final long patientIdentifier = (request.getVersion() == FhirVersion.R4V3)
             ? patient.getIdentifiers().getPatientIdV3()

@@ -45,6 +45,11 @@ public class PatientClaimsCollector {
     private final boolean useInPlace; // Test Anna's EOB filter change
 
 
+    public PatientClaimsCollector(PatientClaimsRequest claimsRequest, Date earliestDate) {
+        // set useInPlace=false by default
+        this(claimsRequest, earliestDate, false);
+    }
+
     public PatientClaimsCollector(PatientClaimsRequest claimsRequest, Date earliestDate, boolean useInPlace) {
         this.claimsRequest = claimsRequest;
 
