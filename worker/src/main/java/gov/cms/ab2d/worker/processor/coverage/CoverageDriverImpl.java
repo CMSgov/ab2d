@@ -8,6 +8,7 @@ import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
+import gov.cms.ab2d.coverage.query.GetAggregatedCoverageMembership;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
@@ -527,21 +528,22 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Trace(metricName = "EnrollmentCountV3", dispatcher = true)
     @Override
     public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
-        final ZonedDateTime endTime = getEndDateTime();
-
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
 
+        /*
+        final ZonedDateTime endTime = getEndDateTime();
         final ZonedDateTime startDateTime = getStartDateTime(contract);
         final CoverageV3Periods coverageV3Periods = CoverageV3Utils.enumerateCoveragePeriods(startDateTime, endTime);
-
         log.info("[V3] counting number of beneficiaries for {} coverage periods for job {}",
                 coverageV3Periods.getHistoricalCoverage().size() + coverageV3Periods.getRecentCoverage().size(),
                 job.getJobUuid()
         );
-
         int count = coverageV3Service.countBeneficiariesByCoveragePeriod(coverageV3Periods, contract.getContractNumber());
+        */
+
+        int count = coverageV3Service.getAggregatedTableRowCount(contract.getContractNumber());
         log.info("[V3] number of beneficiaries for job {}: {}", job.getJobUuid(), count);
         return count;
     }

@@ -23,7 +23,11 @@ public class GetCoverageV3Count extends CoverageV3BaseQuery {
 	private static final String QUERY =
 	"""
 	SELECT contract, year, month, COUNT(*)
-	FROM v3.coverage_v3
+	FROM (
+		select * from v3.coverage_v3
+		UNION select *
+		from v3.coverage_v3_historical
+	)
 	GROUP BY contract, year, month
 	ORDER BY contract, month desc, year desc
 	""";
@@ -42,8 +46,8 @@ public class GetCoverageV3Count extends CoverageV3BaseQuery {
 			var list = map.get(contract);
 			if (list == null) {
 				list = new ArrayList<>();
-				map.put(contract, list);
 			}
+			map.put(contract, list);
 			list.add(coverageV3Count);
 		}
 
