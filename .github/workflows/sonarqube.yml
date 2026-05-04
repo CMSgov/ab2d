@@ -18,7 +18,7 @@ jobs:
       files: ${{ steps.workflow_files.outputs.files }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
         with:
           fetch-depth: 2
       - id: workflow_files
@@ -39,12 +39,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
         with:
           fetch-depth: 0
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v3 #TODO: Update to Node24
         with:
           java-version: '17'
           distribution: temurin
@@ -63,7 +63,7 @@ jobs:
             SONAR_TOKEN=/sonarqube/token
 
       - name: Assume role in AB2D dev account
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
