@@ -90,13 +90,12 @@ jobs:
         timeout-minutes: 10
       - name: Publish Lambdas
         id: publish_lambdas
-        run: >
+        run: |
           echo "Checking for unpublished artifacts..."
 
           DEPLOY_SCRIPT=""
 
-          VERSION_PUBLISHED_LIST=$(./gradlew -q lookForArtifacts |  tr "'''"
-          "\n")
+          VERSION_PUBLISHED_LIST=$(./gradlew -q lookForArtifacts | tr "'''" "\n")
 
           while IFS= read -r line; do
             ARTIFACTORY_INFO=($(echo $line | tr ":" "\n"))
@@ -111,13 +110,12 @@ jobs:
             ./gradlew $DEPLOY_SCRIPT \
               -Dusername="${ARTIFACTORY_USER}" \
               -Dpassword="${ARTIFACTORY_PASSWORD}" \
-              -Drepository_url="${ARTIFACTORY_URL}" \
+              -Drepository_url="${ARTIFACTORY_URL}"
           else
             echo "No new artifacts to publish."
           fi
 
-          BUILD_VERSION=$(./gradlew properties -q | grep "version:" | awk
-          '{print $2}')
+          BUILD_VERSION=$(./gradlew properties -q | grep "version:" | awk '{print $2}')
 
           echo "Build version: $BUILD_VERSION"
 
