@@ -12,7 +12,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=8a0c2c79b2769bbff75246c2c49992fa8b1470b3"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=a19304a2a4660183b7a32fef26c97c0bc479a2a7"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app

@@ -72,8 +72,6 @@ subprojects {
 
     dependencies {
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.9.2'
-//        testRuntimeOnly 'net.bytebuddy:byte-buddy:1.18.8'
-//        testRuntimeOnly 'net.bytebuddy:byte-buddy-agent:1.18.8'
     }
     ext {
         //override this in subprojects using ext.set("zipName", '{new value}')

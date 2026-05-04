@@ -112,7 +112,6 @@ jobs:
               -Dusername="${ARTIFACTORY_USER}" \
               -Dpassword="${ARTIFACTORY_PASSWORD}" \
               -Drepository_url="${ARTIFACTORY_URL}" \
-              --stacktrace
           else
             echo "No new artifacts to publish."
           fi
