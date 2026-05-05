@@ -56,21 +56,14 @@ _ship_to_cloudwatch() {
     --log-stream-name "$LOG_STREAM" \
     --region "$REGION" 2>/dev/null || true
 
-  echo "-- tofu $* | env=$TOFU_ENV service=$SERVICE run=$RUN_ID --" > "$COMBINED"
+  echo "=== tofu $* | env=$TOFU_ENV service=$SERVICE run=$RUN_ID ===" > "$COMBINED"
 
   # strip ANSI codes from the log file
   sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' "$TEMP_FILE" >> "$COMBINED"
 
-  echo "-- exit_code=$exit_code duration=${DURATION}s --" >> "$COMBINED"
+  echo "=== exit_code=$exit_code duration=${DURATION}s ===" >> "$COMBINED"
 
-  # This command processes the output (in file $COMBINED) by splitting it on newline
-  # then converts each line to a pair of index/value with to_entries
-  # then maps each of those pairs into json with two fields:
-  # "timestamp" which is the START_MS plus 1ms per line (just so it prints sequentially)
-  # and "message" which is the content of the line. Empty lines get replaced with a space.
-  EVENTS=$(jq -Rs --argjson ts "$START_MS" \
-    'split("\n") | to_entries | map({timestamp: ($ts + .key), message: (if .value == "" then " " else .value end)})' \
-    "$COMBINED")
+  EVENTS=$(jq -Rs --argjson ts "$START_MS" '[{timestamp: $ts, message: .}]' "$COMBINED")
 
   aws logs put-log-events \
     --log-group-name "$LOG_GROUP" \
