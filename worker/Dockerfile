@@ -1,5 +1,5 @@
 #AWS Corretto and AL2
-FROM amazoncorretto:21-al2023-jdk
+FROM amazoncorretto:25-al2023-jdk
 WORKDIR /usr/src/ab2d-worker
 ADD target/worker-*-SNAPSHOT-exe.jar /usr/src/ab2d-worker/worker.jar
 ADD target/newrelic/newrelic.jar /usr/src/ab2d-worker/newrelic/newrelic.jar
