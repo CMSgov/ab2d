@@ -69,6 +69,7 @@ jobs:
 
       - name: Checkout Code
         uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-tofu-logging
 
       - name: Tofu plan and apply - Worker
         working-directory: ops/services/30-worker/

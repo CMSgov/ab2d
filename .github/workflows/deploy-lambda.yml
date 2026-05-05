@@ -57,6 +57,7 @@ jobs:
   
       - name: Install tofu
         uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+      - uses: ./.github/actions/setup-tofu-logging
 
       - name: Tofu plan and apply
         working-directory: ops/services/30-lambda/
