@@ -45,9 +45,9 @@ jobs:
           fetch-depth: 0  # Get entire history for SonarQube
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '25'
           distribution: temurin
           cache: maven
 
