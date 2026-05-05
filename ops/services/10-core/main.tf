@@ -369,6 +369,11 @@ resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
   ip_protocol                  = "tcp"
 }
 
+resource "aws_cloudwatch_log_group" "tofu_executions" {
+  name                = "/ab2d/tofu/executions"
+  retention_in_days   = 90
+  tags                = local.default_tags
+}
 module "idr_db_importer_bucket" {
   source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=7c070cd2e8c6b1407961c35976553446df8fafd3"
 

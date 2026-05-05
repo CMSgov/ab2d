@@ -1,0 +1,14 @@
+name: Setup tofu logging wrapper
+description: Adds the tofu wrapper to PATH and sets up a symlink
+
+runs:
+  using: composite
+  steps:
+    - name: Add tofu wrapper to PATH
+      shell: bash
+      run: |
+        echo "TOFU_REAL_BIN=$(which tofu)" >> $GITHUB_ENV
+        chmod +x "$GITHUB_WORKSPACE/ops/scripts/tofu-wrapper
+        mkdir -p $HOME/.local/bin
+        ln -s "$GITHUB_WORKSPACE/ops/scripts/tofu-wrapper" "$HOME/.local/bin/tofu"
+        echo "$HOME/.local/bin" >> $GITHUB_PATH

@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# The goal of this script is to run tofu commands
+# while trying to log the output of the command to cloudwatch
+# without interfering with the tofu command/output
+
+set -euo pipefail # force failure on error
+
+LOG_GROUP="${TOFU_LOG_GROUP:-/ab2d/tofu/executions}"
+REGION="${AWS_REGION:-us-east-1}"
+
+TOFU_ENV="${AB2D_ENV:-${ENV:-unknown}}" # dev/test/sbx/prod
+SERVICE="$(basename "$PWD")" # 30-api, 30-worker, etc
+RUN_ID="${GITHUB_RUN_ID:-local-$$}"
+SUBCOMMAND="${1:-unknown}" # plan/apply/init
+LOG_STREAM="$(date -u +%Y/%m/%d)/${TOFU_ENV}/${SERVICE}/${RUN_ID}/${SUBCOMMAND}" # full path
+
+TEMP_FILE="$(mktemp)"
+COMBINED="$(mktemp)"
+trap 'rm -f "$TEMP_FILE" "$COMBINED"' EXIT # clean up temp files on exit
+
+# in order for the wrapper to run, it needs to know where to call tofu.
+# locally, you would just run this script directly.
+# but in the workflows, we use a symlink so that calling "tofu" instead
+# calls this script.
+# Since the "tofu" command now maps to this script, trying to call "tofu" inside this
+# script would just resolve to this script again, causing recursion.
+# Instead, the workflows add the real path to tofu to an environment variable,
+# and then we hijack any calls to tofu by adding to the path our symlinked shortcut
+# so that the shell will find/resolve it first.
+# the result: Calling tofu resolves to this script, and this script can call the real
+# tofu while logging
+REAL_TOFU="${TOFU_REAL_BIN:-tofu}"
+
+START_MS=$(( $(date +%s) * 1000 ))
+
+# don't break on error. If tofu errors, we want to log it.
+set +e
+"$REAL_TOFU" "$@" 2>&1 | tee "$TEMP_FILE"
+exit_code="${PIPESTATUS[0]}"
+set -e # stop allowing errors
+
+END_MS=$(( $(date +%s) * 1000 ))
+DURATION=$(( (END_MS - START_MS) / 1000 ))
+
+_ship_to_cloudwatch() {
+  aws logs create-log-group \
+    --log-group-name "$LOG_GROUP" \
+    --region "$REGION" 2>/dev/null || true
+
+  aws logs put-retention-policy \
+    --log-group-name "$LOG_GROUP" \
+    --region "$REGION" \
+    --retention-in-days 90 2>/dev/null || true
+
+  aws logs create-log-stream \
+    --log-group-name "$LOG_GROUP" \
+    --log-stream-name "$LOG_STREAM" \
+    --region "$REGION" 2>/dev/null || true
+
+  echo "-- tofu $* | env=$TOFU_ENV service=$SERVICE run=$RUN_ID --" > "$COMBINED"
+
+  # strip ANSI codes from the log file
+  sed $'s/\e\\[[0-9;:]*[a-zA-Z]//g' "$TEMP_FILE" >> "$COMBINED"
+
+  echo "-- exit_code=$exit_code duration=${DURATION}s --" >> "$COMBINED"
+
+  # This command processes the output (in file $COMBINED) by splitting it on newline
+  # then converts each line to a pair of index/value with to_entries
+  # then maps each of those pairs into json with two fields:
+  # "timestamp" which is the START_MS plus 1ms per line (just so it prints sequentially)
+  # and "message" which is the content of the line. Empty lines get replaced with a space.
+  EVENTS=$(jq -Rs --argjson ts "$START_MS" \
+    'split("\n") | to_entries | map({timestamp: ($ts + .key), message: (if .value == "" then " " else .value end)})' \
+    "$COMBINED")
+
+  aws logs put-log-events \
+    --log-group-name "$LOG_GROUP" \
+    --log-stream-name "$LOG_STREAM" \
+    --region "$REGION" \
+    --log-events "$EVENTS"
+}
+
+if ! _ship_to_cloudwatch "$@"; then
+  echo "[tofu-wrapper] WARNING: Cloudwatch logging failed" >&2
+fi
+
+exit "$exit_code"
