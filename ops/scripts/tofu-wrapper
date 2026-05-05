@@ -11,8 +11,7 @@ REGION="${AWS_REGION:-us-east-1}"
 TOFU_ENV="${AB2D_ENV:-${ENV:-unknown}}" # dev/test/sbx/prod
 SERVICE="$(basename "$PWD")" # 30-api, 30-worker, etc
 RUN_ID="${GITHUB_RUN_ID:-local-$$}"
-SUBCOMMAND="${1:-unknown}" # plan/apply/init
-LOG_STREAM="$(date -u +%Y/%m/%d)/${TOFU_ENV}/${SERVICE}/${RUN_ID}/${SUBCOMMAND}" # full path
+LOG_STREAM="$(date -u +%Y/%m/%d)/${TOFU_ENV}/${SERVICE}/${RUN_ID}" # full path
 
 TEMP_FILE="$(mktemp)"
 COMBINED="$(mktemp)"
