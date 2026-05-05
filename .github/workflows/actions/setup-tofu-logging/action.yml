@@ -8,7 +8,7 @@ runs:
       shell: bash
       run: |
         echo "TOFU_REAL_BIN=$(which tofu)" >> $GITHUB_ENV
-        chmod +x "$GITHUB_WORKSPACE/ops/scripts/tofu-wrapper
+        chmod +x "$GITHUB_WORKSPACE/ops/scripts/tofu-wrapper"
         mkdir -p $HOME/.local/bin
         ln -s "$GITHUB_WORKSPACE/ops/scripts/tofu-wrapper" "$HOME/.local/bin/tofu"
         echo "$HOME/.local/bin" >> $GITHUB_PATH
