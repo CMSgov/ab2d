@@ -39,8 +39,8 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
     private final String environment = Optional.ofNullable(System.getenv("environment"))
             .orElse("local") + "-";
 
-    private final static String sqsQueueUrl = System.getenv("AWS_SQS_EVENTS_URL");
-    private final static String queueName = deriveSqsQueueName(sqsQueueUrl);
+    private static final String SQS_QUEUE_URL = System.getenv("AWS_SQS_EVENTS_URL");
+    private static final String QUEUE_NAME = deriveSqsQueueName(SQS_QUEUE_URL);
 
     // AWS sends an object that's not wrapped with type info. The event service expects the wrapper.
     // Since there's not an easy way to enable/disable type wrapper just have 2 mappers.
@@ -74,7 +74,9 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
     }
 
     private static AmazonSQS setup() {
-        if (!StringUtils.isNullOrEmpty(System.getenv("IS_LOCALSTACK"))) {
+        // tests can use System property, main path uses env
+        String localstackFlag = System.getProperty("IS_LOCALSTACK", System.getenv("IS_LOCALSTACK"));
+        if (!StringUtils.isNullOrEmpty(localstackFlag)) {
             System.setProperty(SDKGlobalConfiguration.DISABLE_CERT_CHECKING_SYSTEM_PROPERTY, "true");
             return AmazonSQSAsyncClientBuilder.standard()
                     .withEndpointConfiguration(new AwsClientBuilder
@@ -97,7 +99,7 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
 
     private void sendMetric(SNSEvent.SNSRecord snsRecord, LambdaLogger log) {
         final SendMessageRequest request = new SendMessageRequest();
-        final String queue = this.queueName;
+        final String queue = CloudwatchEventHandler.QUEUE_NAME;
         final String service;
         try {
             final MetricAlarm alarm = inputMapper.readValue(Optional.ofNullable(snsRecord.getSNS())
