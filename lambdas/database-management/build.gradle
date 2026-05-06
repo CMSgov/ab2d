@@ -15,8 +15,8 @@ dependencies {
     implementation 'org.postgresql:postgresql:42.7.2'
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
-    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
     testImplementation 'org.liquibase:liquibase-core:4.33.0'
     testImplementation 'org.postgresql:postgresql:42.7.2'
     testImplementation project(':lambda-test-utils')
@@ -44,7 +44,7 @@ task buildZip(type: Zip) {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '7.5'
+    gradleVersion = '9.2.0'
 }
 
 java {
