@@ -146,13 +146,16 @@ public class FileDownloadCommon {
         throw new ResourceNotFoundException(String.format("Invalid job UUID provided: '%s'", jobUuid));
     }
 
-    // Sanitize and validate input to prevent path traversal (CWE-23)
+    // Sanitize and validate input to prevent path traversal (CWE-23) and CRLF injection (CWE-113)
     public static String sanitizeFilename(String filename) {
         if (filename != null) {
             String trimmed = filename.trim();
-            String sanitized = new File(trimmed).getName().trim();
-            if (sanitized.equals(trimmed)) {
-                return sanitized;
+            // fall through to error if CRLF present
+            if (!(trimmed.contains("\n") || trimmed.contains("\r"))) {
+                String sanitized = new File(trimmed).getName().trim();
+                if (sanitized.equals(trimmed)) {
+                    return sanitized;
+                }
             }
         }
         log.error("Invalid filename provided: '{}'", filename);

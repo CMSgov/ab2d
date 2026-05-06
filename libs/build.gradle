@@ -46,7 +46,7 @@ ext {
     liquibaseVersion="5.0.0"
     jacksonVersion = "2.20.0"
     slackAPIVersion='1.35.0'
-    hl7Version = '6.5.13'
+    hl7Version = '6.9.4'
 
     failedTests = []
     skippedTests = []
