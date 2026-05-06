@@ -111,7 +111,7 @@ class FileDownloadCommonTest {
 
     }
     @Test
-    void testSanitizeFilename_CRLF() {
+    void test_sanitize_filename_crlf() {
         String filenameWithCR = "test\rfilename.ndjson";
         String filenameWithLF = "test\nfilename.ndjson";
 
