@@ -12,8 +12,8 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <sonar.coverage.exclusions>**/PatientClaimsProcessorImpl.java,**/ContractProcessorImpl.java,**/CoverageDriverImpl.java,**/JobProcessorImpl.java</sonar.coverage.exclusions>
     </properties>
 
