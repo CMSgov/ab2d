@@ -34,8 +34,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0'
     implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.15.0'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.15.0'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
-    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
     implementation 'org.slf4j:slf4j-api:2.0.5'
     implementation project(':database-management')
     implementation 'org.liquibase:liquibase-core:4.33.0'
@@ -57,13 +57,13 @@ dependencies {
         exclude group: 'org.projectlombok'
     }
 
-    testImplementation 'org.mockito:mockito-core:4.11.0'
+    testImplementation 'org.mockito:mockito-core:5.23.0'
     testImplementation project(':lambda-lib')
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testImplementation 'org.junit.platform:junit-platform-commons:1.9.2'
     testImplementation 'org.testcontainers:junit-jupiter:1.17.6'
     testImplementation "org.testcontainers:postgresql:1.17.6"
-    testImplementation 'org.liquibase:liquibase-core:4.18.0'
+    testImplementation 'org.liquibase:liquibase-core:4.21.0'
     testImplementation 'org.postgresql:postgresql:42.7.2'
     testImplementation project(':database-management')
     testImplementation project(':lambda-test-utils')
@@ -87,7 +87,7 @@ task buildZip(type: Zip) {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '7.5'
+    gradleVersion = '9.2.0'
 }
 
 java {

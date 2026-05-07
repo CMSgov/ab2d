@@ -152,6 +152,7 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
         return template.query(query, parameters, this.mapper);
     }
 
+    @Deprecated
     private static class CoverageMembershipRowMapper implements RowMapper<CoverageMembership> {
         @Override
         public CoverageMembership mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -159,7 +160,8 @@ public class GetCoverageMembership extends CoverageV3BaseQuery {
             val currentMbi = rs.getString(2);
             val year = rs.getInt(3);
             val month = rs.getInt(4);
-            val identifiers = Identifiers.ofV3(patientId, currentMbi);
+            // TODO REMOVE -- DEPRECATED
+            val identifiers = Identifiers.ofV3(patientId, currentMbi, null, -1L);
             return new CoverageMembership(identifiers, year, month);
         }
     }

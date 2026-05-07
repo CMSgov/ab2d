@@ -5,19 +5,21 @@ plugins {
 
 version "$metricsVersion"
 
-
-configurations {
-    all.collect { configuration ->
-        configuration.exclude group: 'com.amazonaws.aws-java-sdk-core'
-        configuration.exclude group: 'com.fasterxml.jackson.core:jackson-annotations'
-        configuration.exclude group: 'com.fasterxml.jackson.core:jackson-databind'
-        configuration.exclude group: 'org.mock-server'
-        configuration.exclude group: 'software.amazon.awssdk:netty-nio-client'
-        configuration.exclude group: 'io.netty'
-    }
-
+configurations.configureEach {
+    exclude group: 'org.mock-server'
+    exclude group: 'io.netty'
+    exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+    exclude group: 'org.springframework'
+    exclude group: 'org.springframework.boot'
+    exclude group: 'org.springframework.cloud'
+    exclude group: 'com.slack.api'
+    exclude group: 'org.jetbrains.kotlin'
+    exclude group: 'org.postgresql'
+    exclude group: 'com.squareup.okhttp3'
+    exclude group: 'commons-codec'
+    exclude group: 'com.squareup.okio'
+    exclude group: 'org.testcontainers'
 }
-
 
 repositories {
     mavenCentral()
@@ -25,44 +27,32 @@ repositories {
 }
 
 dependencies {
+    implementation 'gov.cms.ab2d:ab2d-events-client:1.11.2'
 
-    implementation('gov.cms.ab2d:ab2d-events-client:1.11.2') {
-        // Gradle is including these transient dependencies in the zip making it huge
-        exclude group: 'org.springframework'
-        exclude group: 'org.springframework.boot'
-        exclude group: 'com.slack.api'
-        exclude group: 'org.jetbrains.kotlin'
-        exclude group: 'org.postgresql'
-        exclude group: 'com.squareup.okhttp3'
-        exclude group: 'commons-codec'
-        exclude group: 'com.squareup.okio'
-        exclude group: 'org.springframework.cloud'
-        exclude group: 'org.testcontainers:testcontainers'
-        // Lombok is amazing but its jar is 2 MBs which is 20% of the total fat jar.
-        // Even when set as compile and annotationProcessor only gradle still adds it to the fat jar
-        exclude group: 'org.projectlombok'
-    }
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
     implementation 'com.amazonaws:aws-java-sdk-sqs:1.12.793'
+
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.15.0'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
-    compileOnly 'org.projectlombok:lombok:1.18.24'
+
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+
     implementation 'org.slf4j:slf4j-api:2.0.4'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
     testImplementation 'org.junit.platform:junit-platform-commons:1.9.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
-    testImplementation 'org.mockito:mockito-core:4.8.0'
+    testImplementation 'org.mockito:mockito-core:5.23.0'
     testImplementation project(':lambda-test-utils')
 }
 
 test {
     useJUnitPlatform()
 }
-task buildZip(type: Zip) {
 
+tasks.register('buildZip', Zip) {
     from compileJava
     from processResources
     into('lib') {
@@ -71,13 +61,13 @@ task buildZip(type: Zip) {
     archiveFileName = 'metrics-lambda.zip'
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '7.5'
+tasks.register('wrapper', Wrapper) {
+    gradleVersion = '9.2.0'
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 build.dependsOn buildZip
