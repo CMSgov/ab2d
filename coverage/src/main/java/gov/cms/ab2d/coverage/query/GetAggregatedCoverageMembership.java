@@ -81,11 +81,13 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     DROP TABLE coverage_v3_temp_{0};
     """;
 
+    // TODO remove
     public static void main(String[] args) {
         System.out.println(MessageFormat.format(CREATE_AGGREGATED_ATTRIBUTION_DATA, "S9701"));
     }
 
-    private static final String AGGREGATED_TABLE_ROW_COUNT = "select count(*) from v3.coverage_v3_aggregated_{0};";
+    // NEW
+    private static final String AGGREGATED_TABLE_ROW_COUNT = "select count(distinct patient_id) from v3.coverage_v3_aggregated_{0};";
 
     private static final String GET_DISTINCT_COVERAGE_PERIOD_COUNT =
     """
