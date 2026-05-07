@@ -21,7 +21,8 @@ class GetAggregatedCoverageMembershipTest {
 
 	@Test
 	void test() {
-		val contract = "Z0000";
+		//val contract = "Z0000"; // no columns where share_data == null
+		val contract = "Z7777"; // one MBI with share_data == null
 		GetAggregatedCoverageMembership test = new GetAggregatedCoverageMembership(container.getDataSource());
 		test.createAggregatedAttributionTable(contract);
 
@@ -31,9 +32,12 @@ class GetAggregatedCoverageMembershipTest {
 		ContractForCoverageDTO contractDto = new ContractForCoverageDTO();
 		contractDto.setContractNumber(contract);
 
-		List<CoverageSummary> coverageSummaries = test.fetchAggregatedData(contractDto, 100, Optional.empty());
-		for (CoverageSummary coverageSummary : coverageSummaries) {
-			System.out.println();
+		List<CoverageSummary> coverageSummaries = test.fetchAggregatedData(contractDto, 1, Optional.empty());
+		while (!coverageSummaries.isEmpty()) {
+			System.out.println("coverageSummaries.size() = " + coverageSummaries.size());
+
+			val lastPatientId = coverageSummaries.get(coverageSummaries.size()-1).getIdentifiers().getPatientIdV3();
+			coverageSummaries = test.fetchAggregatedData(contractDto, 1, Optional.of(lastPatientId));
 		}
 		System.out.println();
 	}

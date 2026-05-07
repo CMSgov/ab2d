@@ -17,6 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,7 +62,9 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
       patient_id,
       current_mbi,
       historical_coverage_summaries,
-      recent_coverage_summaries
+      recent_coverage_summaries,
+      share_data,
+      ROW_NUMBER() OVER (ORDER BY patient_id) AS row_number
     FROM
       coverage_v3_temp_{0} AS recent
       FULL OUTER JOIN
@@ -70,15 +73,17 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         FROM v3.coverage_v3_history_summary
         WHERE contract = ''{0}''
       ) AS history
-      USING (patient_id, current_mbi) AS aggregated_results
-      LEFT JOIN current_mbi ON aggregated_results.current_mbi = current_mbi.mbi
-    WHERE
-      share_data IS NOT FALSE;
+    USING (patient_id, current_mbi) AS aggregated_results
+    LEFT JOIN current_mbi ON aggregated_results.current_mbi = current_mbi.mbi;
     
     CREATE INDEX ON v3.coverage_v3_aggregated_{0} (patient_id);
     
     DROP TABLE coverage_v3_temp_{0};
     """;
+
+    public static void main(String[] args) {
+        System.out.println(MessageFormat.format(CREATE_AGGREGATED_ATTRIBUTION_DATA, "S9701"));
+    }
 
     private static final String AGGREGATED_TABLE_ROW_COUNT = "select count(*) from v3.coverage_v3_aggregated_{0};";
 
@@ -94,6 +99,25 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     )
     """;
 
+
+    /** TODO
+
+     update with
+
+     SELECT patient_id,
+     current_mbi,
+     contract_history,
+     contract_recent,
+     historical_coverage_summaries,
+     recent_coverage_summaries
+     FROM v3.coverage_v3_aggregated_s9701
+     where patient_id > 143851408
+     ORDER BY patient_id asc
+     FETCH FIRST 1000 ROWS WITH TIES;
+
+
+     */
+
     private static final String FETCH_AGGREGATED_DATA_WITHOUT_CURSOR =
     """
     SELECT patient_id,
@@ -101,11 +125,12 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
        contract_history,
        contract_recent,
        historical_coverage_summaries,
-       recent_coverage_summaries
+       recent_coverage_summaries,
+       share_data,
+       row_number
     FROM v3.coverage_v3_aggregated_{0}
-    ORDER BY patient_id,
-             current_mbi
-    LIMIT :limit;
+    ORDER BY patient_id asc
+    FETCH FIRST :limit ROWS WITH TIES;
     """;
 
     private static final String FETCH_AGGREGATED_DATA_WITH_CURSOR =
@@ -115,12 +140,13 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
        contract_history,
        contract_recent,
        historical_coverage_summaries,
-       recent_coverage_summaries
+       recent_coverage_summaries,
+       share_data,
+       row_number
     FROM v3.coverage_v3_aggregated_{0}
-        WHERE patient_id >= :patient_id_cursor
-    ORDER BY patient_id,
-             current_mbi
-    LIMIT :limit;
+        WHERE patient_id > :patient_id_cursor
+    ORDER BY patient_id asc
+    FETCH FIRST :limit ROWS WITH TIES;
     """;
 
     public void createAggregatedAttributionTable(final String contract) {
@@ -161,7 +187,9 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
             query = MessageFormat.format(FETCH_AGGREGATED_DATA_WITHOUT_CURSOR, contractDto.getContractNumber());
         }
 
-        return jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
+        List<CoverageSummary> coverageSummaries = jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
+        // TODO: Need to filter to find any grouping of patient ID, combine dates, and determine if patient has opted-out
+        return coverageSummaries;
     }
 
     public int getCoveragePeriodsInAggregatedTable(String contract) {
@@ -179,19 +207,14 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
 
         @Override
         public CoverageSummary mapRow(ResultSet rs, int rowNum) throws SQLException {
+            val shareData = rs.getObject(7, Boolean.class);
+            val rowNumber = rs.getLong(8);
 
-            /**
-             * patient_id,
-             *            current_mbi,
-             *            contract_history,
-             *            contract_recent,
-             *            historical_coverage_summaries,
-             *            recent_coverage_summaries
-             */
             val patientId = rs.getLong(1);
             val currentMbi = rs.getString(2);
-            val identifiers = Identifiers.ofV3(patientId, currentMbi);
+            val identifiers = Identifiers.ofV3(patientId, currentMbi, shareData, rowNumber);
 
+            // These are not used -- useful for determining if record came from historical or recent coverage table
             val contractHistory = rs.getString(3);
             val contractRecent = rs.getString(4);
 
@@ -205,9 +228,14 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
                     ? null
                     : (Integer[][]) recentSummary.getArray();
 
-            val coverageMembershipList = toCoverageMembershipList(identifiers, historicalSummaryArray, recentSummaryArray);
-            val coverageSummary = CoverageServiceRepository.summarizeCoverageMembership(contractDto, coverageMembershipList);
-            return coverageSummary;
+            if (shareData == null || shareData) {
+                val coverageMembershipList = toCoverageMembershipList(identifiers, historicalSummaryArray, recentSummaryArray);
+                return CoverageServiceRepository.summarizeCoverageMembership(contractDto, coverageMembershipList);
+
+            } else {
+                return new CoverageSummary(identifiers, contractDto, Collections.emptyList());
+            }
+
         }
 
         private List<CoverageMembership> toCoverageMembershipList(
