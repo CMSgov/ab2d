@@ -7,7 +7,6 @@ import org.hl7.fhir.r4.model.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -183,26 +182,35 @@ public class ExplanationOfBenefitTrimmerR4V3 {
             if (r.getIdPart() != null) containedById.put(r.getIdPart(), r);
         }
 
-        // Single pass: collect contained resources satisfying either criterion; LinkedHashSet deduplicates
-        LinkedHashSet<Resource> filteredContainedSet = new LinkedHashSet<>();
+        // Single pass: collect contained resources satisfying either criterion; ArrayList dedup via contains (list is typically ≤ 5 items)
+        List<Resource> filteredContained = new ArrayList<>();
         for (ExplanationOfBenefit.CareTeamComponent ct : filteredCareTeam) {
             if (!ct.hasProvider() || !ct.getProvider().hasReference()) continue;
             String ref = ct.getProvider().getReference();
             String id = ref.startsWith("#") ? ref.substring(1) : ref;
             Resource r = containedById.get(id);
-            if (r == null) continue;
+            if (r == null || filteredContained.contains(r)) continue;
 
-            boolean hasNpi = extractIdentifiers(r).stream()
-                    .anyMatch(ident -> NPI_SYSTEM.equals(ident.getSystem()));
-            boolean hasRenderingExt = r instanceof DomainResource dr
-                    && dr.getExtension().stream()
-                    .filter(ext -> RENDERING_EXT_URLS.contains(ext.getUrl()))
-                    .anyMatch(ext -> ext.getValue() instanceof CodeableConcept cc
-                            && cc.getCoding().stream().anyMatch(Coding::hasCode));
+            boolean hasNpi = false;
+            for (Identifier ident : extractIdentifiers(r)) {
+                if (NPI_SYSTEM.equals(ident.getSystem())) { hasNpi = true; break; }
+            }
 
-            if (hasNpi || hasRenderingExt) filteredContainedSet.add(r);
+            boolean hasRenderingExt = false;
+            if (!hasNpi && r instanceof DomainResource dr) {
+                for (Extension ext : dr.getExtension()) {
+                    if (RENDERING_EXT_URLS.contains(ext.getUrl())
+                            && ext.getValue() instanceof CodeableConcept cc) {
+                        for (Coding coding : cc.getCoding()) {
+                            if (coding.hasCode()) { hasRenderingExt = true; break; }
+                        }
+                        if (hasRenderingExt) break;
+                    }
+                }
+            }
+
+            if (hasNpi || hasRenderingExt) filteredContained.add(r);
         }
-        List<Resource> filteredContained = new ArrayList<>(filteredContainedSet);
 
         List<ExplanationOfBenefit.SupportingInformationComponent> filteredSupportingInfo =
                 filterSupportingInfo(benefit.getSupportingInfo());
@@ -493,8 +501,10 @@ public class ExplanationOfBenefitTrimmerR4V3 {
                 continue;
             }
 
-            boolean matchesRole = ct.getRole().getCoding().stream()
-                    .anyMatch(c -> c.hasCode() && roleCodes.contains(c.getCode()));
+            boolean matchesRole = false;
+            for (Coding c : ct.getRole().getCoding()) {
+                if (c.hasCode() && roleCodes.contains(c.getCode())) { matchesRole = true; break; }
+            }
 
             if (matchesRole) {
                 result.add(ct);
