@@ -32,7 +32,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     }
 
     private static final String AGGREGATED_TABLE_NAME = "v3.coverage_v3_aggregated_{0}";
-    private static final String CREATE_AGGREGATED_ATTRIBUTION_DATA =
+    private static final String CREATE_AGGREGATED_TABLE =
     """
     DROP TABLE IF EXISTS coverage_v3_temp_{0};
     
@@ -81,13 +81,9 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     DROP TABLE coverage_v3_temp_{0};
     """;
 
-    // TODO remove
-    public static void main(String[] args) {
-        System.out.println(MessageFormat.format(CREATE_AGGREGATED_ATTRIBUTION_DATA, "S9701"));
-    }
 
     // NEW
-    private static final String AGGREGATED_TABLE_ROW_COUNT = "select count(distinct patient_id) from v3.coverage_v3_aggregated_{0};";
+    private static final String AGGREGATED_TABLE_ROW_COUNT = "SELECT COUNT(DISTINCT patient_id) FROM v3.coverage_v3_aggregated_{0};";
 
     private static final String GET_DISTINCT_COVERAGE_PERIOD_COUNT =
     """
@@ -102,25 +98,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     """;
 
 
-    /** TODO
-
-     update with
-
-     SELECT patient_id,
-     current_mbi,
-     contract_history,
-     contract_recent,
-     historical_coverage_summaries,
-     recent_coverage_summaries
-     FROM v3.coverage_v3_aggregated_s9701
-     where patient_id > 143851408
-     ORDER BY patient_id asc
-     FETCH FIRST 1000 ROWS WITH TIES;
-
-
-     */
-
-    private static final String FETCH_AGGREGATED_DATA_WITHOUT_CURSOR =
+    private static final String FETCH_FROM_AGGREGATED_TABLE_WITHOUT_CURSOR =
     """
     SELECT patient_id,
        current_mbi,
@@ -135,7 +113,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     FETCH FIRST :limit ROWS WITH TIES;
     """;
 
-    private static final String FETCH_AGGREGATED_DATA_WITH_CURSOR =
+    private static final String FETCH_FROM_AGGREGATED_TABLE_WITH_CURSOR =
     """
     SELECT patient_id,
        current_mbi,
@@ -155,7 +133,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         val tableName = MessageFormat.format(AGGREGATED_TABLE_NAME, contract);
         log.info("Attempting to create aggregated attribution table {}", tableName);
         try {
-            val query = MessageFormat.format(CREATE_AGGREGATED_ATTRIBUTION_DATA, contract);
+            val query = MessageFormat.format(CREATE_AGGREGATED_TABLE, contract);
             jdbcTemplate.getJdbcOperations().execute(query);
         } catch (Exception e) {
             log.info("Error creating {}", tableName);
@@ -173,6 +151,14 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         return rowCount;
     }
 
+    public void deleteAggregatedTable(final String contract) {
+        val tableName = MessageFormat.format(AGGREGATED_TABLE_NAME, contract);
+        log.info("Preparing to delete table {}", tableName);
+        val query = MessageFormat.format("DROP TABLE IF EXISTS {0}", tableName);
+        jdbcTemplate.getJdbcOperations().execute(query);
+        log.info("Deleted table {}", tableName);
+    }
+
     public List<CoverageSummary> fetchAggregatedData(
             final ContractForCoverageDTO contractDto,
             final long limit,
@@ -184,9 +170,9 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         final String query;
         if (cursor.isPresent()) {
             parameters.addValue("patient_id_cursor", cursor.get());
-            query = MessageFormat.format(FETCH_AGGREGATED_DATA_WITH_CURSOR, contractDto.getContractNumber());
+            query = MessageFormat.format(FETCH_FROM_AGGREGATED_TABLE_WITH_CURSOR, contractDto.getContractNumber());
         } else {
-            query = MessageFormat.format(FETCH_AGGREGATED_DATA_WITHOUT_CURSOR, contractDto.getContractNumber());
+            query = MessageFormat.format(FETCH_FROM_AGGREGATED_TABLE_WITHOUT_CURSOR, contractDto.getContractNumber());
         }
 
         List<CoverageSummary> coverageSummaries = jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
