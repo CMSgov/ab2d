@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5"
+      version = "~> 6"
     }
     artifactory = {
       source  = "jfrog/artifactory"
@@ -12,7 +12,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=a19304a2a4660183b7a32fef26c97c0bc479a2a7"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -126,7 +126,7 @@ resource "aws_lambda_function" "metrics_transform" {
   function_name    = "${local.service_prefix}-metrics-transform"
   role             = aws_iam_role.metrics_transform.arn
   handler          = "gov.cms.ab2d.metrics.CloudwatchEventHandler"
-  runtime          = "java11"
+  runtime          = "java25"
   memory_size      = 256
   timeout          = 600
   architectures = [
@@ -370,7 +370,7 @@ resource "aws_lambda_function" "hpms_counts" {
   role             = aws_iam_role.lambda_sns_role.arn
   handler          = "gov.cms.ab2d.retrievehpmscounts.HPMSCountsHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["retrieve-hpms-counts"].sha256)
-  runtime          = "java11"
+  runtime          = "java25"
   timeout          = 600
   memory_size      = 256
   architectures = [
