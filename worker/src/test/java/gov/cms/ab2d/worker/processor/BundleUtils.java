@@ -18,7 +18,7 @@ public class BundleUtils {
     }
 
     public static Identifiers createIdentifierWithoutMbi_V3(long beneficiaryId) {
-        return Identifiers.ofV3(beneficiaryId, null);
+        return Identifiers.ofV3(beneficiaryId, null, null, -1L);
     }
 
     public static Identifiers createIdentifier(long beneficiaryId, String currentMbi, String... historicMbis) {
@@ -26,7 +26,7 @@ public class BundleUtils {
     }
 
     public static Identifiers createIdentifier_V3(long beneficiaryId, String currentMbi) {
-        return Identifiers.ofV3(beneficiaryId, currentMbi);
+        return Identifiers.ofV3(beneficiaryId, currentMbi, null, -1L);
     }
 
     public static org.hl7.fhir.dstu3.model.Bundle createBundle(org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent ... bundleEntries) {

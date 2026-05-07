@@ -176,6 +176,12 @@ public class CoverageServiceRepository {
      */
     private static final String SELECT_COUNT_CONTRACT = " SELECT coverage.contract, coverage.year, coverage.month, coverage.bene_coverage_period_id," + " coverage.bene_coverage_search_event_id, COUNT(*) as bene_count " + " FROM coverage INNER JOIN bene_coverage_period bcp ON coverage.bene_coverage_period_id = bcp.id " + " WHERE bcp.status = 'SUCCESSFUL' AND coverage.contract IN (:contracts)  and coverage.current_mbi is not null AND coverage.year IN (:years) " + " GROUP BY coverage.contract, coverage.year, coverage.month, " + " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id " + " ORDER BY coverage.contract, coverage.year, coverage.month, " + " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id ";
 
+    public static void main(String[] args) {
+
+        System.out.println(SELECT_COUNT_CONTRACT);
+
+    }
+
     private static String vacuumCoverage = "VACUUM coverage";
 
     private final DataSource dataSource;
