@@ -148,7 +148,7 @@ resource "aws_lambda_function" "audit" {
   function_name    = "${local.service_prefix}-audit"
   role             = aws_iam_role.microservices_lambda.arn
   handler          = "gov.cms.ab2d.audit.AuditEventHandler"
-  runtime          = "java11"
+  runtime          = "java25"
   timeout          = 600
   architectures = [
     "arm64",
@@ -291,7 +291,7 @@ resource "aws_lambda_function" "coverage_count" {
   role             = aws_iam_role.lambda_database_sns_role.arn
   handler          = "gov.cms.ab2d.coveragecounts.CoverageCountsHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["coverage-counts"].sha256)
-  runtime          = "java11"
+  runtime          = "java25"
   timeout          = 600
   memory_size      = 1024
   architectures = [
@@ -337,7 +337,7 @@ resource "aws_lambda_function" "database_management" {
   role             = aws_iam_role.lambda_database_sns_role.arn
   handler          = "gov.cms.ab2d.databasemanagement.DatabaseManagementHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["database-management"].sha256)
-  runtime          = "java11"
+  runtime          = "java25"
   timeout          = 600
   memory_size      = 256
   architectures = [
