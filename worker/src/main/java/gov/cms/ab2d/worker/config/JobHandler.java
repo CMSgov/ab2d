@@ -121,6 +121,7 @@ public class JobHandler implements MessageHandler {
         return String.valueOf(submittedJob.get("job_uuid"));
     }
 
+    // Used only for v3 to acquire
     private String getContractNumber(Map<String, Object> submittedJob) {
         return String.valueOf(submittedJob.get("contract_number"));
     }
