@@ -15,7 +15,6 @@ import java.util.Map;
 
 public class GetCoverageV3Count extends CoverageV3BaseQuery {
 
-	@Deprecated
 	private static final String QUERY =
 	"""
 	SELECT contract, year, month, COUNT(*)
