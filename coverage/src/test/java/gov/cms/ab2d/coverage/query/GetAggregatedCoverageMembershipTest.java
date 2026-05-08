@@ -8,6 +8,7 @@ import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+@Slf4j
 @Testcontainers
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class GetAggregatedCoverageMembershipTest {
@@ -127,20 +129,20 @@ class GetAggregatedCoverageMembershipTest {
 		val test = new GetAggregatedCoverageMembership(container.getDataSource());
 
 		var list = new ArrayList<>(List.of(
-			new CoverageSummary(Identifiers.ofV3(1L, null, null, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(1L, null, false, 1L), null, List.of()),
 
-			new CoverageSummary(Identifiers.ofV3(2L, null, null, 0L), null, List.of()),
-			new CoverageSummary(Identifiers.ofV3(2L, null, null, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(2L, null, null, 2L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(2L, null, null, 3L), null, List.of()),
 
-			new CoverageSummary(Identifiers.ofV3(3L, null, null, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(3L, null, null, 4L), null, List.of()),
 
-			new CoverageSummary(Identifiers.ofV3(4L, null, null, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(4L, null, null, 5L), null, List.of()),
 
-			new CoverageSummary(Identifiers.ofV3(5L, null, null, 0L), null, List.of()),
-			new CoverageSummary(Identifiers.ofV3(5L, null, null, 0L), null, List.of()),
-			new CoverageSummary(Identifiers.ofV3(5L, null, false, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(5L, null, null, 6L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(5L, null, null, 7L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(5L, null, false, 8L), null, List.of()),
 
-			new CoverageSummary(Identifiers.ofV3(6L, null, null, 0L), null, List.of())
+			new CoverageSummary(Identifiers.ofV3(6L, null, null, 9L), null, List.of())
 		));
 
 
@@ -148,10 +150,23 @@ class GetAggregatedCoverageMembershipTest {
 
 		test.reduce(duplicateIndexes, list);
 
-		list.removeIf(next -> next == null || Objects.equals(Boolean.FALSE, next.getIdentifiers().getShareDataV3()));
+		val iterator = list.listIterator();
+		while (iterator.hasNext()) {
+			val next = iterator.next();
+			if (next == null) {
+				iterator.remove();
+			} else {
+				val identifiers = next.getIdentifiers();
+				if (Objects.equals(Boolean.FALSE, identifiers.getShareDataV3())) {
+					log.info("Patient at row number {} has opted out; removing coverage summary", identifiers.getRowNumberV3());
+					iterator.remove();
+				}
+			}
+		}
 
 
 		System.out.println();
+
 
 	}
 
