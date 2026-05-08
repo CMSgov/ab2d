@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.properties.PropertiesService;
@@ -29,6 +30,7 @@ public class WorkerServiceImpl implements WorkerService {
     private final JobProcessor jobProcessor;
     private final ShutDownService shutDownService;
     private final PropertiesService propertiesService;
+    private final CoverageV3Service coverageV3Service;
 
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
@@ -41,6 +43,8 @@ public class WorkerServiceImpl implements WorkerService {
 
             if (job.getStatus() == JobStatus.IN_PROGRESS) {
                 log.info("{} has been started", jobUuid);
+
+                coverageV3Service.createAggregatedAttributionTable(job.getContractNumber());
 
                 job = jobProcessor.process(jobUuid);
                 log.info("Job was processed");

@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.aggregator.FileOutputType;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
 import gov.cms.ab2d.eventclient.events.FileEvent;
@@ -67,6 +68,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final JobOutputRepository jobOutputRepository;
     private final ContractProcessor contractProcessor;
     private final SQSEventClient eventLogger;
+    private final CoverageV3Service coverageV3Service;
 
     /**
      * Load the job and process it
@@ -96,6 +98,7 @@ public class JobProcessorImpl implements JobProcessor {
                 log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
                 deleteExistingDirectory(outputDirPath, job);
             }
+            coverageV3Service.deleteAggregatedAttributionTable(job.getContractNumber());
         } catch (Exception e) {
             String contract = job.getContractNumber();
             String message;
@@ -117,6 +120,7 @@ public class JobProcessorImpl implements JobProcessor {
             job.setCompletedAt(OffsetDateTime.now());
             log.info("Job: [{}] FAILED", jobUuid);
             jobRepository.save(job);
+            coverageV3Service.deleteAggregatedAttributionTable(contract);
         }
 
         return job;
@@ -347,5 +351,6 @@ public class JobProcessorImpl implements JobProcessor {
 
         jobRepository.save(job);
         log.info("Job: [{}] is DONE", job.getJobUuid());
+        coverageV3Service.deleteAggregatedAttributionTable(job.getContractNumber());
     }
 }

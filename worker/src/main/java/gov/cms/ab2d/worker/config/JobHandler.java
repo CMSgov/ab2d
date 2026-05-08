@@ -120,8 +120,7 @@ public class JobHandler implements MessageHandler {
     private String getJobId(Map<String, Object> submittedJob) {
         return String.valueOf(submittedJob.get("job_uuid"));
     }
-
-    // Used only for v3 to acquire
+    
     private String getContractNumber(Map<String, Object> submittedJob) {
         return String.valueOf(submittedJob.get("contract_number"));
     }
@@ -144,7 +143,7 @@ public class JobHandler implements MessageHandler {
             result == CoverageV3SyncResult.NO_COVERAGE_FOUND_FOR_CONTRACT ||
             result == CoverageV3SyncResult.IDR_IMPORTER_IN_PROGRESS) {
 
-            coverageV3Service.createAggregatedAttributionTable(contract);
+            // Note: Aggregated attribution table created in WorkerServiceImpl
 
             return true;
         }
