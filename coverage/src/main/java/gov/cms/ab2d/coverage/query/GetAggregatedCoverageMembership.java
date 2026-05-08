@@ -29,7 +29,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }
 
-    private static final String AGGREGATED_TABLE_NAME = "v3.coverage_v3_aggregated_{0}";
+    public static final String AGGREGATED_TABLE_NAME = "v3.coverage_v3_aggregated_{0}";
     private static final String CREATE_AGGREGATED_TABLE =
     """
     DROP TABLE IF EXISTS coverage_v3_temp_{0};

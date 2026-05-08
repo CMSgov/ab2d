@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -129,7 +130,12 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     @Override
     public void deleteAggregatedAttributionTable(String contract) {
-        new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract);
+        val aggregatedTable = MessageFormat.format(GetAggregatedCoverageMembership.AGGREGATED_TABLE_NAME, contract.toLowerCase());
+        if (keepAggregatedTable(aggregatedTable)) {
+            log.info("Skipping deletion for aggregated table {}", aggregatedTable);
+        } else {
+            new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract);
+        }
     }
 
     @Override
@@ -165,10 +171,14 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         }
     }
 
-    protected boolean shouldDeleteAggregatedTable(final String tableName, final List<String> contactsWithActiveJobs) {
+    boolean keepAggregatedTable(final String tableName) {
+        // Keep table for debugging purposes if true
+        return propertiesService.isToggleOn("%s.keep".formatted(tableName), false);
+    }
+
+    boolean shouldDeleteAggregatedTable(final String tableName, final List<String> contactsWithActiveJobs) {
         for (String contactsWithActiveJob : contactsWithActiveJobs) {
-            // Keep table for debugging purposes if true
-            val keepTable = propertiesService.isToggleOn("%s.keep".formatted(tableName), false);
+            val keepTable = keepAggregatedTable(tableName);
             if (keepTable) {
                 log.info("Skipping deletion for aggregated table {}", tableName);
                 return false;
