@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
@@ -16,8 +17,11 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.C;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.Assert.assertFalse;
@@ -81,6 +85,73 @@ class GetAggregatedCoverageMembershipTest {
 		assertTrue(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_coverage_v3_aggregated_z0000"));
 		assertTrue(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_coverage_v3_aggregated_z7777"));
 		assertFalse(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_coverage_v3_aggregated_z9999"));
+
+	}
+
+	@Test
+	void testDuplicates() {
+		val test = new GetAggregatedCoverageMembership(container.getDataSource());
+
+		var list = List.of(
+			new CoverageSummary(Identifiers.ofV3(1L, null, false, 0L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(2L, null, false, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(2L, null, false, 0L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(3L, null, false, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(4L, null, false, 0L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(5L, null, false, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(5L, null, false, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(5L, null, false, 0L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(6L, null, false, 0L), null, List.of())
+		);
+
+
+		System.out.println(test.getIndexesOfDuplicatePatients(list));
+
+
+		list = List.of(
+			new CoverageSummary(Identifiers.ofV3(2L, null, false, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(2L, null, false, 0L), null, List.of())
+		);
+
+		System.out.println(test.getIndexesOfDuplicatePatients(list));
+
+	}
+
+	@Test
+	void testDuplicatesAndReduce() {
+
+		val test = new GetAggregatedCoverageMembership(container.getDataSource());
+
+		var list = new ArrayList<>(List.of(
+			new CoverageSummary(Identifiers.ofV3(1L, null, null, 0L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(2L, null, null, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(2L, null, null, 0L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(3L, null, null, 0L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(4L, null, null, 0L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(5L, null, null, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(5L, null, null, 0L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(5L, null, false, 0L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(6L, null, null, 0L), null, List.of())
+		));
+
+
+		val duplicateIndexes = test.getIndexesOfDuplicatePatients(list);
+
+		test.reduce(duplicateIndexes, list);
+
+		list.removeIf(next -> next == null || Objects.equals(Boolean.FALSE, next.getIdentifiers().getShareDataV3()));
+
+
+		System.out.println();
 
 	}
 
