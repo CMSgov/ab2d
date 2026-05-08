@@ -77,7 +77,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
         // Determine how many records to pull back
         //final long limit = CoverageServiceRepository.getCoverageLimit(page.getPageSize(), expectedCoveragePeriods);
-        final long limit = 1000;
 
         // Query coverage membership from database and collect it
         /*
@@ -95,22 +94,41 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                 .map(membershipEntry -> CoverageServiceRepository.summarizeCoverageMembership(contract, membershipEntry))
                 .collect(toList());
          */
-        val beneficiarySummaries = queryAggregatedCoverageMembership(page, limit);
-        log.info("[V3] List<CoverageSummary> beneficiarySummaries size = {}", beneficiarySummaries.size());
+        val beneficiarySummaries = queryAggregatedCoverageMembership(page, page.getPageSize());
+        val beneficiaryRecordsFetched = beneficiarySummaries.size();
+        log.info("[V3] beneficiary summary records fetched = {}", beneficiaryRecordsFetched);
 
+        printFirstAndLastRowNumbers(beneficiarySummaries);
 
-        // Get the patient to start from next time
-//        final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
-//                enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
+        // Get last patient ID before reducing/filtering `beneficiarySummaries` list
+        // Duplicate patient records (where a patient has multiple MBIs) are reduced and opt-outs are filtered from list
+        val lastPatientId = reduceAndFilter(beneficiarySummaries);
+
+        if (beneficiaryRecordsFetched != beneficiarySummaries.size()) {
+            log.info("[V3] beneficiary summary record count after reducing/filtering = {}", beneficiarySummaries.size());
+        }
 
         // Build the next request if there is a next patient
         CoveragePagingRequest request = null;
-        if (!beneficiarySummaries.isEmpty()) {
-            val nextCursor = beneficiarySummaries.get(beneficiarySummaries.size()-1).getIdentifiers().getPatientIdV3();
-            request = CoveragePagingRequest.ofV3(page.getPageSize(), nextCursor, contract, page.getJobStartTime());
+        if (beneficiaryRecordsFetched > 0) {
+	        request = CoveragePagingRequest.ofV3(page.getPageSize(), lastPatientId, contract, page.getJobStartTime());
         }
 
         return new CoveragePagingResult(beneficiarySummaries, request);
+    }
+
+    // print row number for first and/or last record before reducing/filtering
+    // TODO remove -- temporary debugging code
+    void printFirstAndLastRowNumbers(List<CoverageSummary> summaries) {
+        val size = summaries.size();
+        if (size == 0) {
+            return;
+        }
+
+        val first = summaries.get(0);
+        log.info("First beneficiary record row number = {}", first.getIdentifiers().getRowNumberV3());
+        val last = summaries.get(size-1);
+        log.info("Last beneficiary record row number = {}", last.getIdentifiers().getRowNumberV3());
     }
 
     @Override
@@ -228,6 +246,11 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         );
     }
 
+    private long reduceAndFilter(List<CoverageSummary> summaries) {
+        return new GetAggregatedCoverageMembership(dataSource).reduceAndFilter(summaries);
+    }
+
+    // TODO not used -- remove?
     private List<CoverageMembership> queryCoverageMembership(CoveragePagingRequest page, long limit) {
         return executeTimedQuery(
             format("queryCoverageMembership page=%s", page),
@@ -241,6 +264,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         );
     }
 
+    // TODO not used -- remove?
     private List<YearMonthRecord> getCoveragePeriodsByContract(final String contract) {
         return executeTimedQuery(
             format("getCoveragePeriodsByContract contract=%s", contract),
