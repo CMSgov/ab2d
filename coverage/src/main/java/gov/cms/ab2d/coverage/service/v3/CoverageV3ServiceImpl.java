@@ -133,11 +133,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
-    public void deleteAggregatedTable(String tableName) {
-
-    }
-
-    @Override
     public int getAggregatedTableRowCount(String contract) {
         return new GetAggregatedCoverageMembership(dataSource).getAggregatedTableRowCount(contract);
     }

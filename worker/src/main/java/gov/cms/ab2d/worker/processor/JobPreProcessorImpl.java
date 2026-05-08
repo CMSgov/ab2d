@@ -119,6 +119,10 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             // If the user provided a 'since' value
             job.setSinceSource(SinceSource.USER);
             jobRepository.save(job);
+        } else if (job.getFhirVersion() == FhirVersion.R4V3) {
+            // TODO update FhirVersion.R4V3 to set supportsDefaultSince=false ?
+            log.info("[V3] User did not provide 'since' value; retaining null value");
+            jobRepository.save(job);
         } else if (job.getFhirVersion().supportDefaultSince() && !contract.hasDateIssue()) {
             // If the user did not, but this version supports a default 'since', populate it
             job = updateSinceTime(job, contract);

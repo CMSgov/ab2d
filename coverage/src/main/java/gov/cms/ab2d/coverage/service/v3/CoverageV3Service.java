@@ -17,9 +17,6 @@ public interface CoverageV3Service {
     boolean idrImportInProgress();
     void createAggregatedAttributionTable(String contract);
     void deleteAggregatedAttributionTable(String contract);
-
-    void deleteAggregatedTable(String tableName);
-
     // NOTE: Assumes job has been kicked off and aggregated table exists
     int getAggregatedTableRowCount(String contract);
     // NOTE: Assumes job has been kicked off and aggregated table exists
