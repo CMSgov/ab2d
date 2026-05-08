@@ -1,14 +1,9 @@
 package gov.cms.ab2d.coverage.query;
 
-import gov.cms.ab2d.coverage.model.CoverageCount;
-import gov.cms.ab2d.coverage.model.YearMonthRecord;
-import gov.cms.ab2d.coverage.model.v3.CoverageV3;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Count;
 import lombok.val;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -20,6 +15,7 @@ import java.util.Map;
 
 public class GetCoverageV3Count extends CoverageV3BaseQuery {
 
+	@Deprecated
 	private static final String QUERY =
 	"""
 	SELECT contract, year, month, COUNT(*)
