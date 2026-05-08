@@ -174,11 +174,20 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
             query = MessageFormat.format(FETCH_FROM_AGGREGATED_TABLE_WITHOUT_CURSOR, contractDto.getContractNumber());
         }
 
-        val coverageSummaries = jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
+        return jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
+    }
+
+    // Returns last patient ID
+    //
+    public long reduceAndFilter(List<CoverageSummary> summaries) {
+        if (summaries.isEmpty()) {
+            return -1L;
+        }
+        val lastPatientId = summaries.get(summaries.size()-1).getIdentifiers().getPatientIdV3();
 
         // remove any null values (as a result of reducing duplicate patient records)
         // remove any records where a patient has opted out
-        val iterator = coverageSummaries.listIterator();
+        val iterator = summaries.listIterator();
         while (iterator.hasNext()) {
             val next = iterator.next();
             if (next == null) {
@@ -192,7 +201,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
             }
         }
 
-        return coverageSummaries;
+        return lastPatientId;
     }
 
     List<List<Integer>> getIndexesOfDuplicatePatients(List<CoverageSummary> summaries) {
