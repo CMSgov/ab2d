@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult.*;
@@ -15,12 +14,14 @@ import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncSource.CRON_JOB;
 
 @Slf4j
 @Service
-public class CoverageV3ScheduledSync {
+public class CoverageV3ScheduledTasks {
 
-	private final CoverageV3SyncServiceImpl syncService;
+	private final CoverageV3SyncService syncService;
+	private final CoverageV3Service coverageV3Service;
 
-	public CoverageV3ScheduledSync(CoverageV3SyncServiceImpl syncService) {
+	public CoverageV3ScheduledTasks(CoverageV3SyncService syncService, CoverageV3Service coverageV3Service) {
 		this.syncService = syncService;
+		this.coverageV3Service = coverageV3Service;
 	}
 
 	@Scheduled(cron= "0 0 * * * ?") // every hour
@@ -80,6 +81,11 @@ public class CoverageV3ScheduledSync {
 				log.error("[V3] Error calling moveToHistorical for contract {}", e.getClass());
 			}
 		}
+	}
+
+	@Scheduled(cron= "0 0 * * * ?") // every hour
+	public void checkForAggregatedTablesToBeDeleted() {
+		coverageV3Service.checkForAggregatedTablesToBeDeleted();
 	}
 
 	private CoverageV3SyncResult executeWithRetry(

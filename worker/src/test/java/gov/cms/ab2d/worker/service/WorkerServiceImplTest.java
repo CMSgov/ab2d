@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -31,6 +32,7 @@ class WorkerServiceImplTest {
     JobProcessor jobProcessor = mock(JobProcessor.class);
     ShutDownService shutDownService = mock(ShutDownService.class);
     PropertiesService propertiesService = mock(PropertiesService.class);
+    CoverageV3Service coverageV3Service = mock(CoverageV3Service.class);
 
     Job job = new Job();
     job.setStatus(status);
@@ -38,7 +40,7 @@ class WorkerServiceImplTest {
 
     // assertDoesNotThrow is really the best we can do here... all the function does is log.
     assertDoesNotThrow(() -> {
-      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService);
+      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service);
       workerServiceImpl.process("jobUuid");
     });
   }
@@ -49,8 +51,10 @@ class WorkerServiceImplTest {
     JobProcessor jobProcessor = mock(JobProcessor.class);
     ShutDownService shutDownService = mock(ShutDownService.class);
     PropertiesService propertiesService = mock(PropertiesService.class);
+    CoverageV3Service coverageV3Service = mock(CoverageV3Service.class);
 
-    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService);
+
+    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service);
 
     // verify "resetInProgressJobs" wasn't called, because "activeJobs" is empty
     workerServiceImpl.resetInProgressJobs();

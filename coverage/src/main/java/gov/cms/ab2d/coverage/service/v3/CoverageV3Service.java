@@ -16,8 +16,13 @@ public interface CoverageV3Service {
     Map<String, List<CoverageV3Count>> getCoverageCount();
     boolean idrImportInProgress();
     void createAggregatedAttributionTable(String contract);
+    void deleteAggregatedAttributionTable(String contract);
+
+    void deleteAggregatedTable(String tableName);
+
     // NOTE: Assumes job has been kicked off and aggregated table exists
     int getAggregatedTableRowCount(String contract);
     // NOTE: Assumes job has been kicked off and aggregated table exists
     int getCoveragePeriodsInAggregatedTable(String contract);
+    void checkForAggregatedTablesToBeDeleted();
 }
