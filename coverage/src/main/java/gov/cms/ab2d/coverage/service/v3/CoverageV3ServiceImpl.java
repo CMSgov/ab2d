@@ -172,6 +172,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     protected boolean shouldDeleteAggregatedTable(final String tableName, final List<String> contactsWithActiveJobs) {
         for (String contactsWithActiveJob : contactsWithActiveJobs) {
+            // Keep table for debugging purposes if true
+            val keepTable = propertiesService.isToggleOn("%s.keep".formatted(tableName), false);
+            if (keepTable) {
+                log.info("Skipping deletion for aggregated table {}", tableName);
+                return false;
+            }
+
             if (tableName.toLowerCase().endsWith(contactsWithActiveJob.toLowerCase())) {
                 return false;
             }
