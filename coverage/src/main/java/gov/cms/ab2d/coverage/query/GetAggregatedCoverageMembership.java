@@ -233,11 +233,17 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     }
 
     CoverageSummary reduceSummariesForDuplicatePatientId(List<CoverageSummary> summaries) {
+        val patientId = summaries.get(0).getIdentifiers().getPatientIdV3(); // TODO remove assertion
+
         var shareData = true;
         val dateRanges = new ArrayList<FilterOutByDate.DateRange>();
 
         for (CoverageSummary summary : summaries) {
             val identifiers = summary.getIdentifiers();
+
+            if (identifiers.getPatientIdV3() != patientId) {
+                throw new IllegalStateException(); // TODO remove assertion
+            }
 
             if (identifiers.getShareDataV3() != null && identifiers.getShareDataV3() == false) {
                 shareData = false;
@@ -273,9 +279,9 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
             }
 
             val reducedSummary = reduceSummariesForDuplicatePatientId(summarySubList);
-            int firstIndex = indexSubList.get(0);
+            val firstIndex = indexSubList.get(0);
             summaries.set(firstIndex, reducedSummary);
-            log.info("Reduced duplicate patient records into record from row number {}", firstIndex);
+            log.info("Reduced duplicate patient records into record from row number {}", reducedSummary.getIdentifiers().getRowNumberV3());
         }
     }
 
