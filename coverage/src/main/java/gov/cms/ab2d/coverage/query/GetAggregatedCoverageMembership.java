@@ -178,12 +178,19 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     }
 
     // Returns last patient ID
-    //
     public long reduceAndFilter(List<CoverageSummary> summaries) {
         if (summaries.isEmpty()) {
             return -1L;
         }
         val lastPatientId = summaries.get(summaries.size()-1).getIdentifiers().getPatientIdV3();
+
+        // Find indexes of subsequent record where patient ID is the same
+        // E.g. [ [0,1], [5,6,7] ] means records 1 and 2 have the same patient ID (differnet MBI)
+        // and records 6, 7, and 8 have the same patient ID.
+        List<List<Integer>> indexesOfDuplicatePatients = getIndexesOfDuplicatePatients(summaries);
+
+        // For each set of duplicate patient ID records, reduce (combined to one record)
+        reduce(indexesOfDuplicatePatients, summaries);
 
         // remove any null values (as a result of reducing duplicate patient records)
         // remove any records where a patient has opted out
@@ -283,6 +290,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
                 val summary = summaries.get(index);
                 summarySubList.add(summary);
                 // set element to null instead of removing in order to prevent shifting indexes
+                // nulls will be removed later
                 summaries.set(index, null);
                 log.info("Processing duplicate patient at row number {}", summary.getIdentifiers().getRowNumberV3());
             }
