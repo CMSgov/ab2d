@@ -195,7 +195,7 @@ public class EndToEndBfdTests {
         jobPreProcessor = new JobPreProcessorImpl(contractWorkerClient, jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
-                jobRepository, jobOutputRepository, contractProcessor, logManager);
+                jobRepository, jobOutputRepository, contractProcessor, logManager, coverageV3Service);
         ReflectionTestUtils.setField(jobProcessor, "failureThreshold", 10);
         ReflectionTestUtils.setField(jobProcessor, "efsMount", path.getAbsolutePath());
 
