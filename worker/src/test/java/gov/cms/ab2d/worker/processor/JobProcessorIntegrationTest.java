@@ -14,6 +14,7 @@ import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
 import gov.cms.ab2d.eventclient.events.ErrorEvent;
@@ -147,6 +148,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @Mock
     private BFDClient mockBfdClient;
 
+    @Mock
+    CoverageV3Service coverageV3Service;
+
     @Autowired
     private PropertiesService propertiesService;
 
@@ -229,7 +233,8 @@ class JobProcessorIntegrationTest extends JobCleanup {
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
-                sqsEventClient
+                sqsEventClient,
+                coverageV3Service
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());

@@ -240,17 +240,19 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     }
 
 
-
+    @Override
     public List<String> getContractsInRecentCoverageTable() {
         val template = new JdbcTemplate(this.dataSource);
         return template.queryForList(GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE, String.class);
     }
 
+    @Override
     public List<String> getContractsInCoverageStagingTable() {
         val template = new JdbcTemplate(this.dataSource);
         return template.queryForList(GET_CONTRACTS_WITH_COVERAGE_IN_STAGING, String.class);
     }
 
+    @Override
     public List<String> getContractsWithActiveV3Jobs() {
         val template = new JdbcTemplate(this.dataSource);
         return template.queryForList(GET_CONTRACTS_WITH_ACTIVE_V3_JOBS, String.class);

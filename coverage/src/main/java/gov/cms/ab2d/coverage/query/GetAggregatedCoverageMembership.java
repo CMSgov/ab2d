@@ -83,7 +83,8 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
 
 
     // NEW
-    private static final String AGGREGATED_TABLE_ROW_COUNT = "SELECT COUNT(DISTINCT patient_id) FROM v3.coverage_v3_aggregated_{0};";
+    private static final String AGGREGATED_TABLE_ROW_COUNT =
+            "SELECT COUNT(DISTINCT patient_id) FROM v3.coverage_v3_aggregated_{0}";
 
     private static final String GET_DISTINCT_COVERAGE_PERIOD_COUNT =
     """
@@ -110,7 +111,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
        row_number
     FROM v3.coverage_v3_aggregated_{0}
     ORDER BY patient_id asc
-    FETCH FIRST :limit ROWS WITH TIES;
+    FETCH FIRST :limit ROWS WITH TIES
     """;
 
     private static final String FETCH_FROM_AGGREGATED_TABLE_WITH_CURSOR =
@@ -126,7 +127,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     FROM v3.coverage_v3_aggregated_{0}
         WHERE patient_id > :patient_id_cursor
     ORDER BY patient_id asc
-    FETCH FIRST :limit ROWS WITH TIES;
+    FETCH FIRST :limit ROWS WITH TIES
     """;
 
     public void createAggregatedAttributionTable(final String contract) {

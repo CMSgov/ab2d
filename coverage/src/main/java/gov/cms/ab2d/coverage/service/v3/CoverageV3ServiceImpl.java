@@ -8,6 +8,7 @@ import gov.cms.ab2d.coverage.query.*;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,13 +16,10 @@ import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 
 @Slf4j
 @Service
@@ -99,7 +97,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         val beneficiarySummaries = queryAggregatedCoverageMembership(page, limit);
         log.info("[V3] List<CoverageSummary> beneficiarySummaries size = {}", beneficiarySummaries.size());
 
-        val fetchedLessThanLimit = beneficiarySummaries.size() < limit;
 
         // Get the patient to start from next time
 //        final Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
@@ -107,7 +104,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
         // Build the next request if there is a next patient
         CoveragePagingRequest request = null;
-        if (!fetchedLessThanLimit) {
+        if (!beneficiarySummaries.isEmpty()) {
             val nextCursor = beneficiarySummaries.get(beneficiarySummaries.size()-1).getIdentifiers().getPatientIdV3();
             request = CoveragePagingRequest.ofV3(page.getPageSize(), nextCursor, contract, page.getJobStartTime());
         }
@@ -131,6 +128,16 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
+    public void deleteAggregatedAttributionTable(String contract) {
+        new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract);
+    }
+
+    @Override
+    public void deleteAggregatedTable(String tableName) {
+
+    }
+
+    @Override
     public int getAggregatedTableRowCount(String contract) {
         return new GetAggregatedCoverageMembership(dataSource).getAggregatedTableRowCount(contract);
     }
@@ -138,6 +145,38 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     @Override
     public int getCoveragePeriodsInAggregatedTable(String contract) {
         return new GetAggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract);
+    }
+
+    @Override
+    public void checkForAggregatedTablesToBeDeleted() {
+        val query =
+        """
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'v3'
+          AND table_type = 'BASE TABLE'
+          AND table_name like 'coverage_v3_aggregated%';
+        """;
+
+        val aggregatedTables = new JdbcTemplate(dataSource).queryForList(query, String.class);
+        val contractsWithActiveJobs = coverageV3SyncService.getContractsWithActiveV3Jobs();
+
+        for (String aggregatedTable : aggregatedTables) {
+            if (shouldDeleteAggregatedTable(aggregatedTable, contractsWithActiveJobs)) {
+                log.info("Deleting unused aggregated table {}", aggregatedTable);
+                deleteAggregatedAttributionTable(aggregatedTable);
+                log.info("Deleted table {}", aggregatedTable);
+            }
+        }
+    }
+
+    protected boolean shouldDeleteAggregatedTable(final String tableName, final List<String> contactsWithActiveJobs) {
+        for (String contactsWithActiveJob : contactsWithActiveJobs) {
+            if (tableName.toLowerCase().endsWith(contactsWithActiveJob.toLowerCase())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
