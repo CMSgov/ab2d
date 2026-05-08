@@ -14,10 +14,10 @@ ENV NEW_RELIC_EXPERIMENTAL_RUNTIME=true
 RUN yum update -y --security
 
 #JAVA commands
-CMD ["sh", "-c", "exec java \
+CMD java \
     -XX:+UseContainerSupport \
     -XX:InitialRAMPercentage=${JVM_INITIAL_RAM} \
     -XX:MinRAMPercentage=${JVM_MIN_RAM} \
     -XX:MaxRAMPercentage=${JVM_MAX_RAM} \
     -javaagent:/usr/src/ab2d-worker/newrelic/newrelic.jar \
-    -jar worker.jar"]
+    -jar worker.jar
