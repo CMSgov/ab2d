@@ -5,6 +5,7 @@ import gov.cms.ab2d.coverage.model.CoverageMembership;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.dao.support.DataAccessUtils;
@@ -16,10 +17,7 @@ import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
@@ -176,13 +174,109 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
             query = MessageFormat.format(FETCH_FROM_AGGREGATED_TABLE_WITHOUT_CURSOR, contractDto.getContractNumber());
         }
 
-        List<CoverageSummary> coverageSummaries = jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
-        // TODO: Need to filter to find any grouping of patient ID, combine dates, and determine if patient has opted-out
+        val coverageSummaries = jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
+
+        // remove any null values (as a result of reducing duplicate patient records)
+        // remove any records where a patient has opted out
+        val iterator = coverageSummaries.listIterator();
+        while (iterator.hasNext()) {
+            val next = iterator.next();
+            if (next == null) {
+                iterator.remove();
+            } else {
+                val identifiers = next.getIdentifiers();
+                if (Objects.equals(Boolean.FALSE, identifiers.getShareDataV3())) {
+                    log.info("Patient at row number {} has opted out; removing coverage summary", identifiers.getRowNumberV3());
+                    iterator.remove();
+                }
+            }
+        }
+
         return coverageSummaries;
     }
 
-    List<CoverageSummary> checkForDuplicatePatientsAndCombine(List<CoverageSummary> summaries) {
+    List<List<Integer>> getIndexesOfDuplicatePatients(List<CoverageSummary> summaries) {
+        if (summaries.size() < 2) {
+            return Collections.emptyList();
+        }
 
+        val result = new LinkedList<List<Integer>>();
+
+        LinkedHashSet<Integer> intermediateResult = null;
+        var index = 0;
+        var current = summaries.get(index);
+        while (index < summaries.size() - 1) {
+
+            val next = summaries.get(index+1);
+            if (current.getIdentifiers().getPatientIdV3() == next.getIdentifiers().getPatientIdV3()) {
+                if (intermediateResult == null) {
+                    intermediateResult = new LinkedHashSet<>();
+                }
+                intermediateResult.add(index);
+                intermediateResult.add(index+1);
+            } else {
+                if (intermediateResult != null) {
+                    result.add(new ArrayList<>(intermediateResult));
+                    intermediateResult = null;
+                }
+            }
+
+            current = next;
+            index++;
+        }
+
+        if (intermediateResult != null) {
+            result.add(new ArrayList<>(intermediateResult));
+        }
+
+        return result;
+    }
+
+    CoverageSummary reduceSummariesForDuplicatePatientId(List<CoverageSummary> summaries) {
+        var shareData = true;
+        val dateRanges = new ArrayList<FilterOutByDate.DateRange>();
+
+        for (CoverageSummary summary : summaries) {
+            val identifiers = summary.getIdentifiers();
+
+            if (identifiers.getShareDataV3() != null && identifiers.getShareDataV3() == false) {
+                shareData = false;
+            }
+
+            if (summary.getDateRanges() != null) {
+                dateRanges.addAll(summary.getDateRanges());
+            }
+        }
+
+        val firstSummary = summaries.get(0);
+        val firstSummaryIdentifier = firstSummary.getIdentifiers();
+        val newIdentifier = Identifiers.ofV3(
+            firstSummaryIdentifier.getPatientIdV3(),
+            firstSummaryIdentifier.getCurrentMbi(),
+            shareData,
+            firstSummaryIdentifier.getRowNumberV3()
+        );
+
+        return new CoverageSummary(newIdentifier, firstSummary.getContract(), dateRanges);
+
+    }
+
+    void reduce(List<List<Integer>> indexList, List<CoverageSummary> summaries) {
+        for (List<Integer> indexSubList : indexList) {
+            val summarySubList = new ArrayList<CoverageSummary>(indexSubList.size());
+            for (int index : indexSubList) {
+                val summary = summaries.get(index);
+                summarySubList.add(summary);
+                // set element to null instead of removing in order to prevent shifting indexes
+                summaries.set(index, null);
+                log.info("Processing duplicate patient at row number {}", summary.getIdentifiers().getRowNumberV3());
+            }
+
+            val reducedSummary = reduceSummariesForDuplicatePatientId(summarySubList);
+            int firstIndex = indexSubList.get(0);
+            summaries.set(firstIndex, reducedSummary);
+            log.info("Reduced duplicate patient records into record from row number {}", firstIndex);
+        }
     }
 
     public int getCoveragePeriodsInAggregatedTable(String contract) {
@@ -221,13 +315,8 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
                     ? null
                     : (Integer[][]) recentSummary.getArray();
 
-            if (shareData == null || shareData) {
-                val coverageMembershipList = toCoverageMembershipList(identifiers, historicalSummaryArray, recentSummaryArray);
-                return CoverageServiceRepository.summarizeCoverageMembership(contractDto, coverageMembershipList);
-
-            } else {
-                return new CoverageSummary(identifiers, contractDto, Collections.emptyList());
-            }
+            val coverageMembershipList = toCoverageMembershipList(identifiers, historicalSummaryArray, recentSummaryArray);
+            return CoverageServiceRepository.summarizeCoverageMembership(contractDto, coverageMembershipList);
 
         }
 
