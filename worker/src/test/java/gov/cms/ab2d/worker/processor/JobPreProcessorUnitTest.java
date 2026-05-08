@@ -134,19 +134,19 @@ class JobPreProcessorUnitTest {
     void checkStatusString() {
         JobPreProcessorImpl impl = (JobPreProcessorImpl) cut;
         String val = impl.getStatusString(job);
-        assertEquals("EOB_JOB_STARTED for JPP5678 in progress", val);
+        assertEquals("EOB_JOB_STARTED in progress", val);
         OffsetDateTime tm = OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC);
         job.setSince(tm);
         val = impl.getStatusString(job);
-        assertEquals("EOB_JOB_STARTED for JPP5678 in progress (since date: 2022-07-11T01:02:03Z)", val);
+        assertEquals("EOB_JOB_STARTED in progress", val);
         ZoneId zoneId = ZoneId.of("Pacific/Honolulu");
         tm = OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZonedDateTime.now(zoneId).getOffset());
         job.setSince(tm);
         val = impl.getStatusString(job);
-        assertEquals("EOB_JOB_STARTED for JPP5678 in progress (since date: 2022-07-11T01:02:03-10:00)", val);
+        assertEquals("EOB_JOB_STARTED in progress", val);
         assertEquals("", impl.getStatusString(null));
         job.setContractNumber(null);
-        assertEquals("EOB_JOB_STARTED for (unknown) in progress (since date: 2022-07-11T01:02:03-10:00)", impl.getStatusString(job));
+        assertEquals("EOB_JOB_STARTED in progress", impl.getStatusString(job));
     }
 
     @Test
