@@ -181,6 +181,10 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         return coverageSummaries;
     }
 
+    List<CoverageSummary> checkForDuplicatePatientsAndCombine(List<CoverageSummary> summaries) {
+
+    }
+
     public int getCoveragePeriodsInAggregatedTable(String contract) {
         val query = MessageFormat.format(GET_DISTINCT_COVERAGE_PERIOD_COUNT, contract);
         return DataAccessUtils.intResult(jdbcTemplate.getJdbcOperations().queryForList(query, Integer.class));
