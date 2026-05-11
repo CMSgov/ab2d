@@ -112,10 +112,6 @@ public class BFDSearchImpl implements BFDSearch {
 
    }
 
-    @Override
-    public IBaseBundle parseBundle(BFDSearchDTO searchDTO, byte[] response) {
-        return parseBundle(searchDTO.getVersion(), response);
-    }
 
     /**
      * Method exists to track connection to BFD for New Relic
@@ -141,7 +137,7 @@ public class BFDSearchImpl implements BFDSearch {
     }
 
     @Trace
-    private IBaseBundle parseBundle(FhirVersion version, byte[] responseBytes) {
+    public IBaseBundle parseBundle(FhirVersion version, byte[] responseBytes) {
         return version.getJsonParser().parseResource(version.getBundleClass(), new ByteArrayInputStream(responseBytes));
     }
 }
