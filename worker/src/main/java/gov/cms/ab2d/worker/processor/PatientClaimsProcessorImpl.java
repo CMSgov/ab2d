@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.parser.IParser;
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Segment;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
@@ -237,6 +239,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         List<String> serviceDates = request.getServiceDates();
 
 
+        boolean verboseBfdLogging = propertiesService.isToggleOn("bfd.logging.verbose", false);
         try {
 
             // Set header for requests so BFD knows where this request originated from
@@ -245,7 +248,30 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             // Make first request and begin looping over remaining pages
             eobBundle = bfdRequestTracking.executeRequest(
                 REQUEST_EOB,
-                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum())
+                () -> {
+
+                    if (verboseBfdLogging) {
+                        var rowNumber = -1L;
+                        if (patient.getIdentifiers().isV3()) {
+                            rowNumber = patient.getIdentifiers().getRowNumberV3();
+                        }
+
+                        final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientIdentifier +
+                                " using since " + sinceTime + " and until " + untilTime + " and serviceDates " + serviceDates);
+                        bfdSegment.setMetricName("RequestEOB");
+
+                        val bfdStart = System.currentTimeMillis();
+                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+                        val bfdEnd = System.currentTimeMillis();
+                        final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
+                        val parseBundleEnd = System.currentTimeMillis();
+                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber);
+                        bfdSegment.end();
+                        return bundle;
+                    } else {
+                        return bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+                    }
+                }
             );
             collector.filterAndAddEntries(eobBundle, patient);
 
@@ -280,6 +306,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
     }
+
+    private static void logBfdVerbose(long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber) {
+        val bfdResponseMs = (bfdEnd - bfdStart);
+        val parseBundleMs = (parseBundleEnd - bfdEnd);
+        log.info("BFD request: {}ms; parseBundle: {}ms", bfdResponseMs, parseBundleMs);
+    }
+
 
     /**
      * Determine what since date to use if any.
