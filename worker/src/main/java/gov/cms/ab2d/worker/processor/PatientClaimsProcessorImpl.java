@@ -309,9 +309,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         val bfdResponseMs = (bfdEnd - bfdStart) / 1_000_000;
         val parseBundleMs = (parseBundleEnd - bfdEnd) / 1_000_000;
         if (rowNumber > 0) {
-            log.info("requestEOBFromServer stats; Job: {}; {}ms; parseBundle: {}ms; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, rowNumber);
+            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, rowNumber);
         } else {
-            log.info("requestEOBFromServer stats; Job: {}; {}ms; parseBundle: {}ms", jobId, bfdResponseMs, parseBundleMs);
+            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms", jobId, bfdResponseMs, parseBundleMs);
         }
     }
 
