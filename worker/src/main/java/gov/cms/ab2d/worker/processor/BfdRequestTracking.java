@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -50,9 +51,9 @@ public class BfdRequestTracking {
 	}
 
 	public <T> T executeRequest(BfdRequestType type, Supplier<T> supplier) {
-		val start = LocalDateTime.now();
+		val start = Instant.now();
 		val result = supplier.get();
-		val end = LocalDateTime.now();
+		val end = Instant.now();
 		val duration = ChronoUnit.MILLIS.between(start, end);
 		val durationSeconds = duration / 1000.0;
 		if (type == BfdRequestType.REQUEST_EOB) {
