@@ -100,6 +100,20 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     select count(*) from deleted_rows;
     """.formatted(COVERAGE_V3_TABLE_RECENT);
 
+    private static final String DELETE_HISTORY_SUMMARY_FOR_CONTRACT =
+        "DELETE FROM v3.coverage_v3_history_summary WHERE contract = :contract";
+
+    private static final String INSERT_HISTORY_SUMMARY_FOR_CONTRACT =
+    """
+    INSERT INTO v3.coverage_v3_history_summary
+        (contract, patient_id, current_mbi, historical_coverage_summaries)
+    SELECT contract, patient_id, current_mbi,
+           array_agg(array[year, month] ORDER BY year ASC, month ASC)
+    FROM v3.coverage_v3_historical
+    WHERE contract = :contract
+    GROUP BY contract, patient_id, current_mbi
+    """;
+
     private static final String GET_CONTRACTS_WITH_ACTIVE_V3_JOBS =
         "select distinct contract_number from job where status in ('IN_PROGRESS', 'SUBMITTED')";
 
@@ -219,6 +233,8 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                 log.info("[V3] Moved {} rows to historical coverage table for contract {}", rowsMoved, contract);
                 if (rowsMoved == 0) {
                     return NO_COVERAGE_FOUND_FOR_CONTRACT;
+                } else {
+                    populateHistorySummaryForContract(contract);
                 }
                 int rowsDeleted = deleteMonthsOldCoverage(contract);
                 log.info("[V3] Deleted {} rows from recent coverage table for contract {}", rowsDeleted, contract);
@@ -296,6 +312,14 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val parameters = new MapSqlParameterSource().addValue("contract", contract);
         val template = new NamedParameterJdbcTemplate(this.dataSource);
         return DataAccessUtils.intResult(template.queryForList(query, parameters, Integer.class));
+    }
+
+    private void populateHistorySummaryForContract(String contract) {
+        val parameters = new MapSqlParameterSource().addValue("contract", contract);
+        val template = new NamedParameterJdbcTemplate(dataSource);
+        template.update(DELETE_HISTORY_SUMMARY_FOR_CONTRACT, parameters);
+        int rowsInserted = template.update(INSERT_HISTORY_SUMMARY_FOR_CONTRACT, parameters);
+        log.info("[V3] Inserted {} rows into coverage_v3_history_summary for contract {}", rowsInserted, contract);
     }
 
     boolean isTestContract(String contract) {
