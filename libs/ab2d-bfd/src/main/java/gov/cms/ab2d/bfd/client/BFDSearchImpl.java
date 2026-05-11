@@ -49,6 +49,14 @@ public class BFDSearchImpl implements BFDSearch {
     @Trace
     @Override
     public IBaseBundle searchEOB(BFDSearchDTO searchDTO) throws IOException {
+        return parseBundle(
+            searchDTO.getVersion(),
+            searchEOBWithoutParseBundle(searchDTO)
+        );
+    }
+
+    @Override
+    public byte[] searchEOBWithoutParseBundle(BFDSearchDTO searchDTO) throws IOException {
         long patientId = searchDTO.getPatientId();
         OffsetDateTime since = searchDTO.getSince();
         OffsetDateTime until = searchDTO.getUntil();
@@ -100,9 +108,13 @@ public class BFDSearchImpl implements BFDSearch {
         request.addHeader(BFDClient.BFD_HDR_BULK_CLIENTID, contractNum);
         request.addHeader(BFDClient.BFD_HDR_BULK_JOBID, bulkJobId);
 
-        byte[] responseBytes = getEOBSFromBFD(patientId, request);
+        return getEOBSFromBFD(patientId, request);
 
-        return parseBundle(version, responseBytes);
+   }
+
+    @Override
+    public IBaseBundle parseBundle(BFDSearchDTO searchDTO, byte[] response) {
+        return parseBundle(searchDTO.getVersion(), response);
     }
 
     /**
