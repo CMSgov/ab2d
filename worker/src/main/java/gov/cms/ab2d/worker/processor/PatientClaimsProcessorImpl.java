@@ -259,14 +259,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         bfdSegment.setMetricName("RequestEOB");
 
                         val bfdStart = System.nanoTime();
-//                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
-//                        val bfdEnd = System.nanoTime();
-//                        final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
-//                        val parseBundleEnd = System.nanoTime();
-//                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber);
-//                        bfdSegment.end();
-//                        return bundle;
-                        return null;
+                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+                        val bfdEnd = System.nanoTime();
+                        final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
+                        val parseBundleEnd = System.nanoTime();
+                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber);
+                        bfdSegment.end();
+                        return bundle;
                     } else {
                         return bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
                     }
