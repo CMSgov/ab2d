@@ -310,7 +310,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private static void logBfdVerbose(long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber) {
         val bfdResponseMs = (bfdEnd - bfdStart);
         val parseBundleMs = (parseBundleEnd - bfdEnd);
-        log.info("BFD request: {}ms; parseBundle: {}ms", bfdResponseMs, parseBundleMs);
+        if (rowNumber >= 0) {
+            log.info("BFD request: {}ms; parseBundle: {}ms; rowNUmber: {}", bfdResponseMs, parseBundleMs, rowNumber);
+        } else {
+            log.info("BFD request: {}ms; parseBundle: {}ms", bfdResponseMs, parseBundleMs, rowNumber);
+        }
     }
 
 
