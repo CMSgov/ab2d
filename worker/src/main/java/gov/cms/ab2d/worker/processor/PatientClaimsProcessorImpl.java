@@ -258,14 +258,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                                 " using since " + sinceTime + " and until " + untilTime + " and serviceDates " + serviceDates);
                         bfdSegment.setMetricName("RequestEOB");
 
-                        val bfdStart = Instant.now();
-                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
-                        val bfdEnd = Instant.now();
-                        final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
-                        val parseBundleEnd = Instant.now();
-                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber);
-                        bfdSegment.end();
-                        return bundle;
+                        val bfdStart = System.nanoTime();
+//                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+//                        val bfdEnd = System.nanoTime();
+//                        final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
+//                        val parseBundleEnd = System.nanoTime();
+//                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber);
+//                        bfdSegment.end();
+//                        return bundle;
+                        return null;
                     } else {
                         return bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
                     }
@@ -305,13 +306,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    private static void logBfdVerbose(Instant bfdStart, Instant bfdEnd, Instant parseBundleEnd, long rowNumber) {
-        val bfdResponseMs = Duration.between(bfdStart, bfdEnd).toMillis() / 1000.0;
-        val parseBundleMs = Duration.between(parseBundleEnd, bfdEnd).toMillis() / 1000.0;
+    private static void logBfdVerbose(long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber) {
+        val bfdResponseMs = (bfdEnd - bfdStart) / 1_000_000;
+        val parseBundleMs = (parseBundleEnd - bfdEnd) / 1_000_000;
         if (rowNumber > 0) {
-            log.info("BFD request: {}s; parseBundle: {}s; rowNumber: {}", bfdResponseMs, parseBundleMs, rowNumber);
+            log.info("BFD request: {}ms; parseBundle: {}ms; rowNumber: {}", bfdResponseMs, parseBundleMs, rowNumber);
         } else {
-            log.info("BFD request: {}s; parseBundle: {}s", bfdResponseMs, parseBundleMs);
+            log.info("BFD request: {}ms; parseBundle: {}ms", bfdResponseMs, parseBundleMs);
         }
     }
 
