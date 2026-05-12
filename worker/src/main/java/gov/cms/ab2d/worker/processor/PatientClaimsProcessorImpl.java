@@ -172,6 +172,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (eobs.isEmpty()) {
             return null;
         }
+
         int eobsWritten = 0;
         int eobsError = 0;
 
@@ -263,8 +264,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         val bfdEnd = System.nanoTime();
                         final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
                         val parseBundleEnd = System.nanoTime();
-                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob());
                         bfdSegment.end();
+                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob(), request.getVersion(), bundle);
                         return bundle;
                     } else {
                         return bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
@@ -305,9 +306,24 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    private static void logBfdVerbose(long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber, String jobId) {
+    private static void logBfdVerbose(long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber, String jobId, FhirVersion version, IBaseBundle bundle) {
         val bfdResponseMs = (bfdEnd - bfdStart) / 1_000_000;
         val parseBundleMs = (parseBundleEnd - bfdEnd) / 1_000_000;
+
+        var bundleSize = -1L;
+	    switch (version) {
+            case STU3:
+                org.hl7.fhir.dstu3.model.Bundle dstu3Bundle = (org.hl7.fhir.dstu3.model.Bundle) bundle;
+                bundleSize = dstu3Bundle.getEntry().size();
+                break;
+            case R4:
+            case R4V3:
+                org.hl7.fhir.r4.model.Bundle r4Bundle = (org.hl7.fhir.r4.model.Bundle) bundle;
+                bundleSize = r4Bundle.getEntry().size();
+                break;
+        }
+
+
         if (rowNumber > 0) {
             log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, rowNumber);
         } else {
