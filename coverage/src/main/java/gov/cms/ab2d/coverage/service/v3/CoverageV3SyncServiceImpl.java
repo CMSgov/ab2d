@@ -231,11 +231,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             if (locked) {
                 int rowsMoved = moveToHistoricalInternal(contract);
                 log.info("[V3] Moved {} rows to historical coverage table for contract {}", rowsMoved, contract);
-//                if (rowsMoved == 0) {
-//                    return NO_COVERAGE_FOUND_FOR_CONTRACT;
-//                } else {
+                if (rowsMoved == 0) {
+                    return NO_COVERAGE_FOUND_FOR_CONTRACT;
+                } else {
                     populateHistorySummaryForContract(contract);
-    //            }
+                }
                 int rowsDeleted = deleteMonthsOldCoverage(contract);
                 log.info("[V3] Deleted {} rows from recent coverage table for contract {}", rowsDeleted, contract);
 
@@ -323,8 +323,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     }
 
     boolean isTestContract(String contract) {
-     //   return contract.toUpperCase(Locale.ROOT).startsWith("Z");
-        return false;
+        return contract.toUpperCase(Locale.ROOT).startsWith("Z");
     }
 
     boolean contractHasJobInProgress(String contract) {
