@@ -122,14 +122,6 @@ public class BFDSearchImpl implements BFDSearch {
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
 
-
-            if (metrics != null && metrics.length > 0) {
-                if (response.getEntity() != null) {
-                    metrics[0] = String.valueOf(response.getEntity().getContentLength());
-                }
-            }
-
-
             if (status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES) {
 
                 try (InputStream instream = response.getEntity().getContent()) {
@@ -142,6 +134,13 @@ public class BFDSearchImpl implements BFDSearch {
                 throw new RuntimeException("Server error occurred");
             }
         }
+
+        if (metrics != null && metrics.length > 0) {
+            if (responseBytes != null) {
+                metrics[0] = String.valueOf(responseBytes.length);
+            }
+        }
+
         return responseBytes;
     }
 
