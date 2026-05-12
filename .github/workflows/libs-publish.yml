@@ -60,4 +60,3 @@ jobs:
       - name: Publish to artifactory -- ab2d-bfd only
         run: |
           ./gradlew ab2d-bfd:artifactoryPublish -x test -b build.gradle 
-#          ./gradlew ab2d-filters:artifactoryPublish -x test -b build.gradle
