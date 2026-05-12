@@ -27,9 +27,6 @@ defaults:
     working-directory: ./libs
 
 jobs:
-  build:
-    uses: ./.github/workflows/libs-build.yml
-    secrets: inherit
   publish:
     needs: build
     runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
