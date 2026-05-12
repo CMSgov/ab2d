@@ -7,7 +7,7 @@ import java.io.IOException;
 public interface BFDSearch {
     IBaseBundle searchEOB(BFDSearchDTO searchDTO) throws IOException;
 
-    default byte[] searchEOBWithoutParseBundle(BFDSearchDTO searchDTO) throws IOException {
+    default byte[] searchEOBWithoutParseBundle(BFDSearchDTO searchDTO, String[] metrics) throws IOException {
         return null;
     }
 

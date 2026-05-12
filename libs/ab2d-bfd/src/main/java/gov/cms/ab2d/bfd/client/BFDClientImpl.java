@@ -125,9 +125,9 @@ public class BFDClientImpl implements BFDClient {
             exclude = { ResourceNotFoundException.class }
     )
     @Override
-    public byte[] requestEOBFromServerWithoutParseBundle(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum) {
+    public byte[] requestEOBFromServerWithoutParseBundle(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum, String[] metrics) {
         BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(patientID, version, contractNum, getJobId(), pageSize, sinceTime, untilTime, serviceDates);
-        return bfdSearch.searchEOBWithoutParseBundle(bfdSearchDTO);
+        return bfdSearch.searchEOBWithoutParseBundle(bfdSearchDTO, metrics);
     }
 
 
