@@ -259,13 +259,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                                 " using since " + sinceTime + " and until " + untilTime + " and serviceDates " + serviceDates);
                         bfdSegment.setMetricName("RequestEOB");
 
+                        // array passed to BFD client; element 0 represents content-length header value
+                        val metrics = new String[]{"-1"};
                         val bfdStart = System.nanoTime();
-                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum(), metrics);
                         val bfdEnd = System.nanoTime();
                         final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
                         val parseBundleEnd = System.nanoTime();
                         bfdSegment.end();
-                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob(), request.getVersion(), bundle);
+                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob(), request.getVersion(), bundle, metrics);
                         return bundle;
                     } else {
                         return bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
@@ -306,28 +308,35 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    private static void logBfdVerbose(long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber, String jobId, FhirVersion version, IBaseBundle bundle) {
+    private static void logBfdVerbose(long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber, String jobId, FhirVersion version, IBaseBundle bundle, String[] metrics) {
         val bfdResponseMs = (bfdEnd - bfdStart) / 1_000_000;
         val parseBundleMs = (parseBundleEnd - bfdEnd) / 1_000_000;
 
         var bundleSize = -1L;
-	    switch (version) {
-            case STU3:
-                org.hl7.fhir.dstu3.model.Bundle dstu3Bundle = (org.hl7.fhir.dstu3.model.Bundle) bundle;
-                bundleSize = dstu3Bundle.getEntry().size();
-                break;
-            case R4:
-            case R4V3:
-                org.hl7.fhir.r4.model.Bundle r4Bundle = (org.hl7.fhir.r4.model.Bundle) bundle;
-                bundleSize = r4Bundle.getEntry().size();
-                break;
+	    try {
+            switch (version) {
+                case STU3:
+                    org.hl7.fhir.dstu3.model.Bundle dstu3Bundle = (org.hl7.fhir.dstu3.model.Bundle) bundle;
+                    bundleSize = dstu3Bundle.getEntry().size();
+                    break;
+                case R4:
+                case R4V3:
+                    org.hl7.fhir.r4.model.Bundle r4Bundle = (org.hl7.fhir.r4.model.Bundle) bundle;
+                    bundleSize = r4Bundle.getEntry().size();
+                    break;
+            }
+        } catch (Exception e) {
+            // do nothing
         }
 
-
+        var contentLength = "-1";
+        if (metrics.length > 0) {
+            contentLength = metrics[0];
+        }
         if (rowNumber > 0) {
-            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, rowNumber);
+            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; contentLength={}; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, bundleSize, contentLength, rowNumber);
         } else {
-            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms", jobId, bfdResponseMs, parseBundleMs);
+            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; contentLength={}", jobId, bfdResponseMs, parseBundleMs, bundleSize, contentLength);
         }
     }
 
