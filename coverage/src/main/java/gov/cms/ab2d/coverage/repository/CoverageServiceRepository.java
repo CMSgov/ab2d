@@ -484,15 +484,19 @@ public class CoverageServiceRepository {
 
         // Determine how many records to pull back
         long limit = getCoverageLimit(page.getPageSize(), expectedCoveragePeriods);
+        log.info("[V1/V2] coverage limit = {}", limit);
 
         // Query coverage membership from database and collect it
         List<CoverageMembership> enrollment = queryCoverageMembership(page, limit);
+        log.info("[V1/V2] List<CoverageMembership> enrollment size = {}", enrollment.size());
 
         // Guarantee ordering of results to the order that the beneficiaries were returned from SQL
         Map<Long, List<CoverageMembership>> enrollmentByBeneficiary = aggregateEnrollmentByPatient(expectedCoveragePeriods, enrollment);
+        log.info("[V1/V2] enrollmentByBeneficiary size = {}", enrollmentByBeneficiary.size());
 
         // Only summarize page size beneficiaries worth of information and report it
         List<CoverageSummary> beneficiarySummaries = enrollmentByBeneficiary.entrySet().stream().limit(page.getPageSize()).map(membershipEntry -> summarizeCoverageMembership(contract, membershipEntry)).collect(toList());
+        log.info("[V1/V2] List<CoverageSummary> beneficiarySummaries size = {}", beneficiarySummaries.size());
 
         // Get the patient to start from next time
         Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor = enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
@@ -571,7 +575,9 @@ public class CoverageServiceRepository {
         // Guarantee insertion order. Could use functional API in future.
         for (CoverageMembership coverageMembership : enrollment) {
             // If not present add to mapping
-            final long patientId = coverageMembership.getIdentifiers().isV3() ? coverageMembership.getIdentifiers().getPatientIdV3() : coverageMembership.getIdentifiers().getBeneficiaryId();
+            final long patientId = coverageMembership.getIdentifiers().isV3()
+                    ? coverageMembership.getIdentifiers().getPatientIdV3()
+                    : coverageMembership.getIdentifiers().getBeneficiaryId();
 
             enrollmentByBeneficiary.putIfAbsent(patientId, new ArrayList<>(expectedCoveragePeriods));
             enrollmentByBeneficiary.get(patientId).add(coverageMembership);

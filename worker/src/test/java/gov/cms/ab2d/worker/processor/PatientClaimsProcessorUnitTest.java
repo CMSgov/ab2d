@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -47,6 +48,7 @@ class PatientClaimsProcessorUnitTest {
 
     @Mock private BFDClient mockBfdClient;
     @Mock private SQSEventClient eventLogger;
+    @Mock private PropertiesService propertiesService;
 
     @TempDir
     File tmpEfsMountDir;
@@ -96,7 +98,8 @@ class PatientClaimsProcessorUnitTest {
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
                 eventLogger,
-                searchConfig
+                searchConfig,
+                propertiesService
         );
 
         ReflectionTestUtils.setField(cut, "earliestDataDate", "01/01/1900");

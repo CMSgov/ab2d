@@ -40,7 +40,9 @@ public final class PropertyConstants {
 
     public static final String V3_ALLOWLISTED_CONTRACTS = "v3.allowlisted.contracts";
 
-    public static final String V3_IDR_IMPORTER_STATUS = "v3.idr-importer.status";
+    public static final String IDR_IMPORTER_STATUS_PROPERTY = "v3.idr-importer.status";
+
+    public static final String IDR_IMPORTER_STATUS_IN_PROGRESS = "import_in_progress";
 
     // When true, R4V3 EOB processing uses in-place mutation instead of copy-based construction
     public static final String EOB_V3_IN_PLACE = "eob.v3.inplace.enabled";
