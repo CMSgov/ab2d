@@ -1,6 +1,7 @@
 package gov.cms.ab2d.filter;
 
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 
@@ -118,6 +119,7 @@ import java.util.stream.Collectors;
  * . detail
  * . modifierExtension
  */
+@Slf4j
 @UtilityClass
 public class ExplanationOfBenefitTrimmerR4V3 {
     public static final String ANESTHESIA_UNIT_COUNT = "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-LINE-ANSTHSA-UNIT-CNT";
@@ -152,6 +154,10 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         if (benefit == null) {
             return null;
         }
+
+        log.info("clm_uniq_id / ExplanationOfBenefit.id: {}", benefit.getId());
+
+
         // Copy it so we don't destroy the original
         ExplanationOfBenefit newBenefit = copyData(benefit);
         // Remove the unauthorized data
@@ -172,6 +178,9 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     public static IBaseResource getBenefitInPlace(IBaseResource resource) {
         if (resource == null) return null;
         ExplanationOfBenefit benefit = (ExplanationOfBenefit) resource;
+
+        log.info("clm_uniq_id / ExplanationOfBenefit.id: {}", benefit.getId());
+
 
         // Compute all filtered collections before mutating, since lookups depend on original contained
         List<ExplanationOfBenefit.CareTeamComponent> filteredCareTeam = getCareTeamsByRoleCodes(benefit, roleCodes);
