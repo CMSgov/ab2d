@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.parser.IParser;
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Segment;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
@@ -32,9 +34,7 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -172,6 +172,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (eobs.isEmpty()) {
             return null;
         }
+
         int eobsWritten = 0;
         int eobsError = 0;
 
@@ -237,6 +238,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         List<String> serviceDates = request.getServiceDates();
 
 
+        boolean verboseBfdLogging = propertiesService.isToggleOn("bfd.logging.verbose", false);
         try {
 
             // Set header for requests so BFD knows where this request originated from
@@ -245,7 +247,32 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             // Make first request and begin looping over remaining pages
             eobBundle = bfdRequestTracking.executeRequest(
                 REQUEST_EOB,
-                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum())
+                () -> {
+
+                    if (verboseBfdLogging) {
+                        var rowNumber = -1L;
+                        if (patient.getIdentifiers().isV3()) {
+                            rowNumber = patient.getIdentifiers().getRowNumberV3();
+                        }
+
+                        final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientIdentifier +
+                                " using since " + sinceTime + " and until " + untilTime + " and serviceDates " + serviceDates);
+                        bfdSegment.setMetricName("RequestEOB");
+
+                        // array passed to BFD client; element 0 represents content-length header value
+                        val metrics = new String[]{"-1"};
+                        val bfdStart = System.nanoTime();
+                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum(), metrics);
+                        val bfdEnd = System.nanoTime();
+                        final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
+                        val parseBundleEnd = System.nanoTime();
+                        bfdSegment.end();
+                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob(), request.getVersion(), bundle, metrics);
+                        return bundle;
+                    } else {
+                        return bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+                    }
+                }
             );
             collector.filterAndAddEntries(eobBundle, patient);
 
@@ -280,6 +307,39 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
     }
+
+    private static void logBfdVerbose(long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber, String jobId, FhirVersion version, IBaseBundle bundle, String[] metrics) {
+        val bfdResponseMs = (bfdEnd - bfdStart) / 1_000_000;
+        val parseBundleMs = (parseBundleEnd - bfdEnd) / 1_000_000;
+
+        var bundleSize = -1L;
+	    try {
+            switch (version) {
+                case STU3:
+                    org.hl7.fhir.dstu3.model.Bundle dstu3Bundle = (org.hl7.fhir.dstu3.model.Bundle) bundle;
+                    bundleSize = dstu3Bundle.getEntry().size();
+                    break;
+                case R4:
+                case R4V3:
+                    org.hl7.fhir.r4.model.Bundle r4Bundle = (org.hl7.fhir.r4.model.Bundle) bundle;
+                    bundleSize = r4Bundle.getEntry().size();
+                    break;
+            }
+        } catch (Exception e) {
+            // do nothing
+        }
+
+        var responseBytesSize = "-1";
+        if (metrics.length > 0) {
+            responseBytesSize = metrics[0];
+        }
+        if (rowNumber > 0) {
+            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; responseBytesSize={}; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, bundleSize, responseBytesSize, rowNumber);
+        } else {
+            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; responseBytesSize={}", jobId, bfdResponseMs, parseBundleMs, bundleSize, responseBytesSize);
+        }
+    }
+
 
     /**
      * Determine what since date to use if any.

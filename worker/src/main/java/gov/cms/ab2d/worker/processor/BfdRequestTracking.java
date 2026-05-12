@@ -4,9 +4,12 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -34,8 +37,8 @@ public class BfdRequestTracking {
 	}
 
 	private final String jobUuid;
-	private final List<Double> requestEOBFromServerTimes;
-	private final List<Double> requestNextBundleFromServerTimes;
+	private final List<Long> requestEOBFromServerTimes;
+	private final List<Long> requestNextBundleFromServerTimes;
 
 	private BfdRequestTracking() {
 		this.jobUuid = null;
@@ -50,15 +53,14 @@ public class BfdRequestTracking {
 	}
 
 	public <T> T executeRequest(BfdRequestType type, Supplier<T> supplier) {
-		val start = LocalDateTime.now();
+		val start = System.nanoTime();
 		val result = supplier.get();
-		val end = LocalDateTime.now();
-		val duration = ChronoUnit.MILLIS.between(start, end);
-		val durationSeconds = duration / 1000.0;
+		val end = System.nanoTime();
+		val durationMs = (end - start) / 1_000_000;
 		if (type == BfdRequestType.REQUEST_EOB) {
-			requestEOBFromServerTimes.add(durationSeconds);
+			requestEOBFromServerTimes.add(durationMs);
 		} else if (type == BfdRequestType.REQUEST_NEXT_BUNDLE) {
-			requestNextBundleFromServerTimes.add(durationSeconds);
+			requestNextBundleFromServerTimes.add(durationMs);
 		}
 		return result;
 	}
@@ -68,18 +70,32 @@ public class BfdRequestTracking {
 		summarizeResponseTimes("requestNextBundleFromServer", requestNextBundleFromServerTimes);
 	}
 
-	private void summarizeResponseTimes(String bfdRequestOperation, List<Double> requestTimes) {
+	private void summarizeResponseTimes(String bfdRequestOperation, List<Long> requestTimes) {
 		if (requestTimes.isEmpty()) {
 			return;
 		}
-		val stats = requestTimes.stream().collect(Collectors.summarizingDouble(Double::doubleValue));
-		log.info("BFD {} stats; Job={}; Num requests={}; Average={}s, Min={}s, Max={}s",
+		val stats = requestTimes.stream().collect(Collectors.summarizingLong(Long::longValue));
+		log.info("BFD {} stats; Job={}; Num requests={}; Average={}ms; Median={}ms; Min={}ms; Max={}ms",
 			bfdRequestOperation,
 			jobUuid,
 			stats.getCount(),
 			stats.getAverage(),
+			getMedian(requestTimes),
 			stats.getMin(),
 			stats.getMax()
 		);
+	}
+
+	private static double getMedian(List<Long> times) {
+		Collections.sort(times);
+		int size = times.size();
+		if (size % 2 != 0) {
+			return times.get(size / 2);
+		} else {
+			long mid1 = times.get(size / 2 - 1);
+			long mid2 = times.get(size / 2);
+			return (mid1 + mid2) / 2.0;
+		}
+
 	}
 }
