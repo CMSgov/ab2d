@@ -122,12 +122,10 @@ public class BFDSearchImpl implements BFDSearch {
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
 
+
             if (metrics != null && metrics.length > 0) {
-                val contentLengthHeader = response.getFirstHeader(HttpHeaders.CONTENT_LENGTH);
-                if (contentLengthHeader != null) {
-                    metrics[0] = contentLengthHeader.getValue();
-                } else {
-                    metrics[0] = "-1";
+                if (response.getEntity() != null) {
+                    metrics[0] = String.valueOf(response.getEntity().getContentLength());
                 }
             }
 
