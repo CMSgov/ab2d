@@ -100,8 +100,9 @@ public class SlackLogger {
             return false;
         }
 
+        log.error("Slack alert message: {}", message);
+
         if (ab2dEnvironments.contains(ab2dEnvironment)) {
-            log.info("Slack alert message: {}", message);
             return log(message, slack, ab2dEnvironment, slackWebhooks);
         }
 
