@@ -28,7 +28,6 @@ defaults:
 
 jobs:
   publish:
-    needs: build
     runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
