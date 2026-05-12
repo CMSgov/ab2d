@@ -175,9 +175,6 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         if (job.getUntil() != null) {
             statusString += " (until date: " + job.getUntil().format(formatter) + ")";
         }
-        if (job.getServiceDates() != null && !job.getServiceDates().isEmpty()) {
-            statusString += "(service dates: " + job.getServicesDates() + ")";
-        }
         return statusString;
     }
 
