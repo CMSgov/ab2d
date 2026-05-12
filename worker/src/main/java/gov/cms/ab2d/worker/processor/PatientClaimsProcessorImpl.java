@@ -263,7 +263,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         val bfdEnd = System.nanoTime();
                         final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
                         val parseBundleEnd = System.nanoTime();
-                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber);
+                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob());
                         bfdSegment.end();
                         return bundle;
                     } else {
