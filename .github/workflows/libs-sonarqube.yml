@@ -22,7 +22,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
 
-      - uses: actions/setup-java@v5 #TODO: Update to Node24
+      - uses: actions/setup-java@v5
         with:
           distribution: 'adopt'
           java-version: '17'
