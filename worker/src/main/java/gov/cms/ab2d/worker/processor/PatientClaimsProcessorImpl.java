@@ -329,14 +329,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             // do nothing
         }
 
-        var contentLength = "-1";
+        var responseBytesSize = "-1";
         if (metrics.length > 0) {
-            contentLength = metrics[0];
+            responseBytesSize = metrics[0];
         }
         if (rowNumber > 0) {
-            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; contentLength={}; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, bundleSize, contentLength, rowNumber);
+            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; responseBytesSize={}; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, bundleSize, responseBytesSize, rowNumber);
         } else {
-            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; contentLength={}", jobId, bfdResponseMs, parseBundleMs, bundleSize, contentLength);
+            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; responseBytesSize={}", jobId, bfdResponseMs, parseBundleMs, bundleSize, responseBytesSize);
         }
     }
 
