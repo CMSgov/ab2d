@@ -12,7 +12,6 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -166,16 +165,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         if (job == null) {
             return "";
         }
-        String contractNum = job.getContractNumber() == null ? "(unknown)" : job.getContractNumber();
-        String statusString = String.format("%s for %s in progress", EOB_JOB_STARTED, contractNum);
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-        if (job.getSince() != null) {
-            statusString += " (since date: " + job.getSince().format(formatter) + ")";
-        }
-        if (job.getUntil() != null) {
-            statusString += " (until date: " + job.getUntil().format(formatter) + ")";
-        }
-        return statusString;
+        return String.format("%s in progress", EOB_JOB_STARTED);
     }
 
     /**
