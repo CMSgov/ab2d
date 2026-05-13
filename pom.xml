@@ -45,7 +45,7 @@
 
         <!-- AB2D lib versions -->
         <bfd-lib.version>4.5.3-logging</bfd-lib.version> <!-- TODO revert to 4.5.2 -->
-        <events-client.version>3.3.10</events-client.version>
+        <events-client.version>3.3.11</events-client.version>
         <fhir-lib.version>2.5.4</fhir-lib.version>
         <aggregator-lib.version>2.1.4</aggregator-lib.version>
         <filters-lib.version>3.2.0</filters-lib.version> <!-- NOTE 3.2.0-logging contains logging for clm_uniq_id (no longer necessary) -->
