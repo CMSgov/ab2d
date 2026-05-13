@@ -322,7 +322,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                     metricsTracker.insertMetrics(jobUuid, metrics);
                 }
             } catch (Exception e) {
-                log.error("Error writing metrics to DB");
+                log.error("Error writing metrics to DB", e);
             }
 
             BFDClient.BFD_BULK_JOB_ID.remove();
@@ -372,7 +372,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             if (responseBytesSize != null) {
                 responseBytesSizeLong = Long.parseLong(responseBytesSize);
             }
-            return new Metrics.Metric(patientId, bfdResponseNanos, parseBundleNanos, bundleSize, responseBytesSizeLong);
+            return new Metrics.Metric(bfdResponseNanos, parseBundleNanos, bundleSize, responseBytesSizeLong);
         }
         else {
             return null;
