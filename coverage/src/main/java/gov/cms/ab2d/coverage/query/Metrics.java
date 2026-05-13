@@ -49,15 +49,13 @@ public class Metrics extends CoverageV3BaseQuery {
 		this.template = new JdbcTemplate(dataSource);
 	}
 
-	public void createMetricsTable(final String jobUuid) {
+	public void createMetricsTableIfNotExists(final String jobUuid) {
 		val query = MessageFormat.format(CREATE_METRICS_TABLE, jobUuid);
 		template.execute(query);
 	}
 
 	public void insertMetrics(String jobUuid, List<Metric> metrics) {
 		val query = MessageFormat.format(INSERT_METRICS, jobUuid);
-		System.out.println(query);
-
 		template.batchUpdate(
 			query,
 			new BatchPreparedStatementSetter() {

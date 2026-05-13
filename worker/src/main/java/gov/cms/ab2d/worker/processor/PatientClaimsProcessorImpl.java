@@ -316,7 +316,10 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         } finally {
             try {
                 if (metrics.isEmpty()) {
-                    new Metrics(dataSource).insertMetrics(request.getJob(), metrics);
+                    val jobUuid = request.getJob();
+                    val metricsTracker = new Metrics(dataSource);
+                    metricsTracker.createMetricsTableIfNotExists(jobUuid);
+                    metricsTracker.insertMetrics(jobUuid, metrics);
                 }
             } catch (Exception e) {
                 log.error("Error writing metrics to DB");
