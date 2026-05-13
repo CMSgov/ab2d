@@ -18,14 +18,14 @@ public class Metrics extends CoverageV3BaseQuery {
 		id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 		created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 		patient_id BIGINT NOT NULL,
-		request_ms BIGINT NOT NULL,
-		parse_bundle_ms BIGINT NOT NULL,
+		request_ns BIGINT NOT NULL,
+		parse_bundle_ns BIGINT NOT NULL,
 	    bundle_count INT NOT NULL,
 		num_bytes BIGINT NOT NULL
 	);
 	
 	CREATE INDEX ON  v3."metrics_{0}" (id);
-	CREATE INDEX ON  v3."metrics_{0}" (request_ms);
+	CREATE INDEX ON  v3."metrics_{0}" (request_ns);
 	""";
 
 	private static final String INSERT_METRICS =
