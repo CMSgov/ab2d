@@ -42,6 +42,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
+import javax.sql.DataSource;
+
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -69,6 +71,9 @@ class AggregatorJobTest {
     @Mock
     private SQSEventClient logManager;
 
+    @Mock
+    DataSource dataSource;
+
     @org.springframework.beans.factory.annotation.Autowired
     private PropertiesService propertiesService;
 
@@ -80,7 +85,7 @@ class AggregatorJobTest {
         SearchConfig searchConfig = new SearchConfig(tempDir.getAbsolutePath(), STREAMING,
                 FINISHED, 0, 0, 1, 2);
 
-        processor = new PatientClaimsProcessorImpl(bfdClient, logManager, searchConfig, propertiesService);
+        processor = new PatientClaimsProcessorImpl(bfdClient, logManager, searchConfig, propertiesService,dataSource);
     }
 
     @Test
