@@ -23,8 +23,8 @@ public class Metrics extends CoverageV3BaseQuery {
 		num_bytes BIGINT NOT NULL
 	);
 	
-	CREATE INDEX IF NOT EXISTS ON  v3."metrics_{0}" (id);
-	CREATE INDEX IF NOT EXISTS ON  v3."metrics_{0}" (request_ns);
+	CREATE INDEX IF NOT EXISTS idx_id ON v3."metrics_{0}" (id);
+	CREATE INDEX IF NOT EXISTS idx_request_ns ON v3."metrics_{0}" (request_ns);
 	""";
 
 	private static final String INSERT_METRICS =
