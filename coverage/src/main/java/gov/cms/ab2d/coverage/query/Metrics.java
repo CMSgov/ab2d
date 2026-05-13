@@ -17,7 +17,6 @@ public class Metrics extends CoverageV3BaseQuery {
 	CREATE TABLE IF NOT EXISTS v3."metrics_{0}" (
 		id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 		created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-		patient_id BIGINT NOT NULL,
 		request_ns BIGINT NOT NULL,
 		parse_bundle_ns BIGINT NOT NULL,
 	    bundle_count INT NOT NULL,
@@ -32,14 +31,13 @@ public class Metrics extends CoverageV3BaseQuery {
 	"""
 	INSERT INTO
 	  v3."metrics_{0}" (
-	    patient_id,
 	    request_ns,
 	    parse_bundle_ns,
 	    bundle_count,
 	    num_bytes
 	  )
 	VALUES
-	  (?, ?, ?, ?, ?);
+	  (?, ?, ?, ?);
 	""";
 
 	private final JdbcTemplate template;
@@ -62,11 +60,10 @@ public class Metrics extends CoverageV3BaseQuery {
 				@Override
 				public void setValues(PreparedStatement ps, int i) throws SQLException {
 					val metric = metrics.get(i);
-					ps.setLong(1, metric.patientId);
-					ps.setLong(2, metric.requestNs);
-					ps.setLong(3, metric.parseBundleNs);
-					ps.setInt(4, metric.bundleCount);
-					ps.setLong(5, metric.numBytes);
+					ps.setLong(1, metric.requestNs);
+					ps.setLong(2, metric.parseBundleNs);
+					ps.setInt(3, metric.bundleCount);
+					ps.setLong(4, metric.numBytes);
 				}
 				@Override
 				public int getBatchSize() {
@@ -77,7 +74,6 @@ public class Metrics extends CoverageV3BaseQuery {
 	}
 
 	public record Metric(
-			long patientId,
 			long requestNs,
 			long parseBundleNs,
 			int bundleCount,
