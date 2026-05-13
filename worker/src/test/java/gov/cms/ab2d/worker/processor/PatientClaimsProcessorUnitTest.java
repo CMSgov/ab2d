@@ -29,6 +29,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import javax.sql.DataSource;
+
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,6 +51,7 @@ class PatientClaimsProcessorUnitTest {
     @Mock private BFDClient mockBfdClient;
     @Mock private SQSEventClient eventLogger;
     @Mock private PropertiesService propertiesService;
+    @Mock private DataSource dataSource;
 
     @TempDir
     File tmpEfsMountDir;
@@ -99,7 +102,8 @@ class PatientClaimsProcessorUnitTest {
                 mockBfdClient,
                 eventLogger,
                 searchConfig,
-                propertiesService
+                propertiesService,
+                dataSource
         );
 
         ReflectionTestUtils.setField(cut, "earliestDataDate", "01/01/1900");

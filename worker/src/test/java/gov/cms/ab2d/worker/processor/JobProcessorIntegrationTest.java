@@ -61,6 +61,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
+import javax.sql.DataSource;
+
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.eventclient.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -151,6 +153,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @Mock
     CoverageV3Service coverageV3Service;
 
+    @Mock
+    DataSource dataSource;
+
     @Autowired
     private PropertiesService propertiesService;
 
@@ -206,7 +211,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         SearchConfig searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(),
                 STREAMING_DIR, FINISHED_DIR, 0, 0, MULTIPLIER, NUMBER_PATIENT_REQUESTS_PER_THREAD);
 
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, sqsEventClient, searchConfig, propertiesService);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, sqsEventClient, searchConfig, propertiesService, dataSource);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
 
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
