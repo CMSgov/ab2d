@@ -9,6 +9,7 @@ import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.query.Metrics;
 import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.BeneficiarySearchEvent;
@@ -28,6 +29,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
@@ -36,6 +38,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -74,6 +77,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final SQSEventClient logManager;
     private final SearchConfig searchConfig;
     private final PropertiesService propertiesService;
+    private final DataSource dataSource;
 
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
@@ -239,6 +243,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
 
         boolean verboseBfdLogging = propertiesService.isToggleOn("bfd.logging.verbose", false);
+        boolean bfdMetricsEnabled = propertiesService.isToggleOn("bfd.metrics.enabled", false);
+
+        val metrics = new LinkedList<Metrics.Metric>();
         try {
 
             // Set header for requests so BFD knows where this request originated from
@@ -249,7 +256,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 REQUEST_EOB,
                 () -> {
 
-                    if (verboseBfdLogging) {
+                    if (verboseBfdLogging || bfdMetricsEnabled) {
                         var rowNumber = -1L;
                         if (patient.getIdentifiers().isV3()) {
                             rowNumber = patient.getIdentifiers().getRowNumberV3();
@@ -260,14 +267,17 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         bfdSegment.setMetricName("RequestEOB");
 
                         // array passed to BFD client; element 0 represents content-length header value
-                        val metrics = new String[]{"-1"};
+                        val metricsArray = new String[]{"-1"};
                         val bfdStart = System.nanoTime();
-                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum(), metrics);
+                        final byte[] response = bfdClient.requestEOBFromServerWithoutParseBundle(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum(), metricsArray);
                         val bfdEnd = System.nanoTime();
                         final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
                         val parseBundleEnd = System.nanoTime();
                         bfdSegment.end();
-                        logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob(), request.getVersion(), bundle, metrics);
+                        val metric = logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob(), request.getVersion(), bundle, metricsArray, patientIdentifier, verboseBfdLogging, bfdMetricsEnabled);
+                        if (metric != null) {
+                            metrics.add(metric);
+                        }
                         return bundle;
                     } else {
                         return bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
@@ -304,15 +314,24 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             logError(request, patientIdentifier, requestStartTime, ex);
             throw ex;
         } finally {
+            try {
+                if (metrics.isEmpty()) {
+                    new Metrics(dataSource).insertMetrics(request.getJob(), metrics);
+                }
+            } catch (Exception e) {
+                log.error("Error writing metrics to DB");
+            }
+
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
     }
 
-    private static void logBfdVerbose(long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber, String jobId, FhirVersion version, IBaseBundle bundle, String[] metrics) {
-        val bfdResponseMs = (bfdEnd - bfdStart) / 1_000_000;
-        val parseBundleMs = (parseBundleEnd - bfdEnd) / 1_000_000;
+    private static Metrics.Metric logBfdVerbose(
+            long bfdStart, long bfdEnd, long parseBundleEnd, long rowNumber, String jobId,
+            FhirVersion version, IBaseBundle bundle, String[] metrics, long patientId,
+            boolean verboseBfdLogging, boolean bfdMetricsEnabled) {
 
-        var bundleSize = -1L;
+        var bundleSize = -1;
 	    try {
             switch (version) {
                 case STU3:
@@ -333,10 +352,27 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (metrics.length > 0) {
             responseBytesSize = metrics[0];
         }
-        if (rowNumber > 0) {
-            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; responseBytesSize={}; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, bundleSize, responseBytesSize, rowNumber);
-        } else {
-            log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; responseBytesSize={}", jobId, bfdResponseMs, parseBundleMs, bundleSize, responseBytesSize);
+
+        if (verboseBfdLogging) {
+            val bfdResponseMs = (bfdEnd - bfdStart) / 1_000_000;
+            val parseBundleMs = (parseBundleEnd - bfdEnd) / 1_000_000;
+            if (rowNumber > 0) {
+                log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; responseBytesSize={}; rowNumber: {}", jobId, bfdResponseMs, parseBundleMs, bundleSize, responseBytesSize, rowNumber);
+            } else {
+                log.info("requestEOBFromServer stats; Job: {}; Request: {}ms; parseBundle: {}ms; bundleSize={}; responseBytesSize={}", jobId, bfdResponseMs, parseBundleMs, bundleSize, responseBytesSize);
+            }
+        }
+        if (bfdMetricsEnabled) {
+            val bfdResponseNanos = (bfdEnd - bfdStart);
+            val parseBundleNanos = (parseBundleEnd - bfdEnd);
+            var responseBytesSizeLong = -1L;
+            if (responseBytesSize != null) {
+                responseBytesSizeLong = Long.parseLong(responseBytesSize);
+            }
+            return new Metrics.Metric(patientId, bfdResponseNanos, parseBundleNanos, bundleSize, responseBytesSizeLong);
+        }
+        else {
+            return null;
         }
     }
 

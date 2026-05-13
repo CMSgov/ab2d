@@ -1,0 +1,90 @@
+package gov.cms.ab2d.coverage.query;
+
+import lombok.val;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import javax.sql.DataSource;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.text.MessageFormat;
+import java.util.*;
+
+public class Metrics extends CoverageV3BaseQuery {
+
+	private static final String CREATE_METRICS_TABLE =
+	"""
+	CREATE TABLE IF NOT EXISTS v3."metrics_{0}" (
+		id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+		created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+		patient_id BIGINT NOT NULL,
+		request_ms BIGINT NOT NULL,
+		parse_bundle_ms BIGINT NOT NULL,
+	    bundle_count INT NOT NULL,
+		num_bytes BIGINT NOT NULL
+	);
+	
+	CREATE INDEX ON  v3."metrics_{0}" (id);
+	CREATE INDEX ON  v3."metrics_{0}" (request_ms);
+	""";
+
+	private static final String INSERT_METRICS =
+	"""
+	INSERT INTO
+	  v3."metrics_{0}" (
+	    patient_id,
+	    request_ns,
+	    parse_bundle_ns,
+	    bundle_count,
+	    num_bytes
+	  )
+	VALUES
+	  (?, ?, ?, ?, ?);
+	""";
+
+	private final JdbcTemplate template;
+
+	public Metrics(DataSource dataSource) {
+		super(dataSource);
+		this.template = new JdbcTemplate(dataSource);
+	}
+
+	public void createMetricsTable(final String jobUuid) {
+		val query = MessageFormat.format(CREATE_METRICS_TABLE, jobUuid);
+		template.execute(query);
+	}
+
+	public void insertMetrics(String jobUuid, List<Metric> metrics) {
+		val query = MessageFormat.format(INSERT_METRICS, jobUuid);
+		System.out.println(query);
+
+		template.batchUpdate(
+			query,
+			new BatchPreparedStatementSetter() {
+				@Override
+				public void setValues(PreparedStatement ps, int i) throws SQLException {
+					val metric = metrics.get(i);
+					ps.setLong(1, metric.patientId);
+					ps.setLong(2, metric.requestNs);
+					ps.setLong(3, metric.parseBundleNs);
+					ps.setInt(4, metric.bundleCount);
+					ps.setLong(5, metric.numBytes);
+				}
+				@Override
+				public int getBatchSize() {
+					return metrics.size();
+				}
+			}
+		);
+	}
+
+	public record Metric(
+			long patientId,
+			long requestNs,
+			long parseBundleNs,
+			int bundleCount,
+			long numBytes
+	) {}
+
+
+}
