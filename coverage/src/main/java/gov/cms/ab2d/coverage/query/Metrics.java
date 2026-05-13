@@ -1,5 +1,6 @@
 package gov.cms.ab2d.coverage.query;
 
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -10,6 +11,7 @@ import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.*;
 
+@Slf4j
 public class Metrics extends CoverageV3BaseQuery {
 
 	private static final String CREATE_METRICS_TABLE =
@@ -23,8 +25,8 @@ public class Metrics extends CoverageV3BaseQuery {
 		num_bytes BIGINT NOT NULL
 	);
 	
-	CREATE INDEX ON  v3."metrics_{0}" (id);
-	CREATE INDEX ON  v3."metrics_{0}" (request_ns);
+	CREATE INDEX IF NOT EXISTS idx_id ON v3."metrics_{0}" (id);
+	CREATE INDEX IF NOT EXISTS idx_request_ns ON v3."metrics_{0}" (request_ns);
 	""";
 
 	private static final String INSERT_METRICS =
@@ -48,8 +50,13 @@ public class Metrics extends CoverageV3BaseQuery {
 	}
 
 	public void createMetricsTableIfNotExists(final String jobUuid) {
-		val query = MessageFormat.format(CREATE_METRICS_TABLE, jobUuid);
-		template.execute(query);
+		// This could throw an exception if two threads are creating the table / indexes within the same time frame
+		try {
+			val query = MessageFormat.format(CREATE_METRICS_TABLE, jobUuid);
+			template.execute(query);
+		} catch (Exception e) {
+			log.error("Error creating metrics table for {}", jobUuid);
+		}
 	}
 
 	public void insertMetrics(String jobUuid, List<Metric> metrics) {
