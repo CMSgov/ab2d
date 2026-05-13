@@ -17,7 +17,7 @@ public enum Ab2dEnvironment {
     PRODUCTION("ab2d-east-prod");
 
     public static final List<Ab2dEnvironment> ALL = List.of(LOCAL, DEV, SANDBOX, IMPL, PRODUCTION_VALIDATION, PRODUCTION);
-    public static final List<Ab2dEnvironment> PROD_LIST = List.of(PRODUCTION);
+    public static final List<Ab2dEnvironment> PROD_LIST = List.of(PRODUCTION, IMPL);
 
     public static final List<Ab2dEnvironment> PUBLIC_LIST = List.of(PRODUCTION, SANDBOX);
 
