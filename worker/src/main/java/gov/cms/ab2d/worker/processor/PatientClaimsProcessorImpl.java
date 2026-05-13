@@ -315,7 +315,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             throw ex;
         } finally {
             try {
-                if (metrics.isEmpty()) {
+                if (!metrics.isEmpty()) {
                     val jobUuid = request.getJob();
                     val metricsTracker = new Metrics(dataSource);
                     metricsTracker.createMetricsTableIfNotExists(jobUuid);
