@@ -27,8 +27,8 @@ class MetricsTest {
 		metrics.createMetricsTableIfNotExists(jobUuid);
 		metrics.createMetricsTableIfNotExists(jobUuid);
 
-		metrics.insertMetrics(jobUuid, List.of(new Metrics.Metric(500L, 343L, 5L, 3, 52384)));
-		metrics.insertMetrics(jobUuid, List.of(new Metrics.Metric(235L, 343L, 5L, 3, 52384)));
+		metrics.insertMetrics(jobUuid, List.of(new Metrics.Metric(343L, 5L, 3, 52384)));
+		metrics.insertMetrics(jobUuid, List.of(new Metrics.Metric(343L, 5L, 3, 52384)));
 
 		System.out.println();
 	}
