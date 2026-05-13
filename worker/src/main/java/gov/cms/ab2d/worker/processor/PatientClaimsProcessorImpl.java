@@ -322,7 +322,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                     metricsTracker.insertMetrics(jobUuid, metrics);
                 }
             } catch (Exception e) {
-                log.error("Error writing metrics to DB", e);
+                log.error("Error writing metrics to DB for job " + request.getJob(), e);
             }
 
             BFDClient.BFD_BULK_JOB_ID.remove();
