@@ -52,10 +52,12 @@ log "Starting..."
 docker compose "${COMPOSE_FILES[@]}" up -d
 
 wait_for() {
-  local name="$1" url="$2" extra_args="${3:-}" deadline=$((SECONDS + 180))
+  local name="$1" url="$2"
+  shift 2
+  local extra_args=("$@")
+  local deadline=$((SECONDS + 180))
   log "Waiting for $name at $url ..."
-  # extra_args left unquoted so flags like "-k" word-split correctly.
-  until curl -sf $extra_args -o /dev/null "$url"; do
+  until curl -sf "${extra_args[@]}" -o /dev/null "$url"; do
     if [ $SECONDS -ge $deadline ]; then
       log "ERROR: $name did not become ready within 180s"
       docker compose "${COMPOSE_FILES[@]}" ps
@@ -67,7 +69,7 @@ wait_for() {
 }
 
 wait_for "mock-bfd (expectations loaded)" "$MOCK_URL/v1/fhir/metadata"
-wait_for "API"                            "$API_URL/health" "-k"
+wait_for "API"                            "$API_URL/health" -k
 
 log "Applying seed-contract.sql..."
 docker compose "${COMPOSE_FILES[@]}" exec -T db \
@@ -77,4 +79,4 @@ log "Applying seed-coverage.sql..."
 docker compose "${COMPOSE_FILES[@]}" exec -T db \
   psql -v ON_ERROR_STOP=1 -U ab2d -d ab2d < local-dev/sql/seed-coverage.sql >/dev/null
 
-log "Submit a job: local-dev/submit-job.sh
+log "Submit a job: local-dev/submit-job.sh"

@@ -105,7 +105,7 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maventLocal()
+        mavenLocal()
         if (artifactoryLoc) {
             maven {
                 url = "${artifactoryLoc}/${sourcesRepo}"

@@ -35,7 +35,7 @@ mkdir -p "$OUT_DIR"
 
 log() { printf '[job] %s\n' "$*"; }
 
-log "POST $API_BASE/Patient/\$export ($TYPE) ..."
+log "GET $API_BASE/Patient/\$export ($TYPE) ..."
 RAW="$(curl -ski -X GET "$API$API_BASE/Patient/\$export?_type=$TYPE" \
   -H 'Accept: application/fhir+json' \
   -H "Authorization: Bearer $TOKEN" \
