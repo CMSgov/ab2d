@@ -1,13 +1,17 @@
 
 pluginManagement {
     repositories {
-        maven {
-            url = "${System.getenv().get("ARTIFACTORY_URL") ?: (System.getProperty('artifactory_contextUrl'))}" +"/ab2d-main"
-            credentials {
-                username = "${System.getenv().get("ARTIFACTORY_USER") ?: (System.getProperty('artifactory_user'))}"
-                password = "${System.getenv().get("ARTIFACTORY_PASSWORD") ?: (System.getProperty('artifactory_password'))}"
+        def artifactoryUrl = System.getenv().get("ARTIFACTORY_URL") ?: System.getProperty('artifactory_contextUrl')
+        if (artifactoryUrl) {
+            maven {
+                url = "${artifactoryUrl}/ab2d-main"
+                credentials {
+                    username = "${System.getenv().get("ARTIFACTORY_USER") ?: (System.getProperty('artifactory_user'))}"
+                    password = "${System.getenv().get("ARTIFACTORY_PASSWORD") ?: (System.getProperty('artifactory_password'))}"
+                }
             }
         }
+
         gradlePluginPortal()
     }
 }
