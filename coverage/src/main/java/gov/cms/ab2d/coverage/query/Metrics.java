@@ -22,7 +22,8 @@ public class Metrics extends CoverageV3BaseQuery {
 		request_ns BIGINT NOT NULL,
 		parse_bundle_ns BIGINT NOT NULL,
 	    bundle_count INT NOT NULL,
-		num_bytes BIGINT NOT NULL
+		num_bytes BIGINT NOT NULL,
+		filter_ns BIGINT NOT NULL,
 	);
 	
 	CREATE INDEX IF NOT EXISTS idx_id ON v3."metrics_{0}" (id);
@@ -36,10 +37,11 @@ public class Metrics extends CoverageV3BaseQuery {
 	    request_ns,
 	    parse_bundle_ns,
 	    bundle_count,
-	    num_bytes
+	    num_bytes,
+	    filter_ns
 	  )
 	VALUES
-	  (?, ?, ?, ?);
+	  (?, ?, ?, ?, ?);
 	""";
 
 	private final JdbcTemplate template;
@@ -71,6 +73,7 @@ public class Metrics extends CoverageV3BaseQuery {
 					ps.setLong(2, metric.parseBundleNs);
 					ps.setInt(3, metric.bundleCount);
 					ps.setLong(4, metric.numBytes);
+					ps.setLong(5, metric.filterNs[0]);
 				}
 				@Override
 				public int getBatchSize() {
@@ -80,11 +83,34 @@ public class Metrics extends CoverageV3BaseQuery {
 		);
 	}
 
+	public void insertMetrics(String jobUuid, Metric[] metrics) {
+		val query = MessageFormat.format(INSERT_METRICS, jobUuid);
+		template.batchUpdate(
+				query,
+				new BatchPreparedStatementSetter() {
+					@Override
+					public void setValues(PreparedStatement ps, int i) throws SQLException {
+						val metric = metrics[i];
+						ps.setLong(1, metric.requestNs);
+						ps.setLong(2, metric.parseBundleNs);
+						ps.setInt(3, metric.bundleCount);
+						ps.setLong(4, metric.numBytes);
+						ps.setLong(5, metric.filterNs[0]);
+					}
+					@Override
+					public int getBatchSize() {
+						return metrics.length;
+					}
+				}
+		);
+	}
+
 	public record Metric(
 			long requestNs,
 			long parseBundleNs,
 			int bundleCount,
-			long numBytes
+			long numBytes,
+			long[] filterNs
 	) {}
 
 

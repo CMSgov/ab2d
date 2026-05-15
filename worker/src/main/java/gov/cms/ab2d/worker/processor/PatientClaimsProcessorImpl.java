@@ -245,7 +245,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         boolean verboseBfdLogging = propertiesService.isToggleOn("bfd.logging.verbose", false);
         boolean bfdMetricsEnabled = propertiesService.isToggleOn("bfd.metrics.enabled", false);
 
-        val metrics = new LinkedList<Metrics.Metric>();
+        // array with only one element -- lambda requires this be final/effectively final (but needs to be updated inside the lambda)
+        final Metrics.Metric[] currentMetric = new Metrics.Metric[1];
         try {
 
             // Set header for requests so BFD knows where this request originated from
@@ -274,17 +275,25 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
                         val parseBundleEnd = System.nanoTime();
                         bfdSegment.end();
-                        val metric = logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob(), request.getVersion(), bundle, metricsArray, patientIdentifier, verboseBfdLogging, bfdMetricsEnabled);
-                        if (metric != null) {
-                            metrics.add(metric);
-                        }
+                        currentMetric[0] = logBfdVerbose(bfdStart, bfdEnd, parseBundleEnd, rowNumber, request.getJob(), request.getVersion(), bundle, metricsArray, patientIdentifier, verboseBfdLogging, bfdMetricsEnabled);
                         return bundle;
                     } else {
                         return bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
                     }
                 }
             );
-            collector.filterAndAddEntries(eobBundle, patient);
+
+            if (currentMetric[0] == null) {
+                collector.filterAndAddEntries(eobBundle, patient);
+            } else {
+                val filterStart = System.nanoTime();
+                collector.filterAndAddEntries(eobBundle, patient);
+                val filterEnd = System.nanoTime();
+
+                val filterNanos = (filterEnd - filterStart);
+                currentMetric[0].filterNs()[0] = filterNanos;
+            }
+
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
                 val currentEobBundle = eobBundle;
@@ -315,11 +324,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             throw ex;
         } finally {
             try {
-                if (!metrics.isEmpty()) {
+                if (currentMetric[0] != null) {
                     val jobUuid = request.getJob();
                     val metricsTracker = new Metrics(dataSource);
                     metricsTracker.createMetricsTableIfNotExists(jobUuid);
-                    metricsTracker.insertMetrics(jobUuid, metrics);
+                    metricsTracker.insertMetrics(jobUuid, currentMetric);
                 }
             } catch (Exception e) {
                 log.error("Error writing metrics to DB for job " + request.getJob(), e);
