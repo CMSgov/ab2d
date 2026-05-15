@@ -14,9 +14,6 @@ ENV NEW_RELIC_EXPERIMENTAL_RUNTIME=true
 RUN yum update -y --security
 
 #JAVA commands
-<<<<<<< HEAD
-CMD java \
-=======
 CMD ["sh", "-c", "exec java \
     -XX:+UseContainerSupport \
     -XX:InitialRAMPercentage=${JVM_INITIAL_RAM} \
