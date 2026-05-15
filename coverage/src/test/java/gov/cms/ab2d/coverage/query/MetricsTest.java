@@ -27,8 +27,15 @@ class MetricsTest {
 		metrics.createMetricsTableIfNotExists(jobUuid);
 		metrics.createMetricsTableIfNotExists(jobUuid);
 
-		metrics.insertMetrics(jobUuid, List.of(new Metrics.Metric(343L, 5L, 3, 52384)));
-		metrics.insertMetrics(jobUuid, List.of(new Metrics.Metric(343L, 5L, 3, 52384)));
+		val metric1 = new Metrics.Metric(343000000L, 550L, 3, 52384, new long[1]);
+		val metric2 = new Metrics.Metric(412000000L, 600L, 4, 65331, new long[1]);
+
+		metric1.filterNs()[0] = 30000000L;
+		metric2.filterNs()[0] = 40000000L;
+
+		metrics.insertMetrics(jobUuid, new Metrics.Metric[]{metric1});
+		metrics.insertMetrics(jobUuid, new Metrics.Metric[]{metric2});
+
 
 		System.out.println();
 	}

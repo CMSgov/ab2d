@@ -381,7 +381,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             if (responseBytesSize != null) {
                 responseBytesSizeLong = Long.parseLong(responseBytesSize);
             }
-            return new Metrics.Metric(bfdResponseNanos, parseBundleNanos, bundleSize, responseBytesSizeLong);
+            return new Metrics.Metric(bfdResponseNanos, parseBundleNanos, bundleSize, responseBytesSizeLong, new long[1]);
         }
         else {
             return null;
