@@ -72,10 +72,6 @@ public class JobStatusChangeEvent extends LoggableEvent {
 
         sb.append("Job ID: ").append(getJobId()).append("\n");
 
-        if (resourceTypes != null && !resourceTypes.isBlank()) {
-            sb.append("Type: ").append(resourceTypes).append("\n");
-        }
-
         DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         if (since != null) {
             sb.append("Since date: ").append(since.format(formatter)).append("\n");
