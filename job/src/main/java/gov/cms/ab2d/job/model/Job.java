@@ -126,7 +126,8 @@ public class Job {
 
     public JobStatusChangeEvent buildJobStatusChangeEvent(JobStatus newStatus, String statusMessage) {
         final String oldStatus = (status == null) ? null : status.name();
-        return new JobStatusChangeEvent(organization, jobUuid, oldStatus, newStatus.name(), statusMessage);
+        return new JobStatusChangeEvent(organization, jobUuid, oldStatus, newStatus.name(), statusMessage,
+                contractNumber, since, until, servicesDates, resourceTypes);
     }
 
     public FileEvent buildFileEvent(File file, FileEvent.FileStatus status) {

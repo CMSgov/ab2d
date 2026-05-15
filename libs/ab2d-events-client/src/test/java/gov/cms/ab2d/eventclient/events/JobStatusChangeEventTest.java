@@ -24,7 +24,7 @@ class JobStatusChangeEventTest {
 
         JobStatusChangeEvent event = new JobStatusChangeEvent("test", "test", "test", "test", "    ");
 
-        assertTrue(event.asMessage().startsWith(" (test)"));
+        assertTrue(event.asMessage().contains("Job ID: test"));
     }
 
     @DisplayName("Label status change event correctly")
@@ -33,7 +33,7 @@ class JobStatusChangeEventTest {
 
         JobStatusChangeEvent event = new JobStatusChangeEvent("test", "test", "test", "test", null);
 
-        assertTrue(event.asMessage().startsWith(" (test)"));
+        assertTrue(event.asMessage().contains("Job ID: test"));
     }
 
     @DisplayName("Label status change event correctly")
@@ -42,6 +42,6 @@ class JobStatusChangeEventTest {
 
         JobStatusChangeEvent event = new JobStatusChangeEvent("test", "test", "test", "test", "ONEWORD");
 
-        assertTrue(event.asMessage().startsWith(" (test)"));
+        assertTrue(event.asMessage().contains("ONEWORD"));
     }
 }
