@@ -57,7 +57,7 @@ wait_for() {
   local extra_args=("$@")
   local deadline=$((SECONDS + 180))
   log "Waiting for $name at $url ..."
-  until curl -sf "${extra_args[@]}" -o /dev/null "$url"; do
+  until curl -sf ${extra_args[@]+"${extra_args[@]}"} -o /dev/null "$url"; do
     if [ $SECONDS -ge $deadline ]; then
       log "ERROR: $name did not become ready within 180s"
       docker compose "${COMPOSE_FILES[@]}" ps
