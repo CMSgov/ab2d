@@ -8,9 +8,5 @@ public interface WorkerService {
 
     Job process(String jobId);
 
-    default Job process(String jobId, FhirVersion fhirVersion) {
-        return process(jobId);
-    }
-
     FeatureEngagement getEngagement();
 }

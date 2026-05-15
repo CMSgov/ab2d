@@ -6,8 +6,5 @@ import gov.cms.ab2d.job.model.Job;
 public interface JobPreProcessor {
 
     Job preprocess(String jobUuid);
-    default Job preprocess(String jobUuid, FhirVersion fhirVersion) {
-        return preprocess(jobUuid, fhirVersion);
-    }
 
 }

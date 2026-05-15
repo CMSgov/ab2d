@@ -36,13 +36,7 @@ public class WorkerServiceImpl implements WorkerService {
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
     @Override
-    @Deprecated
-    public Job process(String jobId) {
-        return process(jobId, null);
-    }
-
-    @Override
-    public Job process(String jobUuid, FhirVersion fhirVersion) {
+    public Job process(String jobUuid) {
 
         activeJobs.add(jobUuid);
         try {
@@ -51,7 +45,7 @@ public class WorkerServiceImpl implements WorkerService {
             if (job.getStatus() == JobStatus.IN_PROGRESS) {
                 log.info("{} has been started", jobUuid);
 
-                if (fhirVersion != null && fhirVersion == FhirVersion.R4V3) {
+                if (job.getFhirVersion() == FhirVersion.R4V3) {
                     coverageV3Service.createAggregatedAttributionTable(job.getContractNumber());
                 }
 
