@@ -38,7 +38,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -327,8 +326,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 if (currentMetric[0] != null) {
                     val jobUuid = request.getJob();
                     val metricsTracker = new Metrics(dataSource);
-                    metricsTracker.createMetricsTableIfNotExists(jobUuid);
-                    metricsTracker.insertMetrics(jobUuid, currentMetric);
+                    metricsTracker.addMetric(jobUuid, currentMetric);
                 }
             } catch (Exception e) {
                 log.error("Error writing metrics to DB for job " + request.getJob(), e);

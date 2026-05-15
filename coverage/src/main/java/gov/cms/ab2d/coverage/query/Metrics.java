@@ -9,7 +9,6 @@ import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.MessageFormat;
-import java.util.*;
 
 @Slf4j
 public class Metrics extends CoverageV3BaseQuery {
@@ -23,7 +22,7 @@ public class Metrics extends CoverageV3BaseQuery {
 		parse_bundle_ns BIGINT NOT NULL,
 	    bundle_count INT NOT NULL,
 		num_bytes BIGINT NOT NULL,
-		filter_ns BIGINT NOT NULL,
+		filter_ns BIGINT NOT NULL
 	);
 	
 	CREATE INDEX IF NOT EXISTS idx_id ON v3."metrics_{0}" (id);
@@ -51,39 +50,32 @@ public class Metrics extends CoverageV3BaseQuery {
 		this.template = new JdbcTemplate(dataSource);
 	}
 
-	public void createMetricsTableIfNotExists(final String jobUuid) {
+	private void createMetricsTableIfNotExists(final String jobUuid) {
 		// This could throw an exception if two threads are creating the table / indexes within the same time frame
 		try {
 			val query = MessageFormat.format(CREATE_METRICS_TABLE, jobUuid);
 			template.execute(query);
 		} catch (Exception e) {
-			log.error("Error creating metrics table for {}", jobUuid);
+			throw e;
 		}
 	}
 
-	public void insertMetrics(String jobUuid, List<Metric> metrics) {
-		val query = MessageFormat.format(INSERT_METRICS, jobUuid);
-		template.batchUpdate(
-			query,
-			new BatchPreparedStatementSetter() {
-				@Override
-				public void setValues(PreparedStatement ps, int i) throws SQLException {
-					val metric = metrics.get(i);
-					ps.setLong(1, metric.requestNs);
-					ps.setLong(2, metric.parseBundleNs);
-					ps.setInt(3, metric.bundleCount);
-					ps.setLong(4, metric.numBytes);
-					ps.setLong(5, metric.filterNs[0]);
-				}
-				@Override
-				public int getBatchSize() {
-					return metrics.size();
-				}
+
+	public void addMetric(String jobUuid, Metric[] metrics) {
+		try {
+			// this will fail the first time because the table won't exist
+			_addMetric(jobUuid, metrics);
+		} catch (Exception e) {
+			try {
+				createMetricsTableIfNotExists(jobUuid);
+				_addMetric(jobUuid, metrics);
+			} catch (Exception e2) {
+				log.error("Error adding metrics for {}", jobUuid, e2);
 			}
-		);
+		}
 	}
 
-	public void insertMetrics(String jobUuid, Metric[] metrics) {
+	private void _addMetric(String jobUuid, Metric[] metrics) {
 		val query = MessageFormat.format(INSERT_METRICS, jobUuid);
 		template.batchUpdate(
 				query,
