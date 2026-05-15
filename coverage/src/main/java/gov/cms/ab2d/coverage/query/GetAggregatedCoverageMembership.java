@@ -81,8 +81,9 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
 
 
     // NEW
+    // TODO test this -- added share_data criteria
     private static final String AGGREGATED_TABLE_ROW_COUNT =
-            "SELECT COUNT(DISTINCT patient_id) FROM v3.coverage_v3_aggregated_{0}";
+            "SELECT COUNT(DISTINCT patient_id) FROM v3.coverage_v3_aggregated_{0} WHERE share_data IS NOT false";
 
     private static final String GET_DISTINCT_COVERAGE_PERIOD_COUNT =
     """
