@@ -8,7 +8,7 @@
 ## Table of Contents
 
 1. [Create volume directory](#create-volume-directory)
-1. [Running Locally with Intelij](#running-locally-with-intelij)
+1. [Running Locally](#running-locally)
 1. [Installing and Using Pre-Commit](#installing-and-using-pre-commit)
 
 ## Create volume directory
@@ -21,35 +21,72 @@
 
 1. Note that this directory acts as a shared volume for the API and worker containers
 
-## Running Locally with Intelij
-1. Remove comments in the docker-compose.yml to set db ports
-   ```ShellSession
-      ports:
-      - "5432:5432"
-   ```
-2. Run postgress and localstack locally using Docker
+## Running Locally
 
-   ```ShellSession
-   $ docker-compose up db localstack
-   ```
+### Prerequisites 
 
-Worker Setup
+- Docker (with `docker compose`)
+- Java 25
 
-3. Select Run/Debug Configuration > Edit Configurations > add configuration (+) > Spring Boot
-4. In Main Class select gov.cms.ab2d.worker.SpringBootApp
-5. Go to 1Password and search for 'AB2D Local Env Variables'. Use the configs in the note for the Environment Variables field
-6. Run the configuration
+### Setup
+Build the worker/api jar:
 
+```sh
+mvn -DskipTests package
+```
 
-API Setup
-6. Select Run/Debug Configuration > Edit Configurations > add configuration (+) > Spring Boot
-7. In Main Class select gov.cms.ab2d.api.SpringBootApp
-8. Go to 1Password and search for 'AB2D Local Env Variables'. Use the configs in the note for the Environment Variables field
-9. Run the configuration
+Build the contracts jar:
 
+  ```sh
+  (cd contracts && ./gradlew -x test build)
+  docker build -t ab2d-contracts-local:latest contracts
+  ```
 
-[AB2D Deploy](Deploy/README.md)
+### Quick start
 
+```sh
+local-dev/up.sh              # handles setting up docker compose and running sql scripts
+local-dev/submit-job.sh      # submit job, poll, download NDJSON
+local-dev/down.sh            # tear down everything
+```
+
+Use the `down` script to wipe the database if needed:
+
+```sh
+local-dev/down.sh --volumes
+```
+
+### Attaching a Debugger in IntelliJ
+
+To attach a debugger to the worker or API, set up the peripheral modules with the following commands:
+
+```sh
+# database, localstack, and bfd mock
+docker compose -f docker-compose.yml -f docker-compose.local.yml \
+  up -d db localstack mock-bfd mock-bfd-init
+
+# contracts service
+docker compose -f docker-compose.yml -f docker-compose.local.yml \
+  up -d --no-deps contracts
+```
+
+Then, start the worker/api by running the local configuration for each app. Two configurations are included, named `api (local)` and `worker (local)`. 
+
+Once the environment is running, seed the local database to run test jobs:
+
+```sh
+psql -h localhost -U ab2d -d ab2d -f local-dev/sql/seed-contract.sql
+psql -h localhost -U ab2d -d ab2d -f local-dev/sql/seed-coverage.sql
+```
+
+When prompted for a password, use the default: `ab2d`.
+
+Once the database is seeded, submit a job using the job submission script, `local-dev/submit-job.sh`, or by sending a request to the API directly at https://localhost:8443.
+
+Running the apps between docker container and locally may cause a network issue. Resolve this issue by explicitly setting the location of the internal docker network:
+```sh
+echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
+```
 ## Installing and Using Pre-commit
 
 Anyone committing to this repo must use the pre-commit hook to lower the likelihood that secrets will be exposed.

@@ -55,3 +55,9 @@ services:
     environment:
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
+    # workaround for alpine while java versions are changing
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8070/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5

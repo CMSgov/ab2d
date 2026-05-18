@@ -122,7 +122,7 @@ public class SQSEventClient implements EventClient {
 
         } catch (JsonProcessingException | UnsupportedOperationException | SqsException e) {
             log.info(e.getMessage());
-        } catch (CompletionException _) {
+        } catch (CompletionException completionException) {
             log.info("SQS async operation failed");
         }
     }

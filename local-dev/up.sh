@@ -38,12 +38,16 @@ fi
 
 # find or build contracts image
 if ! docker image inspect ab2d-contracts-local:latest >/dev/null 2>&1; then
-  CONTRACTS_DIR="${CONTRACTS_DIR:-$ROOT/../ab2d-contracts}"
+  CONTRACTS_DIR="${CONTRACTS_DIR:-$ROOT/contracts}"
   if [ -f "$CONTRACTS_DIR/Dockerfile" ]; then
+    if ! ls "$CONTRACTS_DIR"/build/libs/contracts-*.jar >/dev/null 2>&1; then
+      log "Building contracts jar..."
+      (cd "$CONTRACTS_DIR" && ./gradlew --no-daemon -x test build)
+    fi
     log "Building ab2d-contracts-local:latest from $CONTRACTS_DIR ..."
     docker build -t ab2d-contracts-local:latest "$CONTRACTS_DIR"
   else
-    log "ERROR: ab2d-contracts-local:latest missing and ab2d-contracts repo not at $CONTRACTS_DIR." >&2
+    log "ERROR: ab2d-contracts-local:latest missing" >&2
     exit 1
   fi
 fi
