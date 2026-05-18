@@ -44,8 +44,8 @@
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
         <!-- AB2D lib versions -->
-        <bfd-lib.version>4.5.2</bfd-lib.version>
-        <events-client.version>3.3.12</events-client.version>
+        <bfd-lib.version>4.6.0</bfd-lib.version>
+        <events-client.version>3.3.13</events-client.version>
         <fhir-lib.version>2.5.5</fhir-lib.version>
         <aggregator-lib.version>2.1.4</aggregator-lib.version>
         <filters-lib.version>3.1.1</filters-lib.version>
