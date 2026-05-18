@@ -80,7 +80,7 @@
             <dependency>
                 <groupId>ca.uhn.hapi.fhir</groupId>
                 <artifactId>org.hl7.fhir.dstu3</artifactId>
-                <version>6.9.4</version>
+                <version>6.9.7</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
