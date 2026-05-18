@@ -62,7 +62,8 @@ To attach a debugger to the worker or API, set up the peripheral modules with th
 
 ```sh
 # database, localstack, and bfd mock
-docker compose -f docker-compose.yml -f docker-compose.local.yml \
+MOCK_PUBLIC_URL=http://localhost:9999 \
+  docker compose -f docker-compose.yml -f docker-compose.local.yml \
   up -d db localstack mock-bfd mock-bfd-init
 
 # contracts service
@@ -82,11 +83,6 @@ psql -h localhost -U ab2d -d ab2d -f local-dev/sql/seed-coverage.sql
 When prompted for a password, use the default: `ab2d`.
 
 Once the database is seeded, submit a job using the job submission script, `local-dev/submit-job.sh`, or by sending a request to the API directly at https://localhost:8443.
-
-Running the apps between docker container and locally may cause a network issue. Resolve this issue by explicitly setting the location of the internal docker network:
-```sh
-echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
-```
 ## Installing and Using Pre-commit
 
 Anyone committing to this repo must use the pre-commit hook to lower the likelihood that secrets will be exposed.

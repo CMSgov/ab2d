@@ -2,6 +2,7 @@ services:
   db:
     volumes:
       - ./local-dev/sql/init-local-db.sql:/docker-entrypoint-initdb.d/init-local-db.sql
+      - db-data:/var/lib/postgresql/data
 
   localstack:
     image: localstack/localstack:3.8
@@ -21,6 +22,8 @@ services:
     depends_on:
       mock-bfd:
         condition: service_started
+    environment:
+      - MOCK_PUBLIC_URL
     volumes:
       - ./local-dev/mock-bfd/load-expectations.sh:/load.sh:ro
       - ./local-dev/mock-bfd/fixtures:/fixtures:ro
@@ -47,6 +50,8 @@ services:
       - AB2D_BFD_TRUSTSTORE_CERT=
       - AB2D_BFD_V3_TRUSTSTORE_CERT=
       - AB2D_BFD_URL=http://host.docker.internal:9999
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./libs/ab2d-bfd/src/test/resources/bb.keystore:/opt/bfd-keystore.p12:ro
 
@@ -61,3 +66,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
+
+volumes:
+  db-data:
