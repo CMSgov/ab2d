@@ -1,5 +1,5 @@
 module "db" {
-  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=231b7d4f1e607b61b58ec497120b6188a998ef1f"
+  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=b0e43ec5b235d8fddc9cf2aaf3440b73e185d47f"
 
   snapshot_identifier = var.aurora_snapshot
   deletion_protection = true
