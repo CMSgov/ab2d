@@ -67,7 +67,6 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
-
       - name: SonarQube analysis (with coverage)
         run: |
             mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} -Dcheckstyle.skip clean install -pl "!e2e-bfd-test,!e2e-test"  \
