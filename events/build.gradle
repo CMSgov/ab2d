@@ -3,11 +3,12 @@ plugins {
     id 'java'
     id 'jacoco'
     id 'org.springframework.boot' version '3.5.14'
-    id 'com.jfrog.artifactory' version '5.2.5' apply false
     id "org.sonarqube" version "7.3.0.8198"
     id 'maven-publish'
     id 'org.cyclonedx.bom' version '2.0.0' apply true
 }
+
+apply from: "${rootDir}/../gradle/ab2d-shared.gradle"
 
 version="2.0.1"
 group = "gov.cms.ab2d"
@@ -53,6 +54,7 @@ allprojects {
         testImplementation "commons-io:commons-io:2.18.0"
         testImplementation "org.springframework.data:spring-data-jpa"
         testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+        testImplementation "org.testcontainers:testcontainers:${testContainerVersion}"
         testImplementation "org.testcontainers:localstack:${testContainerVersion}"
         testImplementation "org.testcontainers:postgresql:${testContainerVersion}"
         testImplementation "org.testcontainers:junit-jupiter:${testContainerVersion}"
@@ -90,6 +92,10 @@ allprojects {
     }
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
 jacocoTestReport {
     reports {
         xml.required.set(true)
