@@ -3,6 +3,8 @@ package gov.cms.ab2d.coverage.service.v3;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import lombok.val;
+import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -27,6 +29,12 @@ class CoverageV3ServiceImplTest {
 	PropertiesService propertiesService;
 
 	CoverageV3ServiceImpl service = new CoverageV3ServiceImpl(container.getDataSource(), propertiesService, syncService);
+
+
+	@BeforeEach
+	void setup() {
+		service = new CoverageV3ServiceImpl(container.getDataSource(), propertiesService, syncService);
+	}
 
 	// TODO Temporary -- remove
 	@Test
