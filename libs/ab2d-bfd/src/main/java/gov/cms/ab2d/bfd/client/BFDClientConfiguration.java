@@ -4,6 +4,7 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -92,6 +93,11 @@ public class BFDClientConfiguration {
                     .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
                     .setDefaultRequestConfig(requestConfig)
                     .setSSLContext(sslContext)
+
+                    .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy.INSTANCE)
+                    .evictExpiredConnections()
+                    .evictIdleConnections(10, TimeUnit.SECONDS)
+
                     .build();
 
         } catch (Exception e) {
