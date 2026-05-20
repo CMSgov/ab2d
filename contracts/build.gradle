@@ -82,13 +82,16 @@ test {
 repositories {
     mavenCentral()
     mavenLocal()
-    maven {
-        def artifactoryUrl = System.getenv("ARTIFACTORY_URL") ?: System.getProperty("artifactory_contextUrl")
-        println("Using Artifactory URL in build.gradle: ${artifactoryUrl}/ab2d-main")
-        url = "${artifactoryUrl}/ab2d-main"
-        credentials {
-            username = System.getenv("ARTIFACTORY_USER") ?: System.getProperty("username")
-            password = System.getenv("ARTIFACTORY_PASSWORD") ?: System.getProperty("password")
+    def artifactoryUrl = System.getenv("ARTIFACTORY_URL") ?: System.getProperty("artifactory_contextUrl")
+    if (artifactoryUrl) {
+        maven {
+            println("Using Artifactory URL in build.gradle: ${artifactoryUrl}/ab2d-main")
+            url = "${artifactoryUrl}/ab2d-main"
+            credentials {
+                username = System.getenv("ARTIFACTORY_USER") ?: System.getProperty("username")
+                password = System.getenv("ARTIFACTORY_PASSWORD") ?: System.getProperty("password")
+            }
         }
     }
+
 }

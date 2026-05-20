@@ -41,7 +41,7 @@ ext {
     springCloudAwsVersion='3.4.0'
     hapiVersion = '8.4.0'
     newRelicVersion='8.4.0'
-    testContainerVersion='1.20.6'
+    testContainerVersion='1.21.4'
     mockServerVersion='5.15.0'
     liquibaseVersion="5.0.0"
     jacksonVersion = "2.20.0"
@@ -104,15 +104,16 @@ allprojects {
     }
 
     repositories {
-        maven {
-            url = "${artifactoryLoc}/${sourcesRepo}"
-            credentials {
-                username = project.artifactory_user
-                password = project.artifactory_password
+        mavenCentral()
+        mavenLocal()
+        if (artifactoryLoc) {
+            maven {
+                url = "${artifactoryLoc}/${sourcesRepo}"
+                credentials {
+                    username = project.artifactory_user
+                    password = project.artifactory_password
+                }
             }
-//            authentication {
-//                basic(BasicAuthentication)
-//            }
         }
     }
 }

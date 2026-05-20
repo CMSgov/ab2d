@@ -1,0 +1,37 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="worker (local)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="worker" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="gov.cms.ab2d.worker.SpringBootApp" />
+    <option name="ACTIVE_PROFILES" value="local" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <envs>
+      <env name="AB2D_DB_HOST" value="localhost" />
+      <env name="AB2D_DB_PORT" value="5432" />
+      <env name="AB2D_DB_DATABASE" value="ab2d" />
+      <env name="AB2D_DB_USER" value="ab2d" />
+      <env name="AB2D_DB_PASSWORD" value="ab2d" />
+      <env name="AB2D_DB_SSL_MODE" value="allow" />
+      <env name="AB2D_EFS_MOUNT" value="/opt/ab2d" />
+      <env name="AB2D_EXECUTION_ENV" value="local" />
+      <env name="AWS_SQS_URL" value="http://localhost:4566" />
+      <env name="AWS_ACCESS_KEY_ID" value="test" />
+      <env name="AWS_SECRET_ACCESS_KEY" value="test" />
+      <env name="AWS_DEFAULT_REGION" value="us-east-1" />
+      <env name="MICROSERVICES_URL" value="localhost:8070" />
+      <env name="AB2D_V2_ENABLED" value="true" />
+      <env name="AB2D_V3_ENABLED" value="false" />
+      <env name="AB2D_BFD_URL" value="http://localhost:9999" />
+      <env name="AB2D_BFD_KEYSTORE_LOCATION" value="libs/ab2d-bfd/src/test/resources/bb.keystore" />
+      <env name="AB2D_BFD_KEYSTORE_PASSWORD" value="changeit" />
+      <env name="AB2D_BFD_KEYSTORE_BASE64" value="" />
+      <env name="AB2D_BFD_TRUSTSTORE_CERT" value="" />
+      <env name="AB2D_BFD_V3_TRUSTSTORE_CERT" value="" />
+      <env name="COVERAGE_UPDATE_LOAD_SCHEDULE" value="0/1 * * * * ?" />
+      <env name="COVERAGE_UPDATE_MONITORING_INTERVAL" value="0/1 * * * * ?" />
+      <env name="COVERAGE_VERIFY_SCHEDULE" value="0 0 0 1 * ? 2099" />
+    </envs>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

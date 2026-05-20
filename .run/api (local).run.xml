@@ -1,0 +1,28 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="api (local)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="api" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="gov.cms.ab2d.api.SpringBootApp" />
+    <option name="ACTIVE_PROFILES" value="local" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <envs>
+      <env name="AB2D_DB_HOST" value="localhost" />
+      <env name="AB2D_DB_PORT" value="5432" />
+      <env name="AB2D_DB_DATABASE" value="ab2d" />
+      <env name="AB2D_DB_USER" value="ab2d" />
+      <env name="AB2D_DB_PASSWORD" value="ab2d" />
+      <env name="AB2D_DB_SSL_MODE" value="allow" />
+      <env name="AB2D_EFS_MOUNT" value="/opt/ab2d" />
+      <env name="AB2D_EXECUTION_ENV" value="local" />
+      <env name="AWS_SQS_URL" value="http://localhost:4566" />
+      <env name="AWS_ACCESS_KEY_ID" value="test" />
+      <env name="AWS_SECRET_ACCESS_KEY" value="test" />
+      <env name="AWS_DEFAULT_REGION" value="us-east-1" />
+      <env name="MICROSERVICES_URL" value="localhost:8070" />
+      <env name="AB2D_V2_ENABLED" value="true" />
+      <env name="AB2D_V3_ENABLED" value="false" />
+    </envs>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
