@@ -6,6 +6,7 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.time.Duration;
 
@@ -23,6 +24,7 @@ public class JwtConfig {
     }
 
     @Bean
+    @Profile("!local")
     public AccessTokenVerifier accessTokenVerifier(@Value("${api.okta-jwt-issuer}") String oktaJwtIssuer,
                                                    @Value("${api.okta-jwt-audience}") String oktaJwtAudience,
                                                    @Value("${api.okta-connection-timeout}") int oktaConnectionTimeout) {
