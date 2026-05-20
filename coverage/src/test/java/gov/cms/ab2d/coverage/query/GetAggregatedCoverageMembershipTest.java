@@ -52,7 +52,7 @@ class GetAggregatedCoverageMembershipTest {
 		GetAggregatedCoverageMembership test = new GetAggregatedCoverageMembership(container.getDataSource());
 		test.createAggregatedAttributionTable(contract);
 
-		assertTrue(test.getAggregatedTableRowCount(contract) > 0);
+		assertTrue(test.getDistinctPatientCount(contract) > 0);
 		assertTrue(test.getCoveragePeriodsInAggregatedTable(contract) > 0);
 
 		ContractForCoverageDTO contractDto = new ContractForCoverageDTO();

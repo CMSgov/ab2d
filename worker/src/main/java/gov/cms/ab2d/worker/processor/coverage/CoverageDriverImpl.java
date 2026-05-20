@@ -529,18 +529,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
 
-        /*
-        final ZonedDateTime endTime = getEndDateTime();
-        final ZonedDateTime startDateTime = getStartDateTime(contract);
-        final CoverageV3Periods coverageV3Periods = CoverageV3Utils.enumerateCoveragePeriods(startDateTime, endTime);
-        log.info("[V3] counting number of beneficiaries for {} coverage periods for job {}",
-                coverageV3Periods.getHistoricalCoverage().size() + coverageV3Periods.getRecentCoverage().size(),
-                job.getJobUuid()
-        );
-        int count = coverageV3Service.countBeneficiariesByCoveragePeriod(coverageV3Periods, contract.getContractNumber());
-        */
-
-        int count = coverageV3Service.getAggregatedTableRowCount(contract.getContractNumber());
+        int count = coverageV3Service.getDistinctPatientCount(contract.getContractNumber());
         log.info("[V3] number of beneficiaries for job {}: {}", job.getJobUuid(), count);
         return count;
     }
@@ -758,7 +747,10 @@ public class CoverageDriverImpl implements CoverageDriver {
     }
 
     @Override
+    @Deprecated
+
     public void verifyCoverageV3() {
+        /*
         val issues = new ArrayList<String>();
 
         // Only filter contracts that matter
@@ -782,7 +774,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         if (!issues.isEmpty()) {
             throw new CoverageVerificationException(message, issues);
         }
-
+        */
     }
 
     private boolean contractNotBeingUpdatedV3(List<String> issues, Contract contract) {

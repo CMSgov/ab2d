@@ -40,20 +40,24 @@ public class CoverageV3CheckQuartzJob extends QuartzJobBean {
             log.info("[V3] Skipping enrollment verification because AB2D is already in maintenance mode");
         }
 
-//        try {
-//            driver.verifyCoverageV3();
-//        } catch (CoverageVerificationException exception) {
-//            log.error("[V3] coverage is invalid or not able to be verified {}", exception.getAlertMessage());
-//            logManager.alert("[V3] " + COVERAGE_VERIFICATION_FAILURE + " Coverage verification failed:\n" + exception.getAlertMessage(), List.of(PRODUCTION));
-//
-//            throw new JobExecutionException(exception);
-//        } catch (Exception exception) {
-//            log.error("[V3] Encountered unexpected failure attempting to verify coverage", exception);
-//
-//            logManager.alert("[V3] " + COVERAGE_VERIFICATION_ABORTED + " could not verify coverage due to " + exception.getClass()
-//                    + ":\n" + exception.getMessage(), List.of(PRODUCTION));
-//
-//            throw new JobExecutionException(exception);
-//        }
+        // Note: This process uses a query that causes the database to run out of disk space... to be updated in AB2D-7272
+
+        /*
+        try {
+            driver.verifyCoverageV3();
+        } catch (CoverageVerificationException exception) {
+            log.error("[V3] coverage is invalid or not able to be verified {}", exception.getAlertMessage());
+            logManager.alert("[V3] " + COVERAGE_VERIFICATION_FAILURE + " Coverage verification failed:\n" + exception.getAlertMessage(), List.of(PRODUCTION));
+
+            throw new JobExecutionException(exception);
+        } catch (Exception exception) {
+            log.error("[V3] Encountered unexpected failure attempting to verify coverage", exception);
+
+            logManager.alert("[V3] " + COVERAGE_VERIFICATION_ABORTED + " could not verify coverage due to " + exception.getClass()
+                    + ":\n" + exception.getMessage(), List.of(PRODUCTION));
+
+            throw new JobExecutionException(exception);
+        }
+         */
     }
 }

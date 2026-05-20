@@ -33,6 +33,7 @@ public class GetCoverageV3Count extends CoverageV3BaseQuery {
 		super(dataSource);
 	}
 
+	@Deprecated
 	public Map<String, List<CoverageV3Count>> coverageCounts() {
 		val template = new JdbcTemplate(this.dataSource);
 		List<CoverageV3Count> queryResult = template.query(QUERY, new CoverageV3CountRowMapper());

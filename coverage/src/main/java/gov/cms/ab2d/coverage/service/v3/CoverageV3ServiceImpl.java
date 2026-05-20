@@ -138,8 +138,8 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
-    public int getAggregatedTableRowCount(String contract) {
-        return new GetAggregatedCoverageMembership(dataSource).getAggregatedTableRowCount(contract);
+    public int getDistinctPatientCount(String contract) {
+        return new GetAggregatedCoverageMembership(dataSource).getDistinctPatientCount(contract);
     }
 
     @Override

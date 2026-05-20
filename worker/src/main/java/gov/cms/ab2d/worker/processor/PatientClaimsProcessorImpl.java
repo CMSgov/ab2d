@@ -112,11 +112,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 ? new BfdRequestTracking(request.getJob())
                 : BfdRequestTracking.NOOP;
 
-        boolean useInPlace   = propertiesService.isToggleOn(EOB_V3_IN_PLACE, false);
-        long    allocBefore  = threadAllocBytes();
-        long[]  gcBefore     = gcSnapshot();
-        long    nsBefore     = System.nanoTime();
-
         File file = null;
         String anyErrors = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
@@ -132,21 +127,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
             bfdRequestTracking.summarizeResponseTimes();
         }
-
-        long   elapsedMs        = (System.nanoTime() - nsBefore) / 1_000_000;
-        long   allocDeltaKB     = allocBefore >= 0 ? (threadAllocBytes() - allocBefore) / 1024 : -1;
-        long[] gcAfter          = gcSnapshot();
-        long   gcEvents         = gcAfter[0] - gcBefore[0];
-        long   gcTimeDeltaMs    = gcAfter[1] - gcBefore[1];
-        int    patients         = request.getCoverageSummary().size();
-        long   heapUsedMB       = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
-
-        log.info("eob.processing.metrics job={} contract={} patients={} inPlace={} "
-                        + "allocKB={} allocKBPerPatient={} gcEvents={} gcTimeDeltaMs={} heapUsedMB={} elapsedMs={}",
-                request.getJob(), request.getContractNum(), patients, useInPlace,
-                allocDeltaKB,
-                patients > 0 && allocDeltaKB >= 0 ? allocDeltaKB / patients : -1,
-                gcEvents, gcTimeDeltaMs, heapUsedMB, elapsedMs);
 
         return anyErrors;
     }
@@ -226,8 +206,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         Date earliestDate = getEarliestDataDate();
 
         // Aggregate claims into a single list
-        boolean useInPlace = propertiesService.isToggleOn(EOB_V3_IN_PLACE, false);
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate, useInPlace);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
 
         final long patientIdentifier = (request.getVersion() == FhirVersion.R4V3)
             ? patient.getIdentifiers().getPatientIdV3()
@@ -458,24 +437,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             date = new Date(d.toInstant(ZoneOffset.UTC).toEpochMilli());
         }
         return date;
-    }
-
-    private static long threadAllocBytes() {
-        return THREAD_BEAN != null
-                ? THREAD_BEAN.getThreadAllocatedBytes(Thread.currentThread().getId())
-                : -1;
-    }
-
-    private static long[] gcSnapshot() {
-        long count = 0;
-        long timeMs = 0;
-        for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
-            long c = gc.getCollectionCount();
-            long t = gc.getCollectionTime();
-            if (c >= 0) count  += c;
-            if (t >= 0) timeMs += t;
-        }
-        return new long[]{count, timeMs};
     }
 
 }

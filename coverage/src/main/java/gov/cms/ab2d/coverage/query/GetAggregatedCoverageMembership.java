@@ -82,7 +82,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
 
     // NOTE: This is updated to include 'WHERE share_data is NOT false', however whether a patient has been opted out
     // will be determined after `reduceAndFilter` is called (in the event a patient has more than one MBI)
-    private static final String AGGREGATED_TABLE_ROW_COUNT =
+    private static final String AGGREGATED_TABLE_DISTINCT_PATIENT_COUNT =
             "SELECT COUNT(DISTINCT patient_id) FROM v3.coverage_v3_aggregated_{0} WHERE share_data IS NOT false";
 
     private static final String GET_DISTINCT_COVERAGE_PERIOD_COUNT =
@@ -142,10 +142,10 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         log.info("Created table {}", tableName);
     }
 
-    public int getAggregatedTableRowCount(final String contract) {
+    public int getDistinctPatientCount(final String contract) {
         val tableName = MessageFormat.format(AGGREGATED_TABLE_NAME, contract);
         log.info("Calculating row count for {}", tableName);
-        val query = MessageFormat.format(AGGREGATED_TABLE_ROW_COUNT, contract);
+        val query = MessageFormat.format(AGGREGATED_TABLE_DISTINCT_PATIENT_COUNT, contract);
         val rowCount = DataAccessUtils.intResult(jdbcTemplate.getJdbcOperations().queryForList(query, Integer.class));
         log.info("Row count for {} = {}", tableName, rowCount);
         return rowCount;

@@ -15,11 +15,14 @@ public interface CoverageV3Service {
     CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source);
     Map<String, List<CoverageV3Count>> getCoverageCount();
     boolean idrImportInProgress();
+    // called before starting a v3 job
     void createAggregatedAttributionTable(String contract);
+    // called when v3 job is completed, failed, or cancelled via API
     void deleteAggregatedAttributionTable(String contract);
     // NOTE: Assumes job has been kicked off and aggregated table exists
-    int getAggregatedTableRowCount(String contract);
-    // NOTE: Assumes job has been kicked off and aggregated table exists
+    int getDistinctPatientCount(String contract);
+    // NOTE: Assumes job has been kicked off and aggregated table exists -- this is a slow process and will be updated in AB2D-7272
     int getCoveragePeriodsInAggregatedTable(String contract);
+    // used to find/delete tables from jobs cancelled manually (not via the API)
     void checkForAggregatedTablesToBeDeleted();
 }
