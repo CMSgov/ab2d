@@ -63,7 +63,7 @@ public class Metrics extends CoverageV3BaseQuery {
 
 	public void addMetric(String jobUuid, Metric[] metrics) {
 		try {
-			// this will fail the first time because the table won't exist
+			// this will fail the first time because the table won't exist -- better than calling 'create table if not exists' every single time
 			_addMetric(jobUuid, metrics);
 		} catch (Exception e) {
 			try {
