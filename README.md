@@ -83,6 +83,7 @@ psql -h localhost -U ab2d -d ab2d -f local-dev/sql/seed-coverage.sql
 When prompted for a password, use the default: `ab2d`.
 
 Once the database is seeded, submit a job using the job submission script, `local-dev/submit-job.sh`, or by sending a request to the API directly at https://localhost:8443.
+
 ## Installing and Using Pre-commit
 
 Anyone committing to this repo must use the pre-commit hook to lower the likelihood that secrets will be exposed.

@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.security;
 
 import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.Jwt;
+import com.okta.jwt.JwtVerificationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -29,30 +30,18 @@ public class LocalJwtConfig {
             @Value("${api.local.jwt.token-ttl-hours:2}") long tokenTtlHours) {
         log.warn("LOCAL PROFILE: JWT verification is stubbed; any bearer token will authenticate as '{}'", clientId);
         return token -> {
+            if (token == null || token.isBlank()) {
+                throw new JwtVerificationException("LOCAL stub rejected empty bearer token");
+            }
             Instant now = Instant.now();
-            Instant expiresAt = now.plus(Duration.ofHours(tokenTtlHours));
-            Map<String, Object> claims = Map.of("sub", clientId);
-            return new Jwt() {
-                @Override
-                public String getTokenValue() {
-                    return token;
-                }
-
-                @Override
-                public Instant getIssuedAt() {
-                    return now;
-                }
-
-                @Override
-                public Instant getExpiresAt() {
-                    return expiresAt;
-                }
-
-                @Override
-                public Map<String, Object> getClaims() {
-                    return claims;
-                }
-            };
+            return new StubJwt(token, now, now.plus(Duration.ofHours(tokenTtlHours)), Map.of("sub", clientId));
         };
+    }
+
+    private record StubJwt(String token, Instant issued, Instant expires, Map<String, Object> claims) implements Jwt {
+        @Override public String getTokenValue() { return token; }
+        @Override public Instant getIssuedAt() { return issued; }
+        @Override public Instant getExpiresAt() { return expires; }
+        @Override public Map<String, Object> getClaims() { return claims; }
     }
 }

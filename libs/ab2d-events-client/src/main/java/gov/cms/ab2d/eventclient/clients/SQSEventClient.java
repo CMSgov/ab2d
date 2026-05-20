@@ -14,7 +14,6 @@ import gov.cms.ab2d.eventclient.messages.SlackSQSMessage;
 import gov.cms.ab2d.eventclient.messages.TraceAndAlertSQSMessage;
 import gov.cms.ab2d.eventclient.messages.TraceSQSMessage;
 import java.util.List;
-import java.util.concurrent.CompletionException;
 
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
@@ -122,8 +121,6 @@ public class SQSEventClient implements EventClient {
 
         } catch (JsonProcessingException | UnsupportedOperationException | SqsException e) {
             log.info(e.getMessage());
-        } catch (CompletionException completionException) {
-            log.info("SQS async operation failed");
         }
     }
 }
