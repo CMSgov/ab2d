@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 
 class JobSummaryEventTest {
 
-  JobSummaryEvent jobSummaryEvent;
-  OffsetDateTime now = OffsetDateTime.now();
+  private JobSummaryEvent jobSummaryEvent;
+  private OffsetDateTime now = OffsetDateTime.now();
 
   @Test
   void testAsMessage() {

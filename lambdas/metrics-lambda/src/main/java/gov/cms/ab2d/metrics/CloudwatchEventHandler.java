@@ -61,13 +61,11 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
     public static String deriveSqsQueueName(String url) {
         if (url == null || url.isBlank()) {
             return "ab2d-local-events";
-        }
-        else {
+        } else {
             try {
                 String[] tokens = url.split("/");
-                return tokens[tokens.length-1];
-            }
-            catch (Exception e) {
+                return tokens[tokens.length - 1];
+            } catch (Exception e) {
                 throw new MetricsLambdaException("Unable to derive SQS queue name from URL: " + url);
             }
         }

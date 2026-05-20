@@ -38,14 +38,14 @@ import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITI
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class InvokeTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
+    private static final AB2DLocalstackContainer LOCALSTACK_CONTAINER = new AB2DLocalstackContainer();
 
-    private static final String snsTopicPrefix = "ab2d-local";
+    private static final String SNS_TOPIC_PREFIX = "ab2d-local";
 
     private final ObjectMapper mapper = JsonMapper.builder()
             .configure(ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
@@ -68,7 +68,7 @@ class InvokeTest {
         ContractDTO contractDTO = new ContractDTO(1L, "test.json", "test.json", OffsetDateTime.now(), Contract.ContractType.NORMAL, 100, 100);
         ContractDTO contractDTO2 = new ContractDTO(2L, "test2", "test2", OffsetDateTime.now(), Contract.ContractType.NORMAL, 200, 200);
         CloseableHttpClient httpResponse = mock(CloseableHttpClient.class);
-        HPMSCountsHandler eventHandler = new HPMSCountsHandler(httpResponse, getSNSClient(props.get("AWS_SNS_URL") + ""), snsTopicPrefix);
+        HPMSCountsHandler eventHandler = new HPMSCountsHandler(httpResponse, getSNSClient(props.get("AWS_SNS_URL") + ""), SNS_TOPIC_PREFIX);
         Mockito.when(httpResponse.execute(any(), any(BasicHttpClientResponseHandler.class))).thenReturn(mapper.writeValueAsString(List.of(contractDTO, contractDTO2)));
         String value = mapper.writeValueAsString("");
         eventHandler.handleRequest(new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8)), System.out, new TestContext());
@@ -78,10 +78,10 @@ class InvokeTest {
     void hpmsCountInvokeSend() throws IOException {
         Properties props = PropertiesUtil.loadProps();
 
-        ContractDTO contractDTO = new ContractDTO(1l, "test.json", "test.json", OffsetDateTime.now(), Contract.ContractType.NORMAL, 200, 200);
-        ContractDTO contractDTO2 = new ContractDTO(2l, "test2", "test2", OffsetDateTime.now(), Contract.ContractType.NORMAL, 300, 300);
+        ContractDTO contractDTO = new ContractDTO(1L, "test.json", "test.json", OffsetDateTime.now(), Contract.ContractType.NORMAL, 200, 200);
+        ContractDTO contractDTO2 = new ContractDTO(2L, "test2", "test2", OffsetDateTime.now(), Contract.ContractType.NORMAL, 300, 300);
         CloseableHttpClient httpResponse = mock(CloseableHttpClient.class);
-        HPMSCountsHandler eventHandler = new HPMSCountsHandler(httpResponse, getSNSClient(props.get("AWS_SNS_URL") + ""), snsTopicPrefix);
+        HPMSCountsHandler eventHandler = new HPMSCountsHandler(httpResponse, getSNSClient(props.get("AWS_SNS_URL") + ""), SNS_TOPIC_PREFIX);
         Mockito.when(httpResponse.execute(any(), any(BasicHttpClientResponseHandler.class))).thenReturn(mapper.writeValueAsString(List.of(contractDTO, contractDTO2)));
         String value = mapper.writeValueAsString("");
         eventHandler.handleRequest(new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8)), System.out, new TestContext());

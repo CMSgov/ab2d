@@ -15,18 +15,22 @@ import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 
 public class S3MockAPIExtension implements BeforeAllCallback, ExtensionContext.Store.CloseableResource {
     private static final S3Mock API = S3Mock.create(8001, "/tmp/s3");
-    public static S3Client S3_CLIENT;
-    private static boolean STARTED = false;
+    private static S3Client s3Client;
+    private static boolean started = false;
+
+    public static S3Client getS3Client() {
+        return s3Client;
+    }
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        if (!STARTED) {
-            STARTED = true;
+        if (!started) {
+            started = true;
             context.getRoot().getStore(GLOBAL).put("S3MockAPIExtension", this);
 
             API.start();
 
-            S3_CLIENT = S3Client.builder()
+            s3Client = S3Client.builder()
                     .region(S3_REGION)
                     .endpointOverride(new URI(TEST_ENDPOINT))
                     .build();
@@ -38,7 +42,7 @@ public class S3MockAPIExtension implements BeforeAllCallback, ExtensionContext.S
     @Override
     public void close() {
         deleteBucket();
-        S3_CLIENT.close();
+        s3Client.close();
         API.stop();
     }
 
@@ -47,7 +51,7 @@ public class S3MockAPIExtension implements BeforeAllCallback, ExtensionContext.S
                 .bucket(TEST_BFD_BUCKET_NAME)
                 .build();
 
-        S3_CLIENT.createBucket(bucketRequest);
+        s3Client.createBucket(bucketRequest);
     }
 
     public static void createFile(String content, String fileName) {
@@ -56,7 +60,7 @@ public class S3MockAPIExtension implements BeforeAllCallback, ExtensionContext.S
                 .key(fileName)
                 .build();
 
-        S3_CLIENT.putObject(objectRequest, RequestBody.fromString(content));
+        s3Client.putObject(objectRequest, RequestBody.fromString(content));
     }
 
     public static boolean isObjectExists(String fileName) {
@@ -66,7 +70,7 @@ public class S3MockAPIExtension implements BeforeAllCallback, ExtensionContext.S
                     .key(fileName)
                     .build();
 
-            S3_CLIENT.headObject(headObjectRequest);
+            s3Client.headObject(headObjectRequest);
             return true;
         } catch (S3Exception ex) {
             if (ex.statusCode() == 404) {
@@ -83,7 +87,7 @@ public class S3MockAPIExtension implements BeforeAllCallback, ExtensionContext.S
                     .bucket(TEST_BFD_BUCKET_NAME)
                     .key(fileName)
                     .build();
-            S3_CLIENT.deleteObject(deleteObjectRequest);
+            s3Client.deleteObject(deleteObjectRequest);
         }
     }
 
@@ -92,6 +96,6 @@ public class S3MockAPIExtension implements BeforeAllCallback, ExtensionContext.S
                 .bucket(TEST_BFD_BUCKET_NAME)
                 .build();
 
-        S3_CLIENT.deleteBucket(deleteBucketRequest);
+        s3Client.deleteBucket(deleteBucketRequest);
     }
 }

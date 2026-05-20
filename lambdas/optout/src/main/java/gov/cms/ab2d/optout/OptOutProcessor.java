@@ -25,12 +25,12 @@ import static gov.cms.ab2d.optout.OptOutConstants.*;
 
 public class OptOutProcessor {
     private final LambdaLogger logger;
-    public List<OptOutInformation> optOutInformationList;
-    public boolean isRejected;
+    private List<OptOutInformation> optOutInformationList;
+    private boolean isRejected;
     private final String dbHost;
     private final String environment;
 
-    ParameterStoreUtil parameterStore;
+    private ParameterStoreUtil parameterStore;
 
     public OptOutProcessor(LambdaLogger logger) {
         this.logger = logger;
@@ -223,6 +223,18 @@ public class OptOutProcessor {
 
     public String getEffectiveDate(String date) {
         return (isRejected) ? " ".repeat(EFFECTIVE_DATE_LENGTH) : date;
+    }
+
+    public List<OptOutInformation> getOptOutInformationList() {
+        return optOutInformationList;
+    }
+
+    public boolean isRejected() {
+        return isRejected;
+    }
+
+    public void setRejected(boolean rejected) {
+        this.isRejected = rejected;
     }
 
 }

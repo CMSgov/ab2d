@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class FileEventTest {
 
-  FileEvent fileEvent;
+  private FileEvent fileEvent;
 
   @Test
   void testConstructor() {

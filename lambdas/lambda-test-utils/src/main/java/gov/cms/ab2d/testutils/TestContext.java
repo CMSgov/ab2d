@@ -12,13 +12,13 @@ import org.slf4j.Logger;
 public class TestContext implements Context {
 
     private final LambdaLogger logger;
-    Logger log = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    private final Logger log = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
 
     public TestContext() {
         logger = Mockito.mock(LambdaLogger.class);
         Mockito.doAnswer(call -> {
-                    log.info( call.getArgument(0));
+                    log.info(call.getArgument(0));
                     return null;
                 })
                 .when(logger)

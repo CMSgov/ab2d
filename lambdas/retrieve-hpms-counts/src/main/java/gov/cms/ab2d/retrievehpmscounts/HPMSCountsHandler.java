@@ -124,7 +124,7 @@ public class HPMSCountsHandler implements RequestStreamHandler {
     // upgrade this lambda (Java 11) to a recent version of `ab2d-sns-client` (Java 17) due to incompatibility
     public static class AB2DSNSClientOverride implements SNSClient {
 
-        private static final Logger log = LoggerFactory.getLogger(AB2DSNSClientOverride.class);
+        private static final Logger LOG = LoggerFactory.getLogger(AB2DSNSClientOverride.class);
         private final AmazonSNSClient amazonSNSClient;
         private final ObjectMapper mapper;
         private final Ab2dEnvironment ab2dEnvironment;
@@ -134,8 +134,8 @@ public class HPMSCountsHandler implements RequestStreamHandler {
             if (snsTopicPrefix == null || snsTopicPrefix.isBlank()) {
                 throw new AB2DSNSClientOverrideException("SNS topic prefix is required");
             }
-            log.info("SNS topic prefix: '{}'", snsTopicPrefix);
-            this.mapper = ((JsonMapper.Builder)JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)).build();
+            LOG.info("SNS topic prefix: '{}'", snsTopicPrefix);
+            this.mapper = ((JsonMapper.Builder) JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)).build();
             this.amazonSNSClient = amazonSNSClient;
             this.ab2dEnvironment = ab2dEnvironment;
             this.snsTopicPrefix = snsTopicPrefix;
@@ -147,7 +147,7 @@ public class HPMSCountsHandler implements RequestStreamHandler {
             AmazonSNSClient client = this.amazonSNSClient;
             request.setTopicArn(client.createTopic(snsTopicPrefix + "-" + topicName).getTopicArn());
             request.setMessage(this.mapper.writeValueAsString(message));
-            log.info("Sending message to '{}'", request.getTopicArn());
+            LOG.info("Sending message to '{}'", request.getTopicArn());
             this.amazonSNSClient.publish(request);
         }
 

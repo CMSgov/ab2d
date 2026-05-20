@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 public class ContextTest {
 
-    Logger log = org.slf4j.LoggerFactory.getLogger(this.getClass());
+    private final Logger log = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
     @Test
     void testContext() {

@@ -14,6 +14,14 @@ pluginManagement {
 
 rootProject.name = 'ab2d-events'
 
+// Workaround: gov.cms.ab2d.plugin 1.0.2 sets project.sourceCompatibility using the
+// Gradle 8 API that was removed in Gradle 9. Pre-registering these as ext properties
+// lets Groovy's dynamic dispatch update the ext value instead of throwing.
+gradle.beforeProject { proj ->
+    proj.ext.set("sourceCompatibility", 17)
+    proj.ext.set("targetCompatibility", 17)
+}
+
 // buildFileName needs to be set for aws deploys but can completely breaks intellij
 if (System.getProperty("set.root.project.build.filename")!=null) {
     rootProject.buildFileName = 'ab2d-events'

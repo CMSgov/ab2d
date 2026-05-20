@@ -18,9 +18,9 @@ class EobUtilsTest {
     }
   }
 
-  IBaseResource eob1 = ExplanationOfBenefitTrimmerSTU3.getBenefit(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json"));
-  IBaseResource eob2 = ExplanationOfBenefitTrimmerSTU3.getBenefit(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json"));
-  IBaseResource eob3 = new MockEOB();
+  private IBaseResource eob1 = ExplanationOfBenefitTrimmerSTU3.getBenefit(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json"));
+  private IBaseResource eob2 = ExplanationOfBenefitTrimmerSTU3.getBenefit(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json"));
+  private IBaseResource eob3 = new MockEOB();
 
   @Test
   void testInvokeGetMethod() {

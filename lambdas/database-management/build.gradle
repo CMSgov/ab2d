@@ -12,19 +12,19 @@ repositories {
 
 dependencies {
     implementation 'org.liquibase:liquibase-core:4.33.0'
-    implementation 'org.postgresql:postgresql:42.7.2'
+    implementation 'org.postgresql:postgresql:42.7.11'
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
-    annotationProcessor 'org.projectlombok:lombok:1.18.42'
-    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
+    compileOnly 'org.projectlombok:lombok:1.18.46'
     testImplementation 'org.liquibase:liquibase-core:4.33.0'
-    testImplementation 'org.postgresql:postgresql:42.7.2'
+    testImplementation 'org.postgresql:postgresql:42.7.11'
     testImplementation project(':lambda-test-utils')
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testImplementation 'org.junit.platform:junit-platform-commons:1.9.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
-    testImplementation 'org.testcontainers:junit-jupiter:1.17.6'
-    testImplementation "org.testcontainers:postgresql:1.17.6"
+    testImplementation 'org.testcontainers:junit-jupiter:1.20.6'
+    testImplementation "org.testcontainers:postgresql:1.20.6"
 
 
     implementation project(':lambda-lib')
@@ -48,8 +48,8 @@ task wrapper(type: Wrapper) {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 build.dependsOn buildZip
