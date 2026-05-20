@@ -4,7 +4,7 @@ import software.amazon.awssdk.regions.Region;
 
 import java.util.regex.Pattern;
 
-public class OptOutConstants {
+public final class OptOutConstants {
 
     public static final String ENDPOINT = "https://s3.amazonaws.com";
     public static final Region S3_REGION = Region.US_EAST_1;
@@ -25,9 +25,9 @@ public class OptOutConstants {
                     "ON CONFLICT (mbi) DO UPDATE \n" +
                     "SET share_data = EXCLUDED.share_data, \n" +
                     "effective_date = current_date;";
-    public static final String COUNT_STATEMENT = "SELECT \n"+
-        "COUNT(CASE WHEN share_data = 'true' THEN 1 END) AS optin, \n"+
-        "COUNT(CASE WHEN share_data = 'false' THEN 1 END) AS optout \n"+
+    public static final String COUNT_STATEMENT = "SELECT \n" +
+        "COUNT(CASE WHEN share_data = 'true' THEN 1 END) AS optin, \n" +
+        "COUNT(CASE WHEN share_data = 'false' THEN 1 END) AS optout \n" +
         "FROM current_mbi WHERE share_data IS NOT NULL";
 
     public static final String LETTER_PATTERN = "[AC-HJKMNPQRT-Y]";
@@ -48,5 +48,5 @@ public class OptOutConstants {
                     "\\d{2}"
     );
 
-    private OptOutConstants() {}
+    private OptOutConstants() { }
 }

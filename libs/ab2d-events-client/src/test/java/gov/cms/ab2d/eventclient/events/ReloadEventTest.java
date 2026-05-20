@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 class ReloadEventTest {
 
-  ReloadEvent reloadEvent;
+  private ReloadEvent reloadEvent;
 
   @Test
   void testConstructor() {

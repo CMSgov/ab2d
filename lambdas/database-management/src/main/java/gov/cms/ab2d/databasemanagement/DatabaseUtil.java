@@ -15,7 +15,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class DatabaseUtil {
+public final class DatabaseUtil {
     private DatabaseUtil() {
     }
 
@@ -23,8 +23,7 @@ public class DatabaseUtil {
         Properties properties = PropertiesUtil.loadProps();
         try {
             return DriverManager.getConnection(properties.get("DB_URL") + "", properties.get("DB_USERNAME") + "", properties.get("DB_PASSWORD") + "");
-        }
-        catch (SQLException ex){
+        } catch (SQLException ex) {
             throw new DatabaseManagementException("Unable to get connection to ab2d database", ex);
         }
     }

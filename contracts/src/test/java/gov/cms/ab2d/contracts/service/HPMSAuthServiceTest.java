@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @TestPropertySource(locations = "/application.properties")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 // HPMSAuthServiceImpl holds some state that's useful normally but can break tests. Reset the bean after each test.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class HPMSAuthServiceTest {

@@ -14,12 +14,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class InvokeTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer POSTGRE_SQL_CONTAINER = new AB2DPostgresqlContainer();
 
     @Test
     void database() throws SQLException {

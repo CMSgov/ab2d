@@ -30,12 +30,12 @@ import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITI
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class InvokeTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
-    private static final PostgreSQLContainer postgreSQLContainerr = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer POSTGRE_SQL_CONTAINER = new AB2DPostgresqlContainer();
 
     private final ObjectMapper mapper = JsonMapper.builder()
             .configure(ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)

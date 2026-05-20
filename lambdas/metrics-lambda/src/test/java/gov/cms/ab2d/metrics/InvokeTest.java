@@ -81,7 +81,7 @@ class InvokeTest {
         snsRecord.setSns(sns);
         event.setRecords(List.of(snsRecord));
         Context context = new TestContext();
-        Field sqs = ReflectionUtils.findFields(CloudwatchEventHandler.class,f -> f.getName()
+        Field sqs = ReflectionUtils.findFields(CloudwatchEventHandler.class, f -> f.getName()
                         .equals("amazonSQS"), ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
                 .stream()
                 .findFirst()

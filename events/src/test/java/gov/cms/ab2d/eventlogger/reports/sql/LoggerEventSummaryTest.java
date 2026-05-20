@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = SpringBootApp.class)
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class LoggerEventSummaryTest {
     public static final int ONE_MILL_SEC_IN_NANO = 1000000;
 

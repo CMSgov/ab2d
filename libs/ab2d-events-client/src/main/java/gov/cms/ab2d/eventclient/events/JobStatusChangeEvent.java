@@ -31,6 +31,7 @@ public class JobStatusChangeEvent extends LoggableEvent {
         this.description = description;
     }
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     public JobStatusChangeEvent(String organization, String jobId, String oldStatus, String newStatus, String description,
                                 String contractNumber, OffsetDateTime since, OffsetDateTime until,
                                 List<String> serviceDates, String resourceTypes, String version) {

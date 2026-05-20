@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @TestPropertySource(locations = "/application.properties")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class HPMSManualModeTest {
 
     public static final String TEST_CONTRACT_NUMBER = "X1234";

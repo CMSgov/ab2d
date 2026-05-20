@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestPropertySource(locations = "/application.properties")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class HPMSFetcherTest {
 
     final int NUM_CONTRACTS = 6;

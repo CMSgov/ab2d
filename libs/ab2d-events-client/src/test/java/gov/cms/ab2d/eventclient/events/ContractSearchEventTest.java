@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 class ContractSearchEventTest {
 
-  ContractSearchEvent contractSearchEvent;
+  private ContractSearchEvent contractSearchEvent;
 
   @Test
   void testConstructor() {

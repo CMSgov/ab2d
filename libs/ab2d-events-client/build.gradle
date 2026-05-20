@@ -2,7 +2,7 @@ version "$eventClientVersion"
 
 dependencies {
     implementation(platform(annotationProcessor("com.slack.api:slack-api-client:$slackAPIVersion")))
-    implementation "commons-codec:commons-codec:1.9"
+    implementation "commons-codec:commons-codec:1.18.0"
     implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-jdbc:${springBootVersion}"

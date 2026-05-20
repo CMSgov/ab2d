@@ -5,8 +5,8 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import com.amazonaws.services.s3.event.S3EventNotification;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static gov.cms.ab2d.optout.OptOutConstants.ENDPOINT;
 
@@ -25,10 +25,10 @@ public class OptOutHandler implements RequestHandler<SQSEvent, Void> {
         try {
             logger.log("OptOut Lambda started. Processing message from SQS " + msg.getBody());
 
-            JSONParser parser = new JSONParser();
-            JSONObject json = (JSONObject) parser.parse(msg.getBody());
-            var s3EventMessage = json.get("Message");
-            var notification = S3EventNotification.parseJson(s3EventMessage.toString()).getRecords().get(0);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode json = mapper.readTree(msg.getBody());
+            var s3EventMessage = json.get("Message").asText();
+            var notification = S3EventNotification.parseJson(s3EventMessage).getRecords().get(0);
 
             var optOutProcessing = processorInit(logger);
             var optOutResults = optOutProcessing.process(getFileName(notification), getBucketName(notification), ENDPOINT);

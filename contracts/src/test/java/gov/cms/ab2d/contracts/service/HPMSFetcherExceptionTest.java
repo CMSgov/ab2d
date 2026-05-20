@@ -17,7 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
 @TestPropertySource(locations = "/application.properties")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @TestPropertySource(properties = {
         "hpms.base.path=invalid",
         "hpms.base.url=localhost"

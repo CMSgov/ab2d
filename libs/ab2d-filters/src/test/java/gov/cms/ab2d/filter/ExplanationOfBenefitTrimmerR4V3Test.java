@@ -38,6 +38,13 @@ class ExplanationOfBenefitTrimmerR4V3Test {
     }
 
     static void populate() {
+        populateBasicFields();
+        populateSupportingInfoAndItems();
+        populatePractitionersAndExtensions();
+        populateCareTeamDiagnosisProcedure();
+    }
+
+    private static void populateBasicFields() {
         EOB.setText(new Narrative().setStatus(Narrative.NarrativeStatus.ADDITIONAL));
         EOB.setMeta(new Meta().setLastUpdated(SAMPLE_DATE));
         EOB.setPatient(new Reference("Patient/1234"));
@@ -100,8 +107,9 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         EOB.setAdjudication(List.of(
                 new ExplanationOfBenefit.AdjudicationComponent()
                         .setAmount(new Money().setValue(11))));
+    }
 
-        // DRG supportingInfo per FHIRPath
+    private static void populateSupportingInfoAndItems() {
         ExplanationOfBenefit.SupportingInformationComponent drgSupportingInfo =
                 new ExplanationOfBenefit.SupportingInformationComponent()
                         .setSequence(3)
@@ -116,7 +124,7 @@ class ExplanationOfBenefitTrimmerR4V3Test {
                                 new CodeableConcept().addCoding(
                                         new Coding()
                                                 .setSystem(DRG_SYSTEM)
-                                                .setCode("123") // sample DRG code
+                                                .setCode("123")
                                 )
                         );
         EOB.setSupportingInfo(List.of(drgSupportingInfo));
@@ -137,139 +145,88 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         EOB.setType(new CodeableConcept().setText(DUMMY_TYPE));
         EOB.setSubType(new CodeableConcept().setText("subtype"));
         EOB.setBillablePeriod(new Period().setEnd(SAMPLE_DATE).setStart(SAMPLE_DATE));
+    }
 
+    private static void populatePractitionersAndExtensions() {
         Practitioner attending = new Practitioner();
         attending.setId("careteam-attending");
-        attending.addIdentifier()
-                .setSystem(NPI_SYSTEM)
-                .setValue("rendering-npi");
+        attending.addIdentifier().setSystem(NPI_SYSTEM).setValue("rendering-npi");
 
         Practitioner referring = new Practitioner();
         referring.setId("attending-referring");
-        referring.addIdentifier()
-                .setSystem(NPI_SYSTEM)
-                .setValue("referring-npi");
+        referring.addIdentifier().setSystem(NPI_SYSTEM).setValue("referring-npi");
 
         Practitioner operating = new Practitioner();
         operating.setId("careteam-operating");
-        operating.addIdentifier()
-                .setSystem(NPI_SYSTEM)
-                .setValue("operating-npi");
+        operating.addIdentifier().setSystem(NPI_SYSTEM).setValue("operating-npi");
 
         Practitioner otherOperating = new Practitioner();
         otherOperating.setId("careteam-otheroperating");
-        otherOperating.addIdentifier()
-                .setSystem(NPI_SYSTEM)
-                .setValue("otheroperating-npi");
+        otherOperating.addIdentifier().setSystem(NPI_SYSTEM).setValue("otheroperating-npi");
 
         Practitioner rendering = new Practitioner();
         rendering.setId("careteam-rendering");
-        rendering.addIdentifier()
-                .setSystem(NPI_SYSTEM)
-                .setValue("rendering-npi");
+        rendering.addIdentifier().setSystem(NPI_SYSTEM).setValue("rendering-npi");
 
-// extensions for rendering provider (test expects them on careteam-attending)
-        attending.addExtension(
-                new Extension()
-                        .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD")
-                        .setValue(
-                                new CodeableConcept().addCoding(
-                                        new Coding()
-                                                .setSystem("http://example.org/prvdr-type")
-                                                .setCode("01")
-                                )
-                        )
-        );
-        attending.addExtension(
-                new Extension()
-                        .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD")
-                        .setValue(
-                                new CodeableConcept().addCoding(
-                                        new Coding()
-                                                .setSystem("http://example.org/rendering-participation")
-                                                .setCode("F")
-                                )
-                        )
-        );
+        attending.addExtension(new Extension()
+                .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD")
+                .setValue(new CodeableConcept().addCoding(new Coding()
+                        .setSystem("http://example.org/prvdr-type").setCode("01"))));
+        attending.addExtension(new Extension()
+                .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD")
+                .setValue(new CodeableConcept().addCoding(new Coding()
+                        .setSystem("http://example.org/rendering-participation").setCode("F"))));
 
-        rendering.addExtension(
-                new Extension()
-                        .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD")
-                        .setValue(
-                                new CodeableConcept().addCoding(
-                                        new Coding()
-                                                .setSystem("http://example.org/prvdr-type")
-                                                .setCode("01") // sample code
-                                )
-                        )
-        );
-        rendering.addExtension(
-                new Extension()
-                        .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD")
-                        .setValue(
-                                new CodeableConcept().addCoding(
-                                        new Coding()
-                                                .setSystem("http://example.org/rendering-participation")
-                                                .setCode("F") // sample code
-                                )
-                        )
-        );
+        rendering.addExtension(new Extension()
+                .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD")
+                .setValue(new CodeableConcept().addCoding(new Coding()
+                        .setSystem("http://example.org/prvdr-type").setCode("01"))));
+        rendering.addExtension(new Extension()
+                .setUrl("https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-RNDRG-PRVDR-PRTCPTG-CD")
+                .setValue(new CodeableConcept().addCoding(new Coding()
+                        .setSystem("http://example.org/rendering-participation").setCode("F"))));
 
         EOB.setContained(List.of(attending, referring, operating, otherOperating, rendering));
+    }
 
+    private static void populateCareTeamDiagnosisProcedure() {
         ExplanationOfBenefit.CareTeamComponent ctAttending =
                 new ExplanationOfBenefit.CareTeamComponent()
                         .setSequence(1)
                         .setResponsible(true)
                         .setRole(new CodeableConcept().addCoding(
-                                new Coding()
-                                        .setSystem(CARETEAM_ROLE_SYSTEM)
-                                        .setCode("attending")))
+                                new Coding().setSystem(CARETEAM_ROLE_SYSTEM).setCode("attending")))
                         .setProvider(new Reference("#careteam-attending"));
 
         ExplanationOfBenefit.CareTeamComponent ctReferring =
                 new ExplanationOfBenefit.CareTeamComponent()
                         .setSequence(2)
                         .setRole(new CodeableConcept().addCoding(
-                                new Coding()
-                                        .setSystem(CARETEAM_ROLE_SYSTEM)
-                                        .setCode("referring")))
+                                new Coding().setSystem(CARETEAM_ROLE_SYSTEM).setCode("referring")))
                         .setProvider(new Reference("#careteam-referring"));
 
         ExplanationOfBenefit.CareTeamComponent ctOperating =
                 new ExplanationOfBenefit.CareTeamComponent()
                         .setSequence(3)
                         .setRole(new CodeableConcept().addCoding(
-                                new Coding()
-                                        .setSystem(CARETEAM_ROLE_SYSTEM)
-                                        .setCode("operating")))
+                                new Coding().setSystem(CARETEAM_ROLE_SYSTEM).setCode("operating")))
                         .setProvider(new Reference("#careteam-operating"));
 
         ExplanationOfBenefit.CareTeamComponent ctOtherOperating =
                 new ExplanationOfBenefit.CareTeamComponent()
                         .setSequence(4)
                         .setRole(new CodeableConcept().addCoding(
-                                new Coding()
-                                        .setSystem(CARETEAM_ROLE_SYSTEM)
-                                        .setCode("otheroperating")))
+                                new Coding().setSystem(CARETEAM_ROLE_SYSTEM).setCode("otheroperating")))
                         .setProvider(new Reference("#careteam-otheroperating"));
 
         ExplanationOfBenefit.CareTeamComponent ctRendering =
                 new ExplanationOfBenefit.CareTeamComponent()
                         .setSequence(5)
                         .setRole(new CodeableConcept().addCoding(
-                                new Coding()
-                                        .setSystem(CARETEAM_ROLE_SYSTEM)
-                                        .setCode("rendering")))
+                                new Coding().setSystem(CARETEAM_ROLE_SYSTEM).setCode("rendering")))
                         .setProvider(new Reference("#careteam-rendering"));
 
-        EOB.setCareTeam(List.of(
-                ctAttending,
-                ctReferring,
-                ctOperating,
-                ctOtherOperating,
-                ctRendering
-        ));
+        EOB.setCareTeam(List.of(ctAttending, ctReferring, ctOperating, ctOtherOperating, ctRendering));
 
         EOB.setDiagnosis(List.of(
                 new ExplanationOfBenefit.DiagnosisComponent()

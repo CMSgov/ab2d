@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.MissingResourceException;
 
 public class ConvertXmlToJson {
-    public static void main(String...args) throws IOException {
+    public static void main(String... args) throws IOException {
         String inputFile = args[0];
         String outputFile = args[1];
         InputStream sampleData =

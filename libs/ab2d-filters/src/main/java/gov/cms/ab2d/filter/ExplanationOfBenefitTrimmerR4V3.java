@@ -130,7 +130,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     public static final String MS_DRG_SYSTEM = "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software";
 
     private static final String NPI_SYSTEM = "http://hl7.org/fhir/sid/us-npi";
-    private static final List<String> roleCodes = List.of("attending", "referring", "operating", "otheroperating", "rendering");
+    private static final List<String> ROLE_CODES = List.of("attending", "referring", "operating", "otheroperating", "rendering");
 
     private static final String RENDERING_EXT = "https://bluebutton.cms.gov/fhir/StructureDefinition/";
 
@@ -198,7 +198,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
                     .ifPresent(org -> copy.getContained().add(org.copy()));
         }
 
-        List<ExplanationOfBenefit.CareTeamComponent> newCars = getCareTeamsByRoleCodes(benefit, roleCodes);
+        List<ExplanationOfBenefit.CareTeamComponent> newCars = getCareTeamsByRoleCodes(benefit, ROLE_CODES);
 
         copy.setCareTeam(newCars);
 

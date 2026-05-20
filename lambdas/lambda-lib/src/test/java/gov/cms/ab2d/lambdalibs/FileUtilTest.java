@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class FileUtilTest {
-    final Path FILE_PATH = Paths.get("/tmp/opt/");
-    final String FILE_NAME = "testFile.txt";
+    private static final Path FILE_PATH = Paths.get("/tmp/opt/");
+    private static final String FILE_NAME = "testFile.txt";
 
     @Test
     void temporaryFileDeletionTest() throws IOException {
@@ -32,7 +32,7 @@ public class FileUtilTest {
         if (!Files.exists(dirPath)) {
             Files.createDirectory(dirPath);
         }
-        Path path1 = Paths.get(dirName + "/"+ FILE_NAME);
+        Path path1 = Paths.get(dirName + "/" + FILE_NAME);
         Path path2 = Paths.get(dirName + "/file.txt");
         byte[] data = {1, 2, 3, 4, 5};
         Files.write(path1, data);

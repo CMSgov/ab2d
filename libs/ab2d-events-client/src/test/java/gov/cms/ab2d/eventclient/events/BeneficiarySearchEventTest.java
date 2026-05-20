@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class BeneficiarySearchEventTest {
 
-  BeneficiarySearchEvent beneficiarySearchEvent;
+  private BeneficiarySearchEvent beneficiarySearchEvent;
 
   @Test
   void testConstructor() {

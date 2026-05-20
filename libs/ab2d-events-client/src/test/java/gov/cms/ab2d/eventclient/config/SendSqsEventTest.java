@@ -10,7 +10,6 @@ import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 
-import java.lang.UnsupportedOperationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -37,7 +36,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest(properties = {"spring.liquibase.enabled=false"})
 @ExtendWith(OutputCaptureExtension.class)
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 public class SendSqsEventTest {
 
     @Container
@@ -79,7 +78,7 @@ public class SendSqsEventTest {
 
     @Test
     void testSendMessagesDifferentQueue() throws JsonProcessingException {
-        amazonSQS.createQueue( CreateQueueRequest.builder()
+        amazonSQS.createQueue(CreateQueueRequest.builder()
                 .queueName("ab2d-dev-events-sqs")
                 .build());
         SqsAsyncClient amazonSQSSpy = Mockito.spy(amazonSQS);
@@ -150,7 +149,7 @@ public class SendSqsEventTest {
 
         when(amazonSQSMock.getQueueUrl(any(GetQueueUrlRequest.class))).thenReturn(CompletableFuture.completedFuture(queueURL));
         when(queueURL.queueUrl()).thenReturn("http://localhost:4321");
-        when(amazonSQSMock.sendMessage(any(SendMessageRequest.class))).thenThrow(new UnsupportedOperationException("foobar"));
+        when(amazonSQSMock.sendMessage(any(SendMessageRequest.class))).thenThrow(new java.lang.UnsupportedOperationException("foobar"));
         SQSEventClient sqsEventClient = new SQSEventClient(amazonSQSMock, mapper, LOCAL_EVENTS_SQS);
 
         ApiRequestEvent sentApiRequestEvent = new ApiRequestEvent("organization", "jobId", "url", "ipAddress", "token", "requestId");

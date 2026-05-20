@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 class ErrorEventTest {
 
-  ErrorEvent errorEvent;
+  private ErrorEvent errorEvent;
 
   @Test
   void testConstructor() {

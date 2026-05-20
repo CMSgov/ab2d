@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class ApiRequestEventTest {
 
-  ApiRequestEvent apiRequestEvent;
+  private ApiRequestEvent apiRequestEvent;
 
   @Test
   void testContructor() {

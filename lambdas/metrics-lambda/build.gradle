@@ -32,14 +32,13 @@ dependencies {
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
     implementation 'com.amazonaws:aws-java-sdk-sqs:1.12.793'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.20.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.0'
 
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.15.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0'
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
+    compileOnly 'org.projectlombok:lombok:1.18.46'
 
-    annotationProcessor 'org.projectlombok:lombok:1.18.42'
-    compileOnly 'org.projectlombok:lombok:1.18.42'
-
-    implementation 'org.slf4j:slf4j-api:2.0.4'
+    implementation 'org.slf4j:slf4j-api:2.0.17'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
     testImplementation 'org.junit.platform:junit-platform-commons:1.9.2'
