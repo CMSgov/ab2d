@@ -23,7 +23,7 @@ ext {
 
     // AB2D libraries
     fhirVersion='2.5.4'
-    bfdVersion='4.5.3-logging'
+    bfdVersion='4.5.3-logging-extra'
     aggregatorVersion='2.1.4'
     filtersVersion='3.2.0-logging' // AB2D-7222 Refactor EOB Processing to Eliminate Excess Allocations and Improve Reusability + Add logging for clm_uniq_id
     eventClientVersion='3.3.10'
