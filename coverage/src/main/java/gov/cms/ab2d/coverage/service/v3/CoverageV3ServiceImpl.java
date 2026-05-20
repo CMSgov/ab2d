@@ -56,7 +56,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
             // A missing period = one month of enrollment missing for the contract
 
             //final int coveragePeriodsSize = getCoveragePeriodsByContract(page.getContractNumber()).size();
-            final int coveragePeriodsSize = new GetAggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract.getContractNumber());
+            final int coveragePeriodsSize = new AggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract.getContractNumber());
 
             log.info("coveragePeriods.size() = {}; expectedCoveragePeriods = {}", coveragePeriodsSize, expectedCoveragePeriods);
             if (coveragePeriodsSize != expectedCoveragePeriods) {
@@ -143,27 +143,27 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     @Override
     public void createAggregatedAttributionTable(String contract) {
-        new GetAggregatedCoverageMembership(dataSource).createAggregatedAttributionTable(contract);
+        new AggregatedCoverageMembership(dataSource).createAggregatedAttributionTable(contract);
     }
 
     @Override
     public void deleteAggregatedAttributionTable(String contract) {
-        val aggregatedTable = MessageFormat.format(GetAggregatedCoverageMembership.AGGREGATED_TABLE_NAME, contract.toLowerCase());
+        val aggregatedTable = MessageFormat.format(AggregatedCoverageMembership.AGGREGATED_TABLE_NAME, contract.toLowerCase());
         if (keepAggregatedTable(aggregatedTable)) {
             log.info("Skipping deletion for aggregated table {}", aggregatedTable);
         } else {
-            new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract);
+            new AggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract);
         }
     }
 
     @Override
     public int getAggregatedTableRowCount(String contract) {
-        return new GetAggregatedCoverageMembership(dataSource).getAggregatedTableRowCount(contract);
+        return new AggregatedCoverageMembership(dataSource).getAggregatedTableRowCount(contract);
     }
 
     @Override
     public int getCoveragePeriodsInAggregatedTable(String contract) {
-        return new GetAggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract);
+        return new AggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract);
     }
 
     @Override
@@ -238,7 +238,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     private List<CoverageSummary> queryAggregatedCoverageMembership(CoveragePagingRequest page, long limit) {
         return executeTimedQuery(
             format("queryAggregatedCoverageMembership page=%s", page),
-            () -> new GetAggregatedCoverageMembership(dataSource).fetchAggregatedData(
+            () -> new AggregatedCoverageMembership(dataSource).fetchAggregatedData(
                     page.getContract(),
                     limit,
                     page.getCursor()
@@ -247,7 +247,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     private long reduceAndFilter(List<CoverageSummary> summaries) {
-        return new GetAggregatedCoverageMembership(dataSource).reduceAndFilter(summaries);
+        return new AggregatedCoverageMembership(dataSource).reduceAndFilter(summaries);
     }
 
     // TODO not used -- remove?

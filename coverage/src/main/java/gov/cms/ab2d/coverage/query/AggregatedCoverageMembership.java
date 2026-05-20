@@ -20,11 +20,11 @@ import java.text.MessageFormat;
 import java.util.*;
 
 @Slf4j
-public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
+public class AggregatedCoverageMembership extends CoverageV3BaseQuery {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    public GetAggregatedCoverageMembership(DataSource dataSource) {
+    public AggregatedCoverageMembership(DataSource dataSource) {
         super(dataSource);
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }
@@ -80,8 +80,8 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     """;
 
 
-    // NEW
-    // TODO test this -- added share_data criteria
+    // NOTE: This is updated to include 'WHERE share_data is NOT false', however whether a patient has been opted out
+    // will be determined after `reduceAndFilter` is called (in the event a patient has more than one MBI)
     private static final String AGGREGATED_TABLE_ROW_COUNT =
             "SELECT COUNT(DISTINCT patient_id) FROM v3.coverage_v3_aggregated_{0} WHERE share_data IS NOT false";
 
