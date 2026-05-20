@@ -48,14 +48,13 @@ ext {
     slackAPIVersion='1.35.0'
     hl7Version = '6.9.7'
 
-    failedTests = []
-    skippedTests = []
-    testSuites = []
 }
 
 allprojects {
 
-    tasks.withType(Test) { testTask ->
+    tasks.withType(Test).configureEach { testTask ->
+        def taskFailedTests = []
+        def taskSkippedTests = []
 
         testTask.testLogging { logging ->
             events TestLogEvent.FAILED,
@@ -70,11 +69,11 @@ allprojects {
 
         afterTest { desc, result ->
             if (result.resultType == TestResult.ResultType.FAILURE) {
-                rootProject.ext.failedTests.add(desc)
+                taskFailedTests.add(desc)
             }
 
             if (result.resultType == TestResult.ResultType.SKIPPED) {
-                rootProject.ext.skippedTests.add(desc)
+                taskSkippedTests.add(desc)
             }
         }
 
@@ -88,12 +87,21 @@ allprojects {
                     "failed ${result.failedTestCount}, " +
                     "skipped ${result.skippedTestCount}" +
                     ") "
-            rootProject.ext.testSuites += summary
+            println "Test Suite Summary: $summary"
+
+            if (!taskSkippedTests.isEmpty()) {
+                println "Skipped Tests: "
+                taskSkippedTests.each { println "\t" + it }
+            }
+            if (!taskFailedTests.isEmpty()) {
+                println "Failing Tests: "
+                taskFailedTests.each { println "\t" + it }
+            }
         }
     }
 
     // In each Project run to check if the version exists in the repository
-    task lookForArtifacts {
+    tasks.register('lookForArtifacts') {
         doLast {
             //This is the parent build where nothing gets published. Skip it.
             if(project.name != 'ab2d-libs')
@@ -151,8 +159,11 @@ subprojects {
         implementation(platform(annotationProcessor("org.projectlombok:lombok:$lombokVersion")))
     }
 
+    processResources {
+        exclude('checkstyle.xml')
+    }
+
     jar {
-        processResources.exclude('checkstyle.xml')
         //classifier "main".equalsIgnoreCase(gitBranch()) || "main".equalsIgnoreCase(System.getenv('BRANCH_NAME')) ? "" : "SNAPSHOT"
         // suppress the '*** building branch' logs
         if (!'true'.equals(System.getenv("SUPPRESS_LOGGING_BRANCH_CLASSIFIER"))) {
@@ -233,28 +244,6 @@ subprojects {
         componentVersion = "2.0.0"
     }
 }
-
-gradle.addListener(new BuildAdapter() {
-    @Override
-    void buildFinished(BuildResult result) {
-        if (!rootProject.ext.skippedTests.isEmpty()) {
-            println "Skipped Tests: "
-            for (String skippedTestDesc : rootProject.ext.skippedTests) {
-                println "\t" + skippedTestDesc
-            }
-        }
-        if (!rootProject.ext.failedTests.isEmpty()) {
-            println "Failing Tests: "
-            for (String failedTestDesc : rootProject.ext.failedTests) {
-                println "\t" + failedTestDesc
-            }
-        }
-        if (!rootProject.ext.testSuites.isEmpty()) {
-            println "Test Suite Summary: "
-            println rootProject.ext.testSuites
-        }
-    }
-})
 
 def gitBranch() {
     def branch = ""
