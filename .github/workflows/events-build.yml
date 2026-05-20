@@ -77,7 +77,7 @@ jobs:
         if: ${{ inputs.push_image == true }}
         id: build_image
         run: |
-          ./gradlew bootJar -Dset.root.project.build.filename=true
+          ./gradlew bootJar
           ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
           SHA_SHORT=$(git rev-parse --short HEAD)
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
