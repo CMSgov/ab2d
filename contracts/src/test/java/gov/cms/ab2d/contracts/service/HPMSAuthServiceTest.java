@@ -1,16 +1,23 @@
 package gov.cms.ab2d.contracts.service;
 
+import gov.cms.ab2d.contracts.hmsapi.HPMSAuthResponse;
 import gov.cms.ab2d.contracts.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import static org.springframework.http.HttpStatus.OK;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +36,11 @@ class HPMSAuthServiceTest {
     @Autowired
     HPMSAuthServiceImpl authService;
 
+    @MockBean
+    private WebClient mockedWebClient;
+
+    @Autowired
+    MockWebClient mockWebClient;
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -37,44 +49,56 @@ class HPMSAuthServiceTest {
     @Test
     public void tokenTest() {
         assertNotNull(authService);
+        HPMSAuthResponse authResponse = new HPMSAuthResponse();
+        authResponse.setAccessToken("TEST_TOKEN");
+        authResponse.setExpires(3600);
 
-        // Verifying initial state
-        assertTrue(authService.getAuthToken().isBlank());
-        assertEquals(0L, authService.getTokenRefreshAfter());
+        try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
+            mockWebClient.authRequestError(mockedWebClient, webClientStatic, OK, authResponse);
 
-        // Verifying the first time
-        HttpHeaders headers = new HttpHeaders();
-        authService.buildAuthHeaders(headers);
-        //noinspection ConstantConditions
-        assertEquals(authService.getAuthToken(), headers.get(HttpHeaders.AUTHORIZATION).get(0));
-        assertNotEquals(0, authService.getTokenRefreshAfter());
+            // Verifying initial state
+            assertTrue(authService.getAuthToken().isBlank());
+            assertEquals(0L, authService.getTokenRefreshAfter());
 
-        String firstAuthToken = authService.getAuthToken();
-        // Second call should return identical token (since it is cached)
-        headers = new HttpHeaders();
-        authService.buildAuthHeaders(headers);
-        //noinspection ConstantConditions
-        assertEquals(firstAuthToken, headers.get(HttpHeaders.AUTHORIZATION).get(0));
-        long tokenExpiry = authService.getTokenRefreshAfter();
+            // Verifying the first time
+            HttpHeaders headers = new HttpHeaders();
+            authService.buildAuthHeaders(headers);
+            //noinspection ConstantConditions
+            assertEquals(authService.getAuthToken(), headers.get(HttpHeaders.AUTHORIZATION).get(0));
+            assertNotEquals(0, authService.getTokenRefreshAfter());
 
-        // Force an expiry and see a new token is retrieved, can't depend upon the actual token being physically
-        // refreshed (without inserting a 500 ms pause), so just check expiry hear (which with 1 clock tick, will be
-        // different.
-        authService.clearToken();
-        headers = new HttpHeaders();
-        authService.buildAuthHeaders(headers);
-        assertNotEquals(tokenExpiry, authService.getTokenRefreshAfter());
+            String firstAuthToken = authService.getAuthToken();
+            // Second call should return identical token (since it is cached)
+            headers = new HttpHeaders();
+            authService.buildAuthHeaders(headers);
+            //noinspection ConstantConditions
+            assertEquals(firstAuthToken, headers.get(HttpHeaders.AUTHORIZATION).get(0));
+            long tokenExpiry = authService.getTokenRefreshAfter();
+
+            // Force an expiry and see a new token is retrieved
+            authService.clearToken();
+            headers = new HttpHeaders();
+            authService.buildAuthHeaders(headers);
+            assertNotEquals(tokenExpiry, authService.getTokenRefreshAfter());
+        }
     }
 
     @Test
     void headers() {
-        HttpHeaders headers = new HttpHeaders();
-        authService.buildAuthHeaders(headers);
-        // Method currently sets 3 headers
-        assertTrue(headers.size() >= 3);
-        headers.forEach((headerName, headerValue) -> {
-            assertNotNull(headerValue);
-        });
+        HPMSAuthResponse authResponse = new HPMSAuthResponse();
+        authResponse.setAccessToken("TEST_TOKEN");
+        authResponse.setExpires(3600);
+
+        try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
+            mockWebClient.authRequestError(mockedWebClient, webClientStatic, OK, authResponse);
+            HttpHeaders headers = new HttpHeaders();
+            authService.buildAuthHeaders(headers);
+            // Method currently sets 3 headers
+            assertTrue(headers.size() >= 3);
+            headers.forEach((headerName, headerValue) -> {
+                assertNotNull(headerValue);
+            });
+        }
     }
 
     @AfterEach
