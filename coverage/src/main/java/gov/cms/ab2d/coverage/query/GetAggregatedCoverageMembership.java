@@ -20,11 +20,11 @@ import java.text.MessageFormat;
 import java.util.*;
 
 @Slf4j
-public class AggregatedCoverageMembership extends CoverageV3BaseQuery {
+public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    public AggregatedCoverageMembership(DataSource dataSource) {
+    public GetAggregatedCoverageMembership(DataSource dataSource) {
         super(dataSource);
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }

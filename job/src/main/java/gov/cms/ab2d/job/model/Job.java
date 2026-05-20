@@ -157,8 +157,4 @@ public class Job {
         }
     }
 
-    public static void main(String[] args) {
-        System.out.println(new ServiceDateConverter().convertToDatabaseColumn(List.of("le2020-02-01", "gt2020-01-01")));
-        System.out.println(new ServiceDateConverter().convertToEntityAttribute("gt2020-01-01,le2020-02-01"));
-    }
 }

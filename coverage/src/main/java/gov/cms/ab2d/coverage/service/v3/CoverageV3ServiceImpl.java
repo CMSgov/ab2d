@@ -56,7 +56,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
             // A missing period = one month of enrollment missing for the contract
 
             //final int coveragePeriodsSize = getCoveragePeriodsByContract(page.getContractNumber()).size();
-            final int coveragePeriodsSize = new AggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract.getContractNumber());
+            final int coveragePeriodsSize = new GetAggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract.getContractNumber());
 
             log.info("coveragePeriods.size() = {}; expectedCoveragePeriods = {}", coveragePeriodsSize, expectedCoveragePeriods);
             if (coveragePeriodsSize != expectedCoveragePeriods) {
@@ -75,25 +75,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         }
 
 
-        // Determine how many records to pull back
-        //final long limit = CoverageServiceRepository.getCoverageLimit(page.getPageSize(), expectedCoveragePeriods);
-
-        // Query coverage membership from database and collect it
-        /*
-        final List<CoverageMembership> enrollment = queryCoverageMembership(page, limit);
-        log.info("[V3] List<CoverageMembership> enrollment size = {}", enrollment.size());
-
-        // Guarantee ordering of results to the order that the beneficiaries were returned from SQL
-        final Map<Long, List<CoverageMembership>> enrollmentByBeneficiary =
-                CoverageServiceRepository.aggregateEnrollmentByPatient(expectedCoveragePeriods, enrollment);
-        log.info("[V3] enrollmentByBeneficiary size = {}", enrollmentByBeneficiary.size());
-
-        // Only summarize page size beneficiaries worth of information and report it
-        final List<CoverageSummary> beneficiarySummaries = enrollmentByBeneficiary.entrySet().stream()
-                .limit(page.getPageSize())
-                .map(membershipEntry -> CoverageServiceRepository.summarizeCoverageMembership(contract, membershipEntry))
-                .collect(toList());
-         */
         val beneficiarySummaries = queryAggregatedCoverageMembership(page, page.getPageSize());
         val beneficiaryRecordsFetched = beneficiarySummaries.size();
         log.info("[V3] beneficiary summary records fetched = {}", beneficiaryRecordsFetched);
@@ -143,27 +124,27 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     @Override
     public void createAggregatedAttributionTable(String contract) {
-        new AggregatedCoverageMembership(dataSource).createAggregatedAttributionTable(contract);
+        new GetAggregatedCoverageMembership(dataSource).createAggregatedAttributionTable(contract);
     }
 
     @Override
     public void deleteAggregatedAttributionTable(String contract) {
-        val aggregatedTable = MessageFormat.format(AggregatedCoverageMembership.AGGREGATED_TABLE_NAME, contract.toLowerCase());
+        val aggregatedTable = MessageFormat.format(GetAggregatedCoverageMembership.AGGREGATED_TABLE_NAME, contract.toLowerCase());
         if (keepAggregatedTable(aggregatedTable)) {
             log.info("Skipping deletion for aggregated table {}", aggregatedTable);
         } else {
-            new AggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract);
+            new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract);
         }
     }
 
     @Override
     public int getAggregatedTableRowCount(String contract) {
-        return new AggregatedCoverageMembership(dataSource).getAggregatedTableRowCount(contract);
+        return new GetAggregatedCoverageMembership(dataSource).getAggregatedTableRowCount(contract);
     }
 
     @Override
     public int getCoveragePeriodsInAggregatedTable(String contract) {
-        return new AggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract);
+        return new GetAggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract);
     }
 
     @Override
@@ -238,7 +219,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     private List<CoverageSummary> queryAggregatedCoverageMembership(CoveragePagingRequest page, long limit) {
         return executeTimedQuery(
             format("queryAggregatedCoverageMembership page=%s", page),
-            () -> new AggregatedCoverageMembership(dataSource).fetchAggregatedData(
+            () -> new GetAggregatedCoverageMembership(dataSource).fetchAggregatedData(
                     page.getContract(),
                     limit,
                     page.getCursor()
@@ -247,29 +228,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     private long reduceAndFilter(List<CoverageSummary> summaries) {
-        return new AggregatedCoverageMembership(dataSource).reduceAndFilter(summaries);
-    }
-
-    // TODO not used -- remove?
-    private List<CoverageMembership> queryCoverageMembership(CoveragePagingRequest page, long limit) {
-        return executeTimedQuery(
-            format("queryCoverageMembership page=%s", page),
-            () -> new GetCoverageMembership(dataSource).getCoverageMembership(
-                page.getContractNumber(),
-                CoverageServiceRepository.YEARS,
-                isOptOutOn(),
-                limit,
-                page.getCursor().orElse(null)
-            )
-        );
-    }
-
-    // TODO not used -- remove?
-    private List<YearMonthRecord> getCoveragePeriodsByContract(final String contract) {
-        return executeTimedQuery(
-            format("getCoveragePeriodsByContract contract=%s", contract),
-            () -> new GetCoveragePeriodsByContract(dataSource).getCoveragePeriodsForContract(contract)
-        );
+        return new GetAggregatedCoverageMembership(dataSource).reduceAndFilter(summaries);
     }
 
     private boolean isOptOutOn() {

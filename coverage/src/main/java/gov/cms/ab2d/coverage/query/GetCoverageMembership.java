@@ -1,6 +1,5 @@
 package gov.cms.ab2d.coverage.query;
 
-import com.google.common.collect.Sets;
 import gov.cms.ab2d.coverage.model.CoverageMembership;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import lombok.val;
@@ -11,14 +10,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLOutput;
-import java.text.MessageFormat;
-import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
-import java.util.Set;
 
+@Deprecated
+// Replaced by GetAggregatedCoverageMembership
 public class GetCoverageMembership extends CoverageV3BaseQuery {
 
     private final CoverageMembershipRowMapper mapper;

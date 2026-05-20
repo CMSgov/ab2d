@@ -9,8 +9,6 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.UUID;
 
 @Testcontainers
@@ -32,8 +30,8 @@ class MetricsTest {
 		metric1.filterNs()[0] = 30000000L;
 		metric2.filterNs()[0] = 40000000L;
 
-		metrics.addMetric(jobUuid, new Metrics.Metric[]{metric1});
-		metrics.addMetric(jobUuid, new Metrics.Metric[]{metric2});
+		metrics.addMetricWithRetry(jobUuid, new Metrics.Metric[]{metric1});
+		metrics.addMetricWithRetry(jobUuid, new Metrics.Metric[]{metric2});
 
 		val preparedStatement = container.getDataSource().getConnection().prepareStatement("select * from v3.\"metrics_" + jobUuid + "\"");
 		val result = preparedStatement.executeQuery();

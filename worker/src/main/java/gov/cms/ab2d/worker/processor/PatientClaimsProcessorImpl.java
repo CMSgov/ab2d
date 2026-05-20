@@ -326,7 +326,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 if (currentMetric[0] != null) {
                     val jobUuid = request.getJob();
                     val metricsTracker = new Metrics(dataSource);
-                    metricsTracker.addMetric(jobUuid, currentMetric);
+                    metricsTracker.addMetricWithRetry(jobUuid, currentMetric);
                 }
             } catch (Exception e) {
                 log.error("Error writing metrics to DB for job " + request.getJob(), e);

@@ -176,12 +176,6 @@ public class CoverageServiceRepository {
      */
     private static final String SELECT_COUNT_CONTRACT = " SELECT coverage.contract, coverage.year, coverage.month, coverage.bene_coverage_period_id," + " coverage.bene_coverage_search_event_id, COUNT(*) as bene_count " + " FROM coverage INNER JOIN bene_coverage_period bcp ON coverage.bene_coverage_period_id = bcp.id " + " WHERE bcp.status = 'SUCCESSFUL' AND coverage.contract IN (:contracts)  and coverage.current_mbi is not null AND coverage.year IN (:years) " + " GROUP BY coverage.contract, coverage.year, coverage.month, " + " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id " + " ORDER BY coverage.contract, coverage.year, coverage.month, " + " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id ";
 
-    public static void main(String[] args) {
-
-        System.out.println(SELECT_COUNT_CONTRACT);
-
-    }
-
     private static String vacuumCoverage = "VACUUM coverage";
 
     private final DataSource dataSource;
@@ -490,19 +484,15 @@ public class CoverageServiceRepository {
 
         // Determine how many records to pull back
         long limit = getCoverageLimit(page.getPageSize(), expectedCoveragePeriods);
-        log.info("[V1/V2] coverage limit = {}", limit);
 
         // Query coverage membership from database and collect it
         List<CoverageMembership> enrollment = queryCoverageMembership(page, limit);
-        log.info("[V1/V2] List<CoverageMembership> enrollment size = {}", enrollment.size());
 
         // Guarantee ordering of results to the order that the beneficiaries were returned from SQL
         Map<Long, List<CoverageMembership>> enrollmentByBeneficiary = aggregateEnrollmentByPatient(expectedCoveragePeriods, enrollment);
-        log.info("[V1/V2] enrollmentByBeneficiary size = {}", enrollmentByBeneficiary.size());
 
         // Only summarize page size beneficiaries worth of information and report it
         List<CoverageSummary> beneficiarySummaries = enrollmentByBeneficiary.entrySet().stream().limit(page.getPageSize()).map(membershipEntry -> summarizeCoverageMembership(contract, membershipEntry)).collect(toList());
-        log.info("[V1/V2] List<CoverageSummary> beneficiarySummaries size = {}", beneficiarySummaries.size());
 
         // Get the patient to start from next time
         Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor = enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();

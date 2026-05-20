@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
+// To be replaced with a different approach in AB2D-7272 as this causes the prod database to run out of disk space
 public class GetCoverageV3Count extends CoverageV3BaseQuery {
 
 	private static final String QUERY =

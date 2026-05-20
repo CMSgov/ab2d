@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @Testcontainers
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
-class AggregatedCoverageMembershipTest {
+class GetAggregatedCoverageMembershipTest {
 
 	@Container
 	private static final CoverageV3PostgresContainer container = new CoverageV3PostgresContainer();
@@ -49,7 +49,7 @@ class AggregatedCoverageMembershipTest {
 		val contract = "Z1234";
 //		val contract = "Z0000"; // no columns where share_data == null
 //		val contract = "Z7777"; // one MBI with share_data == null
-		AggregatedCoverageMembership test = new AggregatedCoverageMembership(container.getDataSource());
+		GetAggregatedCoverageMembership test = new GetAggregatedCoverageMembership(container.getDataSource());
 		test.createAggregatedAttributionTable(contract);
 
 		assertTrue(test.getAggregatedTableRowCount(contract) > 0);
@@ -91,7 +91,7 @@ class AggregatedCoverageMembershipTest {
 
 	@Test
 	void testDuplicates() {
-		val test = new AggregatedCoverageMembership(container.getDataSource());
+		val test = new GetAggregatedCoverageMembership(container.getDataSource());
 
 		var list = List.of(
 			new CoverageSummary(Identifiers.ofV3(1L, null, false, 0L), null, List.of()),
@@ -125,7 +125,7 @@ class AggregatedCoverageMembershipTest {
 	@Test
 	void testDuplicatesAndReduce() {
 
-		val test = new AggregatedCoverageMembership(container.getDataSource());
+		val test = new GetAggregatedCoverageMembership(container.getDataSource());
 
 		var list = new ArrayList<>(List.of(
 			new CoverageSummary(Identifiers.ofV3(1L, null, false, 1L), null, List.of()),

@@ -157,7 +157,7 @@ FROM v3.coverage_v3_historical
 WHERE false  -- no data yet
 GROUP BY contract, patient_id, current_mbi;
 
-
+-- TODO replace this call to populateHistorySummaryForContract()
 DO $$
 DECLARE
     c text;
@@ -187,36 +187,3 @@ BEGIN
 
     RAISE NOTICE 'Done. Processed % contracts total.', total;
 END $$;
-
-
---DO $$
---DECLARE
---    c text;
---    total int := 0;
---BEGIN
---    FOR c IN
---        SELECT DISTINCT contract
---        FROM v3.coverage_v3
---        ORDER BY contract
---    LOOP
---
---        EXECUTE format('CREATE TABLE IF NOT EXISTS v3.coverage_v3_%s AS
---        (
---            select contract, patient_id, current_mbi, array_agg(array[year,month]) as recent_coverage_summaries
---                from (
---                    select * from v3.coverage_v3
---                    where contract=''%s''
---                    order by year asc, month asc
---                )
---                group by contract, patient_id, current_mbi
---                order by contract, patient_id asc, current_mbi
---        )', c, c);
---
---        total := total + 1;
---        RAISE NOTICE 'Processed contract % (% total)', c, total;
---
---        COMMIT;  -- frees temp space after each contract to fit in 32GB RAM
---    END LOOP;
---
---    RAISE NOTICE 'Done. Processed % contracts total.', total;
---END $$;

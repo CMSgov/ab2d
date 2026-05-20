@@ -51,7 +51,7 @@ public class Metrics extends CoverageV3BaseQuery {
 	}
 
 	private void createMetricsTableIfNotExists(final String jobUuid) {
-		// This could throw an exception if two threads are creating the table / indexes within the same time frame
+		// This could throw an exception if two or more threads are creating the table / indexes within the same time frame
 		try {
 			val query = MessageFormat.format(CREATE_METRICS_TABLE, jobUuid);
 			template.execute(query);
@@ -61,21 +61,21 @@ public class Metrics extends CoverageV3BaseQuery {
 	}
 
 
-	public void addMetric(String jobUuid, Metric[] metrics) {
+	public void addMetricWithRetry(String jobUuid, Metric[] metrics) {
 		try {
 			// this will fail the first time because the table won't exist -- better than calling 'create table if not exists' every single time
-			_addMetric(jobUuid, metrics);
+			addMetric(jobUuid, metrics);
 		} catch (Exception e) {
 			try {
 				createMetricsTableIfNotExists(jobUuid);
-				_addMetric(jobUuid, metrics);
+				addMetric(jobUuid, metrics);
 			} catch (Exception e2) {
 				log.error("Error adding metrics for {}", jobUuid, e2);
 			}
 		}
 	}
 
-	private void _addMetric(String jobUuid, Metric[] metrics) {
+	private void addMetric(String jobUuid, Metric[] metrics) {
 		val query = MessageFormat.format(INSERT_METRICS, jobUuid);
 		template.batchUpdate(
 				query,
