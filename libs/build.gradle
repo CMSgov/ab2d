@@ -104,15 +104,16 @@ allprojects {
     }
 
     repositories {
-        maven {
-            url = "${artifactoryLoc}/${sourcesRepo}"
-            credentials {
-                username = project.artifactory_user
-                password = project.artifactory_password
+        mavenCentral()
+        mavenLocal()
+        if (artifactoryLoc) {
+            maven {
+                url = "${artifactoryLoc}/${sourcesRepo}"
+                credentials {
+                    username = project.artifactory_user
+                    password = project.artifactory_password
+                }
             }
-//            authentication {
-//                basic(BasicAuthentication)
-//            }
         }
     }
 }

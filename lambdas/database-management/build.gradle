@@ -33,7 +33,7 @@ dependencies {
 test {
     useJUnitPlatform()
 }
-task buildZip(type: Zip) {
+tasks.register('buildZip', Zip) {
 
     from compileJava
     from processResources
@@ -43,13 +43,13 @@ task buildZip(type: Zip) {
     archiveFileName = 'database-management.zip'
 }
 
-task wrapper(type: Wrapper) {
+tasks.register('wrapper', Wrapper) {
     gradleVersion = '9.2.0'
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 build.dependsOn buildZip
