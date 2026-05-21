@@ -11,10 +11,8 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.util.StringUtils;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import gov.cms.ab2d.eventclient.events.MetricsEvent;
@@ -42,15 +40,12 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
     private static final String SQS_QUEUE_URL = System.getenv("AWS_SQS_EVENTS_URL");
     private static final String QUEUE_NAME = deriveSqsQueueName(SQS_QUEUE_URL);
 
-    // AWS sends an object that's not wrapped with type info. The event service expects the wrapper.
-    // Since there's not an easy way to enable/disable type wrapper just have 2 mappers.
     private final ObjectMapper inputMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .registerModule(new JodaModule())
             .registerModule(new JavaTimeModule());
 
     private final ObjectMapper outputMapper = new ObjectMapper()
-            .activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_ARRAY)
             .registerModule(new JodaModule())
             .registerModule(new JavaTimeModule());
 
