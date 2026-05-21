@@ -91,11 +91,12 @@ public class BFDClientConfiguration {
 
             return HttpClients.custom()
                     .setMaxConnPerRoute(maxConnPerRoute)
-                    .setMaxConnTotal(maxConnTotal)
                     .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
                     .setDefaultRequestConfig(requestConfig)
                     .setSSLContext(sslContext)
 
+                    //
+                    .setMaxConnTotal(60)
                     .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy.INSTANCE)
                     .evictExpiredConnections()
                     .evictIdleConnections(10, TimeUnit.SECONDS)
