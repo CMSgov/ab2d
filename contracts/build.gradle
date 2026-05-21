@@ -74,6 +74,10 @@ allprojects {
     }
 }
 
+bootJar {
+    archiveBaseName = 'contracts'
+}
+
 test {
     useJUnitPlatform()
 }
