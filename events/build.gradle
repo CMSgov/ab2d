@@ -4,7 +4,7 @@ plugins {
     id 'jacoco'
     id 'org.springframework.boot' version '3.5.14'
     id 'com.jfrog.artifactory' version '5.2.5' apply false
-    id "org.sonarqube" version "4.1.0.3113"
+    id "org.sonarqube" version "5.1.0.4882"
     id 'maven-publish'
     id 'org.cyclonedx.bom' version '2.0.0' apply true
 }
