@@ -90,12 +90,13 @@ public class BFDClientConfiguration {
             log.info("Creating BFD client with additional parameters (evictExpiredConnections, setKeepAliveStrategy, evictIdleConnections, setMaxConnPerRoute, setMaxConnTotal)");
 
             return HttpClients.custom()
+                    // maxConnPerRoute (bfd.http.maxConnPerRoute) is set to 750 in properties
+                    // maxConnTotal (bfd.http.maxConnTotal) is set to 750 in properties
                     .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
                     .setDefaultRequestConfig(requestConfig)
                     .setSSLContext(sslContext)
-
-                    .setMaxConnPerRoute(60)     // maxConnPerRoute (bfd.http.maxConnPerRoute) is set to 750 in properties
-                    .setMaxConnTotal(60)        // maxConnTotal (bfd.http.maxConnTotal) is set to 750 in properties
+                    .setMaxConnPerRoute(60)
+                    .setMaxConnTotal(60)
                     .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy.INSTANCE)
                     .evictExpiredConnections()
                     .evictIdleConnections(10, TimeUnit.SECONDS)
