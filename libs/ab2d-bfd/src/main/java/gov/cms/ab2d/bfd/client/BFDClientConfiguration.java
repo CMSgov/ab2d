@@ -87,7 +87,7 @@ public class BFDClientConfiguration {
                     .setSocketTimeout(socketTimeout)
                     .build();
 
-            log.info("Creating BFD client with additional parameters (evictExpiredConnections, setKeepAliveStrategy, evictIdleConnections)");
+            log.info("Creating BFD client with additional parameters (evictExpiredConnections, setKeepAliveStrategy, evictIdleConnections, setMaxConnPerRoute, setMaxConnTotal)");
 
             return HttpClients.custom()
                     .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
