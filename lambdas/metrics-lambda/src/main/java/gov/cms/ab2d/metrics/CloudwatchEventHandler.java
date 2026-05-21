@@ -17,6 +17,7 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
+import gov.cms.ab2d.eventclient.messages.SQSMessages;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -108,13 +109,15 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
             service = Optional.ofNullable(alarm.getAlarmName())
                     .orElseThrow(() -> new EventDataException("AlarmName is null"))
                     .replace(environment, "");
-            request.setMessageBody(outputMapper.writeValueAsString(new GeneralSQSMessage(MetricsEvent.builder()
+            // declare type so it doesn't get ignored later
+            SQSMessages sqsMessage = new GeneralSQSMessage(MetricsEvent.builder()
                     .service(service)
                     .eventDescription(alarm.getAlarmDescription())
                     .timeOfEvent(time)
                     //This might need more work later if AWS is sending unknown states regularly
                     .stateType(from(alarm.getNewStateValue()))
-                    .build())));
+                    .build());
+            request.setMessageBody(outputMapper.writeValueAsString(sqsMessage));
         } catch (Exception e) {
             log.log(String.format("Handling lambda failed %s", exceptionToString(e)));
             return;
