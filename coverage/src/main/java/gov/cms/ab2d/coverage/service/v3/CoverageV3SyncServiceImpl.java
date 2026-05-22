@@ -103,6 +103,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     private static final String GET_CONTRACTS_WITH_ACTIVE_V3_JOBS =
         "select distinct contract_number from job where status in ('IN_PROGRESS', 'SUBMITTED')";
 
+    private static final String IS_CONTRACT_ATTESTED =
+        "select count(*) from contract where contract_number = :contract and attested_on is not null";
+
     private static final String GET_CONTRACTS_WITH_COVERAGE_IN_STAGING =
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_STAGING_TABLE);
@@ -116,6 +119,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     @Transactional
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
         if (isTestContract(contract)) {
+            return NO_COVERAGE_FOUND_FOR_CONTRACT;
+        } else if (!isContractAttested(contract)) {
+            log.info("[V3] Contract {} is not attested; skipping staging copy", contract);
             return NO_COVERAGE_FOUND_FOR_CONTRACT;
         } else if (idrImporterInProgress()) {
             return IDR_IMPORTER_IN_PROGRESS;
@@ -304,6 +310,13 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
     boolean contractHasJobInProgress(String contract) {
         return getContractsWithActiveV3Jobs().contains(contract);
+    }
+
+    boolean isContractAttested(String contract) {
+        val parameters = new MapSqlParameterSource().addValue("contract", contract);
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+        Integer count = DataAccessUtils.intResult(template.queryForList(IS_CONTRACT_ATTESTED, parameters, Integer.class));
+        return count != null && count > 0;
     }
 
     @Override

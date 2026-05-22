@@ -4,7 +4,6 @@ import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.DateUtil;
-import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
