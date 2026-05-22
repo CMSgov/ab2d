@@ -11,13 +11,14 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.util.StringUtils;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
-import gov.cms.ab2d.eventclient.messages.SQSMessages;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -47,6 +48,7 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
             .registerModule(new JavaTimeModule());
 
     private final ObjectMapper outputMapper = new ObjectMapper()
+            .activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_ARRAY)
             .registerModule(new JodaModule())
             .registerModule(new JavaTimeModule());
 
@@ -109,15 +111,13 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
             service = Optional.ofNullable(alarm.getAlarmName())
                     .orElseThrow(() -> new EventDataException("AlarmName is null"))
                     .replace(environment, "");
-            // declare type so it doesn't get ignored later
-            SQSMessages sqsMessage = new GeneralSQSMessage(MetricsEvent.builder()
+            request.setMessageBody(outputMapper.writeValueAsString(new GeneralSQSMessage(MetricsEvent.builder()
                     .service(service)
                     .eventDescription(alarm.getAlarmDescription())
                     .timeOfEvent(time)
                     //This might need more work later if AWS is sending unknown states regularly
                     .stateType(from(alarm.getNewStateValue()))
-                    .build());
-            request.setMessageBody(outputMapper.writeValueAsString(sqsMessage));
+                    .build())));
         } catch (Exception e) {
             log.log(String.format("Handling lambda failed %s", exceptionToString(e)));
             return;
