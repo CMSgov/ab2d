@@ -11,7 +11,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -46,7 +46,7 @@ class HPMSFetcherTest {
     @Autowired
     private HPMSAuthServiceImpl hpmsAuthService;
 
-    @MockBean
+    @MockitoBean
     private WebClient mockedWebClient;
 
     @Autowired
