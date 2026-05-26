@@ -1,0 +1,14 @@
+shadow_mode: true
+notifications:
+  channels:
+#    - "@victorops-cdap-team"
+# FIXME
+enabled:
+  ecs: true
+  sqs: true
+  sns: true
+  lambda: true
+  s3: true
+  rds: true
+lambda:
+  error_rate_threshold: 1
