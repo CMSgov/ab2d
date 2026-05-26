@@ -76,7 +76,7 @@ jobs:
 
           if [ "$deployScript" != "" ]; then
             echo "Publishing artifacts: $deployScript, avoiding overwriting existing ones"
-            ./gradlew ${deployScript} -b build.gradle
+            ./gradlew ${deployScript}
           else
             echo "No artifacts to publish."
           fi
@@ -85,5 +85,5 @@ jobs:
         if: ${{ env.FORCE_PUBLISH == 'true' }}
         run: |
           echo "Force publishing (overwriting) all artifacts to Artifactory"
-          ./gradlew artifactoryPublish -b build.gradle
+          ./gradlew artifactoryPublish
 

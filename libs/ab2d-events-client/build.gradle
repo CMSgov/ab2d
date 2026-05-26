@@ -16,7 +16,7 @@ dependencies {
     implementation "com.slack.api:slack-api-client:${slackAPIVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
-    runtimeOnly 'org.postgresql:postgresql:42.7.3'
+    runtimeOnly 'org.postgresql:postgresql:42.7.11'
 
     testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"

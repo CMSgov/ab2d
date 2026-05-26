@@ -2,7 +2,6 @@ version = "$bfdVersion"
 
 dependencies {
     implementation project(':ab2d-fhir')
-    implementation "gov.cms.ab2d:ab2d-fhir:$fhirVersion"
     implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
     implementation("org.apache.httpcomponents.client5:httpclient5:5.5")
