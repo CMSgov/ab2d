@@ -162,6 +162,7 @@ allprojects {
     }
 
     repositories {
+        mavenCentral()
         [sourcesRepo, resolverRepo].unique().each { repoKey ->
             maven {
                 url = "${artifactoryLoc}/${repoKey}"
@@ -171,7 +172,6 @@ allprojects {
                 }
             }
         }
-        mavenCentral()
     }
 
 
