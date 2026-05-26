@@ -131,7 +131,7 @@ subprojects {
 
     jacoco {
         toolVersion = "0.8.14"
-        reportsDirectory = layout.buildDirectory.dir("$buildDir/reports/jacoco")
+        reportsDirectory = layout.buildDirectory.dir("reports/jacoco")
     }
 
     checkstyle {
@@ -162,6 +162,7 @@ allprojects {
     }
 
     repositories {
+        mavenCentral()
         [sourcesRepo, resolverRepo].unique().each { repoKey ->
             maven {
                 url = "${artifactoryLoc}/${repoKey}"
@@ -171,7 +172,6 @@ allprojects {
                 }
             }
         }
-        mavenCentral()
     }
 
 

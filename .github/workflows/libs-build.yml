@@ -46,7 +46,7 @@ jobs:
             SONAR_TOKEN=/sonarqube/token
 
       - name: Build and test libraries
-        run: ./gradlew clean test --info -b build.gradle
+        run: ./gradlew clean test --info
 
       - name: Build JARs
-        run: ./gradlew jar --warn -b build.gradle
+        run: ./gradlew jar --warn

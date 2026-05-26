@@ -18,9 +18,5 @@ pluginManagement {
 
 rootProject.name = 'ab2d-contracts'
 
-// buildFileName needs to be set for aws deploys but can completely breaks intellij
-if (System.getProperty("set.root.project.build.filename")!=null) {
-    rootProject.buildFileName = 'ab2d-contracts'
-}
 
 
