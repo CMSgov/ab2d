@@ -118,18 +118,3 @@ sonarqube {
         property "sonar.java.binaries", "${layout.buildDirectory.get().asFile}/classes"
     }
 }
-
-repositories {
-    mavenCentral()
-    mavenLocal()
-    def artifactoryUrl = System.getenv("ARTIFACTORY_URL") ?: System.getProperty("artifactory_contextUrl")
-    if (artifactoryUrl) {
-        maven {
-            url = "${artifactoryUrl}/ab2d-main"
-            credentials {
-                username = System.getenv("ARTIFACTORY_USER") ?: System.getProperty("username")
-                password = System.getenv("ARTIFACTORY_PASSWORD") ?: System.getProperty("password")
-            }
-        }
-    }
-}
