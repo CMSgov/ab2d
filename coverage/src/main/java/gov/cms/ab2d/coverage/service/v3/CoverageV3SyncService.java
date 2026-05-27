@@ -14,4 +14,6 @@ public interface CoverageV3SyncService {
 
 	List<String> getContractsInCoverageStagingTable();
 
+	int deleteInactiveContractsFromHistorySummary();
+
 }
