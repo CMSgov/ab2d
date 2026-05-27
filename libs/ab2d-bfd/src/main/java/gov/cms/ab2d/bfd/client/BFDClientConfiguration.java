@@ -1,20 +1,18 @@
 package gov.cms.ab2d.bfd.client;
 
-import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
-import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.AbstractEnvironment;
 
 import javax.net.ssl.SSLContext;
 import java.io.*;
@@ -26,7 +24,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
@@ -34,6 +31,9 @@ import java.util.concurrent.TimeUnit;
 @PropertySource("classpath:application.bfd.properties")
 @Slf4j
 public class BFDClientConfiguration {
+
+    private static final ConnectionKeepAliveStrategy KEEP_ALIVE_STRATEGY = DefaultConnectionKeepAliveStrategy.INSTANCE;
+    private static final boolean EVICT_EXPIRED_CONNECTIONS = true;
 
     @Value("${bfd.keystore.location}")
     private String keystorePath;
@@ -68,6 +68,9 @@ public class BFDClientConfiguration {
     @Value("${bfd.http.connTTL}")
     private int connectionTTL;
 
+    @Value("${bfd.http.evictIdleConnectionsTimeout}")
+    private int evictIdleConnectionsTimeout;
+
     @Bean
     public HttpClient bfdHttpClient() {
         try {
@@ -82,28 +85,43 @@ public class BFDClientConfiguration {
                     .loadTrustMaterial(trustStore, null)
                     .build();
 
-            RequestConfig requestConfig = RequestConfig.custom()
+            val bfdClientParams = new BfdClientParameters();
+
+            val requestConfig = RequestConfig.custom()
                     .setConnectTimeout(connectionTimeout)
                     .setConnectionRequestTimeout(requestTimeout)
                     .setSocketTimeout(socketTimeout)
                     .build();
 
-            log.info("Creating BFD client with additional parameters (evictExpiredConnections, setKeepAliveStrategy, evictIdleConnections, setMaxConnPerRoute, setMaxConnTotal)");
+            bfdClientParams
+                .add("connectionTimeout", connectionTimeout)
+                .add("connectionRequestTimeout", requestTimeout)
+                .add("socketTimeout", socketTimeout);
 
+            bfdClientParams
+                .add("connectionTimeToLive", connectionTTL)
+                .add("setMaxConnPerRoute", maxConnPerRoute)
+                .add("setMaxConnTotal", maxConnTotal)
+                .add("evictExpiredConnections", EVICT_EXPIRED_CONNECTIONS)
+                .add("evictIdleConnections", evictIdleConnectionsTimeout)
+                .add("keepAliveStrategy", KEEP_ALIVE_STRATEGY);
 
-            return HttpClients.custom()
-                    // maxConnPerRoute (bfd.http.maxConnPerRoute) is set to 750 in properties
-                    // maxConnTotal (bfd.http.maxConnTotal) is set to 750 in properties
+            val builder = HttpClients.custom()
                     .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
                     .setDefaultRequestConfig(requestConfig)
                     .setSSLContext(sslContext)
-                    .setMaxConnPerRoute(60)
-                    .setMaxConnTotal(60)
-                    .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy.INSTANCE)
-                    .evictExpiredConnections()
-                    .evictIdleConnections(10, TimeUnit.SECONDS)
+                    .setMaxConnPerRoute(maxConnPerRoute)
+                    .setMaxConnTotal(maxConnTotal)
+                    .setKeepAliveStrategy(KEEP_ALIVE_STRATEGY)
+                    .evictIdleConnections(evictIdleConnectionsTimeout, TimeUnit.MILLISECONDS);
 
-                    .build();
+            if (EVICT_EXPIRED_CONNECTIONS) {
+                builder.evictExpiredConnections();
+            }
+
+            log.info("Created BFD client with parameters: {}", bfdClientParams);
+
+            return builder.build();
 
         } catch (Exception e) {
             log.error("Failed to build BFD mTLS HttpClient", e);
@@ -112,33 +130,6 @@ public class BFDClientConfiguration {
         }
     }
 
-
-    public static void main(String[] args) {
-
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(5000)
-                .setConnectionRequestTimeout(6000)
-                .setSocketTimeout(7000)
-                .build();
-
-        CloseableHttpClient client = HttpClients.custom()
-                // maxConnPerRoute (bfd.http.maxConnPerRoute) is set to 750 in properties
-                // maxConnTotal (bfd.http.maxConnTotal) is set to 750 in properties
-                .setConnectionTimeToLive(60000, TimeUnit.MILLISECONDS)
-                .setDefaultRequestConfig(requestConfig)
-//                .setSSLContext(sslContext)
-                .setMaxConnPerRoute(60)
-                .setMaxConnTotal(60)
-                .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy.INSTANCE)
-                .evictExpiredConnections()
-                .evictIdleConnections(10, TimeUnit.SECONDS)
-
-                .build();
-
-
-        System.out.println(client);
-
-    }
 
     private KeyStore resolveClientKeyStore(char[] password) throws Exception {
         if (hasText(keystoreBase64)) {
@@ -282,6 +273,21 @@ public class BFDClientConfiguration {
         String fp = java.util.HexFormat.of().formatHex(dig);
         log.warn("BFD trust cert loaded. Subject='{}' Issuer='{}' SHA256={}",
                 x.getSubjectX500Principal(), x.getIssuerX500Principal(), fp);
+    }
+
+
+    private static class BfdClientParameters {
+        final StringBuilder builder = new StringBuilder();
+
+        BfdClientParameters add(String parameter, Object value) {
+            builder.append("%n%s=%s".formatted(parameter, value));
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return builder.toString();
+        }
     }
 
 }

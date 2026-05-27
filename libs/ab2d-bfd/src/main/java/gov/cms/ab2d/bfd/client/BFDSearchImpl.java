@@ -4,7 +4,6 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -52,12 +51,12 @@ public class BFDSearchImpl implements BFDSearch {
     public IBaseBundle searchEOB(BFDSearchDTO searchDTO) throws IOException {
         return parseBundle(
             searchDTO.getVersion(),
-            searchEOBWithoutParseBundle(searchDTO, null)
+            searchEOBRaw(searchDTO)
         );
     }
 
     @Override
-    public byte[] searchEOBWithoutParseBundle(BFDSearchDTO searchDTO, String[] metrics) throws IOException {
+    public byte[] searchEOBRaw(BFDSearchDTO searchDTO) throws IOException {
         long patientId = searchDTO.getPatientId();
         OffsetDateTime since = searchDTO.getSince();
         OffsetDateTime until = searchDTO.getUntil();
@@ -109,7 +108,7 @@ public class BFDSearchImpl implements BFDSearch {
         request.addHeader(BFDClient.BFD_HDR_BULK_CLIENTID, contractNum);
         request.addHeader(BFDClient.BFD_HDR_BULK_JOBID, bulkJobId);
 
-        return getEOBSFromBFD(patientId, request, metrics);
+        return getEOBSFromBFD(patientId, request);
    }
 
 
@@ -117,7 +116,7 @@ public class BFDSearchImpl implements BFDSearch {
      * Method exists to track connection to BFD for New Relic
      */
     @Trace
-    private byte[] getEOBSFromBFD(long patientId, HttpGet request, String[] metrics) throws IOException {
+    private byte[] getEOBSFromBFD(long patientId, HttpGet request) throws IOException {
         byte[] responseBytes;
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
@@ -133,18 +132,13 @@ public class BFDSearchImpl implements BFDSearch {
             } else {
                 throw new RuntimeException("Server error occurred");
             }
-        }
 
-        if (metrics != null && metrics.length > 0) {
-            if (responseBytes != null) {
-                metrics[0] = String.valueOf(responseBytes.length);
-            }
         }
-
         return responseBytes;
     }
 
     @Trace
+    @Override
     public IBaseBundle parseBundle(FhirVersion version, byte[] responseBytes) {
         return version.getJsonParser().parseResource(version.getBundleClass(), new ByteArrayInputStream(responseBytes));
     }

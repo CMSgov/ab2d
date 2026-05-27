@@ -14,13 +14,12 @@ public interface BFDClient {
     IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, String contractNum);
 
     IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum);
-    default byte[] requestEOBFromServerWithoutParseBundle(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum, String[] metrics) {
-        return null;
-    }
-    default IBaseBundle parseBundle(FhirVersion version, byte[] bfdResponse) {
-        return null;
-    }
 
+    /** Same as {@link #requestEOBFromServer} except return raw byte array instead of parsing to IBaseBundle */
+    byte[] requestEOBFromServerRaw(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum);
+
+    /** Parse response from {@link #requestEOBFromServerRaw} */
+    IBaseBundle parseBundle(FhirVersion version, byte[] bfdResponse);
 
     IBaseBundle requestNextBundleFromServer(FhirVersion version, IBaseBundle bundle, String contractNum);
 

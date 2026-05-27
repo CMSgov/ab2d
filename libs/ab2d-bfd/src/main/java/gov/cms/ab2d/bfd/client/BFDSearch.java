@@ -7,11 +7,9 @@ import java.io.IOException;
 public interface BFDSearch {
     IBaseBundle searchEOB(BFDSearchDTO searchDTO) throws IOException;
 
-    default byte[] searchEOBWithoutParseBundle(BFDSearchDTO searchDTO, String[] metrics) throws IOException {
-        return null;
-    }
+    /** Same as {@link #searchEOB} except return raw byte array instead of parsing to IBaseBundle */
+    byte[] searchEOBRaw(BFDSearchDTO searchDTO) throws IOException;
 
-    default IBaseBundle parseBundle(FhirVersion version, byte[] response) {
-        return null;
-    }
+    /** Parse response from {@link #searchEOBRaw} */
+    IBaseBundle parseBundle(FhirVersion version, byte[] response);
 }
