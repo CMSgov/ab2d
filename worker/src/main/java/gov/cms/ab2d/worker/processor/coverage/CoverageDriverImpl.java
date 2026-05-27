@@ -680,6 +680,8 @@ public class CoverageDriverImpl implements CoverageDriver {
         try {
             return coverageV3Service.pageCoverage(request);
         } catch (Exception exception) {
+            // TODO add a better log message here -- add retry?
+            // TODO write ERROR to database log table
             log.error("[V3] coverage period missing or year,month query incorrect, driver should have resolved earlier - {}", request.toString());
             throw new CoverageDriverException("[V3] coverage driver failing preconditions", exception);
         }

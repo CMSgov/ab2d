@@ -127,6 +127,8 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         new GetAggregatedCoverageMembership(dataSource).createAggregatedAttributionTable(contract);
     }
 
+    // NOTE: This needs to check if the current job that just completed is related to contract
+    // TODO fix this
     @Override
     public void deleteAggregatedAttributionTable(String contract) {
         val aggregatedTable = MessageFormat.format(GetAggregatedCoverageMembership.AGGREGATED_TABLE_NAME, contract.toLowerCase());
