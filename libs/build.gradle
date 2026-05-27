@@ -23,12 +23,12 @@ ext {
 
     // AB2D libraries
     fhirVersion='2.5.6'
-    bfdVersion='4.6.1'
+    bfdVersion='4.6.2'
     aggregatorVersion='2.1.5'
     filtersVersion='3.1.2'
     eventClientVersion='3.3.14'
     propertiesClientVersion='2.1.1'
-    contractClientVersion='2.1.4'
+    contractClientVersion='2.2.0'
     snsClientVersion='1.1.8'
 
     sourcesRepo = 'ab2d-maven-repo'

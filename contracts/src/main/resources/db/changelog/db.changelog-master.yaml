@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/v2025/add_contract_sequence.sql
   - include:
       file: db/changelog/v2025/alter_contract_sequence.sql
+  - include:
+      file: db/changelog/v2026/add_hpms_end_date_to_contract.sql
