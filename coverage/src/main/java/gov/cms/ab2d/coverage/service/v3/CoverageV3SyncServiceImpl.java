@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
@@ -114,7 +115,19 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
 
-
+    private static final String DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY =
+    """
+    with deleted_rows as (
+        DELETE FROM v3.coverage_v3_history_summary
+        WHERE contract IN (
+            SELECT contract_number FROM contract.contract
+            WHERE hpms_end_date IS NOT NULL
+              AND hpms_end_date < :cutoff
+        )
+        RETURNING *
+    )
+    select count(*) from deleted_rows;
+    """;
 
     @Transactional
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
@@ -325,6 +338,15 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return V3_IDR_IMPORTER_STATUS_IN_PROGRESS.equals(idrImporterStatus);
     }
 
+    @Override
+    public int deleteInactiveContractsFromHistorySummary() {
+        LocalDate cutoff = LocalDate.now().minusYears(2);
+        val parameters = new MapSqlParameterSource().addValue("cutoff", cutoff);
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+        int count = DataAccessUtils.intResult(template.queryForList(DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY, parameters, Integer.class));
+        log.info("[V3] Deleted {} rows from coverage_v3_history_summary for contracts inactive > 2 years", count);
+        return count;
+    }
 
 
 }

@@ -80,6 +80,10 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                         String dateWithTZ = attestation.getAttestationDate() + " " + DateUtil.getESTOffset();
                         contract.setAttestedOn(OffsetDateTime.parse(dateWithTZ, FORMATTER));
                     }
+                    if (attestation.getEndDate() != null && !attestation.getEndDate().isBlank()) {
+                        String endDateWithTZ = attestation.getEndDate() + " " + DateUtil.getESTOffset();
+                        contract.setHpmsEndDate(OffsetDateTime.parse(endDateWithTZ, FORMATTER));
+                    }
                 }
             }
         } catch (Exception ex) {
@@ -178,6 +182,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             }
         }
         oldContract.setAttestedOn(newContract.getAttestedOn());
+        oldContract.setHpmsEndDate(newContract.getHpmsEndDate());
         oldContract.setContractName(newContract.getContractName());
         oldContract.setHpmsOrgMarketingName(newContract.getHpmsOrgMarketingName());
         oldContract.setHpmsParentOrgId(newContract.getHpmsParentOrgId());
