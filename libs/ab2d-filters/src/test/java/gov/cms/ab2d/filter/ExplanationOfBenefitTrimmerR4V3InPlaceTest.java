@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,6 +21,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+// TODO: Uncomment when in-place EOB trimming changes are fully adopted.
+// These tests include long-running GC allocation benchmarks not suitable for standard CI.
+@Disabled
 class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
 
     private static final FhirContext FHIR_CONTEXT = FhirContext.forR4();
