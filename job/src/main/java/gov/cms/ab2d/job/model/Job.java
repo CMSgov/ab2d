@@ -126,7 +126,9 @@ public class Job {
 
     public JobStatusChangeEvent buildJobStatusChangeEvent(JobStatus newStatus, String statusMessage) {
         final String oldStatus = (status == null) ? null : status.name();
-        return new JobStatusChangeEvent(organization, jobUuid, oldStatus, newStatus.name(), statusMessage);
+        final String version = (fhirVersion == null) ? null : fhirVersion.getAb2dVersionString().replace("/", "");
+        return new JobStatusChangeEvent(organization, jobUuid, oldStatus, newStatus.name(), statusMessage,
+                contractNumber, since, until, servicesDates, resourceTypes, version);
     }
 
     public FileEvent buildFileEvent(File file, FileEvent.FileStatus status) {

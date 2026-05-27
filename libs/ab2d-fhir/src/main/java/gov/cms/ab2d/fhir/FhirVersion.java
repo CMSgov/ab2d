@@ -66,6 +66,10 @@ public enum FhirVersion {
                 .findFirst().orElse(null);
     }
 
+    public String getAb2dVersionString() {
+        return ab2dVersionString;
+    }
+
     public String getBfdVersionString() {
         return bfdVersionString;
     }

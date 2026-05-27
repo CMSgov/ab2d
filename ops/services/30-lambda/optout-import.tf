@@ -134,7 +134,7 @@ resource "aws_lambda_function" "import" {
   package_type                   = "Zip"
   reserved_concurrent_executions = -1
   role                           = aws_iam_role.import[0].arn
-  runtime                        = "java11"
+  runtime                        = "java25"
   skip_destroy                   = false
 
   tags = {
