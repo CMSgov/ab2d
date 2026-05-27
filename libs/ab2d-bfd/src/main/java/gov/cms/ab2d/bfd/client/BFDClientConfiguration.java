@@ -4,6 +4,7 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
@@ -89,6 +90,7 @@ public class BFDClientConfiguration {
 
             log.info("Creating BFD client with additional parameters (evictExpiredConnections, setKeepAliveStrategy, evictIdleConnections, setMaxConnPerRoute, setMaxConnTotal)");
 
+
             return HttpClients.custom()
                     // maxConnPerRoute (bfd.http.maxConnPerRoute) is set to 750 in properties
                     // maxConnTotal (bfd.http.maxConnTotal) is set to 750 in properties
@@ -108,6 +110,34 @@ public class BFDClientConfiguration {
             throw new BeanInstantiationException(HttpClient.class,
                     "Failed to create BFD HttpClient: " + e.getMessage(), e);
         }
+    }
+
+
+    public static void main(String[] args) {
+
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(5000)
+                .setConnectionRequestTimeout(6000)
+                .setSocketTimeout(7000)
+                .build();
+
+        CloseableHttpClient client = HttpClients.custom()
+                // maxConnPerRoute (bfd.http.maxConnPerRoute) is set to 750 in properties
+                // maxConnTotal (bfd.http.maxConnTotal) is set to 750 in properties
+                .setConnectionTimeToLive(60000, TimeUnit.MILLISECONDS)
+                .setDefaultRequestConfig(requestConfig)
+//                .setSSLContext(sslContext)
+                .setMaxConnPerRoute(60)
+                .setMaxConnTotal(60)
+                .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy.INSTANCE)
+                .evictExpiredConnections()
+                .evictIdleConnections(10, TimeUnit.SECONDS)
+
+                .build();
+
+
+        System.out.println(client);
+
     }
 
     private KeyStore resolveClientKeyStore(char[] password) throws Exception {
