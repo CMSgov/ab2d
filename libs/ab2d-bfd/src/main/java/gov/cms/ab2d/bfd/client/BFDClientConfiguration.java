@@ -273,8 +273,8 @@ public class BFDClientConfiguration {
     }
 
 
-    private static class BfdClientParameters {
-        final StringBuilder builder = new StringBuilder();
+    private static final class BfdClientParameters {
+        private final StringBuilder builder = new StringBuilder();
 
         BfdClientParameters add(String parameter, Object value) {
             builder.append(" %s=%s".formatted(parameter, value));
