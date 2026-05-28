@@ -12,7 +12,15 @@ public interface BFDClient {
     String BFD_HDR_BULK_JOBID = "BULK-JOBID";
 
     IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, String contractNum);
+
     IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum);
+
+    /** Same as {@link #requestEOBFromServer} except return raw byte array instead of parsing to IBaseBundle */
+    byte[] requestEOBFromServerRaw(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum);
+
+    /** Parse response from {@link #requestEOBFromServerRaw} */
+    IBaseBundle parseBundle(FhirVersion version, byte[] bfdResponse);
+
     IBaseBundle requestNextBundleFromServer(FhirVersion version, IBaseBundle bundle, String contractNum);
 
     /**
@@ -30,4 +38,3 @@ public interface BFDClient {
 
     ThreadLocal<String> BFD_BULK_JOB_ID = new ThreadLocal<>();
 }
-

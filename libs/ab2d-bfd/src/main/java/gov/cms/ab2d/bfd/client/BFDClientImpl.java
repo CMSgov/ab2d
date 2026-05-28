@@ -118,6 +118,25 @@ public class BFDClientImpl implements BFDClient {
     }
 
     @Trace
+    @SneakyThrows
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class }
+    )
+    @Override
+    public byte[] requestEOBFromServerRaw(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum) {
+        BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(patientID, version, contractNum, getJobId(), pageSize, sinceTime, untilTime, serviceDates);
+        return bfdSearch.searchEOBRaw(bfdSearchDTO);
+    }
+
+
+    @Override
+    public IBaseBundle parseBundle(FhirVersion version, byte[] bfdResponse) {
+        return bfdSearch.parseBundle(version, bfdResponse);
+    }
+
+    @Trace
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
