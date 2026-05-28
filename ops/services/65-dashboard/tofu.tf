@@ -1,6 +1,6 @@
 locals {
   app              = "ab2d"
-  established_envs = ["dev", "test", "sandbox", "prod"]
+  established_envs = ["prod"]
   service_prefix   = "${local.app}-${local.env}"
 
   parent_env = coalesce(
@@ -10,10 +10,7 @@ locals {
   )
 
   state_buckets = {
-    dev     = "ab2d-dev-tfstate-20250417141439646700000001"
-    test    = "ab2d-test-tfstate-20250410134820763500000001"
-    sandbox = "ab2d-sandbox-tfstate-20250416200059224300000001"
-    prod    = "ab2d-prod-tfstate-20250411202936776600000001"
+    prod = "ab2d-prod-tfstate-20250411202936776600000001"
   }
 }
 
