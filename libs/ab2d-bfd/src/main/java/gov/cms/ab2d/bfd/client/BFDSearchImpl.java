@@ -49,6 +49,14 @@ public class BFDSearchImpl implements BFDSearch {
     @Trace
     @Override
     public IBaseBundle searchEOB(BFDSearchDTO searchDTO) throws IOException {
+        return parseBundle(
+            searchDTO.getVersion(),
+            searchEOBRaw(searchDTO)
+        );
+    }
+
+    @Override
+    public byte[] searchEOBRaw(BFDSearchDTO searchDTO) throws IOException {
         long patientId = searchDTO.getPatientId();
         OffsetDateTime since = searchDTO.getSince();
         OffsetDateTime until = searchDTO.getUntil();
@@ -100,10 +108,9 @@ public class BFDSearchImpl implements BFDSearch {
         request.addHeader(BFDClient.BFD_HDR_BULK_CLIENTID, contractNum);
         request.addHeader(BFDClient.BFD_HDR_BULK_JOBID, bulkJobId);
 
-        byte[] responseBytes = getEOBSFromBFD(patientId, request);
+        return getEOBSFromBFD(patientId, request);
+   }
 
-        return parseBundle(version, responseBytes);
-    }
 
     /**
      * Method exists to track connection to BFD for New Relic
@@ -113,6 +120,7 @@ public class BFDSearchImpl implements BFDSearch {
         byte[] responseBytes;
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
+
             if (status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES) {
 
                 try (InputStream instream = response.getEntity().getContent()) {
@@ -124,12 +132,14 @@ public class BFDSearchImpl implements BFDSearch {
             } else {
                 throw new RuntimeException("Server error occurred");
             }
+
         }
         return responseBytes;
     }
 
     @Trace
-    private IBaseBundle parseBundle(FhirVersion version, byte[] responseBytes) {
+    @Override
+    public IBaseBundle parseBundle(FhirVersion version, byte[] responseBytes) {
         return version.getJsonParser().parseResource(version.getBundleClass(), new ByteArrayInputStream(responseBytes));
     }
 }
