@@ -55,6 +55,11 @@ public final class Constants {
     // constant at compile time so I put it here.
     public static final String SINCE_EARLIEST_DATE = "2020-02-13T00:00:00.000-05:00";
     public static final OffsetDateTime SINCE_EARLIEST_DATE_TIME = OffsetDateTime.of(2020, 2, 13, 0, 0, 0, 0, ZoneOffset.ofHours(-5));
+
+    // V3-specific _since constraint: must be after April 2026 (or null/omitted)
+    public static final String V3_SINCE_EARLIEST_DATE = "2026-04-01T00:00:00.000-05:00";
+    public static final OffsetDateTime V3_SINCE_EARLIEST_DATE_TIME = OffsetDateTime.of(2026, 4, 1, 0, 0, 0, 0, ZoneOffset.ofHours(-5));
+
     public static final String UNTIL_EXAMPLE_DATE = "2024-01-01T00:00:00.000-05:00";
     public static final String ZIPFORMAT = "application/zip";
 }
