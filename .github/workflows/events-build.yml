@@ -49,8 +49,8 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          distribution: 'adopt'
-          java-version: '17'
+          distribution: 'temurin'
+          java-version: '25'
 
       - name: Assume role in target account
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
