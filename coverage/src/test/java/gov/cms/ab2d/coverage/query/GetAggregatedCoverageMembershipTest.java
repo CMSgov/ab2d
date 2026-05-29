@@ -19,10 +19,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -72,9 +69,9 @@ class GetAggregatedCoverageMembershipTest {
 		}
 
 		// Should delete if exists
-		test.deleteAggregatedTable("Z1234");
+		test.deleteAggregatedTable("Z1234", UUID.randomUUID().toString());
 		// And not fail if it doesn't exist
-		test.deleteAggregatedTable("Z1234");
+		test.deleteAggregatedTable("Z1234", UUID.randomUUID().toString());
 
 
 		when(syncService.getContractsWithActiveV3Jobs()).thenReturn(List.of("Z9999"));

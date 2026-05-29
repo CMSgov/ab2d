@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
@@ -26,6 +27,9 @@ import static java.lang.String.format;
 @Service
 @Transactional
 public class CoverageV3ServiceImpl implements CoverageV3Service {
+
+    // If true, log row number of first and last records fetched from aggregated table
+    private static final boolean LOG_ROWS_FETCHED = false;
 
     private final DataSource dataSource;
     private final PropertiesService propertiesService;
@@ -47,15 +51,12 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         // For v3, perform coverage periods check only once (expected vs actual coverage periods) instead for every batch
         // on subsequent batches, page.getCursor() will be populated -- only on first batch will it be absent
         if (page.getCursor().isEmpty()) {
-
             final int expectedCoveragePeriods = CoverageServiceRepository.getExpectedCoveragePeriods(page);
 
             // Make sure all coverage periods are present so that there isn't any missing coverage data
             // Do not remove this check because it is a fail safe to guarantee that there isn't something majorly
             // wrong with the enrollment data.
             // A missing period = one month of enrollment missing for the contract
-
-            //final int coveragePeriodsSize = getCoveragePeriodsByContract(page.getContractNumber()).size();
             final int coveragePeriodsSize = new GetAggregatedCoverageMembership(dataSource).getCoveragePeriodsInAggregatedTable(contract.getContractNumber());
 
             log.info("coveragePeriods.size() = {}; expectedCoveragePeriods = {}", coveragePeriodsSize, expectedCoveragePeriods);
@@ -65,21 +66,19 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                         .formatted(expectedCoveragePeriods, coveragePeriodsSize, contractNumber);
                 log.warn(message);
 
-                // TODO -- re-enable this check; disabled while testing in ephemeral environment
-                /*
                 if (!contractNumber.startsWith("Z")) {
                     throw new IllegalArgumentException(message);
                 }
-                 */
             }
         }
-
 
         val beneficiarySummaries = queryAggregatedCoverageMembership(page, page.getPageSize());
         val beneficiaryRecordsFetched = beneficiarySummaries.size();
         log.info("[V3] beneficiary summary records fetched = {}", beneficiaryRecordsFetched);
 
-        printFirstAndLastRowNumbers(beneficiarySummaries);
+        if (LOG_ROWS_FETCHED) {
+            logRowsFetched(beneficiarySummaries);
+        }
 
         // Get last patient ID before reducing/filtering `beneficiarySummaries` list
         // Duplicate patient records (where a patient has multiple MBIs) are reduced and opt-outs are filtered from list
@@ -89,7 +88,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
             log.info("[V3] beneficiary summary record count after reducing/filtering = {}", beneficiarySummaries.size());
         }
 
-        // Build the next request if there is a next patient
+        // Build the next request if more beneficiaries exist
         CoveragePagingRequest request = null;
         if (beneficiaryRecordsFetched > 0) {
 	        request = CoveragePagingRequest.ofV3(page.getPageSize(), lastPatientId, contract, page.getJobStartTime());
@@ -98,19 +97,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return new CoveragePagingResult(beneficiarySummaries, request);
     }
 
-    // print row number for first and/or last record before reducing/filtering
-    // TODO remove -- temporary debugging code
-    void printFirstAndLastRowNumbers(List<CoverageSummary> summaries) {
-        val size = summaries.size();
-        if (size == 0) {
-            return;
-        }
 
-        val first = summaries.get(0);
-        log.info("First beneficiary record row number = {}", first.getIdentifiers().getRowNumberV3());
-        val last = summaries.get(size-1);
-        log.info("Last beneficiary record row number = {}", last.getIdentifiers().getRowNumberV3());
-    }
 
     @Override
     public Map<String, List<CoverageV3Count>>  getCoverageCount() {
@@ -127,15 +114,17 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         new GetAggregatedCoverageMembership(dataSource).createAggregatedAttributionTable(contract);
     }
 
-    // NOTE: This needs to check if the current job that just completed is related to contract
-    // TODO fix this
     @Override
-    public void deleteAggregatedAttributionTable(String contract) {
+    public void deleteAggregatedAttributionTable(String contract, Optional<String> jobUuid) {
         val aggregatedTable = MessageFormat.format(GetAggregatedCoverageMembership.AGGREGATED_TABLE_NAME, contract.toLowerCase());
         if (keepAggregatedTable(aggregatedTable)) {
-            log.info("Skipping deletion for aggregated table {}", aggregatedTable);
+            if (jobUuid.isEmpty()) {
+                log.info("Skipping deletion for aggregated table {}", aggregatedTable);
+            } else {
+                log.info("Skipping deletion for aggregated table {} related to job {}", aggregatedTable, jobUuid.get());
+            }
         } else {
-            new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract);
+            new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract, jobUuid);
         }
     }
 
@@ -166,10 +155,22 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         for (String aggregatedTable : aggregatedTables) {
             if (shouldDeleteAggregatedTable(aggregatedTable, contractsWithActiveJobs)) {
                 log.info("Deleting unused aggregated table {}", aggregatedTable);
-                deleteAggregatedAttributionTable(aggregatedTable);
+                deleteAggregatedAttributionTable(aggregatedTable, Optional.empty());
                 log.info("Deleted table {}", aggregatedTable);
             }
         }
+    }
+
+    void logRowsFetched(List<CoverageSummary> summaries) {
+        val size = summaries.size();
+        if (size == 0) {
+            return;
+        }
+
+        val first = summaries.get(0);
+        log.info("First beneficiary record row number = {}", first.getIdentifiers().getRowNumberV3());
+        val last = summaries.get(size-1);
+        log.info("Last beneficiary record row number = {}", last.getIdentifiers().getRowNumberV3());
     }
 
     boolean keepAggregatedTable(final String tableName) {

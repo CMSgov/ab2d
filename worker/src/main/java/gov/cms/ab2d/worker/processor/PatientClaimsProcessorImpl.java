@@ -39,7 +39,6 @@ import java.time.*;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;

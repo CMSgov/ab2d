@@ -2,11 +2,14 @@ package gov.cms.ab2d.worker.stuckjob;
 
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +57,9 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
                     PUBLIC_LIST);
             stuckJob.setStatus(CANCELLED);
             jobRepository.save(stuckJob);
-            coverageV3Service.deleteAggregatedAttributionTable(stuckJob.getContractNumber());
+            if (stuckJob.getFhirVersion() == FhirVersion.R4V3) {
+                coverageV3Service.deleteAggregatedAttributionTable(stuckJob.getContractNumber(), Optional.of(stuckJob.getJobUuid()));
+            }
         }
     }
 

@@ -6,6 +6,7 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
 import gov.cms.ab2d.eventclient.events.FileEvent;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobOutputRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
@@ -21,6 +22,7 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +100,9 @@ public class JobProcessorImpl implements JobProcessor {
                 log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
                 deleteExistingDirectory(outputDirPath, job);
             }
-            coverageV3Service.deleteAggregatedAttributionTable(job.getContractNumber());
+            if (job.getFhirVersion() == FhirVersion.R4V3) {
+                coverageV3Service.deleteAggregatedAttributionTable(job.getContractNumber(), Optional.of(jobUuid));
+            }
         } catch (Exception e) {
             String contract = job.getContractNumber();
             String message;
@@ -120,7 +124,9 @@ public class JobProcessorImpl implements JobProcessor {
             job.setCompletedAt(OffsetDateTime.now());
             log.info("Job: [{}] FAILED", jobUuid);
             jobRepository.save(job);
-            coverageV3Service.deleteAggregatedAttributionTable(contract);
+            if (job.getFhirVersion() == FhirVersion.R4V3) {
+                coverageV3Service.deleteAggregatedAttributionTable(contract, Optional.of(jobUuid));
+            }
         }
 
         return job;
@@ -351,6 +357,8 @@ public class JobProcessorImpl implements JobProcessor {
 
         jobRepository.save(job);
         log.info("Job: [{}] is DONE", job.getJobUuid());
-        coverageV3Service.deleteAggregatedAttributionTable(job.getContractNumber());
+        if (job.getFhirVersion() == FhirVersion.R4V3) {
+            coverageV3Service.deleteAggregatedAttributionTable(job.getContractNumber(), Optional.of(job.getJobUuid()));
+        }
     }
 }

@@ -7,6 +7,7 @@ import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface CoverageV3Service {
     int countBeneficiariesByCoveragePeriod(CoverageV3Periods coveragePeriods, String contract);
@@ -17,8 +18,9 @@ public interface CoverageV3Service {
     boolean idrImportInProgress();
     // called before starting a v3 job
     void createAggregatedAttributionTable(String contract);
-    // called when v3 job is completed, failed, or cancelled via API
-    void deleteAggregatedAttributionTable(String contract);
+    // called when v3 job is completed, failed, or cancelled via API in which case job UUID will be provided
+    // also called by cron job to periodically clean up old tables if job was cancelled manually (in which case job UUID is not provided)
+    void deleteAggregatedAttributionTable(String contract, Optional<String> jobUuid);
     // NOTE: Assumes job has been kicked off and aggregated table exists
     int getDistinctPatientCount(String contract);
     // NOTE: Assumes job has been kicked off and aggregated table exists -- this is a slow process and will be updated in AB2D-7272
