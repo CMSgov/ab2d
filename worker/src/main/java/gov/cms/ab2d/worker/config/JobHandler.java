@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.coverage.service.v3.CoverageV3LockWrapper;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -43,17 +42,14 @@ public class JobHandler implements MessageHandler {
     private final LockRegistry lockRegistry;
     private final WorkerService workerService;
     private final CoverageV3Service coverageV3Service;
-    private final CoverageV3LockWrapper coverageV3LockWrapper;
 
     public JobHandler(
             LockRegistry lockRegistry,
             WorkerService workerService,
-            CoverageV3Service coverageV3Service,
-            CoverageV3LockWrapper coverageV3LockWrapper) {
+            CoverageV3Service coverageV3Service) {
         this.lockRegistry = lockRegistry;
         this.workerService = workerService;
         this.coverageV3Service = coverageV3Service;
-        this.coverageV3LockWrapper = coverageV3LockWrapper;
     }
 
     @Override
