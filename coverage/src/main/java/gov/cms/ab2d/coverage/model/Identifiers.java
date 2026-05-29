@@ -26,7 +26,7 @@ public class Identifiers {
     private final Boolean shareDataV3;
 
     // Used for debugging purposes only
-    // Row number can be used to reference the patient ID  at the given row of aggregated table
+    // Row number is used to reference the patient at the given row of aggregated table
     private final long rowNumberV3;
 
     private Identifiers(long beneficiaryId, String currentMbi, LinkedHashSet<String> historicMbis, long patientIdV3, boolean isV3, Boolean shareDataV3, long rowNumberV3) {

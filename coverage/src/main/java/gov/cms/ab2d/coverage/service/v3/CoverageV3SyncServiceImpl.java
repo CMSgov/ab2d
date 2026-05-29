@@ -3,6 +3,7 @@ package gov.cms.ab2d.coverage.service.v3;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -25,16 +26,19 @@ import static java.lang.String.format;
 @Component
 public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
-    private final CoverageV3LockWrapper lockWrapper;
+    private final CoverageV3LockWrapper recentCoverageLock;
+    private final CoverageV3LockWrapper historicalCoverageLock;
     private final PropertiesService propertiesService;
     private final DataSource dataSource;
 
     public CoverageV3SyncServiceImpl(
             DataSource dataSource,
-            CoverageV3LockWrapper lockWrapper,
+            @Qualifier("recentCoverageLock") CoverageV3LockWrapper recentCoverageLock,
+            @Qualifier("historicalCoverageLock") CoverageV3LockWrapper historicalCoverageLock,
             PropertiesService propertiesService) {
         this.dataSource = dataSource;
-        this.lockWrapper = lockWrapper;
+        this.recentCoverageLock = recentCoverageLock;
+        this.historicalCoverageLock = historicalCoverageLock;
         this.propertiesService = propertiesService;
     }
 
@@ -146,7 +150,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             return NO_COVERAGE_FOUND_FOR_CONTRACT;
         }
 
-        val lock = lockWrapper.getCoverageLock(contract);
+        val lock = recentCoverageLock.getCoverageLock(contract);
         val locked = lock.tryLock();
         try {
             if (locked) {
@@ -225,7 +229,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             return JOB_IN_PROGRESS_FOR_CONTRACT;
         }
 
-        val lock = lockWrapper.getCoverageLock(contract);
+        val lock = historicalCoverageLock.getCoverageLock(contract);
         val locked = lock.tryLock();
         try {
             if (locked) {

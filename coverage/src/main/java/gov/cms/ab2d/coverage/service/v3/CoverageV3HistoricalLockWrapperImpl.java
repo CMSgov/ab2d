@@ -6,20 +6,19 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.util.concurrent.locks.Lock;
 
 @Slf4j
-@Component
-public class CoverageV3LockWrapperImpl implements CoverageV3LockWrapper {
+@Component("historicalCoverageLock")
+public class CoverageV3HistoricalLockWrapperImpl implements CoverageV3LockWrapper {
 
-    private static final String COVERAGE_V3_LOCK_NAME_PREFIX = "COVERAGE_V3_LOCK_";
-    private static final int LOCK_TTL_MILLIS = 120_000; // 2 minutes
+    private static final String COVERAGE_V3_LOCK_NAME_PREFIX = "COVERAGE_V3_HISTORICAL_LOCK_";
+    private static final int LOCK_TTL_MILLIS = 1_800_000; // 30 minutes
     private final JdbcLockRegistry lockRegistry;
 
-    public CoverageV3LockWrapperImpl(ApplicationContext context, DataSource dataSource) {
+    public CoverageV3HistoricalLockWrapperImpl(ApplicationContext context, DataSource dataSource) {
         val defaultLockRepository = new DefaultLockRepository(dataSource);
         defaultLockRepository.setApplicationContext(context);
         defaultLockRepository.setTimeToLive(LOCK_TTL_MILLIS);

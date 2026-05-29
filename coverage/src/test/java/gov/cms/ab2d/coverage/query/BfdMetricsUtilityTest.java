@@ -11,6 +11,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @Testcontainers
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class BfdMetricsUtilityTest {
@@ -20,7 +22,6 @@ class BfdMetricsUtilityTest {
 
 	@Test
 	void test() throws Exception {
-
 		val jobUuid = UUID.randomUUID().toString();
 		val metrics = new BfdMetricsUtility(container.getDataSource());
 
@@ -30,16 +31,17 @@ class BfdMetricsUtilityTest {
 		metrics.addMetric(jobUuid, metric1);
 		metrics.addMetric(jobUuid, metric2);
 
-		val preparedStatement = container.getDataSource().getConnection().prepareStatement("select * from v3.\"metrics_" + jobUuid + "\"");
-		val result = preparedStatement.executeQuery();
+		try (val preparedStatement = container.getDataSource().getConnection().prepareStatement("select * from v3.\"metrics_" + jobUuid + "\"")) {
+			val result = preparedStatement.executeQuery();
+			result.next();
+			assertEquals(1, result.getLong(1));
+			assertEquals(1_000_001, result.getLong(3));
 
-		result.next();
+			result.next();
+			assertEquals(2, result.getLong(1));
+			assertEquals(1_000_002, result.getLong(3));
+		}
 
-		System.out.println();
-
-		result.next();
-
-		System.out.println();
 	}
 
 }
