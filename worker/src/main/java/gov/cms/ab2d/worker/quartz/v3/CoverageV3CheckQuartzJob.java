@@ -40,7 +40,8 @@ public class CoverageV3CheckQuartzJob extends QuartzJobBean {
             log.info("[V3] Skipping enrollment verification because AB2D is already in maintenance mode");
         }
 
-        // Note: This process uses a query that causes the database to run out of disk space... to be updated in AB2D-7272
+        // Note: This process uses a query that causes the database to run out of disk space...
+        // To be updated in AB2D-7272
 
         /*
         try {

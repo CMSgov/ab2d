@@ -50,9 +50,6 @@ class CoverageV3PresentCheckTest {
 
 		check = new CoverageV3PresentCheck(coverageService, coverageCounts, issues);
 		check.test(contractDto);
-
-		// TODO Add test cases - future coverage periods that postdate periods in v3/init.sql
-		//  will log e.g. 'Z1234-2026-3 no enrollment found', 'Z1234-2026-4 no enrollment found', and so on
 	}
 
 

@@ -13,7 +13,6 @@ import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
-import gov.cms.ab2d.worker.processor.coverage.check.v3.CoverageV3PresentCheck;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -680,8 +679,6 @@ public class CoverageDriverImpl implements CoverageDriver {
         try {
             return coverageV3Service.pageCoverage(request);
         } catch (Exception exception) {
-            // TODO add a better log message here -- add retry?
-            // TODO write ERROR to database log table
             log.error("[V3] coverage period missing or year,month query incorrect, driver should have resolved earlier - {}", request.toString());
             throw new CoverageDriverException("[V3] coverage driver failing preconditions", exception);
         }
@@ -750,8 +747,9 @@ public class CoverageDriverImpl implements CoverageDriver {
 
     @Override
     @Deprecated
-
     public void verifyCoverageV3() {
+        // To be revisited in AB2D-7272
+
         /*
         val issues = new ArrayList<String>();
 

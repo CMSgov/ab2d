@@ -259,9 +259,8 @@ public class ContractProcessorImpl implements ContractProcessor {
 
 
         if ((totalQueued != totalExpected) && (Math.abs(totalQueued - totalExpected) > 4000)) {
-            // TODO - Revert this after testing in ephemeral prod
-            log.info("expected " + totalExpected + " patients from database but retrieved " + totalQueued);
-            //throw new ContractProcessingException("expected " + totalExpected + " patients from database but retrieved " + totalQueued);
+            // Note: In ephemeral prod, this was logged instead of throwing an exception
+            throw new ContractProcessingException("expected " + totalExpected + " patients from database but retrieved " + totalQueued);
         }
     }
 
