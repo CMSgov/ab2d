@@ -22,7 +22,7 @@ class CoverageV3RepositoryTest {
     @Test
     void findAllByMonthAndYear() {
         val periods = coverageV3Repository.findAllByMonthAndYear(1, 2026);
-        assertEquals(5, periods.size());
+        assertEquals(6, periods.size());
     }
 
     @Test
