@@ -10,8 +10,11 @@ import gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.CapturedOutput;
@@ -21,8 +24,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.*;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -41,54 +45,43 @@ class GetAggregatedCoverageMembershipTest {
 			syncService
 	);
 
-	@Test
-	void test(CapturedOutput output) {
-		val contract = "Z1234";
-//		val contract = "Z0000"; // no columns where share_data == null
-//		val contract = "Z7777"; // one MBI with share_data == null
-		GetAggregatedCoverageMembership test = new GetAggregatedCoverageMembership(container.getDataSource());
-		test.createAggregatedAttributionTable(contract);
+	@ParameterizedTest
+	@ValueSource(strings = {"Z1234", "Z0000", "Z7777"})
+	void test(String contract, CapturedOutput output) {
+		GetAggregatedCoverageMembership aggregatedMembership = new GetAggregatedCoverageMembership(container.getDataSource());
+		aggregatedMembership.createAggregatedAttributionTable(contract);
 
-		assertTrue(test.getDistinctPatientCount(contract) > 0);
-		assertTrue(test.getCoveragePeriodsInAggregatedTable(contract) > 0);
+		assertTrue(aggregatedMembership.getDistinctPatientCount(contract) > 0);
+		assertTrue(aggregatedMembership.getCoveragePeriodsInAggregatedTable(contract) > 0);
 
 		ContractForCoverageDTO contractDto = new ContractForCoverageDTO();
 		contractDto.setContractNumber(contract);
 
-		List<CoverageSummary> coverageSummaries = test.fetchAggregatedData(contractDto, 1, Optional.empty());
+		List<CoverageSummary> coverageSummaries = aggregatedMembership.fetchAggregatedData(contractDto, 1, Optional.empty());
 		while (!coverageSummaries.isEmpty()) {
-			System.out.println("coverageSummaries.size() = " + coverageSummaries.size());
-
-			for (CoverageSummary coverageSummary : coverageSummaries) {
-				System.out.println("rowNumber=" + coverageSummary.getIdentifiers().getRowNumberV3());
-				System.out.println("shareData=" + coverageSummary.getIdentifiers().getShareDataV3());
-			}
-
 			val lastPatientId = coverageSummaries.get(coverageSummaries.size()-1).getIdentifiers().getPatientIdV3();
-			coverageSummaries = test.fetchAggregatedData(contractDto, 1, Optional.of(lastPatientId));
+			coverageSummaries = aggregatedMembership.fetchAggregatedData(contractDto, 1, Optional.of(lastPatientId));
 		}
 
 		// Should delete if exists
-		test.deleteAggregatedTable("Z1234", UUID.randomUUID().toString());
+		aggregatedMembership.deleteAggregatedTable(contract, Optional.empty());
 		// And not fail if it doesn't exist
-		test.deleteAggregatedTable("Z1234", UUID.randomUUID().toString());
+		aggregatedMembership.deleteAggregatedTable(contract, Optional.empty());
 
-
+		aggregatedMembership.createAggregatedAttributionTable("Z9999");
 		when(syncService.getContractsWithActiveV3Jobs()).thenReturn(List.of("Z9999"));
-		test.createAggregatedAttributionTable("Z9999");
-		test.createAggregatedAttributionTable("Z0000");
-		test.createAggregatedAttributionTable("Z7777");
+
+		aggregatedMembership.createAggregatedAttributionTable(contract);
 
 		coverageV3Service.checkForAggregatedTablesToBeDeleted();
-		assertTrue(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_coverage_v3_aggregated_z0000"));
-		assertTrue(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_coverage_v3_aggregated_z7777"));
+		assertTrue(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_coverage_v3_aggregated_" + contract.toLowerCase()));
 		assertFalse(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_coverage_v3_aggregated_z9999"));
 
 	}
 
 	@Test
 	void testDuplicates() {
-		val test = new GetAggregatedCoverageMembership(container.getDataSource());
+		val aggregatedMembership = new GetAggregatedCoverageMembership(container.getDataSource());
 
 		var list = List.of(
 			new CoverageSummary(Identifiers.ofV3(1L, null, false, 0L), null, List.of()),
@@ -106,8 +99,8 @@ class GetAggregatedCoverageMembershipTest {
 			new CoverageSummary(Identifiers.ofV3(6L, null, false, 0L), null, List.of())
 		);
 
-
-		System.out.println(test.getIndexesOfDuplicatePatients(list));
+		var indexesOfDuplicatePatients = aggregatedMembership.getIndexesOfDuplicatePatients(list);
+		assertEquals(indexesOfDuplicatePatients.toString(), "[[1, 2], [5, 6, 7]]");
 
 
 		list = List.of(
@@ -115,7 +108,8 @@ class GetAggregatedCoverageMembershipTest {
 			new CoverageSummary(Identifiers.ofV3(2L, null, false, 0L), null, List.of())
 		);
 
-		System.out.println(test.getIndexesOfDuplicatePatients(list));
+		indexesOfDuplicatePatients = aggregatedMembership.getIndexesOfDuplicatePatients(list);
+		assertEquals(indexesOfDuplicatePatients.toString(), "[[0, 1]]");
 
 	}
 

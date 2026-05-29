@@ -254,17 +254,11 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     }
 
     CoverageSummary reduceSummariesForDuplicatePatientId(List<CoverageSummary> summaries) {
-        val patientId = summaries.get(0).getIdentifiers().getPatientIdV3(); // TODO remove assertion
-
         var shareData = true;
         val dateRanges = new ArrayList<FilterOutByDate.DateRange>();
 
         for (CoverageSummary summary : summaries) {
             val identifiers = summary.getIdentifiers();
-
-            if (identifiers.getPatientIdV3() != patientId) {
-                throw new IllegalStateException(); // TODO remove assertion
-            }
 
             if (identifiers.getShareDataV3() != null && identifiers.getShareDataV3() == false) {
                 shareData = false;
@@ -285,7 +279,6 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         );
 
         return new CoverageSummary(newIdentifier, firstSummary.getContract(), dateRanges);
-
     }
 
     void reduce(List<List<Integer>> indexList, List<CoverageSummary> summaries) {
@@ -329,7 +322,8 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
             val currentMbi = rs.getString(2);
             val identifiers = Identifiers.ofV3(patientId, currentMbi, shareData, rowNumber);
 
-            // These are not used -- useful for determining if record came from historical or recent coverage table
+            // Note: These are not used -- useful for determining if record came from historical or recent coverage
+            // table based on whether contract is null
             val contractHistory = rs.getString(3);
             val contractRecent = rs.getString(4);
 

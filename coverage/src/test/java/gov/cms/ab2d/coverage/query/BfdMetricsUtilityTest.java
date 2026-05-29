@@ -24,15 +24,6 @@ class BfdMetricsUtilityTest {
 		val jobUuid = UUID.randomUUID().toString();
 		val metrics = new BfdMetricsUtility(container.getDataSource());
 
-
-		/*
-		private long responseNs;
-		private long parseBundleNs;
-		private int bundleCount;
-		private long numBytes;
-		private long filterNs;
-		 */
-
 		val metric1 = new BfdMetricsUtility.BfdRequestMetric(1_000_001, 1_001, 1, 3501, 501);
 		val metric2 = new BfdMetricsUtility.BfdRequestMetric(1_000_002, 1_001, 2, 3502, 502);
 
