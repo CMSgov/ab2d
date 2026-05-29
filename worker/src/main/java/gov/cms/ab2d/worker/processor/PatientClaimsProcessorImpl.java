@@ -51,8 +51,10 @@ import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     /**
-     * If true, proceed to check 'bfd.metrics.enabled' in properties table for each request
+     * If true, proceed to check if 'bfd.metrics.enabled' is enabled in the properties table for each request
      * If false, skip query to properties table
+     *
+     * Note: Will likely be removed after DataDog migration (?)
      */
     private static final boolean ENABLE_BFD_METRICS = true;
 
