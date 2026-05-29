@@ -157,7 +157,7 @@ FROM v3.coverage_v3_historical
 WHERE false  -- no data yet
 GROUP BY contract, patient_id, current_mbi;
 
--- TODO replace this call to populateHistorySummaryForContract()
+-- Performs same function as populateHistorySummaryForContract()
 DO $$
 DECLARE
     c text;

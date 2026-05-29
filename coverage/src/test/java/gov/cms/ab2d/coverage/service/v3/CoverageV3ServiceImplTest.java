@@ -36,7 +36,6 @@ class CoverageV3ServiceImplTest {
 		service = new CoverageV3ServiceImpl(container.getDataSource(), propertiesService, syncService);
 	}
 
-	// TODO Temporary -- remove
 	@Test
 	void test() {
 		assertTrue(
