@@ -15,7 +15,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.13</version>
+        <version>3.5.14</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>gov.cms.ab2d</groupId>
@@ -36,7 +36,8 @@
         <testcontainers.version>1.21.4</testcontainers.version>
         <newrelic.version>8.22.0</newrelic.version>
         <spring-cloud-aws.version>3.4.0</spring-cloud-aws.version>
-        <postgresql.version>42.7.7</postgresql.version>
+        <postgresql.version>42.7.11</postgresql.version>
+        <kotlin.version>2.1.0</kotlin.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.14</jacoco.version>
@@ -44,13 +45,13 @@
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
         <!-- AB2D lib versions -->
-        <bfd-lib.version>4.5.3-logging-extra2</bfd-lib.version> <!-- NOTE main is on 4.6.0 -->
-        <events-client.version>3.3.13</events-client.version>
-        <fhir-lib.version>2.5.5</fhir-lib.version>
-        <aggregator-lib.version>2.1.4</aggregator-lib.version>
-        <filters-lib.version>3.2.0</filters-lib.version> <!-- NOTE 3.2.0-logging contains logging for clm_uniq_id (no longer necessary) -->
-        <contract-client.version>2.1.3</contract-client.version>
-        <sns-client.version>1.1.7</sns-client.version>
+        <bfd-lib.version>4.7.0</bfd-lib.version>
+        <events-client.version>3.3.14</events-client.version>
+        <fhir-lib.version>2.5.6</fhir-lib.version>
+        <aggregator-lib.version>2.1.5</aggregator-lib.version>
+        <filters-lib.version>3.1.2</filters-lib.version>
+        <contract-client.version>2.1.4</contract-client.version>
+        <sns-client.version>1.1.8</sns-client.version>
 
         <!-- Dependency versions -->
         <commons-compress.version>1.28.0</commons-compress.version>
@@ -75,12 +76,32 @@
             <dependency>
                 <groupId>ca.uhn.hapi.fhir</groupId>
                 <artifactId>org.hl7.fhir.utilities</artifactId>
-                <version>6.9.4</version>
+                <version>6.9.7</version>
             </dependency>
             <dependency>
                 <groupId>ca.uhn.hapi.fhir</groupId>
                 <artifactId>org.hl7.fhir.dstu3</artifactId>
-                <version>6.9.4</version>
+                <version>6.9.7</version>
+            </dependency>
+            <dependency>
+                <groupId>ca.uhn.hapi.fhir</groupId>
+                <artifactId>org.hl7.fhir.r4</artifactId>
+                <version>6.9.7</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>1.84</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>1.84</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.thrift</groupId>
+                <artifactId>libthrift</artifactId>
+                <version>0.23.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

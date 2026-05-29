@@ -12,13 +12,13 @@ repositories {
 
 dependencies {
     implementation 'org.liquibase:liquibase-core:4.33.0'
-    implementation 'org.postgresql:postgresql:42.7.2'
+    implementation 'org.postgresql:postgresql:42.7.11'
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
     annotationProcessor 'org.projectlombok:lombok:1.18.42'
     compileOnly 'org.projectlombok:lombok:1.18.42'
     testImplementation 'org.liquibase:liquibase-core:4.33.0'
-    testImplementation 'org.postgresql:postgresql:42.7.2'
+    testImplementation 'org.postgresql:postgresql:42.7.11'
     testImplementation project(':lambda-test-utils')
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testImplementation 'org.junit.platform:junit-platform-commons:1.9.2'
