@@ -276,7 +276,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private boolean bfdMetricsEnabled() {
-        if (ENABLE_BFD_METRICS) {
+        if (!ENABLE_BFD_METRICS) {
             return false;
         }
         return propertiesService.isToggleOn(PropertyConstants.BFD_METRICS_ENABLED, false);
