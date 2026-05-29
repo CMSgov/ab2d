@@ -47,4 +47,5 @@ public final class PropertyConstants {
     // When true, R4V3 EOB processing uses in-place mutation instead of copy-based construction
     public static final String EOB_V3_IN_PLACE = "eob.v3.inplace.enabled";
 
+    public static final String BFD_METRICS_ENABLED = "bfd.metrics.enabled";
 }
