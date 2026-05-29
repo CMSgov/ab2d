@@ -3,6 +3,7 @@ package gov.cms.ab2d.coverage.service.v3;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import lombok.val;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -18,40 +19,45 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class CoverageV3ServiceImplTest {
 
-	@Container
-	private static final CoverageV3PostgresContainer container = new CoverageV3PostgresContainer();
+    @Container
+    private static final CoverageV3PostgresContainer container = new CoverageV3PostgresContainer();
 
-	@Mock
-	CoverageV3SyncServiceImpl syncService;
-	@Mock
-	PropertiesService propertiesService;
+    @Mock
+    CoverageV3SyncServiceImpl syncService;
+    @Mock
+    PropertiesService propertiesService;
 
-	CoverageV3ServiceImpl service = new CoverageV3ServiceImpl(container.getDataSource(), propertiesService, syncService);
+    CoverageV3ServiceImpl service;
 
-	// TODO Temporary -- remove
-	@Test
-	void test() {
-		assertTrue(
-			service.shouldDeleteAggregatedTable(
-				"coverage_v3_aggregated_s5601",
-				List.of("S4802")
-			)
-		);
+    @BeforeEach
+    void setUp() {
+        service = new CoverageV3ServiceImpl(container.getDataSource(), propertiesService, syncService);
+    }
 
-		assertFalse(
-			service.shouldDeleteAggregatedTable(
-					"coverage_v3_aggregated_s5601",
-					List.of("s5601")
-			)
-		);
+    // TODO Temporary -- remove
+    @Test
+    void test() {
+        assertTrue(
+            service.shouldDeleteAggregatedTable(
+                "coverage_v3_aggregated_s5601",
+                List.of("S4802")
+            )
+        );
 
-		assertFalse(
-			service.shouldDeleteAggregatedTable(
-					"coverage_v3_aggregated_s5601",
-					List.of("S5601")
-			)
-		);
-	}
+        assertFalse(
+            service.shouldDeleteAggregatedTable(
+                    "coverage_v3_aggregated_s5601",
+                    List.of("s5601")
+            )
+        );
+
+        assertFalse(
+            service.shouldDeleteAggregatedTable(
+                    "coverage_v3_aggregated_s5601",
+                    List.of("S5601")
+            )
+        );
+    }
 
 
 }
