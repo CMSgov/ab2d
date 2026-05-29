@@ -10,7 +10,6 @@ import gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,10 +23,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 @Slf4j
 @Testcontainers
@@ -114,9 +112,9 @@ class GetAggregatedCoverageMembershipTest {
 	}
 
 	@Test
-	void testDuplicatesAndReduce() {
+	void testDuplicatesAndReduce(CapturedOutput output) {
 
-		val test = new GetAggregatedCoverageMembership(container.getDataSource());
+		val aggregatedMembership = new GetAggregatedCoverageMembership(container.getDataSource());
 
 		var list = new ArrayList<>(List.of(
 			new CoverageSummary(Identifiers.ofV3(1L, null, false, 1L), null, List.of()),
@@ -136,28 +134,19 @@ class GetAggregatedCoverageMembershipTest {
 		));
 
 
-		val duplicateIndexes = test.getIndexesOfDuplicatePatients(list);
+		val duplicateIndexes = aggregatedMembership.getIndexesOfDuplicatePatients(list);
+		// Rows 2,3 are duplicates as well as 6,7,8
+		assertEquals("[[1, 2], [5, 6, 7]]", duplicateIndexes.toString());
 
-		test.reduce(duplicateIndexes, list);
+		aggregatedMembership.reduce(duplicateIndexes, list);
 
-		val iterator = list.listIterator();
-		while (iterator.hasNext()) {
-			val next = iterator.next();
-			if (next == null) {
-				iterator.remove();
-			} else {
-				val identifiers = next.getIdentifiers();
-				if (Objects.equals(Boolean.FALSE, identifiers.getShareDataV3())) {
-					log.info("Patient at row number {} has opted out; removing coverage summary", identifiers.getRowNumberV3());
-					iterator.remove();
-				}
-			}
-		}
-
-
-		System.out.println();
-
-
+		assertTrue(output.getOut().contains("Processing duplicate patient at row number 2"));
+		assertTrue(output.getOut().contains("Processing duplicate patient at row number 3"));
+		assertTrue(output.getOut().contains("Reduced duplicate patient records into record from row number 2"));
+		assertTrue(output.getOut().contains("Processing duplicate patient at row number 6"));
+		assertTrue(output.getOut().contains("Processing duplicate patient at row number 7"));
+		assertTrue(output.getOut().contains("Processing duplicate patient at row number 8"));
+		assertTrue(output.getOut().contains("Reduced duplicate patient records into record from row number 6"));
 	}
 
 }
