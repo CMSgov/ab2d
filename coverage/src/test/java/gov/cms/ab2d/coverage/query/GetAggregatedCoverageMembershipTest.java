@@ -100,7 +100,7 @@ class GetAggregatedCoverageMembershipTest {
 		);
 
 		var indexesOfDuplicatePatients = aggregatedMembership.getIndexesOfDuplicatePatients(list);
-		assertEquals(indexesOfDuplicatePatients.toString(), "[[1, 2], [5, 6, 7]]");
+		assertEquals("[[1, 2], [5, 6, 7]]", indexesOfDuplicatePatients.toString());
 
 
 		list = List.of(
@@ -109,7 +109,7 @@ class GetAggregatedCoverageMembershipTest {
 		);
 
 		indexesOfDuplicatePatients = aggregatedMembership.getIndexesOfDuplicatePatients(list);
-		assertEquals(indexesOfDuplicatePatients.toString(), "[[0, 1]]");
+		assertEquals("[[0, 1]]", indexesOfDuplicatePatients.toString());
 
 	}
 
