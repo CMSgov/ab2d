@@ -7,16 +7,15 @@ import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
-import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.coverage.service.CoverageV3Service;
-import gov.cms.ab2d.coverage.util.CoverageV3Utils;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -70,6 +69,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final PropertiesService propertiesService;
     private final ContractToContractCoverageMapping mapping;
     private final CoverageSnapshotService coverageSnapshotService;
+
 
     //CHECKSTYLE.OFF
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
@@ -524,22 +524,12 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Trace(metricName = "EnrollmentCountV3", dispatcher = true)
     @Override
     public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
-        final ZonedDateTime endTime = getEndDateTime();
-
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
 
-        final ZonedDateTime startDateTime = getStartDateTime(contract);
-        final CoverageV3Periods coverageV3Periods = CoverageV3Utils.enumerateCoveragePeriods(startDateTime, endTime);
-
-        log.info("counting number of beneficiaries for {} coverage periods for job {}",
-                coverageV3Periods.getHistoricalCoverage().size() + coverageV3Periods.getRecentCoverage().size(),
-                job.getJobUuid()
-        );
-
-        int count = coverageV3Service.countBeneficiariesByCoveragePeriod(coverageV3Periods, contract.getContractNumber());
-        log.info("number of beneficiaries for job {}: {}", job.getJobUuid(), count);
+        int count = coverageV3Service.getDistinctPatientCount(contract.getContractNumber());
+        log.info("[V3] number of beneficiaries for job {}: {}", job.getJobUuid(), count);
         return count;
     }
 
@@ -754,6 +744,48 @@ public class CoverageDriverImpl implements CoverageDriver {
             throw new CoverageVerificationException(message, issues);
         }
     }
+
+    @Override
+    @Deprecated
+    public void verifyCoverageV3() {
+        // To be revisited in AB2D-7272
+
+        /*
+        val issues = new ArrayList<String>();
+
+        // Only filter contracts that matter
+        List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts()
+            .stream()
+            .filter(contract -> !contract.isTestContract())
+            .filter(contract -> contractNotBeingUpdatedV3(issues, contract))
+            .map(Contract::toDTO)
+            .toList();
+
+        val coverageCounts = coverageV3Service.getCoverageCount();
+
+        long passingContracts = enabledContracts.stream()
+            .filter(new CoverageV3PresentCheck(coverageV3Service, coverageCounts, issues))
+            .count();
+
+        String message = String.format("Verified that %d contracts pass all coverage checks out of %d",
+                passingContracts, enabledContracts.size());
+        log.info(message);
+
+        if (!issues.isEmpty()) {
+            throw new CoverageVerificationException(message, issues);
+        }
+        */
+    }
+
+    private boolean contractNotBeingUpdatedV3(List<String> issues, Contract contract) {
+        if (coverageV3Service.idrImportInProgress()) {
+            issues.add("[V3] Contract " + contract.getContractNumber() + " is being updated now so coverage verification will be done later");
+            return false;
+        }
+
+        return true;
+    }
+
 
     /**
      * Check that a contract is not currently having its enrollment updated. The verification steps are only valid

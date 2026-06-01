@@ -15,7 +15,7 @@ import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.coverage.service.CoverageV3Service;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -64,7 +64,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.*;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -196,7 +195,7 @@ public class EndToEndBfdTests {
         jobPreProcessor = new JobPreProcessorImpl(contractWorkerClient, jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
-                jobRepository, jobOutputRepository, contractProcessor, logManager);
+                jobRepository, jobOutputRepository, contractProcessor, logManager, coverageV3Service);
         ReflectionTestUtils.setField(jobProcessor, "failureThreshold", 10);
         ReflectionTestUtils.setField(jobProcessor, "efsMount", path.getAbsolutePath());
 

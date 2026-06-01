@@ -1,0 +1,21 @@
+package gov.cms.ab2d.coverage.query;
+
+import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
+import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+@Testcontainers
+class GetCoverageV3CountTest {
+
+	@Container
+	private static final CoverageV3PostgresContainer container = new CoverageV3PostgresContainer();
+
+	GetCoverageV3Count query;
+
+	@BeforeEach
+	void setup() {
+		query = new GetCoverageV3Count(container.getDataSource());
+	}
+
+}
