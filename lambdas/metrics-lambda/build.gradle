@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'gov.cms.ab2d:ab2d-events-client:1.11.2'
+    implementation 'gov.cms.ab2d:ab2d-events-client:3.3.13'
 
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'

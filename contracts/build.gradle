@@ -1,12 +1,12 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.13'
-    id 'com.jfrog.artifactory' version '4.33.1' apply false
-    id "org.sonarqube" version "4.1.0.3113"
-    id "gov.cms.ab2d.plugin" version "1.0.2"
+    id 'org.springframework.boot' version '3.5.14'
+    id "org.sonarqube" version "7.3.0.8198"
     id 'maven-publish'
-    id 'org.cyclonedx.bom' version '2.0.0' apply true
+    id 'org.cyclonedx.bom' version '3.0.0' apply true
 }
+
+apply from: "${rootDir}/../gradle/ab2d-shared.gradle"
 
 version="2.0.1"
 group = "gov.cms.ab2d"
@@ -14,11 +14,11 @@ group = "gov.cms.ab2d"
 ext {
     lombokVersion = '1.18.38'
     springCloudAwsVersion = '3.4.0'
-    springBootVersion='3.5.13'
+    springBootVersion='3.5.14'
     testContainerVersion='1.21.4'
     liquibaseVersion = '5.0.0'
-    eventClientVersion='3.3.13'
-    contractClientVersion='2.1.3'
+    eventClientVersion='3.3.14'
+    contractClientVersion='2.1.4'
     commonsLangVersion='3.18.0' // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
 }
 
@@ -34,7 +34,7 @@ allprojects {
         implementation "io.awspring.cloud:spring-cloud-aws-starter-sqs:${springCloudAwsVersion}"
         implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
         implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
-        implementation 'org.postgresql:postgresql:42.7.3'
+        implementation 'org.postgresql:postgresql:42.7.11'
         implementation "org.springframework.boot:spring-boot-starter-quartz:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
@@ -53,42 +53,30 @@ allprojects {
         annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
     }
 
-    cyclonedxBom {
-        // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
+    cyclonedxDirectBom {
         includeConfigs = ["runtimeClasspath"]
-        // skipConfigs is a list of configuration names to exclude when generating the BOM
         skipConfigs = ["compileClasspath", "testCompileClasspath"]
-        // Specified the type of project being built. Defaults to 'library'
-        projectType = "library"
-        // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
-        schemaVersion = "1.4"
-        // Boms destination directory (defaults to build/reports)
-        destination = file("build/reports")
-        // The file name for the generated BOMs (before the file format suffix). Defaults to 'bom'
-        outputName = "bom"
-        // The file format generated, can be xml, json or all for generating both
-        outputFormat = "all"
-        // Exclude BOM Serial Number
-        includeBomSerialNumber = false
-        // Override component version
-        componentVersion = "2.0.0"
     }
+
+    cyclonedxBom {
+        projectType = "library"
+        schemaVersion = "VERSION_14"
+        includeBomSerialNumber = false
+        componentVersion = "2.0.0"
+        jsonOutput = file("build/reports/bom.json")
+        xmlOutput = file("build/reports/bom.xml")
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+bootJar {
+    archiveBaseName = 'contracts'
 }
 
 test {
     useJUnitPlatform()
-}
-
-repositories {
-    mavenCentral()
-    mavenLocal()
-    maven {
-        def artifactoryUrl = System.getenv("ARTIFACTORY_URL") ?: System.getProperty("artifactory_contextUrl")
-        println("Using Artifactory URL in build.gradle: ${artifactoryUrl}/ab2d-main")
-        url = "${artifactoryUrl}/ab2d-main"
-        credentials {
-            username = System.getenv("ARTIFACTORY_USER") ?: System.getProperty("username")
-            password = System.getenv("ARTIFACTORY_PASSWORD") ?: System.getProperty("password")
-        }
-    }
 }

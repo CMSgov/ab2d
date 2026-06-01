@@ -4,7 +4,7 @@ plugins {
     id "org.sonarqube" version "7.3.0.8198"
     id 'org.cyclonedx.bom' version '3.0.0' apply true
 }
-version = "1.1.6"
+version = "1.1.7"
 group = "gov.cms.ab2d"
 
 dependencies {
@@ -131,7 +131,7 @@ subprojects {
 
     jacoco {
         toolVersion = "0.8.14"
-        reportsDirectory = layout.buildDirectory.dir("$buildDir/reports/jacoco")
+        reportsDirectory = layout.buildDirectory.dir("reports/jacoco")
     }
 
     checkstyle {
@@ -162,6 +162,7 @@ allprojects {
     }
 
     repositories {
+        mavenCentral()
         [sourcesRepo, resolverRepo].unique().each { repoKey ->
             maven {
                 url = "${artifactoryLoc}/${repoKey}"
@@ -171,7 +172,6 @@ allprojects {
                 }
             }
         }
-        mavenCentral()
     }
 
 
@@ -187,8 +187,8 @@ tasks.register('buildZip', Zip) {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 build.dependsOn buildZip
