@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -28,6 +29,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import javax.sql.DataSource;
+
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,6 +50,8 @@ class PatientClaimsProcessorUnitTest {
 
     @Mock private BFDClient mockBfdClient;
     @Mock private SQSEventClient eventLogger;
+    @Mock private PropertiesService propertiesService;
+    @Mock private DataSource dataSource;
 
     @TempDir
     File tmpEfsMountDir;
@@ -96,7 +101,9 @@ class PatientClaimsProcessorUnitTest {
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
                 eventLogger,
-                searchConfig
+                searchConfig,
+                propertiesService,
+                dataSource
         );
 
         ReflectionTestUtils.setField(cut, "earliestDataDate", "01/01/1900");

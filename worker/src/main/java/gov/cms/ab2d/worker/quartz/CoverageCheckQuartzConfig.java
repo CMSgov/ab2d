@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.quartz;
 
+import gov.cms.ab2d.worker.quartz.v3.CoverageV3CheckQuartzJob;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,5 +37,23 @@ public class CoverageCheckQuartzConfig {
                 .withIdentity("coverage_check_trigger_periodic")
                 .withSchedule(CronScheduleBuilder.cronSchedule(schedule))
                 .build();
+    }
+
+    @Qualifier("coverage_v3_check")
+    @Bean
+    JobDetail coverageV3CheckJobDetail() {
+        return JobBuilder.newJob(CoverageV3CheckQuartzJob.class)
+            .withIdentity("coverage_v3_check")
+            .storeDurably()
+            .build();
+}
+
+    @Bean
+    Trigger coverageV3CheckPeriodicJobTrigger(@Qualifier("coverage_v3_check") JobDetail coverageCheckJobDetail) {
+        return TriggerBuilder.newTrigger()
+            .forJob(coverageCheckJobDetail)
+            .withIdentity("coverage_v3_check_trigger_periodic")
+            .withSchedule(CronScheduleBuilder.cronSchedule(schedule))
+            .build();
     }
 }
