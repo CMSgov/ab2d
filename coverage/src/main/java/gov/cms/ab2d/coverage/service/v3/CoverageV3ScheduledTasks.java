@@ -60,8 +60,8 @@ public class CoverageV3ScheduledTasks {
 		log.info("[V3] Calling moveToHistoricalForAllContracts()");
 		val contracts = syncService.getContractsInRecentCoverageTable();
 		for (String contract : contracts) {
-
 			try {
+				log.info("[V3] Calling moveToHistorical() for contract {}", contract);
 				val result = executeWithRetry(
 					() -> syncService.moveToHistorical(contract, CRON_JOB),
 					List.of(SYNC_FAILED_FOR_CONTRACT, UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT),
@@ -76,9 +76,8 @@ public class CoverageV3ScheduledTasks {
 				} else if (result == UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT) {
 					log.error("[V3] Unable to acquire coverage lock for contract {}", contract);
 				}
-
 			} catch (Exception e) {
-				log.error("[V3] Error calling moveToHistorical for contract {}", e.getClass());
+				log.error("[V3] Error calling moveToHistorical for contract {}", contract);
 			}
 		}
 	}

@@ -15,7 +15,7 @@ import java.util.concurrent.locks.Lock;
 public class CoverageV3HistoricalLockWrapperImpl implements CoverageV3LockWrapper {
 
     private static final String COVERAGE_V3_LOCK_NAME_PREFIX = "COVERAGE_V3_HISTORICAL_LOCK_";
-    private static final int LOCK_TTL_MILLIS = 1_800_000; // 30 minutes
+    private static final int LOCK_TTL_MILLIS = 3_600_000; // 1 hour
     private final JdbcLockRegistry lockRegistry;
 
     public CoverageV3HistoricalLockWrapperImpl(ApplicationContext context, DataSource dataSource) {

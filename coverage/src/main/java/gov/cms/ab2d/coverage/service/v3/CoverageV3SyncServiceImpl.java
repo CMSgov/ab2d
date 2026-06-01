@@ -13,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.executeTimedQuery;
@@ -294,7 +296,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
     int moveToHistoricalInternal(final String contract) {
         val formattedQuery = format(HISTORICAL_SYNC_FOR_CONTRACT, contract);
-        return executeQueryForContract(contract, formattedQuery);
+        // Set query timeout of 1 hour, otherwise large contracts may cause org.springframework.dao.QueryTimeoutException
+        val queryTimeout = Optional.of(Duration.ofHours(1));
+        return executeQueryForContract(contract, formattedQuery, queryTimeout);
     }
 
     int deleteMonthsOldCoverage(final String contract) {
@@ -312,10 +316,19 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return executeQueryForContract(contract, formattedQuery);
     }
 
-    int executeQueryForContract(final String contract, final String query) {
+    int executeQueryForContract(final String contract, final String query, Optional<Duration> timeout) {
         val parameters = new MapSqlParameterSource().addValue("contract", contract);
         val template = new NamedParameterJdbcTemplate(this.dataSource);
+        if (timeout.isPresent()) {
+            val timeoutInSeconds = (int) timeout.get().toSeconds();
+            log.info("Setting query timeout to {} seconds", timeoutInSeconds);
+            template.getJdbcTemplate().setQueryTimeout(timeoutInSeconds);
+        }
         return DataAccessUtils.intResult(template.queryForList(query, parameters, Integer.class));
+    }
+
+    int executeQueryForContract(final String contract, final String query) {
+        return executeQueryForContract(contract, query, Optional.empty());
     }
 
     private void populateHistorySummaryForContract(String contract) {
