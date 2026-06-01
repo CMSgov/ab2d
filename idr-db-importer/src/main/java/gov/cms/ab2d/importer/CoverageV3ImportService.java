@@ -145,7 +145,7 @@ public class CoverageV3ImportService {
         );
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             log.info("Starting coverage_v3_historical sync");
-            ps.setQueryTimeout(1800);
+            ps.setQueryTimeout(7200);
             ps.executeUpdate();
         }
     }
