@@ -56,6 +56,7 @@ import org.yaml.snakeyaml.Yaml;
 
 
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
+import static gov.cms.ab2d.common.util.Constants.V3_SINCE_EARLIEST_DATE_TIME;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static gov.cms.ab2d.e2etest.TestRunner.PdpContract.PDP_100;
 import static gov.cms.ab2d.e2etest.TestRunner.PdpContract.PDP_1000;
@@ -112,6 +113,7 @@ class TestRunner {
     private final Environment environment;
 
     private static final OffsetDateTime earliest = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
+    private static final OffsetDateTime v3earliest = V3_SINCE_EARLIEST_DATE_TIME;
 
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
 
@@ -654,14 +656,15 @@ class TestRunner {
     void runSystemWideExportSince(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         System.out.println();
         log.info("Starting test 2 - " + version.toString());
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version);
+        OffsetDateTime sinceDate = version == R4V3 ? v3earliest : earliest;
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, sinceDate, version);
         log.info("run system wide export since {}", exportResponse);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version, apiClient);
         assertNotNull(downloadDetails);
-        downloadFile(downloadDetails, earliest, version, apiClient);
+        downloadFile(downloadDetails, sinceDate, version, apiClient);
     }
 
     @ParameterizedTest
@@ -945,14 +948,15 @@ class TestRunner {
     void runSystemWideExportSinceWithoutAcceptEncoding(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         System.out.println();
         log.info("Starting test 16 - " + version.toString());
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version);
+        OffsetDateTime sinceDate = version == R4V3 ? v3earliest : earliest;
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, sinceDate, version);
         log.info("run system wide export since {}", exportResponse);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version, apiClient);
         assertNotNull(downloadDetails);
-        downloadFileWithoutAcceptEncoding(downloadDetails, earliest, version, apiClient);
+        downloadFileWithoutAcceptEncoding(downloadDetails, sinceDate, version, apiClient);
     }
 
     @Order(17)
@@ -996,7 +1000,7 @@ class TestRunner {
         val contract = PDP_1000.contract;
         val version = R4V3;
 
-        val exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version, "ExplanationOfBenefit?service-date=gt2020-02-15");
+        val exportResponse = apiClient.exportRequest(FHIR_TYPE, v3earliest, version, "ExplanationOfBenefit?service-date=gt2020-02-15");
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -1014,7 +1018,7 @@ class TestRunner {
         }
         log.info("Starting test 19");
 
-        val response = apiClient_PDP1000.exportRequest(FHIR_TYPE, earliest, R4V3, "Test?service-date=gt2020-02-15");
+        val response = apiClient_PDP1000.exportRequest(FHIR_TYPE, v3earliest, R4V3, "Test?service-date=gt2020-02-15");
         assertEquals(400, response.statusCode());
         val expectedResponseBody =
         """
@@ -1043,7 +1047,7 @@ class TestRunner {
         }
         log.info("Starting test 20");
 
-        val response = apiClient_PDP1000.exportRequest(FHIR_TYPE, earliest, R4V3, "ExplanationOfBenefit?test=gt2020-02-15");
+        val response = apiClient_PDP1000.exportRequest(FHIR_TYPE, v3earliest, R4V3, "ExplanationOfBenefit?test=gt2020-02-15");
         assertEquals(400, response.statusCode());
         val expectedResponseBody =
         """
