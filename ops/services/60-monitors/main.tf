@@ -41,7 +41,7 @@ locals {
     core     = "/ab2d/${local.env}/core"
     accounts = "/ab2d/mgmt/aws-account-numbers"
     splunk   = "/ab2d/mgmt/splunk"
-    datadog  = "/cdap/${local.env}/datadog/cicd/"
+    datadog  = "/ab2d/${local.env}/datadog/cicd/"
   }
 
   defaults   = yamldecode(file("config/defaults.yml"))
