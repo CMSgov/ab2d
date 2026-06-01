@@ -69,8 +69,6 @@ public class CoverageV3ImportService {
             backoff = @Backoff(delay = 1000, multiplier = 2.0)
     )
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws SQLException {
-        //  String stagingFqtn = fqtn + "_staging";
-        String stagingFqtn = fqtn + "_historical";
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
             connection.setAutoCommit(false);
             try (Statement statement = connection.createStatement()) {
@@ -80,7 +78,7 @@ public class CoverageV3ImportService {
             try {
                 //   truncate(connection, stagingFqtn);
                 verifyFileExists(bucket, key, region);
-                int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
+                int stagedRows = executeImport(connection, fqtn, bucket, key, region);
 
                 if (LocalDate.now(ZoneOffset.UTC).getDayOfMonth() == 1) {
                     syncToHistorical(connection, fqtn);
