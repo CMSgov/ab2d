@@ -571,7 +571,9 @@ public class CoverageServiceRepository {
         // Guarantee insertion order. Could use functional API in future.
         for (CoverageMembership coverageMembership : enrollment) {
             // If not present add to mapping
-            final long patientId = coverageMembership.getIdentifiers().isV3() ? coverageMembership.getIdentifiers().getPatientIdV3() : coverageMembership.getIdentifiers().getBeneficiaryId();
+            final long patientId = coverageMembership.getIdentifiers().isV3()
+                    ? coverageMembership.getIdentifiers().getPatientIdV3()
+                    : coverageMembership.getIdentifiers().getBeneficiaryId();
 
             enrollmentByBeneficiary.putIfAbsent(patientId, new ArrayList<>(expectedCoveragePeriods));
             enrollmentByBeneficiary.get(patientId).add(coverageMembership);
@@ -612,13 +614,16 @@ public class CoverageServiceRepository {
         return new CoverageCount(contractNum, year, month, periodId, eventId, beneCount);
     }
 
+    public static CoverageSummary summarizeCoverageMembership(ContractForCoverageDTO contract, Map.Entry<Long, List<CoverageMembership>> membershipInfo) {
+        return summarizeCoverageMembership(contract, membershipInfo.getValue());
+    }
+
     /**
      * Summarize the coverage of one beneficiary for
      */
-    public static CoverageSummary summarizeCoverageMembership(ContractForCoverageDTO contract, Map.Entry<Long, List<CoverageMembership>> membershipInfo) {
+    public static CoverageSummary summarizeCoverageMembership(ContractForCoverageDTO contract, List<CoverageMembership> membershipMonths) {
 
-        List<CoverageMembership> membershipMonths = membershipInfo.getValue();
-        Identifiers identifiers = membershipInfo.getValue().get(0).getIdentifiers();
+        Identifiers identifiers = membershipMonths.get(0).getIdentifiers();
 
         if (membershipMonths.size() == 1) {
             LocalDate start = fromRawResults(membershipMonths.get(0));

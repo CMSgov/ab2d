@@ -240,6 +240,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             // Queue a batch of patients
             current = nextPagingResult(current.getNextRequest().get());
             loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
+
             jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
             processFinishedRequests(contractData);
@@ -255,11 +256,12 @@ public class ContractProcessorImpl implements ContractProcessor {
         int totalExpected = progressTracker.getPatientsExpected();
         //AB2D-6157 Update mismatch job failure to pass in slack alerts
         //AB2D-7080 Raise the null MBI threshold for job requests
-        if ((totalQueued != totalExpected) && (Math.abs(totalQueued - totalExpected) > 4000)) {
-            throw new ContractProcessingException("expected " + totalExpected +
-                    " patients from database but retrieved " + totalQueued);
-        }
 
+
+        if ((totalQueued != totalExpected) && (Math.abs(totalQueued - totalExpected) > 4000)) {
+            // Note: In ephemeral prod, this was logged instead of throwing an exception
+            throw new ContractProcessingException("expected " + totalExpected + " patients from database but retrieved " + totalQueued);
+        }
     }
 
     private CoveragePagingResult createInitialPagingResult(final ContractData contractData) {

@@ -156,4 +156,5 @@ public class Job {
             return string != null ? Arrays.asList(string.split(SPLIT_CHAR)) : null;
         }
     }
+
 }

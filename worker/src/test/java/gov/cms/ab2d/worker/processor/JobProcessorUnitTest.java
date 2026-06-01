@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
@@ -69,6 +70,7 @@ class JobProcessorUnitTest {
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private ContractProcessor contractProcessor;
     @Mock private SQSEventClient eventLogger;
+    @Mock private CoverageV3Service coverageV3Service;
 
     private JobProgressService jobProgressService;
     private JobChannelService jobChannelService;
@@ -91,7 +93,8 @@ class JobProcessorUnitTest {
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
-                eventLogger
+                eventLogger,
+                coverageV3Service
         ));
 
         ReflectionTestUtils.setField(jobProcessor, "efsMount", efsMountTmpDir.toString());
@@ -296,7 +299,8 @@ class JobProcessorUnitTest {
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
-                eventLogger
+                eventLogger,
+                coverageV3Service
         );
         ReflectionTestUtils.setField(jobProcessor, "efsMount", efsMountTmpDir.toString());
 
@@ -322,7 +326,8 @@ class JobProcessorUnitTest {
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
-                eventLogger
+                eventLogger,
+                coverageV3Service
         );
         ReflectionTestUtils.setField(jobProcessor, "efsMount", efsMountTmpDir.toString());
 
@@ -348,7 +353,8 @@ class JobProcessorUnitTest {
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
-                eventLogger
+                eventLogger,
+                coverageV3Service
         );
         ReflectionTestUtils.setField(jobProcessor, "efsMount", efsMountTmpDir.toString());
 
