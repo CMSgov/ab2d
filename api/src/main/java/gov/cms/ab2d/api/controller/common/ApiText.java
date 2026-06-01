@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.controller.common;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
+import static gov.cms.ab2d.common.util.Constants.V3_SINCE_EARLIEST_DATE;
 
 import lombok.experimental.UtilityClass;
 
@@ -15,6 +16,7 @@ public class ApiText {
     public static final String BULK_SINCE = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE;
     public static final String BULK_UNTIL = "The _until parameter is only available with version 2 and version 3 of the API.";
     public static final String BULK_SINCE_DEFAULT = " If no value is provided, it will default to the last time a successful job was requested if it exists. The earliest accepted date is 2020-02-13T00:00:00.000-05:00";
+    public static final String BULK_SINCE_V3 = "If no value is provided, it will default to the last time a successful job was requested if it exists. The earliest accepted date is 2026-04-01T00:00:00.000-05:00";
     public static final String BULK_UNTIL_DEFAULT = " If no value is provided, it will default to the current date.";
     public static final String BULK_TYPEFILTER = "Provide service-date to further refine results";
     public static final String BULK_RESPONSE_LONG = "Absolute URL of an endpoint for subsequent status requests (polling location)";

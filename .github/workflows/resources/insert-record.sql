@@ -25,7 +25,7 @@ VALUES (
     '${API_URL_PREFIX}/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit',
     0,
     '${CONTRACT_NUMBER}',
-    '${SINCE}',
+    ${SINCE},
     ${UNTIL},
     '${FHIR_VERSION}',
     'JENKINS'

@@ -15,6 +15,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
+import static gov.cms.ab2d.common.util.Constants.V3_SINCE_EARLIEST_DATE_TIME;
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_ALLOWLISTED_CONTRACTS;
 import static org.junit.jupiter.api.Assertions.*;
@@ -80,6 +81,21 @@ class ApiCommonTest {
         OffsetDateTime oneMonthInTheFuture = OffsetDateTime.now().plusMonths(1);
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(oneMonthInTheFuture));
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(SINCE_BEFORE_EARLIEST_DATE_TIME));
+    }
+
+    @Test
+    void checkSinceTimeV3Test() {
+        // null is always allowed
+        assertDoesNotThrow(() -> apiCommon.checkSinceTime(null, FhirVersion.R4V3));
+        // date after April 2026 is valid for V3
+        assertDoesNotThrow(() -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME, FhirVersion.R4V3));
+        assertDoesNotThrow(() -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME.plusDays(1), FhirVersion.R4V3));
+        // date before April 2026 is rejected for V3
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME.minusDays(1), FhirVersion.R4V3));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(SINCE_EARLIEST_DATE_TIME, FhirVersion.R4V3));
+        // future date is rejected for V3 too
+        OffsetDateTime oneMonthInTheFuture = OffsetDateTime.now().plusMonths(1);
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(oneMonthInTheFuture, FhirVersion.R4V3));
     }
 
     @Test

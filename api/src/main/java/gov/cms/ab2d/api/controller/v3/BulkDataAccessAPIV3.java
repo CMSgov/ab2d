@@ -59,7 +59,7 @@ public class BulkDataAccessAPIV3 {
                             "application/fhir+ndjson", "application/ndjson", "ndjson"
                     }, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
             ),
-            @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE)),
+            @Parameter(name = SINCE, description = BULK_SINCE_V3, schema = @Schema(type = "date-time", description = V3_SINCE_EARLIEST_DATE)),
             @Parameter(name = UNTIL, description = BULK_UNTIL_DEFAULT, schema = @Schema(type = "date-time", description = UNTIL_EXAMPLE_DATE)),
             @Parameter(name = TYPEFILTER, description = BULK_TYPEFILTER, schema = @Schema(type = "string")),
     }
