@@ -15,7 +15,7 @@ import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.coverage.service.CoverageV3Service;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;

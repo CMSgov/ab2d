@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.stuckjob;
 
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -35,6 +36,9 @@ class CancelStuckJobsProcessorTest {
     @Mock
     private SQSEventClient eventLogger;
 
+    @Mock
+    CoverageV3Service coverageV3Service;
+
     @Captor
     private ArgumentCaptor<Job> captor;
 
@@ -42,7 +46,7 @@ class CancelStuckJobsProcessorTest {
 
     @BeforeEach
     void setUp() {
-        cut = new CancelStuckJobsProcessorImpl(mockJobRepo, eventLogger, 36);
+        cut = new CancelStuckJobsProcessorImpl(mockJobRepo, eventLogger, 36, coverageV3Service);
         ReflectionTestUtils.setField(cut, "cancelThreshold", 6);
 
         jobs.add(createStuckJob(7));
