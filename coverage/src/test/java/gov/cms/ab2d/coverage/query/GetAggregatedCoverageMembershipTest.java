@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -45,7 +46,7 @@ class GetAggregatedCoverageMembershipTest {
 	);
 
 	@ParameterizedTest
-	@ValueSource(strings = {"Z1234", "Z0000", "Z7777"})
+	@ValueSource(strings = { "Z1234", "Z0000", "Z7777"  })
 	void test(String contract, CapturedOutput output) throws Exception {
 		GetAggregatedCoverageMembership aggregatedMembership = new GetAggregatedCoverageMembership(container.getDataSource());
 		aggregatedMembership.createAggregatedAttributionTable(contract);
@@ -79,7 +80,6 @@ class GetAggregatedCoverageMembershipTest {
 		assertTrue(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_" + contract));
 		assertFalse(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_Z9999"));
 		assertFalse(tableExists("v3.coverage_v3_aggregated_" + contract));
-
 
 		aggregatedMembership.createAggregatedAttributionTable(contract);
 		aggregatedMembership.deleteAggregatedTableForContract(contract, Optional.of("555"));
@@ -162,11 +162,9 @@ class GetAggregatedCoverageMembershipTest {
 
 	boolean tableExists(String tableName) throws Exception {
 		val query = "SELECT to_regclass('%s') IS NOT NULL".formatted(tableName);
-		try (val statement = container.getDataSource().getConnection().prepareStatement(query)) {
-			val resultSet = statement.executeQuery();
-			resultSet.next();
-			return resultSet.getBoolean(1);
-		}
+		return new JdbcTemplate(container.getDataSource()).queryForObject(query, Boolean.class);
 	}
+
+
 
 }
