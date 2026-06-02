@@ -12,7 +12,7 @@ description = 'AB2D S3 to Database importer'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(25)
 	}
 }
 
@@ -52,7 +52,7 @@ tasks.named('test') {
 }
 
 jacoco {
-	toolVersion = "0.8.11"
+	toolVersion = "0.8.13"
 }
 
 tasks.jacocoTestReport {

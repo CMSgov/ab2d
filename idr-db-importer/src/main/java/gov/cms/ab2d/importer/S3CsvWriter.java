@@ -34,7 +34,6 @@ public class S3CsvWriter {
         int partNum = 1;
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream(PART_BYTES);
-        writeLine(buf, "patient_id,contract,year,month,current_mbi");
 
         try {
             while (rs.next()) {
