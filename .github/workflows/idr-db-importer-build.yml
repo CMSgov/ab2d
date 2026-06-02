@@ -54,8 +54,8 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          distribution: 'adopt'
-          java-version: '17'
+          distribution: 'temurin'
+          java-version: '25'
 
       - name: Override AWS_ACCOUNT variables
         if: ${{ inputs.is_prod == false }}
