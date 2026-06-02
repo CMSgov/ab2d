@@ -31,56 +31,31 @@ public class SnowflakeCoverageQueryService {
     private final String schema;
     private final PrivateKeyLoader privateKeyLoader;
 
-//    private static final String SQL = """
-//        WITH month_series AS (
-//          SELECT DATEADD(month, -seq4(), DATE_TRUNC('month', CURRENT_DATE()))::DATE AS month_start
-//          FROM TABLE(GENERATOR(ROWCOUNT => 3))
-//        )
-//        SELECT
-//          bene.bene_xref_efctv_sk AS "patient_id",
-//          elec.bene_cntrct_num    AS "contract",
-//          YEAR(ms.month_start)    AS "year",
-//          MONTH(ms.month_start)   AS "month",
-//          bene.bene_mbi_id        AS "current_mbi"
-//        FROM month_series ms
-//        JOIN CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_BENE_MAPD_ENRLMT elec
-//          ON elec.bene_enrlmt_bgn_dt <= LAST_DAY(ms.month_start)
-//         AND elec.bene_enrlmt_end_dt >= ms.month_start
-//        JOIN CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_BENE_HSTRY bene
-//          ON elec.bene_sk = bene.bene_sk
-//        WHERE elec.bene_cntrct_num LIKE 'S%'
-//          AND elec.idr_ltst_trans_flg = 'Y'
-//          AND elec.idr_trans_obslt_ts > '9999-12-30'
-//          AND bene.idr_ltst_trans_flg = 'Y'
-//          AND bene.bene_xref_efctv_sk != 0
-//        ORDER BY "patient_id", "year", "month"
-//        """;
-
     private static final String SQL = """
-    WITH month_series AS (
-      SELECT DATEADD(month, seq4(), DATE '2026-04-01')::DATE AS month_start
-      FROM TABLE(GENERATOR(ROWCOUNT => 3))
-    )
-    SELECT
-      bene.bene_xref_efctv_sk AS "patient_id",
-      elec.bene_cntrct_num    AS "contract",
-      YEAR(ms.month_start)    AS "year",
-      MONTH(ms.month_start)   AS "month",
-      bene.bene_mbi_id        AS "current_mbi"
-    FROM month_series ms
-    JOIN CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_BENE_MAPD_ENRLMT elec
-      ON elec.bene_enrlmt_bgn_dt <= LAST_DAY(ms.month_start)
-     AND elec.bene_enrlmt_end_dt >= ms.month_start
-    JOIN CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_BENE_HSTRY bene
-      ON elec.bene_sk = bene.bene_sk
-    WHERE elec.bene_cntrct_num LIKE 'S%'
-      AND elec.bene_enrlmt_pgm_type_cd IN (2, 3)
-      AND elec.idr_ltst_trans_flg = 'Y'
-      AND elec.idr_trans_obslt_ts > '9999-12-30'
-      AND bene.idr_ltst_trans_flg = 'Y'
-      AND bene.bene_xref_efctv_sk != 0
-    ORDER BY "patient_id", "year", "month"
-    """;
+            WITH month_series AS (
+                     SELECT DATEADD(month, -seq4(), DATE_TRUNC('month', CURRENT_DATE()))::DATE AS month_start
+                     FROM TABLE(GENERATOR(ROWCOUNT => 3))
+                   )
+               SELECT
+                 bene.bene_xref_efctv_sk AS "patient_id",
+                 elec.bene_cntrct_num    AS "contract",
+                 YEAR(ms.month_start)    AS "year",
+                 MONTH(ms.month_start)   AS "month",
+                 bene.bene_mbi_id        AS "current_mbi"
+               FROM month_series ms
+               JOIN CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_BENE_MAPD_ENRLMT elec
+                 ON elec.bene_enrlmt_bgn_dt <= LAST_DAY(ms.month_start)
+                AND elec.bene_enrlmt_end_dt >= ms.month_start
+               JOIN CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_BENE_HSTRY bene
+                 ON elec.bene_sk = bene.bene_sk
+               WHERE elec.bene_cntrct_num LIKE 'S%'
+                 AND elec.bene_enrlmt_pgm_type_cd IN (2, 3)
+                 AND elec.idr_ltst_trans_flg = 'Y'
+                 AND elec.idr_trans_obslt_ts > '9999-12-30'
+                 AND bene.idr_ltst_trans_flg = 'Y'
+                 AND bene.bene_xref_efctv_sk != 0
+               ORDER BY "patient_id", "year", "month"
+            """;
 
     public SnowflakeCoverageQueryService(
             String url,
