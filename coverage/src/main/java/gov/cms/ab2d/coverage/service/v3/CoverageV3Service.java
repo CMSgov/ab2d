@@ -18,9 +18,11 @@ public interface CoverageV3Service {
     boolean idrImportInProgress();
     // called before starting a v3 job
     void createAggregatedAttributionTable(String contract);
-    // called when v3 job is completed, failed, or cancelled via API in which case job UUID will be provided
-    // also called by cron job to periodically clean up old tables if job was cancelled manually (in which case job UUID is not provided)
-    void deleteAggregatedAttributionTable(String contract, Optional<String> jobUuid);
+    // called when v3 job is completed, failed, or cancelled via API or manually in which case job UUID will be provided
+    void deleteAggregatedTableForContract(String contract, Optional<String> jobUuid);
+    // called by cron job to periodically clean up any old tables (in which case job UUID is not provided)
+    void deleteAggregatedTable(String aggregatedTable);
+
     // NOTE: Assumes job has been kicked off and aggregated table exists
     int getDistinctPatientCount(String contract);
     // NOTE: Assumes job has been kicked off and aggregated table exists -- this is a slow process and will be updated in AB2D-7272

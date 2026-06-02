@@ -21,6 +21,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.sql.ResultSet;
 import java.util.*;
 
 import static org.mockito.Mockito.when;
@@ -45,7 +46,7 @@ class GetAggregatedCoverageMembershipTest {
 
 	@ParameterizedTest
 	@ValueSource(strings = {"Z1234", "Z0000", "Z7777"})
-	void test(String contract, CapturedOutput output) {
+	void test(String contract, CapturedOutput output) throws Exception {
 		GetAggregatedCoverageMembership aggregatedMembership = new GetAggregatedCoverageMembership(container.getDataSource());
 		aggregatedMembership.createAggregatedAttributionTable(contract);
 
@@ -61,19 +62,27 @@ class GetAggregatedCoverageMembershipTest {
 			coverageSummaries = aggregatedMembership.fetchAggregatedData(contractDto, 1, Optional.of(lastPatientId));
 		}
 
+		aggregatedMembership.createAggregatedAttributionTable(contract);
 		// Should delete if exists
-		aggregatedMembership.deleteAggregatedTable(contract, Optional.empty());
+		aggregatedMembership.deleteAggregatedTableForContract(contract, Optional.empty());
 		// And not fail if it doesn't exist
-		aggregatedMembership.deleteAggregatedTable(contract, Optional.empty());
+		aggregatedMembership.deleteAggregatedTableForContract(contract, Optional.empty());
+		assertFalse(tableExists("v3.coverage_v3_aggregated_" + contract));
 
 		aggregatedMembership.createAggregatedAttributionTable("Z9999");
 		when(syncService.getContractsWithActiveV3Jobs()).thenReturn(List.of("Z9999"));
 
 		aggregatedMembership.createAggregatedAttributionTable(contract);
+		assertTrue(tableExists("v3.coverage_v3_aggregated_" + contract));
 
 		coverageV3Service.checkForAggregatedTablesToBeDeleted();
-		assertTrue(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_coverage_v3_aggregated_" + contract.toLowerCase()));
-		assertFalse(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_coverage_v3_aggregated_z9999"));
+		assertTrue(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_" + contract));
+		assertFalse(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_Z9999"));
+		assertFalse(tableExists("v3.coverage_v3_aggregated_" + contract));
+
+		aggregatedMembership.createAggregatedAttributionTable(contract);
+		aggregatedMembership.deleteAggregatedTableForContract(contract, Optional.of("1234"));
+		assertFalse(tableExists("v3.coverage_v3_aggregated_" + contract));
 
 	}
 
@@ -147,6 +156,15 @@ class GetAggregatedCoverageMembershipTest {
 		assertTrue(output.getOut().contains("Processing duplicate patient at row number 7"));
 		assertTrue(output.getOut().contains("Processing duplicate patient at row number 8"));
 		assertTrue(output.getOut().contains("Reduced duplicate patient records into record from row number 6"));
+	}
+
+	boolean tableExists(String tableName) throws Exception {
+		val query = "SELECT to_regclass('%s') IS NOT NULL".formatted(tableName);
+		try (val statement = container.getDataSource().getConnection().prepareStatement(query)) {
+			val resultSet = statement.executeQuery();
+			resultSet.next();
+			return resultSet.getBoolean(1);
+		}
 	}
 
 }
