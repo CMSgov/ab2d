@@ -27,6 +27,6 @@ public interface CoverageV3Service {
     int getDistinctPatientCount(String contract);
     // NOTE: Assumes job has been kicked off and aggregated table exists -- this is a slow process and will be updated in AB2D-7272
     int getCoveragePeriodsInAggregatedTable(String contract);
-    // used to find/delete tables from jobs cancelled manually (not via the API)
+    // used to find/delete tables from jobs not properly cleaned up
     void checkForAggregatedTablesToBeDeleted();
 }

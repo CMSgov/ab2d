@@ -80,10 +80,12 @@ class GetAggregatedCoverageMembershipTest {
 		assertFalse(output.getOut().contains("Deleted table v3.coverage_v3_aggregated_Z9999"));
 		assertFalse(tableExists("v3.coverage_v3_aggregated_" + contract));
 
+
 		aggregatedMembership.createAggregatedAttributionTable(contract);
-		aggregatedMembership.deleteAggregatedTableForContract(contract, Optional.of("1234"));
+		aggregatedMembership.deleteAggregatedTableForContract(contract, Optional.of("555"));
 		assertFalse(tableExists("v3.coverage_v3_aggregated_" + contract));
 
+		assertTrue(output.getOut().contains("Preparing to delete table v3.coverage_v3_aggregated_%s related to job 555".formatted(contract)));
 	}
 
 	@Test
