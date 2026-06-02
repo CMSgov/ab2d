@@ -101,7 +101,7 @@ public class JobProcessorImpl implements JobProcessor {
                 deleteExistingDirectory(outputDirPath, job);
             }
             if (job.getFhirVersion() == FhirVersion.R4V3) {
-                coverageV3Service.deleteAggregatedAttributionTable(job.getContractNumber(), Optional.of(jobUuid));
+                coverageV3Service.deleteAggregatedTableForContract(job.getContractNumber(), Optional.of(jobUuid));
             }
         } catch (Exception e) {
             String contract = job.getContractNumber();
@@ -125,7 +125,7 @@ public class JobProcessorImpl implements JobProcessor {
             log.info("Job: [{}] FAILED", jobUuid);
             jobRepository.save(job);
             if (job.getFhirVersion() == FhirVersion.R4V3) {
-                coverageV3Service.deleteAggregatedAttributionTable(contract, Optional.of(jobUuid));
+                coverageV3Service.deleteAggregatedTableForContract(contract, Optional.of(jobUuid));
             }
         }
 
@@ -358,7 +358,7 @@ public class JobProcessorImpl implements JobProcessor {
         jobRepository.save(job);
         log.info("Job: [{}] is DONE", job.getJobUuid());
         if (job.getFhirVersion() == FhirVersion.R4V3) {
-            coverageV3Service.deleteAggregatedAttributionTable(job.getContractNumber(), Optional.of(job.getJobUuid()));
+            coverageV3Service.deleteAggregatedTableForContract(job.getContractNumber(), Optional.of(job.getJobUuid()));
         }
     }
 }

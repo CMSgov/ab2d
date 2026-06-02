@@ -151,8 +151,12 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         return rowCount;
     }
 
-    public void deleteAggregatedTable(final String contract, final Optional<String> jobUuid) {
+    public void deleteAggregatedTableForContract(final String contract, final Optional<String> jobUuid) {
         val tableName = MessageFormat.format(AGGREGATED_TABLE_NAME, contract);
+        deleteAggregatedTable(tableName, jobUuid);
+    }
+
+    public void deleteAggregatedTable(final String tableName, final Optional<String> jobUuid) {
         if (jobUuid.isEmpty()) {
             log.info("Preparing to delete table {}", tableName);
         } else {
