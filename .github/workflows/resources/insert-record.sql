@@ -11,6 +11,7 @@ INSERT INTO ${DATABASE_SCHEMA_NAME}.job (
     contract_number,
     since,
     until,
+    service_dates,
     fhir_version,
     started_by
 )
@@ -27,6 +28,7 @@ VALUES (
     '${CONTRACT_NUMBER}',
     ${SINCE},
     ${UNTIL},
+    ${SERVICE_DATES},
     '${FHIR_VERSION}',
     'JENKINS'
 );
