@@ -115,7 +115,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
-    public void deleteAggregatedAttributionTable(String contract, Optional<String> jobUuid) {
+    public void deleteAggregatedTableForContract(String contract, Optional<String> jobUuid) {
         val aggregatedTable = MessageFormat.format(GetAggregatedCoverageMembership.AGGREGATED_TABLE_NAME, contract.toLowerCase());
         if (keepAggregatedTable(aggregatedTable)) {
             if (jobUuid.isEmpty()) {
@@ -124,8 +124,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                 log.info("Skipping deletion for aggregated table {} related to job {}", aggregatedTable, jobUuid.get());
             }
         } else {
-            new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTable(contract, jobUuid);
+            new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTableForContract(contract, jobUuid);
         }
+    }
+
+    @Override
+    public void deleteAggregatedTable(String aggregatedTable) {
+        new GetAggregatedCoverageMembership(dataSource).deleteAggregatedTable(aggregatedTable, Optional.empty());
     }
 
     @Override
@@ -153,9 +158,10 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         val contractsWithActiveJobs = coverageV3SyncService.getContractsWithActiveV3Jobs();
 
         for (String aggregatedTable : aggregatedTables) {
+            aggregatedTable = "v3." + aggregatedTable;
             if (shouldDeleteAggregatedTable(aggregatedTable, contractsWithActiveJobs)) {
                 log.info("Deleting unused aggregated table {}", aggregatedTable);
-                deleteAggregatedAttributionTable(aggregatedTable, Optional.empty());
+                deleteAggregatedTable(aggregatedTable);
                 log.info("Deleted table {}", aggregatedTable);
             }
         }
@@ -178,15 +184,15 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return propertiesService.isToggleOn("%s.keep".formatted(tableName), false);
     }
 
-    boolean shouldDeleteAggregatedTable(final String tableName, final List<String> contactsWithActiveJobs) {
-        for (String contactsWithActiveJob : contactsWithActiveJobs) {
+    boolean shouldDeleteAggregatedTable(final String tableName, final List<String> contractsWithActiveJobs) {
+        for (String contractWithActiveJob : contractsWithActiveJobs) {
             val keepTable = keepAggregatedTable(tableName);
             if (keepTable) {
                 log.info("Skipping deletion for aggregated table {}", tableName);
                 return false;
             }
 
-            if (tableName.toLowerCase().endsWith(contactsWithActiveJob.toLowerCase())) {
+            if (tableName.toLowerCase().endsWith(contractWithActiveJob.toLowerCase())) {
                 return false;
             }
         }

@@ -6,12 +6,10 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +56,7 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
             stuckJob.setStatus(CANCELLED);
             jobRepository.save(stuckJob);
             if (stuckJob.getFhirVersion() == FhirVersion.R4V3) {
-                coverageV3Service.deleteAggregatedAttributionTable(stuckJob.getContractNumber(), Optional.of(stuckJob.getJobUuid()));
+                coverageV3Service.deleteAggregatedTableForContract(stuckJob.getContractNumber(), Optional.of(stuckJob.getJobUuid()));
             }
         }
     }
