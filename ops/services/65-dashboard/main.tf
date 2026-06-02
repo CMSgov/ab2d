@@ -24,7 +24,7 @@ module "platform" {
 
   app          = local.app
   env          = local.env
-  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/60-monitors"
+  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/65-dashboard"
   service      = local.service
   ssm_root_map = local.ssm_root_map
 }
@@ -32,7 +32,7 @@ module "platform" {
 locals {
   default_tags = module.platform.default_tags
   env          = terraform.workspace
-  service      = "monitors"
+  service      = "dashboard"
 
 
   ssm_root_map = {
@@ -42,4 +42,35 @@ locals {
     splunk   = "/ab2d/mgmt/splunk"
     datadog  = "/cdap/${local.env}/datadog/cicd/"
   }
+}
+
+module "datadog_dashboard" {
+  source = "github.com/CMSgov/cdap//terraform/modules/datadog_dashboard"
+
+  app = local.app
+
+  enable_default_widgets = {
+    ecs    = true
+    alb    = true
+    aurora = true
+    sns    = true
+    sqs    = true
+    lambda = true
+    s3     = true
+    apm    = true
+  }
+
+  widget_live_spans = {
+    ecs    = "4h"
+    alb    = "4h"
+    aurora = "4h"
+    sns    = "4h"
+    sqs    = "4h"
+    lambda = "1d"
+    s3     = "1w"
+    apm    = "1h"
+  }
+
+  custom_widgets = []
+  runbook_url    = "https://definerunbook.cdap.internal.cms.gov" #FIXME to provide an actual runbook
 }
