@@ -55,7 +55,7 @@ public class CoverageV3ImportService {
             }
 
             try {
-          //      truncate(connection, stagingFqtn);
+                truncate(connection, stagingFqtn);
                 verifyFileExists(bucket, key);
 
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
