@@ -137,6 +137,13 @@ jobs:
           else
             export SINCE="null"
           fi
+          
+          # V3 only for service-date param
+          if [[ "$FHIR_VERSION" == "R4V3" && -n "$SERVICE_DATES" ]]; then
+            export SERVICE_DATES="'${SERVICE_DATES}'"
+          else
+            export SERVICE_DATES="null"
+          fi
 
           if [[ -z "${API_URL_PREFIX}" ]]; then
             export API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}
