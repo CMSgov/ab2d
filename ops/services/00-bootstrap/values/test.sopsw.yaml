@@ -24,7 +24,7 @@
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/regence-oregon: ENC[AES256_GCM,data:NzJnHjmimIYhWas9rgUynA==,iv:ctKPhkp+Yl1wf3BqJ4kTtHWe53HLgV+bBLAxipbpH3w=,tag:lL/RZJxjeSVLkAESLkWrRg==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/silverscript: ENC[AES256_GCM,data:ytwhodJyFZv1/s6RhLRNgIjptpq6ZfkcHml/Izttm24/cCwOBSIso24HNhO1e4TgLz0lxutLWHVDsdbQy6prIlQWRY4p6Wa/T2JCdmzxl3L2kyFFTI9pvGjnI+LmesQ7Y1Fan+0lfoeoNAIyEW5YoMRG,iv:qd1NcSf0lRjNhM8gQglt8Iyddztd3ITgeVwzZzeddNU=,tag:tSIlvV/FbDit9Dmwn6X+Mw==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/united-health: ENC[AES256_GCM,data:xZC2jGuMahP90BZ2332Jd27pAe5i3gySoHl/ucqqYmXfK3gw0/F+26kUBwM0PwjUL567OyQqDU7y7qXTo9RPYW0OWrTMG83B1kmbvnu9,iv:qSJC8aFiku3kC4Yp6WUqBw0gUA2GtuNF8C1iAG3i3vY=,tag:Xbtxr//hCNEz4SOdfhqz3Q==,type:str]
-/ab2d/mgmt/artifactory/sensitive/token: ENC[AES256_GCM,data:Fza3n5j1g2B57Ckn3hG+TgEKyq8MOIX1jF7LOqX20rXVd9ZTC3CB1SejabJ/+l/0dxa+P3EX8A2gtLd7YaKB01wAd0eDwqp4Em9da296GAEr4PqJGllxUjDoPGkW2OssyUbVdhdxB76kzWgQ/IHXLduCCzNDeLTt6koF32GFQ3pnxI2N41QrSoZikRiY8QkBafIPIuVKSk031PozOHNu/gS0kPO5dt9R1HP6oBluqRDGKBl4GOCmmrVupsYtUgu1ZdRr7jz+SoAXzOOXcDF+H3ipr2xQV7VH53Ebrmobt1zOrDgMWC2O1VMDnHV4pp3Tya0yZYeGMOSTU0+/LSdjoxm7wO6nEvKx6fUG/NleI0KAQgtbY+UeqbDtz4DJO/b2niJfvhZCmgdZu8NlUbWi/L2xD/QmNdmssnvJDe95DIUArfND8pJ14OcVGBVjnsrp5m6SenumEPYXLt0JzOkItlEqk3fbeLPQCLbAQcBOxyEMO+3pmCBZ96PrndANKVQBCWPEvW/NwFiL7YxZg63lOwLs54AIzZcxlXB5O0W/sN0HL7St5bhLOGjQW8E3Ruut35IeP5o/bQCFNrRZ6ZEsuYj+KKcQKSrZlByecbaFJppXR7uN9y0fpCjJqFm2qf4q58lETb1b83YkMMHG1tH5nSkEGqZRxuMNV6cr4JiRM8NogNVp3gSUzbfF11G5DpBaUFRuTDNf1hjNns1aOhIM6oZEUR44Sv421gvWslpbj06XsiQZPvxz6wOeVys59BLkhsTy9cQFQaQhDC9ninWE9917iMzfrjXJlizRI9TtBufGV3x+pznXtTaA0J3+8ebeYCwMysV+ALas+3pTRSXBs23RlXq/uaiq2UwLC4VjGcvz9AxvawzNQqdAKJRlnz9dP7nlxdpQYtUrRMnKzzM5Qlq+WY7f2CwZEAGJPZtcI6Et6JciFuKMhhDhI5TnNy/ThxN5h2bkajygggjUD5dTiTm1fi/i3BapUCYduWZPqhtwu2YfPCNOHGgDNu5zvdQ3CZSctffZtGPUf2k8f06Y,iv:mUIzvFO06PK///G+6LIoj+B67075NiiQ9MKGwSbbas0=,tag:ZdNvMdiYC6RrxQYQTf/ndg==,type:str]
+/ab2d/mgmt/artifactory/sensitive/token: ENC[AES256_GCM,data:Jt1NKmcT9Mvik+IEYEKl8LRh8tu06P+hXW8x06BdXJa/Qeyjy8qFUs6lPDIJtgBoI/sCm8UVacx+twA24M64bH4gukj6Q5ho2Q1cURHhHFaHZbdGqsOBaFDj/XrsWzTyL1wqDGzZoWgFh3p8gzyn5I+NRmxgpGZyQT9XMAF3zvX5iSjIsLg/36vcL8qP4VoyF+1KlZvgxiQkbwl6HFma6aBotZl+FPp5UgPg8hm+Gy3G9RuzA69to2Jx5p1h79EeCivMWR6E7TLoS8IB6VRgXzAg9fUWJ+q/URaxmEXsIirJ/ITW87Yf1gKVxyRv4rImip2gxLjJhutEQneSNhgdYWH+BBcYsY4NAJiFe8GEWYuqvu1qd49Qg6/z5lGsBI0Og6KnG7kKjldhiZ5GGNrXhGhBe3zH8KtOtZouCZLqxtJOEws+7WEpRYK+GPZR4Tdf9SAKNt5gZyrFLNk3uWAeMMiQFSNAfVfHETFQEYPyB5nSOGyq/UJWukmmWIVb1GIt80crQpjrORhqtH7iXId1VjYLwYBx4nl/MFU0vihIr/XC5y9L7d0a12cIcofuxeftAwEvPxfQ4MiU+aoeOAk0NihzLlRxy2IYafCaQJu/saqnxn/k6Uz7dh2Gcaapb5EvY1ascKJWdmcZ5x9lu49SZsuff25GfSfYCOA8r34dNUVHi4Q9KWb1lK4hVAxXE8IBsb0QswkK1cITKdP3LWvkJ6hPrrjnKI2kD3/zijpEbcP9u3RRRZzGBKzUpNRGPEPUudIN2kksgxB1GgM5SrBQmV82DSlwXxmxe+lL1AIqBypMSGFgH2MseuCNbLjPiqLoTPBGMWmt+dKEXw/uk4r3NxNCrH3wdOqIXapacMTOpITWEyUSVU0tLXwrgXcbN9I8V2nmumsHdW/Uo7z4R+u3KN6Zi1GCSe8jNgC9mlzp9PZRpF8OvaF2bXwBfnGfZBIv1a7bsq7RfA9DK8XhraCm1P2p+YS6h25KV/tIbw2ugRQL8KKodsSONk33bCjHy7Nxz2ReNd1V7B45JJ35nAsl,iv:yvHBJjv3ypTf+YK1XX6WCxqQH+vKNY4JA2JkbZeH6yg=,tag:QsjwbtK5GqDJJ8ojczfVwA==,type:str]
 /ab2d/mgmt/artifactory/nonsensitive/url: https://artifactory.cloud.cms.gov/artifactory
 /ab2d/mgmt/slack-webhooks/sensitive/ab2d-slack-alerts: ENC[AES256_GCM,data:vuKvjm3mFZE84fq8YXIvP2kR1ke63lndsCbHOfdvGL8bVVseZOqThOCqui/eny8yl8QnrgIPsxZiFJrnx6EBoIy6ZNVl+GMVL9bnANbG1M5jnRxyjxcH3z/8LS4=,iv:LKFo+RKbKQ5wAPRJJCWMroK2q+vK9EsOkCrqWd61l5o=,tag:V45OrJ6L66+b8N7HqdeqVA==,type:str]
 /ab2d/mgmt/slack-webhooks/sensitive/ab2d-security: ENC[AES256_GCM,data:V0zGPxtcaW5nR/aekV+ZYJ+vsEmz7JCE8cK73Ru1+c8J2Aab8sRmjAU4a5NbgRXEtUPSwrAVSpBXsauQQ82c5N5e5qxtY80rvPAcmnZ+jw==,iv:3ad/GlKVHfLQwXGeno0B72C/qtelOVd6oN7xpn0jgxM=,tag:yzWGyRF7RLMoBkrjix5K5A==,type:str]
@@ -37,13 +37,13 @@
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/ab2d-test
+      aws_profile: ""
       created_at: "2025-05-30T19:53:41Z"
       enc: AQICAHieQbEmk17B5WDxP9ZbssNWaBXaOMPBrnVqrvEMaeLytwG0uJB6cG/yKXVUO3Sfrgl2AAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMFaG6tAOHorfTGDUUAgEQgDu6Uueh4M5tJnw0FXK8138nJWvYYFJOcGrRyiT7a9c04CBCsW7FwVOxGJjfIqpXsyZp243y5TNzZ5RhJQ==
-      aws_profile: ""
     - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/ab2d-test
+      aws_profile: ""
       created_at: "2025-05-30T19:53:41Z"
       enc: AQICAHgJRNGY1npk30Hair/yhcKNRMjEO1Ac57p4o8l/f+IR2AG6Qq0G9cR18A+UMQqxvAQSAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMQIr1X2uyp2sflqFWAgEQgDvwAcj/DIH3hP8Spw2XVqOOeCr+FJm4KFaWvyFK+QILbjm6VPvBknXmiwCppSboQtHPC7VXsVhOMXXUTw==
-      aws_profile: ""
-  unencrypted_regex: /nonsensitive/
   mac_only_encrypted: true
-  version: 3.11.0
+  unencrypted_regex: /nonsensitive/
+  version: 3.13.1

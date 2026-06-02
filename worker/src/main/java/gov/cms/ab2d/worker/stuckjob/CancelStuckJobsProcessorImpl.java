@@ -1,10 +1,14 @@
 package gov.cms.ab2d.worker.stuckjob;
 
+import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,12 +26,17 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
     private final JobRepository jobRepository;
     private final SQSEventClient eventLogger;
     private final int cancelThreshold;
+    private final CoverageV3Service coverageV3Service;
 
-    public CancelStuckJobsProcessorImpl(JobRepository jobRepository, SQSEventClient eventLogger,
-                                        @Value("${stuck.job.cancel.threshold}") int cancelThreshold) {
+    public CancelStuckJobsProcessorImpl(
+            JobRepository jobRepository,
+            SQSEventClient eventLogger,
+            @Value("${stuck.job.cancel.threshold}") int cancelThreshold,
+            CoverageV3Service coverageV3Service) {
         this.jobRepository = jobRepository;
         this.eventLogger = eventLogger;
         this.cancelThreshold = cancelThreshold;
+        this.coverageV3Service = coverageV3Service;
     }
 
     @Override
@@ -46,6 +55,10 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
                     PUBLIC_LIST);
             stuckJob.setStatus(CANCELLED);
             jobRepository.save(stuckJob);
+            if (stuckJob.getFhirVersion() == FhirVersion.R4V3) {
+                coverageV3Service.deleteAggregatedTableForContract(stuckJob.getContractNumber(), Optional.of(stuckJob.getJobUuid()));
+            }
         }
     }
+
 }

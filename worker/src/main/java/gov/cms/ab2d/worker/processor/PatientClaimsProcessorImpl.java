@@ -1,11 +1,16 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.parser.IParser;
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Segment;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.query.BfdMetricsUtility;
 import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.BeneficiarySearchEvent;
@@ -25,13 +30,12 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -39,20 +43,25 @@ import java.util.concurrent.Future;
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
-import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_EOB;
-import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_NEXT_BUNDLE;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
-    // Set to false by default to prevent excess logging; enable explicitly for testing
-    public static final boolean TIME_BFD_REQUESTS = false;
+    /**
+     * If true, proceed to check if 'bfd.metrics.enabled' is enabled in the properties table for each request
+     * If false, skip query to properties table
+     *
+     * Note: Will likely be removed after DataDog migration (?)
+     */
+    private static final boolean ENABLE_BFD_METRICS = true;
 
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
     private final SearchConfig searchConfig;
+    private final PropertiesService propertiesService;
+    private final DataSource dataSource;
 
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
@@ -84,9 +93,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
-        val bfdRequestTracking = TIME_BFD_REQUESTS
-                ? new BfdRequestTracking(request.getJob())
-                : BfdRequestTracking.NOOP;
         File file = null;
         String anyErrors = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
@@ -94,14 +100,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             file = stream.getFile();
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             for (CoverageSummary patient : request.getCoverageSummary()) {
-                List<IBaseResource> eobs = getEobBundleResources(request, patient, bfdRequestTracking);
+                List<IBaseResource> eobs = getEobBundleResources(request, patient);
                 anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
                 update.incPatientProcessCount();
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
-            bfdRequestTracking.summarizeResponseTimes();
         }
+
         return anyErrors;
     }
 
@@ -129,6 +135,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (eobs.isEmpty()) {
             return null;
         }
+
         int eobsWritten = 0;
         int eobsError = 0;
 
@@ -171,8 +178,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     @Trace(metricName = "EOBRequest", dispatcher = true)
     private List<IBaseResource> getEobBundleResources(
             PatientClaimsRequest request,
-            CoverageSummary patient,
-            BfdRequestTracking bfdRequestTracking
+            CoverageSummary patient
     ) {
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
@@ -192,6 +198,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime untilTime = getUntilTime(request, sinceTime);
         List<String> serviceDates = request.getServiceDates();
 
+        final BfdMetricsUtility.BfdRequestMetric bfdMetric = bfdMetricsEnabled()
+            ? new BfdMetricsUtility.BfdRequestMetric()
+            : null;
 
         try {
 
@@ -199,18 +208,38 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdRequestTracking.executeRequest(
-                REQUEST_EOB,
-                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum())
-            );
-            collector.filterAndAddEntries(eobBundle, patient);
+            if (bfdMetric != null) {
+                /** Replicate same NewRelic logic as {@link BFDClient#requestEOBFromServer} */
+                final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientIdentifier +
+                        " using since " + sinceTime + " and until " + untilTime + " and serviceDates " + serviceDates);
+                bfdSegment.setMetricName("RequestEOB");
+
+                val bfdStart = System.nanoTime();
+                final byte[] response = bfdClient.requestEOBFromServerRaw(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+                val bfdEnd = System.nanoTime();
+                final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
+                val parseBundleEnd = System.nanoTime();
+
+                bfdSegment.end();
+
+                populateMetric(bfdStart, bfdEnd, parseBundleEnd, response.length, request.getVersion(), bundle, bfdMetric);
+                eobBundle = bundle;
+            } else {
+                eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+            }
+
+            if (bfdMetric == null) {
+                collector.filterAndAddEntries(eobBundle, patient);
+            } else {
+                val filterStart = System.nanoTime();
+                collector.filterAndAddEntries(eobBundle, patient);
+                val filterEnd = System.nanoTime();
+                val filterTimeNs = (filterEnd - filterStart);
+                bfdMetric.setFilterNs(filterTimeNs);
+            }
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
-                val currentEobBundle = eobBundle;
-                eobBundle = bfdRequestTracking.executeRequest(
-                    REQUEST_NEXT_BUNDLE,
-                    () -> bfdClient.requestNextBundleFromServer(request.getVersion(), currentEobBundle, request.getContractNum())
-                );
+                eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
 
@@ -233,9 +262,57 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             logError(request, patientIdentifier, requestStartTime, ex);
             throw ex;
         } finally {
+            try {
+                if (bfdMetric != null) {
+                    val metricsUtility = new BfdMetricsUtility(dataSource);
+                    metricsUtility.addMetric(request.getJob(), bfdMetric);
+                }
+            } catch (Exception e) {
+                log.error("Error writing metrics for job " + request.getJob(), e);
+            }
+
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
     }
+
+    private boolean bfdMetricsEnabled() {
+        if (!ENABLE_BFD_METRICS) {
+            return false;
+        }
+        return propertiesService.isToggleOn(PropertyConstants.BFD_METRICS_ENABLED, false);
+    }
+
+    // populate everything except filter execution time
+    private static void populateMetric(
+            long bfdStart, long bfdEnd, long parseBundleEnd, long responseBytesSize,
+            FhirVersion version, IBaseBundle bundle, BfdMetricsUtility.BfdRequestMetric bfdMetric) {
+
+        int bundleCount = -1;
+	    try {
+            switch (version) {
+                case STU3:
+                    org.hl7.fhir.dstu3.model.Bundle dstu3Bundle = (org.hl7.fhir.dstu3.model.Bundle) bundle;
+                    bundleCount = dstu3Bundle.getEntry().size();
+                    break;
+                case R4:
+                case R4V3:
+                    org.hl7.fhir.r4.model.Bundle r4Bundle = (org.hl7.fhir.r4.model.Bundle) bundle;
+                    bundleCount = r4Bundle.getEntry().size();
+                    break;
+            }
+        } catch (Exception e) {
+            log.error("Error calculating bundle count", e);
+        }
+
+        val bfdResponseNs = (bfdEnd - bfdStart);
+        val parseBundleNs = (parseBundleEnd - bfdEnd);
+
+        bfdMetric.setResponseNs(bfdResponseNs);
+        bfdMetric.setParseBundleNs(parseBundleNs);
+        bfdMetric.setBundleCount(bundleCount);
+        bfdMetric.setNumBytes(responseBytesSize);
+    }
+
 
     /**
      * Determine what since date to use if any.
@@ -309,7 +386,5 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
         return date;
     }
-
-
 
 }
