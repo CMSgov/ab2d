@@ -72,6 +72,15 @@ subprojects {
 
     dependencies {
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.9.2'
+
+        // Remove on upgrade to Spring Boot >= 4.0.0
+        constraints {
+            implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.55'
+            implementation 'io.netty:netty-codec:4.1.133.Final'
+            implementation 'io.netty:netty-codec-http:4.1.133.Final'
+            implementation 'io.netty:netty-codec-http2:4.1.133.Final'
+            implementation 'io.netty:netty-codec-dns:4.1.133.Final'
+        }
     }
     ext {
         //override this in subprojects using ext.set("zipName", '{new value}')
