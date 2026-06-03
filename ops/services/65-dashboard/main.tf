@@ -45,7 +45,7 @@ locals {
 }
 
 module "datadog_dashboard" {
-  source = "github.com/CMSgov/cdap//terraform/modules/datadog_dashboard"
+  source = "github.com/CMSgov/cdap//terraform/modules/datadog_dashboard?ref=b1bee443d035b06080219313525b06ef2781c65d"
 
   app = local.app
 
