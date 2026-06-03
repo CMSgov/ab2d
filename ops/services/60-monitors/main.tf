@@ -66,7 +66,7 @@ locals {
 ###################
 
 module "common_datadog_monitors" {
-  source = "github.com/CMSgov/cdap//terraform/modules/datadog_monitors?ref=PLT-1655/notify"
+  source = "github.com/CMSgov/cdap//terraform/modules/datadog_monitors?ref=945fbd644cc8d239bdf3f3a3a7241fb6066a0f55"
 
   app            = "ab2d"
   env            = local.env
