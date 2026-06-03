@@ -59,6 +59,10 @@
 
         <!-- // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated -->
         <commons-lang3.version>3.18.0</commons-lang3.version>
+
+        <!-- remove these two overrides on upgrade to Spring Boot >= 4.0.0 -->
+        <tomcat.version>10.1.55</tomcat.version>
+        <netty.version>4.1.133.Final</netty.version>
     </properties>
 
     <dependencyManagement>
