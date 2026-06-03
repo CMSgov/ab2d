@@ -51,6 +51,23 @@ allprojects {
         compileOnly "org.projectlombok:lombok:${lombokVersion}"
         implementation(platform(annotationProcessor("org.projectlombok:lombok:${lombokVersion}")))
         annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+
+        // remove these constraints on upgrade to Spring Boot >= 4.0.0
+        constraints {
+            implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.55'
+            implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:10.1.55'
+            implementation 'io.netty:netty-codec:4.1.133.Final'
+            implementation 'io.netty:netty-codec-http:4.1.133.Final'
+            implementation 'io.netty:netty-codec-http2:4.1.133.Final'
+            implementation 'io.netty:netty-codec-dns:4.1.133.Final'
+            implementation 'io.netty:netty-handler-proxy:4.1.133.Final'
+            implementation 'org.jetbrains.kotlin:kotlin-stdlib:2.1.0'
+            implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.0'
+            implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0'
+            implementation 'org.jetbrains.kotlin:kotlin-stdlib-common:2.1.0'
+            // commons-compress: test-only, pulled in by testcontainers 1.21.4.
+            implementation 'org.apache.commons:commons-compress:1.28.0'
+        }
     }
 
     cyclonedxDirectBom {

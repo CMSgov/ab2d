@@ -23,6 +23,9 @@ repositories {
 
 ext {
 	awssdkVersion = '2.41.5'
+	// Remove on upgrade to Spring Boot >= 4.0.0
+	set('tomcat.version', '10.1.55')
+	set('netty.version', '4.1.133.Final')
 }
 
 dependencies {
