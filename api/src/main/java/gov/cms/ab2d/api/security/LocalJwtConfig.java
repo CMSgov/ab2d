@@ -39,9 +39,17 @@ public class LocalJwtConfig {
     }
 
     private record StubJwt(String token, Instant issued, Instant expires, Map<String, Object> claims) implements Jwt {
-        @Override public String getTokenValue() { return token; }
-        @Override public Instant getIssuedAt() { return issued; }
-        @Override public Instant getExpiresAt() { return expires; }
-        @Override public Map<String, Object> getClaims() { return claims; }
+        @Override public String getTokenValue() {
+            return token;
+        }
+        @Override public Instant getIssuedAt() {
+            return issued;
+        }
+        @Override public Instant getExpiresAt() {
+            return expires;
+        }
+        @Override public Map<String, Object> getClaims() {
+            return claims;
+        }
     }
 }

@@ -67,6 +67,15 @@ allprojects {
             implementation('org.apache.thrift:libthrift:0.23.0')
             implementation('org.bouncycastle:bcprov-jdk18on:1.84')
             implementation('org.bouncycastle:bcpkix-jdk18on:1.84')
+
+            // remove all below on upgrade to Spring Boot >= 4.0.0
+            implementation('org.apache.tomcat.embed:tomcat-embed-core:10.1.55')
+            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:10.1.55')
+            implementation('io.netty:netty-codec:4.1.133.Final')
+            implementation('io.netty:netty-codec-http:4.1.133.Final')
+            implementation('io.netty:netty-codec-http2:4.1.133.Final')
+            implementation('io.netty:netty-codec-dns:4.1.133.Final')
+            implementation('org.apache.commons:commons-compress:1.28.0')
         }
     }
 
