@@ -87,7 +87,7 @@ public class CoverageV3ScheduledTasks {
 		coverageV3Service.checkForAggregatedTablesToBeDeleted();
 	}
 
-	@Scheduled(cron = "0 0/3 * * * *") // TEMPORARY: every 3 minutes (revert to "0 0 3 * * *" - daily at 3am)
+	@Scheduled(cron = "0 0 3 * * *") // every day at 3am
 	public void purgeInactiveContractsFromHistorySummary() {
 		log.info("[V3] Purging history summary rows for contracts inactive > 2 years");
 		int deleted = syncService.deleteInactiveContractsFromHistorySummary();
