@@ -13,11 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.executeTimedQuery;
@@ -125,7 +123,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         "select distinct contract_number from job where status in ('IN_PROGRESS', 'SUBMITTED')";
 
     private static final String IS_CONTRACT_ATTESTED =
-        "select count(*) from contract where contract_number = :contract and attested_on is not null";
+        "select count(*) from contract.contract where contract_number = :contract and attested_on is not null";
 
     private static final String GET_CONTRACTS_WITH_COVERAGE_IN_STAGING =
         "select distinct contract from %s"
@@ -141,8 +139,8 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         DELETE FROM v3.coverage_v3_history_summary
         WHERE contract IN (
             SELECT contract_number FROM contract.contract
-            WHERE hpms_end_date IS NOT NULL
-              AND hpms_end_date < :cutoff
+            WHERE attested_on IS NULL
+               OR (hpms_end_date IS NOT NULL AND hpms_end_date < :cutoff)
         )
         RETURNING *
     )
@@ -375,7 +373,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val parameters = new MapSqlParameterSource().addValue("cutoff", cutoff);
         val template = new NamedParameterJdbcTemplate(this.dataSource);
         int count = DataAccessUtils.intResult(template.queryForList(DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY, parameters, Integer.class));
-        log.info("[V3] Deleted {} rows from coverage_v3_history_summary for contracts inactive > 2 years", count);
+        log.info("[V3] Deleted {} rows from coverage_v3_history_summary for unattested contracts or contracts ended > 2 years ago", count);
         return count;
     }
 

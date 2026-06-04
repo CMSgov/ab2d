@@ -182,7 +182,9 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             }
         }
         oldContract.setAttestedOn(newContract.getAttestedOn());
-        oldContract.setHpmsEndDate(newContract.getHpmsEndDate());
+        if (newContract.getHpmsEndDate() != null) {
+            oldContract.setHpmsEndDate(newContract.getHpmsEndDate());
+        }
         oldContract.setContractName(newContract.getContractName());
         oldContract.setHpmsOrgMarketingName(newContract.getHpmsOrgMarketingName());
         oldContract.setHpmsParentOrgId(newContract.getHpmsParentOrgId());
