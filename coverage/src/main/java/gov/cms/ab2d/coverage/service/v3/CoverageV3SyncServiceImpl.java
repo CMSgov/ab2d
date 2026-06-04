@@ -133,6 +133,16 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
 
+    private static final String GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY =
+    """
+    SELECT DISTINCT contract FROM v3.coverage_v3_history_summary
+    WHERE contract IN (
+        SELECT contract_number FROM contract.contract
+        WHERE attested_on IS NULL
+           OR (hpms_end_date IS NOT NULL AND hpms_end_date < :cutoff)
+    )
+    """;
+
     private static final String DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY =
     """
     with deleted_rows as (
@@ -365,6 +375,14 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     public boolean idrImporterInProgress() {
         val idrImporterStatus = propertiesService.getProperty(V3_IDR_IMPORTER_STATUS, "");
         return V3_IDR_IMPORTER_STATUS_IN_PROGRESS.equals(idrImporterStatus);
+    }
+
+    @Override
+    public List<String> getInactiveContracts() {
+        LocalDate cutoff = LocalDate.now().minusYears(2);
+        val parameters = new MapSqlParameterSource().addValue("cutoff", cutoff);
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+        return template.queryForList(GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY, parameters, String.class);
     }
 
     @Override

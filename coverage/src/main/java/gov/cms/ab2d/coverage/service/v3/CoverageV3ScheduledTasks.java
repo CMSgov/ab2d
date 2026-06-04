@@ -90,6 +90,8 @@ public class CoverageV3ScheduledTasks {
 	@Scheduled(cron = "0 0 3 * * *") // every day at 3am
 	public void purgeInactiveContractsFromHistorySummary() {
 		log.info("[V3] Purging history summary rows for contracts inactive > 2 years");
+		List<String> inactiveContracts = syncService.getInactiveContracts();
+		log.info("[V3] Inactive contracts to be purged from history summary ({}): {}", inactiveContracts.size(), inactiveContracts);
 		int deleted = syncService.deleteInactiveContractsFromHistorySummary();
 		log.info("[V3] Purged {} history summary rows for inactive contracts", deleted);
 	}
