@@ -152,9 +152,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             WHERE attested_on IS NULL
                OR (hpms_end_date IS NOT NULL AND hpms_end_date < :cutoff)
         )
-        RETURNING *
+        RETURNING contract
     )
-    select count(*) from deleted_rows;
+    select contract from deleted_rows;
     """;
 
     @Transactional
@@ -378,21 +378,18 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     }
 
     @Override
-    public List<String> getInactiveContracts() {
-        LocalDate cutoff = LocalDate.now().minusYears(2);
-        val parameters = new MapSqlParameterSource().addValue("cutoff", cutoff);
-        val template = new NamedParameterJdbcTemplate(this.dataSource);
-        return template.queryForList(GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY, parameters, String.class);
-    }
-
-    @Override
+    @Transactional
     public int deleteInactiveContractsFromHistorySummary() {
         LocalDate cutoff = LocalDate.now().minusYears(2);
         val parameters = new MapSqlParameterSource().addValue("cutoff", cutoff);
         val template = new NamedParameterJdbcTemplate(this.dataSource);
-        int count = DataAccessUtils.intResult(template.queryForList(DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY, parameters, Integer.class));
-        log.info("[V3] Deleted {} rows from coverage_v3_history_summary for unattested contracts or contracts ended > 2 years ago", count);
-        return count;
+
+        List<String> inactiveContracts = template.queryForList(GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY, parameters, String.class);
+        log.info("[V3] Inactive contracts to be purged from history summary ({}): {}", inactiveContracts.size(), inactiveContracts);
+
+        List<String> deletedContracts = template.queryForList(DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY, parameters, String.class);
+        log.info("[V3] Deleted {} rows from coverage_v3_history_summary for unattested contracts or contracts ended > 2 years ago", deletedContracts.size());
+        return deletedContracts.size();
     }
 
 
