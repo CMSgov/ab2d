@@ -35,6 +35,8 @@
         <logback-encoder.version>9.0</logback-encoder.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <newrelic.version>8.22.0</newrelic.version>
+        <dd-trace-api.version>1.63.0</dd-trace-api.version>
+        <dogstatsd-client.version>4.4.5</dogstatsd-client.version>
         <spring-cloud-aws.version>3.4.0</spring-cloud-aws.version>
         <postgresql.version>42.7.11</postgresql.version>
         <kotlin.version>2.1.0</kotlin.version>
@@ -45,7 +47,7 @@
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
         <!-- AB2D lib versions -->
-        <bfd-lib.version>4.7.0</bfd-lib.version>
+        <bfd-lib.version>4.8.0</bfd-lib.version>
         <events-client.version>3.3.14</events-client.version>
         <fhir-lib.version>2.5.6</fhir-lib.version>
         <aggregator-lib.version>2.1.5</aggregator-lib.version>
