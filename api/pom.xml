@@ -115,6 +115,11 @@
             <type>zip</type>
         </dependency>
         <dependency>
+            <groupId>com.datadoghq</groupId>
+            <artifactId>java-dogstatsd-client</artifactId>
+            <version>${dogstatsd-client.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
             <version>5.5</version>

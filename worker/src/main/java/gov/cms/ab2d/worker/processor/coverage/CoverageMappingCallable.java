@@ -1,7 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -97,12 +98,14 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      *
      * @throws Exception on any failure, before the exception is thrown it will be logged
      */
-    @Trace(metricName = "EnrollmentRequest", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_request")
     @Override
     public CoverageMapping call() {
 
         int month = coverageMapping.getPeriod().getMonth();
         String contractNumber = coverageMapping.getContractNumber();
+        DatadogSpans.setTag("contract", contractNumber);
+        DatadogSpans.setTag("component", "coverage");
 
         final Set<Identifiers> patientIds = new HashSet<>();
         int bundleNo = 1;
@@ -159,6 +162,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                     contractNumber +
                     " for month " + month +
                     " and year " + this.year, e);
+            DatadogSpans.markError(e);
             coverageMapping.failed();
             throw e;
         } finally {
@@ -182,7 +186,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     }
 
-    @Trace
+    @Trace(operationName = "ab2d.coverage.extract_and_filter")
     private Set<Identifiers> extractAndFilter(IBaseBundle bundle) {
         return BundleUtils.getPatientStream(bundle, version)
                 .filter(this::filterByYear)

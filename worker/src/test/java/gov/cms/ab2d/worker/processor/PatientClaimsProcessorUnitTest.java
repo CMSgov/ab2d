@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
@@ -68,27 +67,6 @@ class PatientClaimsProcessorUnitTest {
     private static final OffsetDateTime LATER_ATT_DATE = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
     private CoverageSummary coverageSummary;
 
-    private final Token noOpToken = new Token() {
-        @Override
-        public boolean link() {
-            return false;
-        }
-
-        @Override
-        public boolean expire() {
-            return false;
-        }
-
-        @Override
-        public boolean linkAndExpire() {
-            return false;
-        }
-
-        @Override
-        public boolean isActive() {
-            return false;
-        }
-    };
     private PatientClaimsRequest request;
     private SearchConfig searchConfig;
 
@@ -115,7 +93,7 @@ class PatientClaimsProcessorUnitTest {
                 contractDTO, List.of(TestUtil.getOpenRange()));
 
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, null, null,"client", "job",
-                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                contractNum, Contract.ContractType.NORMAL, STU3, tmpEfsMountDir.getAbsolutePath());
     }
 
     @Test
@@ -150,7 +128,7 @@ class PatientClaimsProcessorUnitTest {
         assertEquals(3, bundle1.getEntry().size());
 
         PatientClaimsRequest request2 = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, LATER_ATT_DATE, null, null,"client", "job",
-                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                contractNum, Contract.ContractType.NORMAL, STU3, tmpEfsMountDir.getAbsolutePath());
         when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, request2.getAttTime(), null, null, contractDTO.getContractNumber())).thenReturn(bundle1);
 
         cut.process(request2).get();
@@ -234,7 +212,7 @@ class PatientClaimsProcessorUnitTest {
         OffsetDateTime sinceDate = EARLY_ATT_DATE.plusDays(1);
 
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, sinceDate, null, null,"client", "job",
-                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                contractNum, Contract.ContractType.NORMAL, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, LATER_ATT_DATE, null, null, contractNum)).thenReturn(bundle1);
@@ -251,7 +229,7 @@ class PatientClaimsProcessorUnitTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID), null, List.of(TestUtil.getOpenRange()));
 
         request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, null, null, null,"client", "job",
-                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                contractNum, Contract.ContractType.NORMAL, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, null, null, null, contractNum)).thenReturn(bundle1);
@@ -268,7 +246,7 @@ class PatientClaimsProcessorUnitTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID), null, List.of(TestUtil.getOpenRange()));
 
         request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, EARLY_SINCE_DATE, null, null,"client", "job",
-                contractNum, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                contractNum, Contract.ContractType.NORMAL, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, PATIENT_ID, null,null, null, contractNum)).thenReturn(bundle1);

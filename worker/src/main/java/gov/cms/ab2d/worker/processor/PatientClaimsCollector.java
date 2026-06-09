@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.NewRelic;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -152,7 +152,10 @@ public class PatientClaimsCollector {
     }
 
     /**
-     * Create custom NewRelic event and log it
+     * Record the EOB bundle request as a Datadog signal trio: a structured log line for analytics
+     * (replacing the New Relic {@code EobBundleRequests} Insights event and its NRQL queries), span
+     * metrics for dashboards, and span tags for filtering.
+     *
      * @param since since date used if in use
      */
     public void logBundleEvent(OffsetDateTime since, OffsetDateTime until) {
@@ -166,7 +169,16 @@ public class PatientClaimsCollector {
         event.put("raweobs", rawEobs);
         event.put("eobs", eobs.size());
 
-        NewRelic.getAgent().getInsights().recordCustomEvent(EOB_REQUEST_EVENT, event);
+        // (a) structured log line for analytics (replaces NRQL queries against the Insights event)
+        log.info("{} {}", EOB_REQUEST_EVENT, event);
+
+        // (b) span metrics for dashboards and (c) span tags for filtering on the active span
+        DatadogSpans.setMetric("eob.bundles", bundles);
+        DatadogSpans.setMetric("eob.raw_eobs", rawEobs);
+        DatadogSpans.setMetric("eob.eobs", eobs.size());
+        DatadogSpans.setTag("contract", claimsRequest.getContractNum());
+        DatadogSpans.setTag("organization", claimsRequest.getOrganization());
+        DatadogSpans.setTag("jobid", claimsRequest.getJob());
 
         log.debug("Bundle - Total EOBs Received: {} - Results Returned After Filtering: {} ", rawEobs, eobs.size());
     }

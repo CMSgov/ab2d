@@ -108,6 +108,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.datadoghq</groupId>
+            <artifactId>dd-trace-api</artifactId>
+            <version>${dd-trace-api.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-events-client</artifactId>
             <version>${events-client.version}</version>

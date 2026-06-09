@@ -1,6 +1,6 @@
 package gov.cms.ab2d.coverage.repository;
 
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.filter.FilterOutByDate;
@@ -201,7 +201,7 @@ public class CoverageServiceRepository {
      * @return the number of beneficiaries related to the event, may be zero
      * @throws RuntimeException if no coverage is found
      */
-    @Trace
+    @Trace(operationName = "ab2d.coverage.count_by_search_event")
     public int countBySearchEvent(CoverageSearchEvent searchEvent) {
 
         SqlParameterSource parameters = new MapSqlParameterSource().addValue("id", searchEvent.getId()).addValue(CONTRACT_STRING, searchEvent.getCoveragePeriod().getContractNumber()).addValue(YEARS_STRING, YEARS);
@@ -232,7 +232,7 @@ public class CoverageServiceRepository {
      * @return the number of beneficiaries common between the two searches
      * @throws RuntimeException on failure to find any results from the query for any reason
      */
-    @Trace
+    @Trace(operationName = "ab2d.coverage.count_intersection")
     public int countIntersection(CoverageSearchEvent searchEvent1, CoverageSearchEvent searchEvent2) {
 
         SqlParameterSource parameters = new MapSqlParameterSource().addValue("search1", searchEvent1.getId()).addValue("search2", searchEvent2.getId()).addValue(CONTRACT_STRING, searchEvent1.getCoveragePeriod().getContractNumber()).addValue(YEARS_STRING, YEARS);
@@ -249,7 +249,7 @@ public class CoverageServiceRepository {
      * @param contractNum       a five character String representing an
      * @return total number of unique beneficiaries
      */
-    @Trace
+    @Trace(operationName = "ab2d.coverage.count_beneficiaries_by_periods")
     public int countBeneficiariesByPeriods(List<Integer> coveragePeriodIds, String contractNum) {
 
         SqlParameterSource parameters = new MapSqlParameterSource().addValue("ids", coveragePeriodIds).addValue(CONTRACT_STRING, contractNum).addValue(YEARS_STRING, YEARS);
@@ -271,7 +271,7 @@ public class CoverageServiceRepository {
      * @param contracts list of {@link ContractForCoverageDTO}s
      * @return counts of the coverage for a given coverage period
      */
-    @Trace
+    @Trace(operationName = "ab2d.coverage.count_by_contract")
     public List<CoverageCount> countByContractCoverage(List<ContractForCoverageDTO> contracts) {
         List<String> contractNumbers = contracts.stream().map(ContractForCoverageDTO::getContractNumber).collect(toList());
         SqlParameterSource parameters = new MapSqlParameterSource().addValue("contracts", contractNumbers).addValue(YEARS_STRING, YEARS);
@@ -292,7 +292,7 @@ public class CoverageServiceRepository {
      * @param beneIds     Collection of beneficiary ids to be added as a batch
      * @throws RuntimeException if insertion fails due to a syntax or timeout issue with Postgres.
      */
-    @Trace
+    @Trace(operationName = "ab2d.coverage.insert_batches")
     public void insertBatches(CoverageSearchEvent searchEvent, Iterable<Identifiers> beneIds) {
 
         try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(INSERT_COVERAGE)) {
@@ -327,12 +327,12 @@ public class CoverageServiceRepository {
     }
 
     /**
-     * This method exists so that NewRelic can identify this component of the transaction and time it explicitly.
+     * This method exists so that Datadog can identify this component of the transaction and time it explicitly.
      *
      * @param statement a batch statement with tens of thousands
      * @throws SQLException on failure to make the insertion
      */
-    @Trace
+    @Trace(operationName = "ab2d.coverage.execute_batch")
     private void executeBatch(PreparedStatement statement) throws SQLException {
         statement.executeBatch();
     }
@@ -674,7 +674,7 @@ public class CoverageServiceRepository {
      * <p>
      * Calling this method introduces significant overhead so make sure it is only called after significant events.
      */
-    @Trace
+    @Trace(operationName = "ab2d.coverage.vacuum")
     public void vacuumCoverage() {
         try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(vacuumCoverage)) {
             statement.execute();
