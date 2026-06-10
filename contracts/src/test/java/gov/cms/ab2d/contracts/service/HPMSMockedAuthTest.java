@@ -8,9 +8,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 
@@ -47,10 +48,10 @@ class HPMSMockedAuthTest {
     @Autowired
     MockWebClient mockWebClient;
 
-    @Autowired
+    @MockitoBean
     private SQSEventClient eventLogger;
 
-    @MockBean
+    @MockitoBean
     private WebClient mockedWebClient;
 
     @Test
