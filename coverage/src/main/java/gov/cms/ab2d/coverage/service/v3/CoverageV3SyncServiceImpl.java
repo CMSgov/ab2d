@@ -13,10 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
-import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.executeTimedQuery;
@@ -123,6 +122,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     private static final String GET_CONTRACTS_WITH_ACTIVE_V3_JOBS =
         "select distinct contract_number from job where status in ('IN_PROGRESS', 'SUBMITTED')";
 
+    private static final String IS_CONTRACT_ATTESTED =
+        "select count(*) from contract.contract where contract_number = :contract and attested_on is not null";
+
     private static final String GET_CONTRACTS_WITH_COVERAGE_IN_STAGING =
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_STAGING_TABLE);
@@ -131,38 +133,36 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
 
-    private static final String SELECT_DISTINCT_CONTRACTS_FROM_HISTORY_SUMMARY =
-        "select distinct contract from v3.coverage_v3_history_summary";
-
-    // TODO CLEAN THIS UP
-    // TODO what happens if this can't be updated because a job is in progress? delete coverage periods and check for
-    private static final String POPULATE_HISTORY_SUMMARY_COVERAGE_PERIODS_FOR_CONTRACT =
+    private static final String GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY =
     """
-    WITH
-    coverage_periods_unparsed AS (
-        SELECT DISTINCT json_array_elements(to_json(historical_coverage_summaries))::TEXT as text
-        FROM v3.coverage_v3_history_summary
-        WHERE contract='{0}'
-    ),
-    coverage_periods_parsed AS (
-        SELECT
-        '{0}' as contract,
-        split_part(translate(text, '[]', ''), ',', 1)::INT AS year,
-        split_part(translate(text, '[]', ''), ',', 2)::INT AS month
-        FROM coverage_periods_unparsed
-        ORDER BY year ASC, month ASC
+    SELECT DISTINCT contract FROM v3.coverage_v3_history_summary
+    WHERE contract IN (
+        SELECT contract_number FROM contract.contract
+        WHERE attested_on IS NULL
+           OR (hpms_end_date IS NOT NULL AND hpms_end_date < :cutoff)
     )
-    
-    INSERT INTO v3.coverage_v3_history_summary_coverage_periods
-    SELECT * FROM coverage_periods_parsed
-    ON CONFLICT (contract, year, month)
-    DO NOTHING;
     """;
 
+    private static final String DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY =
+    """
+    with deleted_rows as (
+        DELETE FROM v3.coverage_v3_history_summary
+        WHERE contract IN (
+            SELECT contract_number FROM contract.contract
+            WHERE attested_on IS NULL
+               OR (hpms_end_date IS NOT NULL AND hpms_end_date < :cutoff)
+        )
+        RETURNING contract
+    )
+    select contract from deleted_rows;
+    """;
 
     @Transactional
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
         if (isTestContract(contract)) {
+            return NO_COVERAGE_FOUND_FOR_CONTRACT;
+        } else if (!isContractAttested(contract)) {
+            log.info("[V3] Contract {} is not attested; skipping staging copy", contract);
             return NO_COVERAGE_FOUND_FOR_CONTRACT;
         } else if (idrImporterInProgress()) {
             return IDR_IMPORTER_IN_PROGRESS;
@@ -364,12 +364,33 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return getContractsWithActiveV3Jobs().contains(contract);
     }
 
+    boolean isContractAttested(String contract) {
+        val parameters = new MapSqlParameterSource().addValue("contract", contract);
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+        Integer count = DataAccessUtils.intResult(template.queryForList(IS_CONTRACT_ATTESTED, parameters, Integer.class));
+        return count != null && count > 0;
+    }
+
     @Override
     public boolean idrImporterInProgress() {
         val idrImporterStatus = propertiesService.getProperty(V3_IDR_IMPORTER_STATUS, "");
         return V3_IDR_IMPORTER_STATUS_IN_PROGRESS.equals(idrImporterStatus);
     }
 
+    @Override
+    @Transactional
+    public int deleteInactiveContractsFromHistorySummary() {
+        LocalDate cutoff = LocalDate.now().minusYears(2);
+        val parameters = new MapSqlParameterSource().addValue("cutoff", cutoff);
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+
+        List<String> inactiveContracts = template.queryForList(GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY, parameters, String.class);
+        log.info("[V3] Inactive contracts to be purged from history summary ({}): {}", inactiveContracts.size(), inactiveContracts);
+
+        List<String> deletedContracts = template.queryForList(DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY, parameters, String.class);
+        log.info("[V3] Deleted {} rows from coverage_v3_history_summary for unattested contracts or contracts ended > 2 years ago", deletedContracts.size());
+        return deletedContracts.size();
+    }
 
 
 }
