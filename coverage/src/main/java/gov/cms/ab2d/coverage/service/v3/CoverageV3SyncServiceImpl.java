@@ -131,6 +131,33 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
 
+    private static final String SELECT_DISTINCT_CONTRACTS_FROM_HISTORY_SUMMARY =
+        "select distinct contract from v3.coverage_v3_history_summary";
+
+    // TODO CLEAN THIS UP
+    // TODO what happens if this can't be updated because a job is in progress? delete coverage periods and check for
+    private static final String POPULATE_HISTORY_SUMMARY_COVERAGE_PERIODS_FOR_CONTRACT =
+    """
+    WITH
+    coverage_periods_unparsed AS (
+        SELECT DISTINCT json_array_elements(to_json(historical_coverage_summaries))::TEXT as text
+        FROM v3.coverage_v3_history_summary
+        WHERE contract='{0}'
+    ),
+    coverage_periods_parsed AS (
+        SELECT
+        '{0}' as contract,
+        split_part(translate(text, '[]', ''), ',', 1)::INT AS year,
+        split_part(translate(text, '[]', ''), ',', 2)::INT AS month
+        FROM coverage_periods_unparsed
+        ORDER BY year ASC, month ASC
+    )
+    
+    INSERT INTO v3.coverage_v3_history_summary_coverage_periods
+    SELECT * FROM coverage_periods_parsed
+    ON CONFLICT (contract, year, month)
+    DO NOTHING;
+    """;
 
 
     @Transactional

@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS v3.coverage_v3_audit (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    action TEXT NOT NULL,
+    contract TEXT,
+    log NOT NULL,
+    data JSONB
+);
