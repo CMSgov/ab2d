@@ -31,9 +31,9 @@ class OptOutHandlerTest {
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer POSTGRE_SQL_CONTAINER = new AB2DPostgresqlContainer();
-    private final static OptOutHandler handler = spy(new OptOutHandler());
-    private final static SQSEvent sqsEvent = mock(SQSEvent.class);
-    private final static SQSEvent.SQSMessage sqsMessage = mock(SQSEvent.SQSMessage.class);
+    private static OptOutHandler handler = spy(new OptOutHandler());
+    private static SQSEvent sqsEvent = mock(SQSEvent.class);
+    private static SQSEvent.SQSMessage sqsMessage = mock(SQSEvent.SQSMessage.class);
 
     @BeforeAll
     static void beforeAll() throws IOException {
@@ -83,7 +83,7 @@ class OptOutHandlerTest {
         verify(logger, times(0)).log(anyString());
     }
 
-    static private String getPayload() throws IOException {
+    private static String getPayload() throws IOException {
         return Files.readString(Paths.get("src/test/resources/sqsEvent.json"));
     }
 }
