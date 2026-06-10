@@ -357,7 +357,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         List<String> serviceDates = request.getServiceDates();
 
         if (serviceDates != null && !serviceDates.isEmpty()) {
-            log.error("----------------- serviceDate: " + serviceDates);
             return serviceDates;
         }
 
@@ -366,7 +365,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (attTime == null) {
             return serviceDates;
         }
-        log.error("----------------- attTime: " + List.of(SERVICE_DATE_GE_PREFIX + attTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE)));
         return List.of(SERVICE_DATE_GE_PREFIX + attTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
     }
 
