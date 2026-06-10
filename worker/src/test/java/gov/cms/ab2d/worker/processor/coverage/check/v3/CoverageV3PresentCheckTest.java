@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
-import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
@@ -17,6 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 
 @Testcontainers
@@ -41,13 +41,12 @@ class CoverageV3PresentCheckTest {
 	@Test
 	void test() {
 		val issues = new ArrayList<String>();
-		val coverageCounts = coverageService.getCoverageCount();
 		val contractNumber = "Z1234";
 		val contractDto = new ContractDTO();
 		contractDto.setContractType(Contract.ContractType.CLASSIC_TEST);
 		contractDto.setContractNumber(contractNumber);
 		contractDto.setAttestedOn(OffsetDateTime.parse("2025-09-30T00:00:00+00:00")); // 2025-09-01
-
+		val coverageCounts = coverageService.getCoveragePeriods(List.of(contractDto));
 		check = new CoverageV3PresentCheck(coverageService, coverageCounts, issues);
 		check.test(contractDto);
 	}

@@ -1,7 +1,9 @@
 package gov.cms.ab2d.coverage.service.v3;
 
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Count;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 
@@ -14,7 +16,7 @@ public interface CoverageV3Service {
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
     CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3SyncSource source);
     CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source);
-    Map<String, List<CoverageV3Count>> getCoverageCount();
+    Map<String, List<YearMonthRecord>> getCoveragePeriods(List<ContractDTO> contracts);
     boolean idrImportInProgress();
     // called before starting a v3 job
     void createAggregatedAttributionTable(String contract);

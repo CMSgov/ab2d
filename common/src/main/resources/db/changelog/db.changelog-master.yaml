@@ -196,4 +196,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2026/add_v3_coverage_period_history_summary.sql
   - include:
-      file: db/changelog/v2026/add_v3_audit_table.sql
+      file: db/changelog/v2026/add_v3_audit_logging.sql
