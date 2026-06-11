@@ -69,7 +69,7 @@ class PatientClaimsProcessorUnitTest {
 
     // Default service-date lower bound is the inclusive attestation date when no service-date filter is supplied
     private static final List<String> EARLY_ATT_SERVICE_DATES = List.of("ge1970-01-01");
-    private static final List<String> LATER_ATT_SERVICE_DATES = List.of("ge20201-02-15");
+    private static final List<String> LATER_ATT_SERVICE_DATES = List.of("ge2020-02-15");
     private CoverageSummary coverageSummary;
 
     private final Token noOpToken = new Token() {
