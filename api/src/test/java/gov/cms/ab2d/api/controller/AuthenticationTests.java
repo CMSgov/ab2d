@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -60,8 +62,11 @@ public class AuthenticationTests {
     @Autowired
     SqsAsyncClient amazonSqs;
 
-    @Autowired
+    @MockitoBean
     SQSEventClient sqsEventClient;
+
+    @MockitoBean
+    AccessTokenVerifier mockAccessTokenVerifier;
 
     @Captor
     private ArgumentCaptor<LoggableEvent> captor;

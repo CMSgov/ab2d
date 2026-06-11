@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.okta.jwt.AccessTokenVerifier;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -47,6 +49,9 @@ public class RoleTests {
 
     @Autowired
     private DataSetup dataSetup;
+
+    @MockitoBean
+    AccessTokenVerifier mockAccessTokenVerifier;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();

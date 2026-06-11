@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -54,6 +56,11 @@ class CoverageSnapshotTest {
 
     @Container
     private static final AB2DLocalstackContainer LOCALSTACK_CONTAINER = new AB2DLocalstackContainer();
+
+    @DynamicPropertySource
+    static void sqsProps(DynamicPropertyRegistry registry) {
+        registry.add("AWS_SQS_URL", LOCALSTACK_CONTAINER::getSqsEndpoint);
+    }
 
     @Autowired
     CoverageSnapshotService coverageSnapshotService;

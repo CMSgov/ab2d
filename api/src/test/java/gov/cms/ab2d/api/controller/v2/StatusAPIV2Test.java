@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller.v2;
 
+import com.okta.jwt.AccessTokenVerifier;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
@@ -17,6 +18,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -52,6 +56,11 @@ class StatusAPIV2Test {
   @Container
   private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
+  @DynamicPropertySource
+  static void sqsProps(DynamicPropertyRegistry registry) {
+    registry.add("AWS_SQS_URL", localstackContainer::getSqsEndpoint);
+  }
+
   @Autowired
   private TestUtil testUtil;
 
@@ -61,8 +70,11 @@ class StatusAPIV2Test {
   @Autowired
   SqsAsyncClient amazonSQS;
 
-  @Autowired
+  @MockitoBean
   SQSEventClient sqsEventClient;
+
+  @MockitoBean
+  AccessTokenVerifier mockAccessTokenVerifier;
 
   @Autowired
   private ApplicationContext context;

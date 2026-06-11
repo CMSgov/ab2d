@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
@@ -7,7 +8,6 @@ import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractServiceStub;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.contracts.model.Contract;
@@ -22,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -65,9 +66,6 @@ public class BulkDataAccessAPIV2IntegrationTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
-
     @Autowired
     private TestUtil testUtil;
 
@@ -76,6 +74,9 @@ public class BulkDataAccessAPIV2IntegrationTests {
 
     @Autowired
     private ApplicationContext context;
+
+    @MockitoBean
+    AccessTokenVerifier mockAccessTokenVerifier;
 
     private String token;
 

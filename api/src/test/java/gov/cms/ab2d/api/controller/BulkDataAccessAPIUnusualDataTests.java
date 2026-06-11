@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
@@ -28,6 +29,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -85,11 +89,19 @@ public class BulkDataAccessAPIUnusualDataTests {
     @Autowired
     SqsAsyncClient amazonSQS;
 
+    @MockitoBean
+    AccessTokenVerifier mockAccessTokenVerifier;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
+
+    @DynamicPropertySource
+    static void sqsProps(DynamicPropertyRegistry registry) {
+        registry.add("AWS_SQS_URL", localstackContainer::getSqsEndpoint);
+    }
 
     @Autowired
     private ApplicationContext context;

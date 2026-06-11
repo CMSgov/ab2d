@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
@@ -19,6 +20,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -66,6 +70,11 @@ public class BulkDataAccessAPIV3IntegrationTests {
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
+    @DynamicPropertySource
+    static void sqsProps(DynamicPropertyRegistry registry) {
+        registry.add("AWS_SQS_URL", localstackContainer::getSqsEndpoint);
+    }
+
     @Autowired
     private TestUtil testUtil;
 
@@ -74,6 +83,9 @@ public class BulkDataAccessAPIV3IntegrationTests {
 
     @Autowired
     private ApplicationContext context;
+
+    @MockitoBean
+    AccessTokenVerifier mockAccessTokenVerifier;
 
     private String token;
 

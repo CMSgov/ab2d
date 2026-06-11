@@ -26,6 +26,9 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -83,8 +86,16 @@ class JwtAuthenticationFilterTest {
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
-    @Autowired
+    @DynamicPropertySource
+    static void sqsProps(DynamicPropertyRegistry registry) {
+        registry.add("AWS_SQS_URL", localstackContainer::getSqsEndpoint);
+    }
+
+    @MockitoBean
     SQSEventClient sqsEventClient;
+
+    @MockitoBean
+    AccessTokenVerifier mockAccessTokenVerifier;
 
     @Autowired
     private ApplicationContext context;

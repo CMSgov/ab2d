@@ -28,14 +28,14 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>25</java.version>
-        <hapi.version>8.4.0</hapi.version>
+        <hapi.version>8.8.0</hapi.version>
         <mockito.core.version>5.16.1</mockito.core.version>
         <okhttp3.version>5.0.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>9.0</logback-encoder.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <newrelic.version>8.22.0</newrelic.version>
-        <spring-cloud-aws.version>3.4.0</spring-cloud-aws.version>
+        <spring-cloud-aws.version>4.0.0</spring-cloud-aws.version>
         <postgresql.version>42.7.11</postgresql.version>
         <kotlin.version>2.1.0</kotlin.version>
 

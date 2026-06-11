@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import com.jayway.jsonpath.JsonPath;
+import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
@@ -24,6 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -67,8 +69,11 @@ public class AdminAPIMaintenanceModeTests {
     @Autowired
     JobClientMock jobClientMock;
 
-    @Autowired
+    @MockitoBean
     SQSEventClient sqsEventClient;
+
+    @MockitoBean
+    AccessTokenVerifier mockAccessTokenVerifier;
 
     @Autowired
     private ApplicationContext context;
