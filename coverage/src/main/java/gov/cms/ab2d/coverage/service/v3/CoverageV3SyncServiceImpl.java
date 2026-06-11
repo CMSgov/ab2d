@@ -319,7 +319,6 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
         if (isTestContract(contract)) {
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
-            audit.log(action, result, contract, null, null);
             return result;
         } else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
             result = JOB_IN_PROGRESS_FOR_CONTRACT;
