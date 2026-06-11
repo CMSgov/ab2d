@@ -170,11 +170,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     coverage_periods_unparsed AS (
         SELECT DISTINCT json_array_elements(to_json(historical_coverage_summaries))::TEXT as text
         FROM v3.coverage_v3_history_summary
-        WHERE contract='{0}'
+        WHERE contract='%s'
     ),
     coverage_periods_parsed AS (
         SELECT
-        '{0}' as contract,
+        '%s' as contract,
         split_part(translate(text, '[]', ''), ',', 1)::INT AS year,
         split_part(translate(text, '[]', ''), ',', 2)::INT AS month
         FROM coverage_periods_unparsed
@@ -196,7 +196,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             return NO_COVERAGE_FOUND_FOR_CONTRACT;
         } else if (!isContractAttested(contract)) {
             log.info("[V3] Contract {} is not attested; skipping staging copy", contract);
-            return NO_COVERAGE_FOUND_FOR_CONTRACT;
+            result = NO_COVERAGE_FOUND_FOR_CONTRACT;
+            audit.log(action, result, contract, "Contract is not attested", null);
+            return result;
         } else if (idrImporterInProgress()) {
             result = IDR_IMPORTER_IN_PROGRESS;
             audit.log(action, result, contract, null, null);
@@ -336,10 +338,23 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                     return NO_COVERAGE_FOUND_FOR_CONTRACT;
                 } else {
                     audit.log(action, null, contract, null, Map.of("rowsMoved", rowsMoved));
-                    populateHistorySummaryForContract(contract);
-                    audit.log(action, null, contract, "Populated history summary table", null);
-                    populateHistorySummaryCoveragePeriodsForContract(contract);
-                    audit.log(action, null, contract, "Populated history summary coverage period table", null);
+
+                    try {
+                        populateHistorySummaryForContract(contract);
+                        audit.log(action, null, contract, "Populated history summary table", null);
+                    } catch (Exception e) {
+                        audit.log(action, null, contract, "Failed to populate history summary table", null);
+                        throw e;
+                    }
+
+                    try {
+                        populateHistorySummaryCoveragePeriodsForContract(contract);
+                        audit.log(action, null, contract, "Populated history summary coverage period table", null);
+                    } catch (Exception e) {
+                        audit.log(action, null, contract, "Failed to populate history summary coverage period table", null);
+                        throw e;
+                    }
+
                 }
                 int rowsDeleted = deleteMonthsOldCoverage(contract);
                 log.info("[V3] Deleted {} rows from recent coverage table for contract {}", rowsDeleted, contract);
@@ -424,7 +439,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return DataAccessUtils.intResult(template.queryForList(query, parameters, Integer.class));
     }
 
-    private void populateHistorySummaryForContract(String contract) {
+    void populateHistorySummaryForContract(String contract) {
         val parameters = new MapSqlParameterSource().addValue("contract", contract);
         val template = new NamedParameterJdbcTemplate(dataSource);
         template.update(DELETE_HISTORY_SUMMARY_FOR_CONTRACT, parameters);
@@ -469,12 +484,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return deletedContracts.size();
     }
 
-    private void populateHistorySummaryCoveragePeriodsForContract(String contract) {
+    void populateHistorySummaryCoveragePeriodsForContract(String contract) {
         val template = new JdbcTemplate(this.dataSource);
-        val query = MessageFormat.format(POPULATE_HISTORY_SUMMARY_COVERAGE_PERIODS_FOR_CONTRACT, contract);
+        // Note: Using String.format here because MessageFormat.format requires escaping all string literals
+        val query = POPULATE_HISTORY_SUMMARY_COVERAGE_PERIODS_FOR_CONTRACT.formatted(contract, contract);
         template.execute(query);
     }
-
-
 
 }

@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.processor.coverage.check.v3;
 
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.YearMonthRecord;
-import gov.cms.ab2d.coverage.model.v3.CoverageV3Count;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import jakarta.validation.constraints.NotNull;
@@ -21,9 +20,9 @@ import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTim
  * Verifies enabled contracts have the expected number of coverage periods based on attestation date
  */
 @Slf4j
-public class CoverageV3PresentCheck extends CoverageV3CheckPredicate {
+public class CoverageV3CoveragePeriodsPresentCheck extends CoverageV3CheckPredicate {
 
-    public CoverageV3PresentCheck(CoverageV3Service coverageService, Map<String, List<YearMonthRecord>> coverageCounts, List<String> issues) {
+    public CoverageV3CoveragePeriodsPresentCheck(CoverageV3Service coverageService, Map<String, List<YearMonthRecord>> coverageCounts, List<String> issues) {
         super(coverageService, coverageCounts, issues);
     }
 

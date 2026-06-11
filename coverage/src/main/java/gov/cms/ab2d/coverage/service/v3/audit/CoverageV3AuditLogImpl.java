@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -43,9 +44,13 @@ public class CoverageV3AuditLogImpl implements CoverageV3AuditLog {
 
 		MapSqlParameterSource parameters = null;
 		try {
+			val resultAsString = result != null
+				? result.toString()
+				: "";
+
 			parameters = new MapSqlParameterSource()
 				.addValue("action", action.toString())
-				.addValue("result", Optional.ofNullable(result.toString()).orElse(""))
+				.addValue("result", resultAsString)
 				.addValue("contract", Optional.ofNullable(contract).orElse(""))
 				.addValue("log", Optional.ofNullable(logText).orElse(""))
 				.addValue("data", toJson(data));

@@ -4,7 +4,6 @@ import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.DateUtil;
-import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
@@ -15,7 +14,7 @@ import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
-import gov.cms.ab2d.worker.processor.coverage.check.v3.CoverageV3PresentCheck;
+import gov.cms.ab2d.worker.processor.coverage.check.v3.CoverageV3CoveragePeriodsPresentCheck;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -774,7 +773,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         val coveragePeriods = coverageV3Service.getCoveragePeriods(enabledContracts);
 
         long passingContracts = enabledContracts.stream()
-            .filter(new CoverageV3PresentCheck(coverageV3Service, coveragePeriods, issues))
+            .filter(new CoverageV3CoveragePeriodsPresentCheck(coverageV3Service, coveragePeriods, issues))
             .count();
 
         String message = String.format("Verified that %d contracts pass all coverage checks out of %d",

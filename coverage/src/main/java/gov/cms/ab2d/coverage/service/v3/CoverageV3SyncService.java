@@ -6,8 +6,8 @@ import java.util.function.Supplier;
 
 public interface CoverageV3SyncService {
 	CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source);
-	CoverageV3SyncResult moveToHistorical(String contract, CoverageV3SyncSource source);
 
+	CoverageV3SyncResult moveToHistorical(String contract, CoverageV3SyncSource source);
 
 	List<String> getContractsWithActiveV3Jobs();
 
