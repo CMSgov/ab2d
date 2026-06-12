@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -67,11 +66,6 @@ public class PatientClaimsRequest {
      * Dictates how date filtering is done in {@link PatientClaimsCollector} for real vs test contracts.
      */
     private final Contract.ContractType contractType;
-
-    /**
-     * NR token corresponding to transaction. Calls are sampled to profile performance.
-     */
-    private final Token token;
 
     /**
      * Dictates which version of FHIR to use when requesting and serializing data
