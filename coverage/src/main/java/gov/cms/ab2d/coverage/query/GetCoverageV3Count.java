@@ -52,6 +52,7 @@ public class GetCoverageV3Count extends CoverageV3BaseQuery {
 		return map;
 	}
 
+	@Deprecated
 	private static class CoverageV3CountRowMapper implements RowMapper<CoverageV3Count> {
 		@Override
 		public CoverageV3Count mapRow(ResultSet rs, int rowNum) throws SQLException {
