@@ -48,4 +48,9 @@ public final class PropertyConstants {
     public static final String EOB_V3_IN_PLACE = "eob.v3.inplace.enabled";
 
     public static final String BFD_METRICS_ENABLED = "bfd.metrics.enabled";
+
+    public static final String V3_COVERAGE_PERIOD_CHECK_ENABLED = "v3.coverage-check.enabled";
+
+    public static final String V3_AUDIT_LOGGING_ENABLED = "v3.audit-logging.enabled";
+
 }

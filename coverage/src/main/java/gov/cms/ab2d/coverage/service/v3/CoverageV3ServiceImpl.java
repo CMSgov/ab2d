@@ -1,6 +1,7 @@
 package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Count;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
@@ -9,16 +10,19 @@ import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
@@ -98,11 +102,34 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
 
-
     @Override
-    public Map<String, List<CoverageV3Count>>  getCoverageCount() {
-        return new GetCoverageV3Count(dataSource).coverageCounts();
+    public Map<String, List<YearMonthRecord>> getCoveragePeriods(List<ContractDTO> contracts) {
+        val result = new HashMap<String, List<YearMonthRecord>>();
+        val template = new NamedParameterJdbcTemplate(dataSource);
+        val query =
+        """
+        SELECT year, month
+        FROM v3.coverage_v3_history_summary_coverage_periods
+        WHERE contract = :contract
+        UNION
+        SELECT DISTINCT year, month
+        FROM v3.coverage_v3
+        WHERE contract = :contract
+        ORDER BY year DESC, month DESC
+        """;
+
+        for (ContractDTO contract : contracts) {
+            val parameters = new MapSqlParameterSource().addValue("contract", contract.getContractNumber());
+            val coveragePeriods = template.query(query, parameters, (rs, rowNum) -> new YearMonthRecord(
+                rs.getInt(1),
+                rs.getInt(2))
+            );
+            result.put(contract.getContractNumber(), coveragePeriods);
+        }
+
+        return result;
     }
+
 
     @Override
     public boolean idrImportInProgress() {
@@ -211,7 +238,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 	    return coverageV3SyncService.moveToHistorical(contract, source);
     }
 
-
     @Override
     public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {
         return executeTimedQuery(
@@ -224,6 +250,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
                     .countBeneficiaries(contract, periods, isOptOutOn())
         );
     }
+
 
     private List<CoverageSummary> queryAggregatedCoverageMembership(CoveragePagingRequest page, long limit) {
         return executeTimedQuery(

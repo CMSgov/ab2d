@@ -227,3 +227,20 @@ VALUES
     ('NULLEND', 105, 'P105', array[array[2025, 2]]),
     ('UNATT1',  106, 'P106', array[array[2024, 1]])
 ;
+
+CREATE TABLE IF NOT EXISTS v3.coverage_v3_history_summary_coverage_periods (
+    contract TEXT NOT NULL,
+    year INT NOT NULL,
+    month INT NOT NULL,
+    UNIQUE (contract, year, month)
+);
+
+CREATE TABLE IF NOT EXISTS v3.coverage_v3_audit (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    action TEXT NOT NULL,
+    result TEXT,
+    contract TEXT,
+    log TEXT NOT NULL,
+    data JSONB
+);
