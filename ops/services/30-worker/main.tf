@@ -2,19 +2,19 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5"
+      version = "~> 6"
     }
   }
 }
 
 module "data_db_writer_instance" {
-  source = "github.com/CMSgov/beneficiary-fhir-data//ops/terraform-modules/general/data-db-writer-instance?ref=2.211.0"
+  source = "github.com/CMSgov/beneficiary-fhir-data//ops/terraform-modules/general/data-db-writer-instance?ref=2.248.0"
 
   cluster_identifier = data.aws_rds_cluster.this.cluster_identifier
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -56,11 +56,11 @@ locals {
 
   ab2d_efs_mount                = "/mnt/efs"
   aws_region                    = module.platform.primary_region.name
-  bfd_keystore_location         = module.platform.ssm.worker.bfd_keystore_location.value
-  bfd_keystore_password_arn     = module.platform.ssm.worker.bfd_keystore_password.arn
-  bfd_keystore_base64_arn       = module.platform.ssm.worker.bfd_keystore_base64.arn
-  bfd_server_public_cert_arn    = module.platform.ssm.worker.bfd_truststore_cert.arn
-  bfd_v3_server_public_cert_arn = module.platform.ssm.worker.bfd_v3_truststore_cert.arn
+  bfd_keystore_location         = nonsensitive(module.platform.ssm.worker.bfd_keystore_location.value)
+  bfd_keystore_password_arn     = nonsensitive(module.platform.ssm.worker.bfd_keystore_password.arn)
+  bfd_keystore_base64_arn       = nonsensitive(module.platform.ssm.worker.bfd_keystore_base64.arn)
+  bfd_server_public_cert_arn    = nonsensitive(module.platform.ssm.worker.bfd_truststore_cert.arn)
+  bfd_v3_server_public_cert_arn = nonsensitive(module.platform.ssm.worker.bfd_v3_truststore_cert.arn)
   vpc_id                        = module.platform.vpc_id
   rds_writer_az                 = module.data_db_writer_instance.writer.availability_zone
   writer_adjacent_subnets       = [for subnet in module.platform.private_subnets : subnet.id if subnet.availability_zone == local.rds_writer_az]
@@ -71,14 +71,14 @@ locals {
   worker_desired_instances   = 1
 
   ab2d_db_host              = data.aws_rds_cluster.this.endpoint
-  db_name_arn               = module.platform.ssm.core.database_name.arn
-  db_password_arn           = module.platform.ssm.core.database_password.arn
-  db_username_arn           = module.platform.ssm.core.database_user.arn
+  db_name_arn               = nonsensitive(module.platform.ssm.core.database_name.arn)
+  db_password_arn           = nonsensitive(module.platform.ssm.core.database_password.arn)
+  db_username_arn           = nonsensitive(module.platform.ssm.core.database_user.arn)
   contracts_url             = module.platform.ssm.contracts.url.value
   new_relic_app_name        = module.platform.ssm.common.new_relic_app_name.value
-  new_relic_license_key_arn = module.platform.ssm.common.new_relic_license_key.arn
-  slack_alert_webhooks_arn  = module.platform.ssm.common.slack_alert_webhooks.arn
-  slack_trace_webhooks_arn  = module.platform.ssm.common.slack_trace_webhooks.arn
+  new_relic_license_key_arn = nonsensitive(module.platform.ssm.common.new_relic_license_key.arn)
+  slack_alert_webhooks_arn  = nonsensitive(module.platform.ssm.common.slack_alert_webhooks.arn)
+  slack_trace_webhooks_arn  = nonsensitive(module.platform.ssm.common.slack_trace_webhooks.arn)
 
   # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
   worker_image_repo = split("@", data.aws_ecr_image.worker.image_uri)[0]
@@ -121,17 +121,16 @@ data "aws_sqs_queue" "events" {
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=cbd07ee078ecd379a32125b8354bd1ecaf5c275d"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
   platform = module.platform
 }
 
 module "service" {
-  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=52af0763fab4e65b29ead8bf88774f0bad4bdd87"
 
   cluster_arn                       = module.cluster.this.arn
   cpu                               = local.ecs_task_def_cpu_worker
   desired_count                     = local.worker_desired_instances
-  execution_role_arn                = data.aws_iam_role.worker.arn
   force_new_deployment              = anytrue([var.force_worker_deployment, var.worker_service_image_tag != null])
   health_check_grace_period_seconds = null
   image                             = local.worker_image_uri
@@ -139,7 +138,6 @@ module "service" {
   platform                          = module.platform
   security_groups                   = [data.aws_security_group.worker.id]
   subnets                           = local.writer_adjacent_subnets
-  task_role_arn                     = data.aws_iam_role.worker.arn
 
   container_environment = [
     { name = "AB2D_BFD_INSIGHTS", value = local.bfd_insights }, #FIXME: Is this even used?
@@ -164,8 +162,8 @@ module "service" {
   container_secrets = [
     { name = "AB2D_BFD_KEYSTORE_BASE64", valueFrom = local.bfd_keystore_base64_arn },
     { name = "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom = local.bfd_keystore_password_arn },
-    { name : "AB2D_BFD_TRUSTSTORE_CERT", valueFrom : local.bfd_server_public_cert_arn },
-    { name : "AB2D_BFD_V3_TRUSTSTORE_CERT", valueFrom : local.bfd_v3_server_public_cert_arn },
+    { name = "AB2D_BFD_TRUSTSTORE_CERT", valueFrom : local.bfd_server_public_cert_arn },
+    { name = "AB2D_BFD_V3_TRUSTSTORE_CERT", valueFrom : local.bfd_v3_server_public_cert_arn },
     { name = "AB2D_DB_DATABASE", valueFrom = local.db_name_arn },
     { name = "AB2D_DB_PASSWORD", valueFrom = local.db_password_arn },
     { name = "AB2D_DB_USER", valueFrom = local.db_username_arn },

@@ -10,7 +10,7 @@ resource "aws_cloudwatch_metric_alarm" "target_response_time" {
   alarm_actions       = [local.cloudwatch_sns_topic]
   dimensions = {
     LoadBalancer = aws_lb.ab2d_api.arn_suffix
-    TargetGroup  = aws_lb_target_group.ab2d_api.arn_suffix
+    TargetGroup  = regex("targetgroup/.+", module.service.target_group_arn)
   }
 }
 
@@ -26,7 +26,7 @@ resource "aws_cloudwatch_metric_alarm" "healthy_host_count" {
   alarm_actions       = [local.cloudwatch_sns_topic]
   dimensions = {
     LoadBalancer = aws_lb.ab2d_api.arn_suffix
-    TargetGroup  = aws_lb_target_group.ab2d_api.arn_suffix
+    TargetGroup  = regex("targetgroup/.+", module.service.target_group_arn)
   }
 }
 
