@@ -223,7 +223,7 @@ module "cluster" {
 }
 
 module "service" {
-  source                        = "github.com/CMSgov/cdap//terraform/modules/service?ref=gfreeman/AB2D-7301"
+  source                        = "github.com/CMSgov/cdap//terraform/modules/service?ref=52af0763fab4e65b29ead8bf88774f0bad4bdd87"
   platform                      = module.platform
   cluster_arn                   = module.cluster.this.arn
   image                         = local.api_image_uri
@@ -233,10 +233,20 @@ module "service" {
   security_groups               = [data.aws_security_group.api.id, aws_security_group.load_balancer.id] #FIXME
   additional_task_role_policies = { api = aws_iam_policy.api.arn }
 
-  alb_listener_arn  = aws_lb_listener.ab2d_api.arn
-  alb_port_name     = "https"
-  alb_priority      = 100
-  alb_path_patterns = ["*"]
+  alb_listener_arn          = aws_lb_listener.ab2d_api.arn
+  alb_port_name             = "https"
+  alb_priority              = 100
+  alb_path_patterns         = ["*"]
+  alb_target_group_protocol = local.alb_listener_protocol
+  alb_health_check = {
+    path                = "/health"
+    protocol            = local.alb_listener_protocol
+    matcher             = "200-299"
+    healthy_threshold   = 2
+    unhealthy_threshold = 5
+    timeout             = 10
+    interval            = 30
+  }
 
   port_mappings = [
     {
@@ -318,17 +328,6 @@ module "service" {
   ]
 }
 
-# TODO Remove these two moved blocks after service module changes have been deployed
-moved {
-  from = aws_ecs_service.api
-  to   = module.service.aws_ecs_service.this
-}
-
-moved {
-  from = aws_ecs_task_definition.api
-  to   = module.service.aws_ecs_task_definition.this
-}
-
 resource "aws_sns_topic" "api" {
   name              = "${local.service_prefix}-api-healthy-host"
   kms_master_key_id = local.kms_master_key_id
@@ -349,7 +348,7 @@ resource "aws_cloudwatch_metric_alarm" "health" {
 
   dimensions = {
     LoadBalancer = aws_lb.ab2d_api.arn_suffix
-    TargetGroup  = aws_lb_target_group.ab2d_api.arn_suffix
+    TargetGroup  = regex("targetgroup/.+", module.service.target_group_arn)
   }
 }
 
@@ -363,7 +362,6 @@ resource "aws_sns_topic_subscription" "splunk_api" {
 resource "aws_lb" "ab2d_api" {
   #TODO Consider using name_prefix for ephemeral environments... thhey may only be up to 6-characters
   name               = "${local.service_prefix}-api"
-  depends_on         = [aws_lb_target_group.ab2d_api]
   internal           = local.alb_internal
   load_balancer_type = "application"
 
@@ -386,19 +384,20 @@ resource "aws_lb" "ab2d_api" {
   }
 }
 
-resource "aws_lb_target_group" "ab2d_api" {
-  name        = "${local.service_prefix}-api"
-  port        = local.alb_listener_port
-  protocol    = local.alb_listener_protocol
+resource "aws_lb_target_group" "default" {
+  name        = "${local.service_prefix}-default"
+  port        = local.container_port
+  protocol    = "HTTPS"
   vpc_id      = local.vpc_id
   target_type = "ip"
 
   health_check {
+    path                = "/health"
+    protocol            = "HTTPS"
+    matcher             = "200-299"
     healthy_threshold   = 2
     unhealthy_threshold = 5
     timeout             = 10
-    protocol            = local.alb_listener_protocol
-    path                = "/health"
     interval            = 30
   }
 }
@@ -410,8 +409,9 @@ resource "aws_lb_listener" "ab2d_api" {
   certificate_arn   = local.alb_listener_certificate_arn
   ssl_policy        = local.alb_ssl_policy
 
+  # Module managed listener should have higher priority
   default_action {
-    target_group_arn = aws_lb_target_group.ab2d_api.arn
+    target_group_arn = aws_lb_target_group.default.arn
     type             = "forward"
   }
 }
