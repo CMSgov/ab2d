@@ -25,17 +25,4 @@ data "aws_iam_policy_document" "api" {
       values   = ["ab2d/${module.platform.env}/api"]
     }
   }
-
-  statement {
-    sid    = "SQSAccess"
-    effect = "Allow"
-    actions = [
-      "sqs:SendMessage",
-      "sqs:ReceiveMessage",
-      "sqs:DeleteMessage",
-      "sqs:GetQueueUrl",
-      "sqs:GetQueueAttributes"
-    ]
-    resources = [data.aws_sqs_queue.events.arn]
-  }
 }
