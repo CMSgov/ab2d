@@ -4,6 +4,7 @@ import gov.cms.ab2d.contracts.SpringBootApp;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.repository.ContractRepository;
 import gov.cms.ab2d.contracts.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,9 @@ class ContractControllerTest {
 
     @Autowired
     private ContractRepository contractRepository;
+
+    @MockitoBean
+    private SQSEventClient eventLogger;
 
     @Container
     private static final PostgreSQLContainer POSTGRE_SQL_CONTAINER = new AB2DPostgresqlContainer();
