@@ -42,6 +42,7 @@ allprojects {
 
         implementation "commons-codec:commons-codec:1.18.0"
         implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+        implementation "org.springframework.boot:spring-boot-liquibase:${springBootVersion}"
         implementation "com.amazonaws:amazon-kinesis-client:1.15.3"
         implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
         implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"

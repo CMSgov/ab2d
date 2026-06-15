@@ -39,7 +39,7 @@ ext {
     lombokVersion = '1.18.38'
     springBootVersion='4.0.6'
     springCloudAwsVersion='4.0.0'
-    hapiVersion = '8.4.0'
+    hapiVersion = '8.8.0'
     ddTraceApiVersion='1.63.0'
     testContainerVersion='1.21.4'
     mockServerVersion='5.15.0'
