@@ -14,9 +14,8 @@ import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
@@ -68,7 +67,6 @@ public class AuthenticationTests {
     @MockitoBean
     AccessTokenVerifier mockAccessTokenVerifier;
 
-    @Captor
     private ArgumentCaptor<LoggableEvent> captor;
 
     @Container
@@ -78,6 +76,7 @@ public class AuthenticationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
+        captor = ArgumentCaptor.forClass(LoggableEvent.class);
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 

@@ -29,6 +29,7 @@ import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
+import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -47,6 +48,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -135,6 +137,9 @@ class CoverageDriverTest extends JobCleanup {
 
     @Autowired
     private CoverageSnapshotService snapshotService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private Contract contract;
     private Contract contract1;
@@ -768,12 +773,16 @@ class CoverageDriverTest extends JobCleanup {
         CoverageSearchEvent event = new CoverageSearchEvent();
         event.setCoveragePeriod(period);
         event.setNewStatus(status);
-        event.setCreated(created);
         event.setDescription("testing");
 
         event = coverageSearchEventRepo.saveAndFlush(event);
+
+        // Hibernate 7 treats @CreationTimestamp fields as immutable; bypass JPA via JDBC so
+        // tests can backdate the event for stuck-job / staleness scenarios.
+        jdbcTemplate.update(
+                "UPDATE event_bene_coverage_search_status_change SET created = ? WHERE id = ?",
+                Timestamp.from(created.toInstant()), event.getId());
         event.setCreated(created);
-        coverageSearchEventRepo.saveAndFlush(event);
 
         return event;
     }

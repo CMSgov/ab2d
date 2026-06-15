@@ -56,7 +56,6 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
-            <version>4.33.0</version>
         </dependency>
 
         <dependency>
@@ -133,13 +132,13 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
-            <version>4.3.0</version>
+            <version>5.0.1</version>
         </dependency>
 
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
-            <version>1.6.0</version> <!-- Override version 1.5 from spring-cloud-starter-openfeign@4.3.0-->
+            <version>1.6.0</version> <!-- Override version 1.5 from spring-cloud-starter-openfeign@5.0.1-->
         </dependency>
 
         <dependency>

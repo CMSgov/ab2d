@@ -61,6 +61,6 @@ public class CapabilityAPIV2 {
 
         String server = common.getCurrentUrl(request).replace("/metadata", "");
         CapabilityStatement capabilityStatement = CapabilityStatementR4.populateCS(server);
-        return new ResponseEntity<>(parser.encodeResourceToString(capabilityStatement), null, HttpStatus.OK);
+        return new ResponseEntity<>(parser.encodeResourceToString(capabilityStatement), HttpStatus.OK);
     }
 }
