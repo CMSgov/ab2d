@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6"
+      version = "~> 5"
     }
   }
 }
@@ -15,7 +15,7 @@ locals {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app

@@ -25,6 +25,10 @@ data "aws_rds_cluster" "this" {
   cluster_identifier = local.service_prefix
 }
 
+data "aws_iam_role" "task_execution_role" {
+  name = "${local.service_prefix}-microservices"
+}
+
 data "aws_ecr_image" "contracts" {
   repository_name = "ab2d-contracts"
   image_tag       = var.contracts_service_image_tag

@@ -2,13 +2,13 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6"
+      version = "~> 5"
     }
   }
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -47,9 +47,9 @@ locals {
   ab2d_db_host                 = data.aws_rds_cluster.this.endpoint
   ab2d_efs_mount               = "/mnt/efs"
   aws_region                   = module.platform.primary_region.name
-  ab2d_keystore_location       = nonsensitive(module.platform.ssm.core.keystore_location.value)
-  ab2d_keystore_password_arn   = nonsensitive(module.platform.ssm.core.keystore_password.arn)
-  ab2d_okta_jwt_issuer_arn     = nonsensitive(module.platform.ssm.core.okta_jwt_issuer.arn)
+  ab2d_keystore_location       = module.platform.ssm.core.keystore_location.value
+  ab2d_keystore_password_arn   = module.platform.ssm.core.keystore_password.arn
+  ab2d_okta_jwt_issuer_arn     = module.platform.ssm.core.okta_jwt_issuer.arn
   alb_internal                 = false
   alb_listener_certificate_arn = module.platform.is_ephemeral_env ? data.aws_acm_certificate.this[0].arn : aws_acm_certificate.this[0].arn
   alb_listener_port            = 443
@@ -58,24 +58,24 @@ locals {
   api_desired_instances        = module.platform.parent_env == "prod" ? 2 : 1
   bfd_insights                 = "none" #FIXME?
   container_port               = 8443
-  db_name_arn                  = nonsensitive(module.platform.ssm.core.database_name.arn)
-  db_password_arn              = nonsensitive(module.platform.ssm.core.database_password.arn)
-  db_username_arn              = nonsensitive(module.platform.ssm.core.database_user.arn)
+  db_name_arn                  = module.platform.ssm.core.database_name.arn
+  db_password_arn              = module.platform.ssm.core.database_password.arn
+  db_username_arn              = module.platform.ssm.core.database_user.arn
   ecs_task_def_cpu_api         = 4096  #FIXME: this needs to be environment-specific
   ecs_task_def_memory_api      = 14336 #FIXME: this needs to be environment-specific
-  hpms_api_params_arn          = nonsensitive(module.platform.ssm.core.hpms_api_params.arn)
-  hpms_auth_key_id_arn         = nonsensitive(module.platform.ssm.core.hpms_auth_key_id.arn)
-  hpms_auth_key_secret_arn     = nonsensitive(module.platform.ssm.core.hpms_auth_key_secret.arn)
-  hpms_url_arn                 = nonsensitive(module.platform.ssm.core.hpms_url.arn)
+  hpms_api_params_arn          = module.platform.ssm.core.hpms_api_params.arn
+  hpms_auth_key_id_arn         = module.platform.ssm.core.hpms_auth_key_id.arn
+  hpms_auth_key_secret_arn     = module.platform.ssm.core.hpms_auth_key_secret.arn
+  hpms_url_arn                 = module.platform.ssm.core.hpms_url.arn
   kms_master_key_id            = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   microservices_url            = lookup(module.platform.ssm.microservices, "url", { value : "none" }).value
   network_access_logs_bucket   = module.platform.splunk_logging_bucket.bucket
   new_relic_app_name           = module.platform.ssm.common.new_relic_app_name.value
-  new_relic_license_key_arn    = nonsensitive(module.platform.ssm.common.new_relic_license_key.arn)
+  new_relic_license_key_arn    = module.platform.ssm.common.new_relic_license_key.arn
   private_subnet_ids           = keys(module.platform.private_subnets)
   public_subnet_ids            = keys(module.platform.public_subnets)
-  slack_alert_webhooks_arn     = nonsensitive(module.platform.ssm.common.slack_alert_webhooks.arn)
-  slack_trace_webhooks_arn     = nonsensitive(module.platform.ssm.common.slack_trace_webhooks.arn)
+  slack_alert_webhooks_arn     = module.platform.ssm.common.slack_alert_webhooks.arn
+  slack_trace_webhooks_arn     = module.platform.ssm.common.slack_trace_webhooks.arn
   vpc_id                       = module.platform.vpc_id
   cloudwatch_sns_topic         = data.aws_sns_topic.cloudwatch_alarms.arn
   splunk_alert_email           = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
@@ -218,33 +218,22 @@ resource "aws_security_group_rule" "efs_ingress" {
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=cbd07ee078ecd379a32125b8354bd1ecaf5c275d"
   platform = module.platform
 }
 
 module "service" {
-  source                        = "github.com/CMSgov/cdap//terraform/modules/service?ref=gfreeman/AB2D-7301"
-  platform                      = module.platform
-  cluster_arn                   = module.cluster.this.arn
-  image                         = local.api_image_uri
-  cpu                           = local.ecs_task_def_cpu_api
-  memory                        = local.ecs_task_def_memory_api
-  desired_count                 = local.api_desired_instances
-  security_groups               = [data.aws_security_group.api.id, aws_security_group.load_balancer.id] #FIXME
-  additional_task_role_policies = { api = aws_iam_policy.api.arn }
+  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
+  platform        = module.platform
+  cluster_arn     = module.cluster.this.arn
+  image           = local.api_image_uri
+  cpu             = local.ecs_task_def_cpu_api
+  memory          = local.ecs_task_def_memory_api
+  desired_count   = local.api_desired_instances
+  port_mappings   = [{ containerPort = local.container_port }]
+  security_groups = [data.aws_security_group.api.id, aws_security_group.load_balancer.id] #FIXME
+  task_role_arn   = data.aws_iam_role.api.arn
 
-  alb_listener_arn  = aws_lb_listener.ab2d_api.arn
-  alb_port_name     = "https"
-  alb_priority      = 100
-  alb_path_patterns = ["*"]
-
-  port_mappings = [
-    {
-      containerPort = local.container_port
-      protocol      = "tcp"
-      name          = "https"
-    }
-  ]
   force_new_deployment = anytrue([var.force_api_deployment, var.api_service_image_tag != null])
 
   container_environment = [
@@ -276,6 +265,11 @@ module "service" {
     { name = "HPMS_AUTH_KEY_SECRET", valueFrom = local.hpms_auth_key_secret_arn },      #FIXME: Is this even used?
     { name = "NEW_RELIC_LICENSE_KEY", valueFrom = local.new_relic_license_key_arn },    #FIXME: Is this even used?
   ]
+  load_balancers = [{
+    target_group_arn = aws_lb_target_group.ab2d_api.arn
+    container_name   = local.service
+    container_port   = local.container_port
+  }]
   mount_points = [
     {
       containerPath = local.ab2d_efs_mount,

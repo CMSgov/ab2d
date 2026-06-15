@@ -2,13 +2,13 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6"
+      version = "~> 5"
     }
   }
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -38,9 +38,9 @@ locals {
   ab2d_db_host               = data.aws_rds_cluster.this.endpoint
   aws_account_number         = module.platform.account_id
   aws_region                 = module.platform.primary_region.name
-  db_database_arn            = nonsensitive(module.platform.ssm.core.database_name.arn)
-  db_password_arn            = nonsensitive(module.platform.ssm.core.database_password.arn)
-  db_user_arn                = nonsensitive(module.platform.ssm.core.database_user.arn)
+  db_database_arn            = module.platform.ssm.core.database_name.arn
+  db_password_arn            = module.platform.ssm.core.database_password.arn
+  db_user_arn                = module.platform.ssm.core.database_user.arn
   events_sqs_url             = data.aws_sqs_queue.events.url
   kms_master_key_id          = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   network_access_logs_bucket = module.platform.splunk_logging_bucket.bucket
@@ -51,14 +51,14 @@ locals {
   contracts_image_tag  = coalesce(var.contracts_service_image_tag, flatten([[for t in data.aws_ecr_image.contracts.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.contracts.image_tags])[0])
   contracts_image_uri  = "${local.contracts_image_repo}:${local.contracts_image_tag}"
 
-  hpms_api_params_arn      = nonsensitive(module.platform.ssm.core.hpms_api_params.arn)
-  hpms_auth_key_id_arn     = nonsensitive(module.platform.ssm.core.hpms_auth_key_id.arn)
-  hpms_auth_key_secret_arn = nonsensitive(module.platform.ssm.core.hpms_auth_key_secret.arn)
-  hpms_url_arn             = nonsensitive(module.platform.ssm.core.hpms_url.arn)
+  hpms_api_params_arn      = module.platform.ssm.core.hpms_api_params.arn
+  hpms_auth_key_id_arn     = module.platform.ssm.core.hpms_auth_key_id.arn
+  hpms_auth_key_secret_arn = module.platform.ssm.core.hpms_auth_key_secret.arn
+  hpms_url_arn             = module.platform.ssm.core.hpms_url.arn
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=cbd07ee078ecd379a32125b8354bd1ecaf5c275d"
   platform = module.platform
 }
 
@@ -249,23 +249,20 @@ resource "aws_lb_listener_rule" "contracts" {
 }
 
 module "contracts_service" {
-  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=gfreeman/AB2D-7301"
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
 
   cluster_arn                       = module.cluster.this.id
   cpu                               = 1024
   desired_count                     = 1
+  execution_role_arn                = data.aws_iam_role.task_execution_role.arn
   force_new_deployment              = anytrue([var.force_contracts_deployment, var.contracts_service_image_tag != null])
   health_check_grace_period_seconds = null
   image                             = local.contracts_image_uri
   memory                            = 2048
   platform                          = module.platform
   security_groups                   = [data.aws_security_group.api.id]
-  additional_task_role_policies     = { contracts = aws_iam_policy.contracts.arn }
-
-  alb_listener_arn  = aws_lb_listener.internal_lb.arn
-  alb_port_name     = "http"
-  alb_priority      = 100
-  alb_path_patterns = ["/contracts", "/contracts/*"]
+  service_name_override             = "contracts"
+  task_role_arn                     = data.aws_iam_role.task_execution_role.arn
 
   container_environment = [
     { name = "AB2D_DB_HOST", value = local.ab2d_db_host },
@@ -284,6 +281,13 @@ module "contracts_service" {
     { name = "HPMS_AUTH_KEY_ID", valueFrom = local.hpms_auth_key_id_arn },
     { name = "HPMS_AUTH_KEY_SECRET", valueFrom = local.hpms_auth_key_secret_arn }
   ]
+
+  load_balancers = [{
+    target_group_arn = aws_lb_target_group.contracts.arn
+    container_name   = local.service
+    container_port   = 8070
+
+  }]
 
   mount_points = [
     {
@@ -308,7 +312,6 @@ module "contracts_service" {
       containerPort = 8070
       hostPort      = 8070
       protocol      = "tcp"
-      name          = "http"
     }
   ]
 

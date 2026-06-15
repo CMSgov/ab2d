@@ -12,7 +12,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=a19304a2a4660183b7a32fef26c97c0bc479a2a7"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -252,7 +252,7 @@ resource "aws_lambda_function" "audit_svc_monitoring" {
   architectures = [
     "arm64",
   ]
-  tags = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
+  tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
   environment {
     variables = {
       SLACK_WEBHOOK_URL = local.slack_webhook_ab2d_slack_alerts

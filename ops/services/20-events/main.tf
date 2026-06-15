@@ -2,13 +2,13 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6"
+      version = "~> 5"
     }
   }
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -38,9 +38,9 @@ locals {
   ab2d_db_host               = data.aws_rds_cluster.this.endpoint
   aws_account_number         = module.platform.account_id
   aws_region                 = module.platform.primary_region.name
-  db_database_arn            = nonsensitive(module.platform.ssm.core.database_name.arn)
-  db_password_arn            = nonsensitive(module.platform.ssm.core.database_password.arn)
-  db_user_arn                = nonsensitive(module.platform.ssm.core.database_user.arn)
+  db_database_arn            = module.platform.ssm.core.database_name.arn
+  db_password_arn            = module.platform.ssm.core.database_password.arn
+  db_user_arn                = module.platform.ssm.core.database_user.arn
   events_sqs_url             = data.aws_sqs_queue.events.url
   kms_master_key_id          = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   network_access_logs_bucket = module.platform.splunk_logging_bucket.bucket
@@ -51,16 +51,16 @@ locals {
   events_image_tag  = coalesce(var.events_service_image_tag, flatten([[for t in data.aws_ecr_image.events.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.events.image_tags])[0])
   events_image_uri  = "${local.events_image_repo}:${local.events_image_tag}"
 
-  ab2d_keystore_location_arn = nonsensitive(module.platform.ssm.core.keystore_location.arn)
-  ab2d_keystore_password_arn = nonsensitive(module.platform.ssm.core.keystore_password.arn)
+  ab2d_keystore_location_arn = module.platform.ssm.core.keystore_location.arn
+  ab2d_keystore_password_arn = module.platform.ssm.core.keystore_password.arn
 
-  ab2d_okta_jwt_issuer_arn      = nonsensitive(module.platform.ssm.core.okta_jwt_issuer.arn)
-  ab2d_slack_alert_webhooks_arn = nonsensitive(module.platform.ssm.common.slack_alert_webhooks.arn)
-  ab2d_slack_trace_webhooks_arn = nonsensitive(module.platform.ssm.common.slack_trace_webhooks.arn)
+  ab2d_okta_jwt_issuer_arn      = module.platform.ssm.core.okta_jwt_issuer.arn
+  ab2d_slack_alert_webhooks_arn = module.platform.ssm.common.slack_alert_webhooks.arn
+  ab2d_slack_trace_webhooks_arn = module.platform.ssm.common.slack_trace_webhooks.arn
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=cbd07ee078ecd379a32125b8354bd1ecaf5c275d"
   platform = module.platform
 }
 
@@ -177,17 +177,19 @@ resource "aws_sns_topic_subscription" "events" {
 }
 
 module "events_service" {
-  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=gfreeman/AB2D-7301"
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
 
-  cluster_arn                   = module.cluster.this.id
-  cpu                           = 512
-  desired_count                 = 1
-  force_new_deployment          = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
-  image                         = local.events_image_uri
-  memory                        = 1024
-  platform                      = module.platform
-  security_groups               = [data.aws_security_group.api.id]
-  additional_task_role_policies = { events = aws_iam_policy.events.arn }
+  cluster_arn           = module.cluster.this.id
+  cpu                   = 512
+  desired_count         = 1
+  execution_role_arn    = data.aws_iam_role.task_execution_role.arn
+  force_new_deployment  = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
+  image                 = local.events_image_uri
+  memory                = 1024
+  platform              = module.platform
+  security_groups       = [data.aws_security_group.api.id]
+  service_name_override = "events"
+  task_role_arn         = data.aws_iam_role.task_execution_role.arn
 
   container_environment = [
     { name = "AB2D_DB_HOST", value = local.ab2d_db_host },
@@ -233,7 +235,6 @@ module "events_service" {
       hostPort      = 8010 #FIXME is this even necessary?
       containerPort = 8010
       protocol      = "tcp"
-      name          = "http"
     }
   ]
 
