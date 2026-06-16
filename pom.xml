@@ -74,6 +74,12 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- pin hapi-fhir-base -->
+            <dependency>
+                <groupId>ca.uhn.hapi.fhir</groupId>
+                <artifactId>hapi-fhir-base</artifactId>
+                <version>${hapi.version}</version>
+            </dependency>
             <!-- patch for util
             todo: change when new HAPI release updates version natively
             -->
