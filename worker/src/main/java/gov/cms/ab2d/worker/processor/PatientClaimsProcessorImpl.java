@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -56,6 +57,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * Note: Will likely be removed after DataDog migration (?)
      */
     private static final boolean ENABLE_BFD_METRICS = true;
+
+    /**
+     * FHIR search prefix for an inclusive ("greater than or equal") lower bound used when defaulting the
+     * service-date filter to the contract's attestation date.
+     */
+    private static final String SERVICE_DATE_GE_PREFIX = "ge";
 
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
@@ -196,7 +203,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Guarantee that since and until dates provided with job don't violate AB2D requirements
         OffsetDateTime sinceTime = getSinceTime(request);
         OffsetDateTime untilTime = getUntilTime(request, sinceTime);
-        List<String> serviceDates = request.getServiceDates();
+        List<String> serviceDates = getServiceDates(request);
 
         final BfdMetricsUtility.BfdRequestMetric bfdMetric = bfdMetricsEnabled()
             ? new BfdMetricsUtility.BfdRequestMetric()
@@ -344,6 +351,21 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
 
         return sinceTime;
+    }
+
+    private List<String> getServiceDates(PatientClaimsRequest request) {
+        List<String> serviceDates = request.getServiceDates();
+
+        if (serviceDates != null && !serviceDates.isEmpty()) {
+            return serviceDates;
+        }
+
+        // No service-date provided: default the lower bound to the (inclusive) attestation date
+        OffsetDateTime attTime = request.getAttTime();
+        if (attTime == null) {
+            return serviceDates;
+        }
+        return List.of(SERVICE_DATE_GE_PREFIX + attTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
     }
 
     private OffsetDateTime getUntilTime(PatientClaimsRequest request, OffsetDateTime updatedSinceTime) {

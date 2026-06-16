@@ -37,7 +37,10 @@ import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.util.HealthCheck;
 import java.io.File;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.LongStream;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -270,6 +273,45 @@ class JobProcessorIntegrationTest extends JobCleanup {
         assertEquals(COMPLETED_PERCENT, processedJob.getStatusMessage());
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
+    }
+
+    @Test
+    @DisplayName("When a job has no service-date, the service-date lower bound defaults to the contract attestation date")
+    void whenNoServiceDate_thenServiceDateDefaultsToAttestationDate() {
+        // Job created in setUp has no service-date. The worker resolves the contract through ContractWorkerClient,
+        // so the attestation date used for the default service-date lower bound is whatever that client returns.
+        OffsetDateTime attestedOn = contractWorkerClient.getContractByContractNumber(contract.getContractNumber()).getAttestedOn();
+        String expectedServiceDate = "ge" + attestedOn.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
+
+        var processedJob = cut.process(job.getJobUuid());
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+
+        ArgumentCaptor<List<String>> serviceDatesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(mockBfdClient, atLeastOnce()).requestEOBFromServer(eq(STU3), anyLong(), any(), any(),
+                serviceDatesCaptor.capture(), anyString());
+
+        Set<List<String>> distinctServiceDates = new HashSet<>(serviceDatesCaptor.getAllValues());
+        assertEquals(Set.of(List.of(expectedServiceDate)), distinctServiceDates,
+                "Expected every BFD request to default service-date to the inclusive attestation date " + expectedServiceDate);
+    }
+
+    @Test
+    @DisplayName("When a job has an explicit service-date, it is passed to BFD unmodified")
+    void whenServiceDateProvided_thenServiceDateUsedUnmodified() {
+        List<String> providedServiceDates = List.of("gt2021-06-01", "le2021-12-31");
+        job.setServiceDates(providedServiceDates);
+        jobRepository.saveAndFlush(job);
+
+        var processedJob = cut.process(job.getJobUuid());
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+
+        ArgumentCaptor<List<String>> serviceDatesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(mockBfdClient, atLeastOnce()).requestEOBFromServer(eq(STU3), anyLong(), any(), any(),
+                serviceDatesCaptor.capture(), anyString());
+
+        assertTrue(serviceDatesCaptor.getAllValues().stream()
+                        .allMatch(serviceDates -> providedServiceDates.equals(serviceDates)),
+                "Expected every BFD request to use the provided service-date filter unmodified");
     }
 
     @Test
