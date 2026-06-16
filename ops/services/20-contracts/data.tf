@@ -1,7 +1,3 @@
-data "aws_sns_topic" "events" {
-  name = "${local.service_prefix}-events"
-}
-
 data "aws_sqs_queue" "events" {
   name = "${local.service_prefix}-events"
 }
