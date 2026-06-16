@@ -17,6 +17,11 @@ on:
         required: false
         type: boolean
         default: false
+      branch:
+        description: "Branch or ref to checkout (defaults to the calling workflow's ref)"
+        required: false
+        type: string
+        default: ""
 
 concurrency:
   group: tofu-plan-or-apply
@@ -42,6 +47,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+        with:
+          ref: ${{ inputs.branch != '' && inputs.branch || github.ref }}
       - uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 #v4.1.1
       - uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
       - uses: cmsgov/cdap/actions/setup-sops@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
