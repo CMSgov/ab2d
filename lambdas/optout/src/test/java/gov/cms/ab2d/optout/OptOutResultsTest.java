@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 public class OptOutResultsTest {
-    
-    @Test 
+
+    @Test
     public void itStoresValuesCorrectly() {
         int todayOptIn = 1;
         int todayOptOut = 1;

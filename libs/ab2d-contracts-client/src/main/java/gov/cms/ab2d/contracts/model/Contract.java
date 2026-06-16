@@ -81,6 +81,9 @@ public class Contract extends TimestampBase {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime attestedOn;
 
+    @Column(name = "hpms_end_date", columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private OffsetDateTime hpmsEndDate;
+
     public boolean isTestContract() {
         return contractType.isTestContract();
     }

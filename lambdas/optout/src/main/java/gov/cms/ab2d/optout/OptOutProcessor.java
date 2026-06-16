@@ -25,8 +25,8 @@ import static gov.cms.ab2d.optout.OptOutConstants.*;
 
 public class OptOutProcessor {
     private final LambdaLogger logger;
-    public List<OptOutInformation> optOutInformationList;
-    public boolean isRejected;
+    private List<OptOutInformation> optOutInformationList;
+    private boolean isRejected;
     private final String dbHost;
     private final String environment;
 
@@ -42,6 +42,18 @@ public class OptOutProcessor {
         var dbPassword = "/ab2d/" + environment + "/core/sensitive/database_password";
         parameterStore = ParameterStoreUtil.getParameterStore(bfdRole, dbUser, dbPassword);
         isRejected = false;
+    }
+
+    public List<OptOutInformation> getOptOutInformationList() {
+        return optOutInformationList;
+    }
+
+    public boolean isRejected() {
+        return isRejected;
+    }
+
+    public void setRejected(boolean rejected) {
+        this.isRejected = rejected;
     }
 
     public OptOutResults process(String fileName, String bfdBucket, String endpoint) throws URISyntaxException {

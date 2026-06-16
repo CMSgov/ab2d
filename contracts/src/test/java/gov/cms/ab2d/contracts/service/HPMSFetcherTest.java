@@ -108,12 +108,12 @@ class HPMSFetcherTest {
         when(mockWebClient.responseSpec.bodyToMono(Object[].class)).thenReturn(Mono.just(orgArray));
 
         Set<HPMSAttestation> attestationSet = Set.of(
-            new HPMSAttestation("S1234", true, "2020-01-31 14:57:34"),
-            new HPMSAttestation("S2341", true, "2020-02-13 14:57:34"),
-            new HPMSAttestation("S3412", true, "2020-03-24 14:57:34"),
-            new HPMSAttestation("S4123", true, "2020-04-15 14:57:34"),
-            new HPMSAttestation("S5234", true, "2020-05-01 14:57:34"),
-            new HPMSAttestation("S6345", true, "2020-06-10 14:57:34")
+            new HPMSAttestation("S1234", true, "2020-01-31 14:57:34", null),
+            new HPMSAttestation("S2341", true, "2020-02-13 14:57:34", null),
+            new HPMSAttestation("S3412", true, "2020-03-24 14:57:34", null),
+            new HPMSAttestation("S4123", true, "2020-04-15 14:57:34", null),
+            new HPMSAttestation("S5234", true, "2020-05-01 14:57:34", null),
+            new HPMSAttestation("S6345", true, "2020-06-10 14:57:34", null)
         );
         when(mockWebClient.responseSpec.bodyToMono(any(ParameterizedTypeReference.class)))
             .thenReturn(Mono.just(attestationSet));

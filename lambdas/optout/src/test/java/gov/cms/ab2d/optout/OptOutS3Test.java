@@ -14,7 +14,6 @@ import java.nio.file.Paths;
 
 import static gov.cms.ab2d.optout.OptOutConstants.CONF_FILE_NAME;
 import static gov.cms.ab2d.optout.OptOutConstantsTest.*;
-import static gov.cms.ab2d.optout.S3MockAPIExtension.S3_CLIENT;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -22,12 +21,12 @@ import static org.mockito.Mockito.mock;
 @ExtendWith({S3MockAPIExtension.class})
 class OptOutS3Test {
 
-    private static OptOutS3 OPT_OUT_S3;
+    private static OptOutS3 optOutS3;
 
     @BeforeEach
     public void beforeEach() throws IOException {
         S3MockAPIExtension.createFile(Files.readString(Paths.get("src/test/resources/" + TEST_FILE_NAME), StandardCharsets.UTF_8), TEST_FILE_NAME);
-        OPT_OUT_S3 = new OptOutS3(S3_CLIENT, TEST_FILE_NAME, TEST_BFD_BUCKET_NAME, mock(LambdaLogger.class));
+        optOutS3 = new OptOutS3(S3MockAPIExtension.getS3Client(), TEST_FILE_NAME, TEST_BFD_BUCKET_NAME, mock(LambdaLogger.class));
     }
 
     @AfterEach
@@ -37,32 +36,32 @@ class OptOutS3Test {
 
     @Test
     void openFileS3Test() {
-        Assertions.assertNotNull(OPT_OUT_S3.openFileS3());
+        Assertions.assertNotNull(optOutS3.openFileS3());
     }
 
     @Test
     void openFileS3ExceptionTest() {
         S3MockAPIExtension.deleteFile(TEST_FILE_NAME);
-        assertThrows(OptOutException.class, () -> OPT_OUT_S3.openFileS3());
+        assertThrows(OptOutException.class, () -> optOutS3.openFileS3());
     }
 
     @Test
     void createResponseOptOutFileTest() {
-        var key = OPT_OUT_S3.createResponseOptOutFile("text");
+        var key = optOutS3.createResponseOptOutFile("text");
         assertTrue(S3MockAPIExtension.isObjectExists(key));
         S3MockAPIExtension.deleteFile(key);
     }
 
     @Test
     void deleteFileFromS3Test() {
-        OPT_OUT_S3.deleteFileFromS3();
+        optOutS3.deleteFileFromS3();
         Assertions.assertFalse(S3MockAPIExtension.isObjectExists(TEST_FILE_NAME));
     }
 
     @Test
     void getOutFileName() {
-        OPT_OUT_S3 = new OptOutS3(S3_CLIENT, TEST_BUCKET_PATH + "/in/" + TEST_FILE_NAME, TEST_BFD_BUCKET_NAME, mock(LambdaLogger.class));
-        var outFileName = OPT_OUT_S3.getOutFileName();
+        optOutS3 = new OptOutS3(S3MockAPIExtension.getS3Client(), TEST_BUCKET_PATH + "/in/" + TEST_FILE_NAME, TEST_BFD_BUCKET_NAME, mock(LambdaLogger.class));
+        var outFileName = optOutS3.getOutFileName();
         Assertions.assertTrue(outFileName.startsWith(TEST_BUCKET_PATH + "/out/T" + CONF_FILE_NAME));
     }
 }
