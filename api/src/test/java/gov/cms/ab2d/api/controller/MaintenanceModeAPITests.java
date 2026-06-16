@@ -4,6 +4,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -40,6 +42,9 @@ public class MaintenanceModeAPITests {
 
     @Autowired
     private ApplicationContext context;
+
+    @MockitoBean
+    SQSEventClient sqsEventClient;
 
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
 

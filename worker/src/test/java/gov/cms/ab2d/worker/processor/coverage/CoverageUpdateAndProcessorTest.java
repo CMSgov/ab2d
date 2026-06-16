@@ -17,6 +17,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
@@ -43,6 +44,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -109,6 +111,9 @@ class CoverageUpdateAndProcessorTest {
 
     @Autowired
     private CoverageV3Service coverageV3Service;
+
+    @MockitoBean
+    private SQSEventClient sqsEventClient;
 
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
 

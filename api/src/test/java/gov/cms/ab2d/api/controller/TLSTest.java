@@ -6,6 +6,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -73,6 +74,9 @@ public class TLSTest {
 
     @MockitoBean
     AccessTokenVerifier mockAccessTokenVerifier;
+
+    @MockitoBean
+    SQSEventClient sqsEventClient;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();

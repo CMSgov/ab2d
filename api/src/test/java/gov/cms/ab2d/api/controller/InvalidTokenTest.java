@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +57,9 @@ public class InvalidTokenTest {
 
     @MockitoBean
     AccessTokenVerifier mockAccessTokenVerifier;
+
+    @MockitoBean
+    SQSEventClient sqsEventClient;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();

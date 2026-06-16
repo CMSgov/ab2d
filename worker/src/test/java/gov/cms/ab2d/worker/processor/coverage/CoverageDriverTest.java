@@ -7,6 +7,7 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -49,6 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -120,6 +122,9 @@ class CoverageDriverTest extends JobCleanup {
 
     @Autowired
     private PdpClientService pdpClientService;
+
+    @MockitoBean
+    private SQSEventClient sqsEventClient;
 
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
 

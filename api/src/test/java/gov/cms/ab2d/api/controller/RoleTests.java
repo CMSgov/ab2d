@@ -6,6 +6,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -52,6 +53,9 @@ public class RoleTests {
 
     @MockitoBean
     AccessTokenVerifier mockAccessTokenVerifier;
+
+    @MockitoBean
+    SQSEventClient sqsEventClient;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();

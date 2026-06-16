@@ -16,6 +16,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.contracts.model.Contract;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import java.util.List;
@@ -86,6 +87,9 @@ public class AdminAPIPdpClientTests {
 
     @MockitoBean
     AccessTokenVerifier mockAccessTokenVerifier;
+
+    @MockitoBean
+    SQSEventClient sqsEventClient;
 
     private String token;
 
