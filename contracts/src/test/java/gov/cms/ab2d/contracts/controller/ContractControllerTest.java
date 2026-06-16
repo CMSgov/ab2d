@@ -9,7 +9,6 @@ import java.time.OffsetDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,9 +39,6 @@ class ContractControllerTest {
 
     @Autowired
     private ContractRepository contractRepository;
-
-    @MockitoBean
-    private SQSEventClient eventLogger;
 
     @Container
     private static final PostgreSQLContainer POSTGRE_SQL_CONTAINER = new AB2DPostgresqlContainer();
