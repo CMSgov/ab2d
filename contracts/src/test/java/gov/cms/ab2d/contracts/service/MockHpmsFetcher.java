@@ -5,7 +5,6 @@ import gov.cms.ab2d.contracts.hmsapi.HPMSEnrollment;
 import gov.cms.ab2d.contracts.hmsapi.HPMSOrganizationInfo;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 public class MockHpmsFetcher implements HPMSFetcher {
 
@@ -15,10 +14,10 @@ public class MockHpmsFetcher implements HPMSFetcher {
     private static final Map<String, HPMSEnrollment> enrolls = new HashMap<>();
 
     static {
-        attests.put("S1234", new HPMSAttestation("S1234", true, "2020-01-31 14:57:34"));
-        attests.put("S2341", new HPMSAttestation("S2341", true, "2020-02-13 14:57:34"));
-        attests.put("S3412", new HPMSAttestation("S3412", true, "2020-03-24 14:57:34"));
-        attests.put("S4123", new HPMSAttestation("S4123", true, "2020-04-15 14:57:34"));
+        attests.put("S1234", new HPMSAttestation("S1234", true, "2020-01-31 14:57:34", null));
+        attests.put("S2341", new HPMSAttestation("S2341", true, "2020-02-13 14:57:34", null));
+        attests.put("S3412", new HPMSAttestation("S3412", true, "2020-03-24 14:57:34", null));
+        attests.put("S4123", new HPMSAttestation("S4123", true, "2020-04-15 14:57:34", null));
 
         HPMSOrganizationInfo orgInfo = new HPMSOrganizationInfo("ABC Org", 5, "S1234", "Contract ABC", "ABC Marketing");
         orgSet.add(orgInfo);

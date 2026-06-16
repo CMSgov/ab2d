@@ -133,6 +133,33 @@ VALUES
 ;
 
 
+CREATE SCHEMA contract;
+
+CREATE TABLE IF NOT EXISTS contract.contract
+(
+    contract_number character varying(255) NOT NULL,
+    attested_on timestamp with time zone,
+    hpms_end_date timestamp with time zone
+);
+
+-- Used by isContractAttested() and deleteInactiveContractsFromHistorySummary()
+-- ATT1: attested, no end date                       -> attested, not purged
+-- NOATT: not attested                               -> not attested
+-- OLD1/OLD2: attested, hpms_end_date > 2 years ago  -> purged from history summary
+-- RECENT1: attested, hpms_end_date 1 year ago       -> retained
+-- NULLEND: attested, hpms_end_date is null          -> retained
+-- UNATT1: unattested, hpms_end_date is null         -> purged from history summary
+INSERT INTO contract.contract(contract_number, attested_on, hpms_end_date)
+VALUES
+    ('ATT1',    now(), null),
+    ('NOATT',   null,  null),
+    ('OLD1',    now(), now() - interval '3 years'),
+    ('OLD2',    now(), now() - interval '5 years'),
+    ('RECENT1', now(), now() - interval '1 year'),
+    ('NULLEND', now(), null),
+    ('UNATT1',  null,  null)
+;
+
 CREATE TABLE IF NOT EXISTS job
 (
     job_uuid character varying(255) NOT NULL,
@@ -187,3 +214,33 @@ BEGIN
 
     RAISE NOTICE 'Done. Processed % contracts total.', total;
 END $$;
+
+-- History summary rows used by deleteInactiveContractsFromHistorySummary().
+-- OLD1/OLD2 (attested, hpms_end_date > 2 years ago) and UNATT1 (unattested) must be purged;
+-- RECENT1 (attested, 1 year ago) and NULLEND (attested, null end date) must remain.
+INSERT INTO v3.coverage_v3_history_summary(contract, patient_id, current_mbi, historical_coverage_summaries)
+VALUES
+    ('OLD1',    101, 'P101', array[array[2020, 1]]),
+    ('OLD1',    102, 'P102', array[array[2020, 2]]),
+    ('OLD2',    103, 'P103', array[array[2019, 1]]),
+    ('RECENT1', 104, 'P104', array[array[2025, 1]]),
+    ('NULLEND', 105, 'P105', array[array[2025, 2]]),
+    ('UNATT1',  106, 'P106', array[array[2024, 1]])
+;
+
+CREATE TABLE IF NOT EXISTS v3.coverage_v3_history_summary_coverage_periods (
+    contract TEXT NOT NULL,
+    year INT NOT NULL,
+    month INT NOT NULL,
+    UNIQUE (contract, year, month)
+);
+
+CREATE TABLE IF NOT EXISTS v3.coverage_v3_audit (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    action TEXT NOT NULL,
+    result TEXT,
+    contract TEXT,
+    log TEXT NOT NULL,
+    data JSONB
+);
