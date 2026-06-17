@@ -23,7 +23,7 @@ ext {
 
     // AB2D libraries
     fhirVersion='2.5.6'
-    bfdVersion='4.7.0'
+    bfdVersion='4.8.0'
     aggregatorVersion='2.1.5'
     filtersVersion='3.1.2'
     eventClientVersion='3.3.14'
@@ -40,7 +40,7 @@ ext {
     springBootVersion='3.5.14'
     springCloudAwsVersion='3.4.0'
     hapiVersion = '8.4.0'
-    newRelicVersion='8.4.0'
+    ddTraceApiVersion='1.63.0'
     testContainerVersion='1.21.4'
     mockServerVersion='5.15.0'
     liquibaseVersion="5.0.0"
@@ -151,7 +151,6 @@ subprojects {
 
     dependencies {
         implementation(platform("org.liquibase:liquibase-core:$liquibaseVersion"))
-        implementation(platform("com.newrelic.agent.java:newrelic-api:$newRelicVersion"))
         implementation(platform("org.testcontainers:testcontainers:$testContainerVersion"))
         implementation(platform("org.testcontainers:postgresql:$testContainerVersion"))
         implementation(platform("org.testcontainers:junit-jupiter:$testContainerVersion"))
