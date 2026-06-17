@@ -1,0 +1,89 @@
+name: 60-monitors
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ops/services/60-monitors/**"
+  pull_request:
+    paths:
+      - "ops/services/60-monitors/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: choice
+        options: [dev, test, sandbox, prod]
+      apply:
+        description: "Run apply (vs plan only)"
+        type: boolean
+        default: false
+      branch:
+        description: "Branch or ref to checkout"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  setup:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
+    outputs:
+      apply: ${{ steps.check.outputs.apply }}
+      branch: ${{ steps.check.outputs.branch }}
+    steps:
+      - id: check
+        run: |
+          echo "apply=${{ github.ref == 'refs/heads/main' }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.head_ref || github.ref }}" >> $GITHUB_OUTPUT
+
+  dev:
+    needs: setup
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "60-monitors"
+      environment: "dev"
+      apply: ${{ needs.setup.outputs.apply == 'true' }}
+      branch: ${{ needs.setup.outputs.branch }}
+    secrets: inherit
+
+  test:
+    needs: [setup, dev]
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "60-monitors"
+      environment: "test"
+      apply: ${{ needs.setup.outputs.apply == 'true' }}
+      branch: ${{ needs.setup.outputs.branch }}
+    secrets: inherit
+
+  sandbox:
+    needs: [setup, test]
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "60-monitors"
+      environment: "sandbox"
+      apply: ${{ needs.setup.outputs.apply == 'true' }}
+      branch: ${{ needs.setup.outputs.branch }}
+    secrets: inherit
+
+  prod:
+    needs: [setup, sandbox]
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "60-monitors"
+      environment: "prod"
+      apply: ${{ needs.setup.outputs.apply == 'true' }}
+      branch: ${{ needs.setup.outputs.branch }}
+    secrets: inherit
+
+  manual:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "60-monitors"
+      environment: ${{ inputs.environment }}
+      apply: ${{ inputs.apply }}
+      branch: ${{ inputs.branch }}
+    secrets: inherit
