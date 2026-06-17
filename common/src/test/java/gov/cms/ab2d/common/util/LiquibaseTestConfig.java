@@ -16,7 +16,9 @@ public class LiquibaseTestConfig {
     public SpringLiquibase testLiquibase(
             @Value("${spring.datasource.url}") String url,
             @Value("${spring.datasource.username}") String user,
-            @Value("${spring.datasource.password}") String pass
+            @Value("${spring.datasource.password}") String pass,
+            @Value("${spring.liquibase.default-schema:ab2d}") String defaultSchema,
+            @Value("${spring.liquibase.liquibase-schema:public}") String liquibaseSchema
     ) {
         HikariDataSource ds = new HikariDataSource();
         ds.setJdbcUrl(url);
@@ -26,6 +28,8 @@ public class LiquibaseTestConfig {
         SpringLiquibase lb = new SpringLiquibase();
         lb.setDataSource(ds);
         lb.setChangeLog("classpath:/db/changelog/db.changelog-master.yaml");
+        lb.setDefaultSchema(defaultSchema);
+        lb.setLiquibaseSchema(liquibaseSchema);
         lb.setShouldRun(true);
         return lb;
     }

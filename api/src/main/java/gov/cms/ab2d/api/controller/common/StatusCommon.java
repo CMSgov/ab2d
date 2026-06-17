@@ -194,7 +194,6 @@ public class StatusCommon {
         eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.ACCEPTED,
                 "Job cancelled", null, (String) request.getAttribute(REQUEST_ID)));
 
-        return new ResponseEntity<>(null, null,
-                HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 }
