@@ -27,4 +27,10 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
                         + this.getMappedPort(EnabledService.named("SQS").getPort())
                         + "/local-events-sqs");
     }
+
+    @Override
+    public void stop() {
+        // Survive across test classes so Spring 7's TestContext restart doesn't reconnect to a dead port.
+        // Ryuk reaps the container at JVM exit.
+    }
 }

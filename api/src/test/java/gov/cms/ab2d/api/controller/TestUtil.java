@@ -13,7 +13,6 @@ import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -45,7 +44,7 @@ public class TestUtil {
     @Getter
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
-    @MockBean
+    @Autowired
     AccessTokenVerifier mockAccessTokenVerifier;
 
     @Value("${api.okta-jwt-audience}")

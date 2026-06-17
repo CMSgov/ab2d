@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
-@Import(ContractServiceTestConfig.class)
+@Import({ContractServiceTestConfig.class, LiquibaseTestConfig.class})
 public class DataSetup {
 
     @Autowired

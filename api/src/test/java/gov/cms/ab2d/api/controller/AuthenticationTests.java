@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -13,13 +14,13 @@ import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -60,10 +61,12 @@ public class AuthenticationTests {
     @Autowired
     SqsAsyncClient amazonSqs;
 
-    @Autowired
+    @MockitoBean
     SQSEventClient sqsEventClient;
 
-    @Captor
+    @MockitoBean
+    AccessTokenVerifier mockAccessTokenVerifier;
+
     private ArgumentCaptor<LoggableEvent> captor;
 
     @Container
@@ -73,6 +76,7 @@ public class AuthenticationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
+        captor = ArgumentCaptor.forClass(LoggableEvent.class);
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 
