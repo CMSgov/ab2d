@@ -3,9 +3,7 @@ package gov.cms.ab2d.bfd.client;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Segment;
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +70,7 @@ public class BFDClientImpl implements BFDClient {
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
-    @Trace
+    @Trace(operationName = "ab2d.bfd.client.request_eob_from_server")
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
@@ -97,7 +95,7 @@ public class BFDClientImpl implements BFDClient {
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
-    @Trace
+    @Trace(operationName = "ab2d.bfd.client.request_eob_from_server")
     @SneakyThrows
     @Override
     @Retryable(
@@ -106,18 +104,25 @@ public class BFDClientImpl implements BFDClient {
             exclude = { ResourceNotFoundException.class }
     )
     public IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, List<String> serviceDates, String contractNum) {
-            final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
-                    " using since " + sinceTime + " and until " + untilTime + " and serviceDates " + serviceDates);
-        bfdSegment.setMetricName("RequestEOB");
-
         BFDSearchDTO bfdSearchDTO = new BFDSearchDTO(patientID, version, contractNum, getJobId(), pageSize, sinceTime, untilTime, serviceDates);
-        IBaseBundle result = bfdSearch.searchEOB(bfdSearchDTO);
-        bfdSegment.end();
-
-        return result;
+        return callBFD(bfdSearchDTO);
     }
 
-    @Trace
+    /**
+     * Performs the timed call to BFD for a patient's Explanation of Benefit data.
+     * <p>
+     * Extracted into its own method so that the Datadog tracer surfaces it as a
+     * dedicated {@code ab2d.bfd.call} span (the former New Relic {@code RequestEOB}
+     * segment). The tracer handles span nesting automatically, so no manual
+     * start/end bookkeeping is required.
+     */
+    @Trace(operationName = "ab2d.bfd.call")
+    @SneakyThrows
+    private IBaseBundle callBFD(BFDSearchDTO bfdSearchDTO) {
+        return bfdSearch.searchEOB(bfdSearchDTO);
+    }
+
+    @Trace(operationName = "ab2d.bfd.client.request_eob_from_server_raw")
     @SneakyThrows
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
@@ -136,7 +141,7 @@ public class BFDClientImpl implements BFDClient {
         return bfdSearch.parseBundle(version, bfdResponse);
     }
 
-    @Trace
+    @Trace(operationName = "ab2d.bfd.client.request_next_bundle_from_server")
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
@@ -163,7 +168,7 @@ public class BFDClientImpl implements BFDClient {
         return jobId;
     }
 
-    @Trace
+    @Trace(operationName = "ab2d.bfd.client.request_part_d_enrollees_from_server")
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
