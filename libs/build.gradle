@@ -23,13 +23,13 @@ ext {
 
     // AB2D libraries
     fhirVersion='2.5.6'
-    bfdVersion='4.7.0'
+    bfdVersion='4.8.0'
     aggregatorVersion='2.1.5'
     filtersVersion='3.1.2'
     eventClientVersion='3.3.14'
     propertiesClientVersion='2.1.1'
     contractClientVersion='2.2.0'
-    snsClientVersion='1.1.8'
+    snsClientVersion='1.1.9'
 
     sourcesRepo = 'ab2d-maven-repo'
     deployerRepo = 'ab2d-main'
@@ -37,10 +37,10 @@ ext {
 
     commonsLangVersion='3.18.0'
     lombokVersion = '1.18.38'
-    springBootVersion='3.5.14'
-    springCloudAwsVersion='3.4.0'
-    hapiVersion = '8.4.0'
-    newRelicVersion='8.4.0'
+    springBootVersion='4.0.6'
+    springCloudAwsVersion='4.0.0'
+    hapiVersion = '8.8.0'
+    ddTraceApiVersion='1.63.0'
     testContainerVersion='1.21.4'
     mockServerVersion='5.15.0'
     liquibaseVersion="5.0.0"
@@ -151,22 +151,11 @@ subprojects {
 
     dependencies {
         implementation(platform("org.liquibase:liquibase-core:$liquibaseVersion"))
-        implementation(platform("com.newrelic.agent.java:newrelic-api:$newRelicVersion"))
         implementation(platform("org.testcontainers:testcontainers:$testContainerVersion"))
         implementation(platform("org.testcontainers:postgresql:$testContainerVersion"))
         implementation(platform("org.testcontainers:junit-jupiter:$testContainerVersion"))
         implementation(platform("org.testcontainers:localstack:$testContainerVersion"))
         implementation(platform(annotationProcessor("org.projectlombok:lombok:$lombokVersion")))
-
-        // remove on upgrade to Spring Boot >= 4.0.0
-        constraints {
-            implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.55'
-            implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:10.1.55'
-            implementation 'io.netty:netty-codec:4.1.133.Final'
-            implementation 'io.netty:netty-codec-http:4.1.133.Final'
-            implementation 'io.netty:netty-codec-http2:4.1.133.Final'
-            implementation 'io.netty:netty-codec-dns:4.1.133.Final'
-        }
     }
 
     processResources {

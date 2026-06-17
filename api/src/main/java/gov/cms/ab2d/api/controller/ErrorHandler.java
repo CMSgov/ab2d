@@ -1,8 +1,8 @@
 package gov.cms.ab2d.api.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.security.BadJWTTokenException;
 import gov.cms.ab2d.api.security.ClientNotEnabledException;
@@ -132,7 +132,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
                 API_ERROR, description, (String) request.getAttribute(REQUEST_ID));
         eventLogger.logAndAlert(responseEvent, Ab2dEnvironment.PROD_LIST);
 
-        return new ResponseEntity<>(null, null, status);
+        return new ResponseEntity<>(status);
     }
 
     @ExceptionHandler({MissingTokenException.class,
@@ -157,7 +157,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
                 API_ERROR, description, (String) request.getAttribute(REQUEST_ID));
         eventLogger.sendLogs(responseEvent);
 
-        return new ResponseEntity<>(null, null, status);
+        return new ResponseEntity<>(status);
     }
 
     @ExceptionHandler(EndpointNotAvailableException.class)
@@ -177,7 +177,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
                 API_ERROR, ex.getClass().getSimpleName(), (String) request.getAttribute(REQUEST_ID)));
         eventLogger.trace("API_MAINT_BLOCKED Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID), Ab2dEnvironment.PROD_LIST);
 
-        return new ResponseEntity<>(null, null, status);
+        return new ResponseEntity<>(status);
     }
 
     @ExceptionHandler(TooManyRequestsException.class)
