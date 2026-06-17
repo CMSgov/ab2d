@@ -84,7 +84,7 @@ public class FileDownloadCommon {
             eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.OK, "File Download",
                     "File " + filename + " was downloaded", (String) request.getAttribute(REQUEST_ID)));
             jobClient.incrementDownload(downloadResource.getFile(), jobUuid);
-            return new ResponseEntity<>(null, null, HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         }
     }
 

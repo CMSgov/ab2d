@@ -5,6 +5,7 @@ import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.JobTestSpringBootApp;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.model.Job;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -53,6 +55,10 @@ class MaxJobsTest extends JobCleanup {
 
     @Autowired
     private DataSetup dataSetup;
+
+    @MockitoBean
+    @SuppressWarnings("unused")
+    private SQSEventClient sqsEventClient;
 
     private StartJobDTO startJobDTO;
 

@@ -33,6 +33,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -93,6 +95,11 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
 
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
+
+    @DynamicPropertySource
+    static void sqsProps(DynamicPropertyRegistry registry) {
+        registry.add("AWS_SQS_URL", localstackContainer::getSqsEndpoint);
+    }
 
     @BeforeEach
     void setUp() {

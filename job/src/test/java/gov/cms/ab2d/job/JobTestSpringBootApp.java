@@ -4,7 +4,7 @@ import gov.cms.ab2d.common.feign.ContractFeignClient;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;

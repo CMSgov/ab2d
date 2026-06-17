@@ -17,11 +17,13 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
+import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -40,7 +42,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -108,6 +112,9 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private CoverageV3Service coverageV3Service;
 
+    @MockitoBean
+    private SQSEventClient sqsEventClient;
+
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @Autowired
@@ -124,6 +131,9 @@ class CoverageUpdateAndProcessorTest {
 
     @Autowired
     private CoverageSnapshotService snapshotService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private Contract contract;
     private CoveragePeriod january;
@@ -656,12 +666,16 @@ class CoverageUpdateAndProcessorTest {
         CoverageSearchEvent event = new CoverageSearchEvent();
         event.setCoveragePeriod(period);
         event.setNewStatus(status);
-        event.setCreated(created);
         event.setDescription("testing");
 
         event = coverageSearchEventRepo.saveAndFlush(event);
+
+        // Hibernate 7 treats @CreationTimestamp fields as immutable; bypass JPA via JDBC so
+        // tests can backdate the event for stuck-job / staleness scenarios.
+        jdbcTemplate.update(
+                "UPDATE event_bene_coverage_search_status_change SET created = ? WHERE id = ?",
+                Timestamp.from(created.toInstant()), event.getId());
         event.setCreated(created);
-        coverageSearchEventRepo.saveAndFlush(event);
 
         return event;
     }

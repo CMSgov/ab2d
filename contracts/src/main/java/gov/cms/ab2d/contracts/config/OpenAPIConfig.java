@@ -4,8 +4,8 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.core.GroupedOpenApi;
-import org.springdoc.core.customizers.OpenApiCustomiser;
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,7 +17,7 @@ import static gov.cms.ab2d.contracts.config.SwaggerConstants.MAIN;
  *
  * {@link OpenAPI} - the base configuration for all versions of the API
  * {@link GroupedOpenApi} - one of these for each version of FHIR we support (V1 - STU3, V2 - R4)
- * {@link OpenApiCustomiser} - customize a {@link GroupedOpenApi} with default behavior
+ * {@link OpenApiCustomizer} - customize a {@link GroupedOpenApi} with default behavior
  */
 @Slf4j
 @Configuration

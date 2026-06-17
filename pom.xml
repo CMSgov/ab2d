@@ -15,7 +15,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.14</version>
+        <version>4.0.6</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>gov.cms.ab2d</groupId>
@@ -28,14 +28,15 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>25</java.version>
-        <hapi.version>8.4.0</hapi.version>
+        <hapi.version>8.8.0</hapi.version>
         <mockito.core.version>5.16.1</mockito.core.version>
         <okhttp3.version>5.0.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>9.0</logback-encoder.version>
         <testcontainers.version>1.21.4</testcontainers.version>
-        <newrelic.version>8.22.0</newrelic.version><dd.java.agent.version>1.63.0</dd.java.agent.version>
-        <spring-cloud-aws.version>3.4.0</spring-cloud-aws.version>
+        <newrelic.version>8.22.0</newrelic.version>
+        <dd.java.agent.version>1.63.0</dd.java.agent.version>
+        <spring-cloud-aws.version>4.0.0</spring-cloud-aws.version>
         <postgresql.version>42.7.11</postgresql.version>
         <kotlin.version>2.1.0</kotlin.version>
 
@@ -56,23 +57,29 @@
         <!-- Dependency versions -->
         <commons-compress.version>1.28.0</commons-compress.version>
         <commons-io.version>2.19.0</commons-io.version>
-
-        <!-- // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated -->
-        <commons-lang3.version>3.18.0</commons-lang3.version>
-
-        <!-- remove these two overrides on upgrade to Spring Boot >= 4.0.0 -->
-        <tomcat.version>10.1.55</tomcat.version>
-        <netty.version>4.1.133.Final</netty.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>io.awspring.cloud</groupId>
+                <artifactId>spring-cloud-aws-dependencies</artifactId>
+                <version>${spring-cloud-aws.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
                 <version>3.1.1</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- pin hapi-fhir-base -->
+            <dependency>
+                <groupId>ca.uhn.hapi.fhir</groupId>
+                <artifactId>hapi-fhir-base</artifactId>
+                <version>${hapi.version}</version>
             </dependency>
             <!-- patch for util
             todo: change when new HAPI release updates version natively
