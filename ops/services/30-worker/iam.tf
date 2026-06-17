@@ -48,7 +48,8 @@ data "aws_iam_policy_document" "worker" {
       "sqs:GetQueueAttributes"
     ]
     resources = [
-      "arn:aws:sqs:${module.platform.primary_region.name}:${module.platform.aws_caller_identity.account_id}:ab2d-${module.platform.env}-worker"
+      "arn:aws:sqs:${module.platform.primary_region.name}:${module.platform.aws_caller_identity.account_id}:ab2d-${module.platform.env}-worker",
+      "arn:aws:sqs:${module.platform.primary_region.name}:${module.platform.aws_caller_identity.account_id}:ab2d-${module.platform.env}-events"
     ]
   }
 
