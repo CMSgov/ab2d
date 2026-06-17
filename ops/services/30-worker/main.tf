@@ -138,6 +138,7 @@ module "service" {
   platform                          = module.platform
   security_groups                   = [data.aws_security_group.worker.id]
   subnets                           = local.writer_adjacent_subnets
+  additional_task_role_policies     = { worker = aws_iam_policy.worker.arn }
 
   container_environment = [
     { name = "AB2D_BFD_INSIGHTS", value = local.bfd_insights }, #FIXME: Is this even used?
