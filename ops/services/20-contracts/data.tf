@@ -1,7 +1,3 @@
-data "aws_sns_topic" "events" {
-  name = "${local.service_prefix}-events"
-}
-
 data "aws_sqs_queue" "events" {
   name = "${local.service_prefix}-events"
 }
@@ -23,10 +19,6 @@ data "aws_security_group" "lambda" {
 
 data "aws_rds_cluster" "this" {
   cluster_identifier = local.service_prefix
-}
-
-data "aws_iam_role" "task_execution_role" {
-  name = "${local.service_prefix}-microservices"
 }
 
 data "aws_ecr_image" "contracts" {
