@@ -26,6 +26,6 @@ public class MaintenanceModeAPI {
     @GetMapping(STATUS_ENDPOINT)
     public ResponseEntity<MaintenanceModeResponse> getMaintenanceMode() {
         MaintenanceModeResponse maintenanceModeResponse = new MaintenanceModeResponse(String.valueOf(propertiesService.isToggleOn(PropertyConstants.MAINTENANCE_MODE, false)));
-        return new ResponseEntity<>(maintenanceModeResponse, null, HttpStatus.OK);
+        return new ResponseEntity<>(maintenanceModeResponse, HttpStatus.OK);
     }
 }

@@ -3,7 +3,6 @@ package gov.cms.ab2d.api.controller.common;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
-import static gov.cms.ab2d.common.util.Constants.V3_SINCE_EARLIEST_DATE;
 
 import lombok.experimental.UtilityClass;
 

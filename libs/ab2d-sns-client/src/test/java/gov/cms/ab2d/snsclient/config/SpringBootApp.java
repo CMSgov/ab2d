@@ -3,17 +3,15 @@ package gov.cms.ab2d.snsclient.config;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication(
         scanBasePackages = {"gov.cms.ab2d.snsclient"},
-        exclude = {
-                DataSourceAutoConfiguration.class,
-                DataSourceTransactionManagerAutoConfiguration.class,
-                HibernateJpaAutoConfiguration.class}
+        excludeName = {
+                "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",
+                "org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration",
+                "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration"
+        }
 )
 public class SpringBootApp {
     public static void main(String[] args) {
