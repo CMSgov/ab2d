@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.DateUtil;
@@ -440,7 +440,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @throws CoverageDriverException if enrollment state violates assumed preconditions or database lock cannot be retrieved
      * @throws InterruptedException    if trying to lock the table is interrupted
      */
-    @Trace(metricName = "EnrollmentIsAvailable", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_is_available")
     @Override
     public boolean isCoverageAvailable(Job job, ContractDTO contract) throws InterruptedException {
         String contractNumber = job.getContractNumber();
@@ -509,7 +509,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    @Trace(metricName = "EnrollmentIsAvailableV3", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_is_available_v3")
     @Override
     public boolean isCoverageAvailableV3(Job job, ContractDTO contract) {
         /**
@@ -520,7 +520,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         return true;
     }
 
-    @Trace(metricName = "EnrollmentCountV3", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_count_v3")
     @Override
     public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
         if (contract == null) {
@@ -541,7 +541,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      *
      * @throws CoverageDriverException job has no contract which should not be possible
      */
-    @Trace(metricName = "EnrollmentCount", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_count")
     @Override
     public int numberOfBeneficiariesToProcess(Job job, ContractDTO contract) {
 
@@ -582,7 +582,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      *
      * @throws CoverageDriverException if coverage period or some other precondition necessary for paging is missing
      */
-    @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_load_from_db")
     @Override
     public CoveragePagingResult pageCoverage(Job job, ContractDTO contract) {
         ZonedDateTime now = getEndDateTime();

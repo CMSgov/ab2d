@@ -1,12 +1,11 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Token;
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.aggregator.AggregatorCallable;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -131,6 +130,10 @@ public class ContractProcessorImpl implements ContractProcessor {
     public List<JobOutput> process(Job job) {
         var contractNumber = job.getContractNumber();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
+        DatadogSpans.setTag("contract", contractNumber);
+        DatadogSpans.setTag("organization", job.getOrganization());
+        DatadogSpans.setTag("component", "job");
+        long jobStart = System.currentTimeMillis();
 
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(contractNumber);
         int numBenes = (job.getFhirVersion() == FhirVersion.R4V3)
@@ -178,6 +181,9 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         } catch (InterruptedException | IOException ex) {
             log.error("interrupted while processing job for contract");
+            DatadogSpans.markError(ex);
+        } finally {
+            DatadogSpans.setMetric("job.duration", System.currentTimeMillis() - jobStart);
         }
 
         return jobOutputs;
@@ -355,15 +361,13 @@ public class ContractProcessorImpl implements ContractProcessor {
      * The queue maintains multiple distinct queues, one for each job running, and offers guarantees that jobs
      * are served equally.
      * <p>
-     * On using new-relic tokens with async calls
-     * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
+     * Trace context is propagated across the async boundary automatically by the dd-java-agent, so no
+     * manual token handoff is required here.
      *
      * @param patient - the patient to process
      * @return a pointer to the queued request which will complete or be cancelled at some point.
      */
     private Future<ProgressTrackerUpdate> queuePatientClaimsRequest(List<CoverageSummary> patient, ContractData contractData) {
-        final Token token = NewRelic.getAgent().getTransaction().getToken();
-
         val job = contractData.getJob();
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
         // could be viewed as a hack by many; but on the other hand it saves us from writing
@@ -380,7 +384,6 @@ public class ContractProcessorImpl implements ContractProcessor {
                     jobUuid,
                     job.getContractNumber(),
                     contractData.getContract().getContractType(),
-                    token,
                     job.getFhirVersion(),
                     searchConfig.getEfsMount()
             );
@@ -453,7 +456,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      *
      * @param future - a specific future
      */
-    @Trace
+    @Trace(operationName = "ab2d.job.process_future")
     private ProgressTrackerUpdate processFuture(Future<ProgressTrackerUpdate> future, ContractData data) {
         int numBenes = 0;
         try {
@@ -474,6 +477,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             update.incPatientFailureCount(numBenes);
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
+            DatadogSpans.markError(rootCause);
             return update;
         }
     }
@@ -514,7 +518,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param streamOutput - the output file from the job
      * @return - the job output object
      */
-    @Trace(dispatcher = true)
+    @Trace(operationName = "ab2d.job.create_output")
     private JobOutput createJobOutput(StreamOutput streamOutput) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(streamOutput.getFilePath());
