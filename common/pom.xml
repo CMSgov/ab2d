@@ -97,20 +97,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.newrelic.agent.java</groupId>
-            <artifactId>newrelic-java</artifactId>
-            <version>${newrelic.version}</version>
-            <scope>provided</scope>
-            <type>zip</type>
-        </dependency>
-
-        <dependency>
-            <groupId>com.newrelic.agent.java</groupId>
-            <artifactId>newrelic-api</artifactId>
-            <version>${newrelic.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.datadoghq</groupId>
             <artifactId>dd-trace-api</artifactId>
             <version>${dd-trace-api.version}</version>

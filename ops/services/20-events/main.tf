@@ -217,11 +217,6 @@ module "events_service" {
       "readOnly"      = false
     },
     {
-      "containerPath" = "/newrelic/logs",
-      "sourceVolume"  = "newrelic_logs",
-      "readOnly"      = false
-    },
-    {
       "containerPath" = "/var/log",
       "sourceVolume"  = "var_log",
       "readOnly"      = false
@@ -241,10 +236,6 @@ module "events_service" {
     {
       configure_at_launch = false
       name                = "tmp"
-    },
-    {
-      configure_at_launch = false
-      name                = "newrelic_logs"
     },
     {
       configure_at_launch = false
