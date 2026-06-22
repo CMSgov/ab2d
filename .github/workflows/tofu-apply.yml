@@ -154,7 +154,7 @@ jobs:
           tofu plan ${{ inputs.idr_db_importer_image_tag != '' && format('{0}{1}', '-var=image_tag=', inputs.idr_db_importer_image_tag) || '-var=image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan
       - name: tofu apply - lambda
-        if: lambda_version != ''
+        if: ${{ inputs.lambda_version != '' }}
         working-directory: ops/services/30-lambda/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure

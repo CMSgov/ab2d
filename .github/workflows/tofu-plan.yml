@@ -147,7 +147,7 @@ jobs:
           export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.idr_db_importer_image_tag != '' && format('{0}{1}', '-var=image_tag=', inputs.idr_db_importer_image_tag) || '-var=image_tag="$ACTIVE_IMAGE_TAG"' }}
       - name: tofu plan - lambda
-        if: lambda_version != ''
+        if: ${{ inputs.lambda_version != '' }}
         working-directory: ops/services/30-lambda/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
