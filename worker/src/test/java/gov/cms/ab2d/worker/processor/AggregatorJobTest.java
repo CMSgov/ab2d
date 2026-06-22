@@ -1,7 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.contracts.model.Contract;
@@ -32,8 +30,12 @@ import java.util.concurrent.TimeUnit;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -54,6 +56,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @Testcontainers
 @Import(AB2DSQSMockConfig.class)
 class AggregatorJobTest {
@@ -93,7 +97,6 @@ class AggregatorJobTest {
         String job = "123";
         String contractNo = "ABCD";
         String org = "org1";
-        final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any(), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(1)));
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any(), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(2)));
@@ -111,7 +114,7 @@ class AggregatorJobTest {
         PatientClaimsRequest request = new PatientClaimsRequest(createCoverageSummaries(10, contract),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
-                null, null, org, job, contract.getContractNumber(), Contract.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
+                null, null, org, job, contract.getContractNumber(), Contract.ContractType.NORMAL, FhirVersion.STU3, tempDir.getAbsolutePath());
         ReflectionTestUtils.setField(processor, "earliestDataDate", "01/01/2020");
 
         Future<ProgressTrackerUpdate> future = processor.process(request);
