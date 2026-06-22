@@ -28,6 +28,11 @@ on:
         description: ECR image tag for worker service
         default: ""
         type: string
+      lambda_version:
+        description: Lambda version
+        default: ""
+        type: string
+
   workflow_dispatch:
     inputs:
       environment:
@@ -57,6 +62,10 @@ on:
         type: string
       worker_image_tag:
         description: ECR image tag for worker service
+        default: ""
+        type: string
+      lambda_version:
+        description: Lambda version
         default: ""
         type: string
 
@@ -138,11 +147,12 @@ jobs:
           export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.idr_db_importer_image_tag != '' && format('{0}{1}', '-var=image_tag=', inputs.idr_db_importer_image_tag) || '-var=image_tag="$ACTIVE_IMAGE_TAG"' }}
       - name: tofu plan - lambda
+        if: lambda_version != ''
         working-directory: ops/services/30-lambda/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan
+          tofu plan -var=release_version=${{ inputs.lambda_version }}
       - name: tofu plan - worker
         working-directory: ops/services/30-worker/
         run: |
