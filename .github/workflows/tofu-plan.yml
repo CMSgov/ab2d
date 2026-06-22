@@ -121,7 +121,6 @@ jobs:
           export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-contracts --service ab2d-$ENV-contracts --query 'taskArns[0]' --output text)
           export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-contracts --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[?name != 'datadog-agent'].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.contracts_image_tag != '' && format('{0}{1}', '-var=contracts_service_image_tag=', inputs.contracts_image_tag) || '-var=contracts_service_image_tag="$ACTIVE_IMAGE_TAG"' }}
-
       - name: tofu plan - events
         working-directory: ops/services/20-events/
         run: |
