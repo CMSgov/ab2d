@@ -50,6 +50,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.TransactionSystemException;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -117,7 +118,7 @@ class JobServiceTest extends JobCleanup {
     @Autowired
     private ContractService contractService;
 
-    @Autowired
+    @MockitoBean
     private SQSEventClient sqsEventClient;
 
     @SuppressWarnings({"rawtypes", "unused"})

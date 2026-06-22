@@ -8,9 +8,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 
@@ -21,7 +22,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.concurrent.CompletionException;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,10 +50,10 @@ class HPMSMockedAuthTest {
     @Autowired
     MockWebClient mockWebClient;
 
-    @Autowired
+    @MockitoBean
     private SQSEventClient eventLogger;
 
-    @MockBean
+    @MockitoBean
     private WebClient mockedWebClient;
 
     @Test
@@ -96,7 +99,7 @@ class HPMSMockedAuthTest {
         // This is to test when HMPS is completely down so we don't get any response.
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
             client.authRequestTimeout(mockedWebClient, webClientStatic, nullBody);
-            assertThrows(RemoteTimeoutException.class, () -> authService.buildAuthHeaders(headers));
+            assertCausedBy(RemoteTimeoutException.class, () -> authService.buildAuthHeaders(headers));
         }
     }
 
@@ -104,8 +107,17 @@ class HPMSMockedAuthTest {
         HttpHeaders headers = new HttpHeaders();
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
             client.authRequestError(mockedWebClient, webClientStatic, httpStatus, new HPMSAuthResponse());
-            assertThrows(WebClientResponseException.class, () -> authService.buildAuthHeaders(headers));
+            assertCausedBy(WebClientResponseException.class, () -> authService.buildAuthHeaders(headers));
         }
+    }
+
+    // spring wraps the original error in CompletionException.
+    private static void assertCausedBy(Class<? extends Throwable> expected, org.junit.jupiter.api.function.Executable executable) {
+        Throwable thrown = assertThrows(Throwable.class, executable);
+        if (thrown instanceof CompletionException && thrown.getCause() != null) {
+            thrown = thrown.getCause();
+        }
+        assertInstanceOf(expected, thrown);
     }
 
     @AfterEach

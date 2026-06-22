@@ -46,6 +46,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 
+import javax.sql.DataSource;
+
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.fhir.FhirVersion.R4V3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
@@ -76,6 +78,10 @@ class ContractProcessorInvalidPatientTest {
 
     @Mock
     private PropertiesService propertiesService;
+
+    @Mock
+    private DataSource dataSource;
+
 
     @Mock
     private ContractToContractCoverageMapping mapping;
@@ -116,7 +122,7 @@ class ContractProcessorInvalidPatientTest {
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);
-        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger, searchConfig, propertiesService);
+        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger, searchConfig, propertiesService, dataSource);
         JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(JOB_ID);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);

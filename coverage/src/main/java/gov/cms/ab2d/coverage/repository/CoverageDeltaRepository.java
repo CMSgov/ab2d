@@ -1,6 +1,6 @@
 package gov.cms.ab2d.coverage.repository;
 
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -38,7 +38,7 @@ public class CoverageDeltaRepository {
      * @param previousSearch an earlier search from a previous update that is now outdated by CCW loads to BFD
      * @param currentSearch the latest search with the most up-to-date enrollment in BFD
      */
-    @Trace
+    @Trace(operationName = "ab2d.coverage.track_deltas")
     public void trackDeltas(CoverageSearchEvent previousSearch, CoverageSearchEvent currentSearch) {
 
         // Calculate benes in previous search that are not in current search

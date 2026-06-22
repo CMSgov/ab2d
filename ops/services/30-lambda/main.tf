@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5"
+      version = "~> 6"
     }
     artifactory = {
       source  = "jfrog/artifactory"
@@ -12,7 +12,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f4c14d47cc20e7f6de9112d7155af1213c9bca5a"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=8a6527c0689bb46ae0e74bd47e4087ab59cff1b0"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -126,7 +126,7 @@ resource "aws_lambda_function" "metrics_transform" {
   function_name    = "${local.service_prefix}-metrics-transform"
   role             = aws_iam_role.metrics_transform.arn
   handler          = "gov.cms.ab2d.metrics.CloudwatchEventHandler"
-  runtime          = "java11"
+  runtime          = "java25"
   memory_size      = 256
   timeout          = 600
   architectures = [
@@ -148,7 +148,7 @@ resource "aws_lambda_function" "audit" {
   function_name    = "${local.service_prefix}-audit"
   role             = aws_iam_role.microservices_lambda.arn
   handler          = "gov.cms.ab2d.audit.AuditEventHandler"
-  runtime          = "java11"
+  runtime          = "java25"
   timeout          = 600
   architectures = [
     "arm64",
@@ -252,7 +252,7 @@ resource "aws_lambda_function" "audit_svc_monitoring" {
   architectures = [
     "arm64",
   ]
-  tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
+  tags = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
   environment {
     variables = {
       SLACK_WEBHOOK_URL = local.slack_webhook_ab2d_slack_alerts
@@ -291,7 +291,7 @@ resource "aws_lambda_function" "coverage_count" {
   role             = aws_iam_role.lambda_database_sns_role.arn
   handler          = "gov.cms.ab2d.coveragecounts.CoverageCountsHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["coverage-counts"].sha256)
-  runtime          = "java11"
+  runtime          = "java25"
   timeout          = 600
   memory_size      = 1024
   architectures = [
@@ -337,7 +337,7 @@ resource "aws_lambda_function" "database_management" {
   role             = aws_iam_role.lambda_database_sns_role.arn
   handler          = "gov.cms.ab2d.databasemanagement.DatabaseManagementHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["database-management"].sha256)
-  runtime          = "java11"
+  runtime          = "java25"
   timeout          = 600
   memory_size      = 256
   architectures = [
@@ -370,7 +370,7 @@ resource "aws_lambda_function" "hpms_counts" {
   role             = aws_iam_role.lambda_sns_role.arn
   handler          = "gov.cms.ab2d.retrievehpmscounts.HPMSCountsHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["retrieve-hpms-counts"].sha256)
-  runtime          = "java11"
+  runtime          = "java25"
   timeout          = 600
   memory_size      = 256
   architectures = [

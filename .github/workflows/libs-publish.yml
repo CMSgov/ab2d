@@ -38,10 +38,10 @@ jobs:
       FORCE_PUBLISH: ${{ inputs.forcePublish }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v3 #TODO: Update to Node24
         with:
           java-version: '17'
           distribution: 'corretto'
@@ -76,7 +76,7 @@ jobs:
 
           if [ "$deployScript" != "" ]; then
             echo "Publishing artifacts: $deployScript, avoiding overwriting existing ones"
-            ./gradlew ${deployScript} -b build.gradle
+            ./gradlew ${deployScript}
           else
             echo "No artifacts to publish."
           fi
@@ -85,5 +85,5 @@ jobs:
         if: ${{ env.FORCE_PUBLISH == 'true' }}
         run: |
           echo "Force publishing (overwriting) all artifacts to Artifactory"
-          ./gradlew artifactoryPublish -b build.gradle
+          ./gradlew artifactoryPublish
 

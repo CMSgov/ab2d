@@ -1,7 +1,7 @@
 package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
@@ -46,9 +46,17 @@ public class BFDSearchImpl implements BFDSearch {
      * @return a bundle of eobs for the patient.
      * @throws IOException on failure to retrieve claims from BFD
      */
-    @Trace
+    @Trace(operationName = "ab2d.bfd.search")
     @Override
     public IBaseBundle searchEOB(BFDSearchDTO searchDTO) throws IOException {
+        return parseBundle(
+            searchDTO.getVersion(),
+            searchEOBRaw(searchDTO)
+        );
+    }
+
+    @Override
+    public byte[] searchEOBRaw(BFDSearchDTO searchDTO) throws IOException {
         long patientId = searchDTO.getPatientId();
         OffsetDateTime since = searchDTO.getSince();
         OffsetDateTime until = searchDTO.getUntil();
@@ -64,8 +72,7 @@ public class BFDSearchImpl implements BFDSearch {
         if (version == FhirVersion.R4V3) {
             url.append("&_source=NCH");
             url.append("&_security:not=42CFRPart2");
-        }
-        else {
+        } else {
             url.append("&excludeSAMHSA=true");
             url.append("&type=carrier,dme,hha,hospice,inpatient,outpatient,snf");
         }
@@ -100,19 +107,19 @@ public class BFDSearchImpl implements BFDSearch {
         request.addHeader(BFDClient.BFD_HDR_BULK_CLIENTID, contractNum);
         request.addHeader(BFDClient.BFD_HDR_BULK_JOBID, bulkJobId);
 
-        byte[] responseBytes = getEOBSFromBFD(patientId, request);
+        return getEOBSFromBFD(patientId, request);
+   }
 
-        return parseBundle(version, responseBytes);
-    }
 
     /**
-     * Method exists to track connection to BFD for New Relic
+     * Method exists to track connection to BFD for Datadog
      */
-    @Trace
+    @Trace(operationName = "ab2d.bfd.call")
     private byte[] getEOBSFromBFD(long patientId, HttpGet request) throws IOException {
         byte[] responseBytes;
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
+
             if (status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES) {
 
                 try (InputStream instream = response.getEntity().getContent()) {
@@ -124,12 +131,14 @@ public class BFDSearchImpl implements BFDSearch {
             } else {
                 throw new RuntimeException("Server error occurred");
             }
+
         }
         return responseBytes;
     }
 
-    @Trace
-    private IBaseBundle parseBundle(FhirVersion version, byte[] responseBytes) {
+    @Trace(operationName = "ab2d.bfd.parse_bundle")
+    @Override
+    public IBaseBundle parseBundle(FhirVersion version, byte[] responseBytes) {
         return version.getJsonParser().parseResource(version.getBundleClass(), new ByteArrayInputStream(responseBytes));
     }
 }

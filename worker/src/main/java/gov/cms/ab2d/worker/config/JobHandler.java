@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.coverage.service.v3.CoverageV3LockWrapper;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -43,17 +42,14 @@ public class JobHandler implements MessageHandler {
     private final LockRegistry lockRegistry;
     private final WorkerService workerService;
     private final CoverageV3Service coverageV3Service;
-    private final CoverageV3LockWrapper coverageV3LockWrapper;
 
     public JobHandler(
             LockRegistry lockRegistry,
             WorkerService workerService,
-            CoverageV3Service coverageV3Service,
-            CoverageV3LockWrapper coverageV3LockWrapper) {
+            CoverageV3Service coverageV3Service) {
         this.lockRegistry = lockRegistry;
         this.workerService = workerService;
         this.coverageV3Service = coverageV3Service;
-        this.coverageV3LockWrapper = coverageV3LockWrapper;
     }
 
     @Override
@@ -119,6 +115,39 @@ public class JobHandler implements MessageHandler {
 
     private String getJobId(Map<String, Object> submittedJob) {
         return String.valueOf(submittedJob.get("job_uuid"));
+    }
+    
+    private String getContractNumber(Map<String, Object> submittedJob) {
+        return String.valueOf(submittedJob.get("contract_number"));
+    }
+
+    private FhirVersion getFhirVersion(Map<String, Object> submittedJob) {
+        return FhirVersion.valueOf(String.valueOf(submittedJob.get("fhir_version")));
+    }
+
+    private boolean trySyncCoverageV3(Map<String, Object> submittedJob) throws InterruptedException {
+        val fhirVersion = getFhirVersion(submittedJob);
+        if (fhirVersion != FhirVersion.R4V3) {
+            return true;
+        }
+
+        val contract = getContractNumber(submittedJob);
+        log.info("Calling moveOldCoverageToHistoricalCoverage() for contract {}", contract);
+        coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, JOB_HANDLER);
+        log.info("Calling moveFromStagingToRecentCoverage() for contract {}", contract);
+        val result = coverageV3Service.moveFromStagingToRecentCoverage(contract, JOB_HANDLER);
+        if (result == CoverageV3SyncResult.SYNC_SUCCESSFUL_FOR_CONTRACT ||
+            result == CoverageV3SyncResult.NO_COVERAGE_FOUND_FOR_CONTRACT ||
+            result == CoverageV3SyncResult.IDR_IMPORTER_IN_PROGRESS) {
+
+            // Note: Aggregated attribution table created in WorkerServiceImpl
+
+            return true;
+        }
+
+        log.error("trySyncCoverageV3 failed with result {}", result);
+        return false;
+
     }
 
     private String getContractNumber(Map<String, Object> submittedJob) {

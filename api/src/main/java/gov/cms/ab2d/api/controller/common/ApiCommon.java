@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.fhir.FhirVersion.R4V3;
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_ALLOWLISTED_CONTRACTS;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -96,15 +97,26 @@ public class ApiCommon {
     }
 
     public void checkSinceTime(OffsetDateTime date) {
+        checkSinceTime(date, null);
+    }
+
+    public void checkSinceTime(OffsetDateTime date, FhirVersion version) {
         if (date == null) {
             return;
         }
         if (date.isAfter(OffsetDateTime.now())) {
             throw new InvalidClientInputException("You can not use a time after the current time for _since");
         }
-        if (date.isBefore(SINCE_EARLIEST_DATE_TIME)) {
-            log.error("Invalid _since time received {}", date);
-            throw new InvalidClientInputException("_since must be after " + SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME));
+        if (R4V3.equals(version)) {
+            if (date.isBefore(V3_SINCE_EARLIEST_DATE_TIME)) {
+                log.error("Invalid _since time received {} for V3", date);
+                throw new InvalidClientInputException("_since must be after " + V3_SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME) + " for V3");
+            }
+        } else {
+            if (date.isBefore(SINCE_EARLIEST_DATE_TIME)) {
+                log.error("Invalid _since time received {}", date);
+                throw new InvalidClientInputException("_since must be after " + SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME));
+            }
         }
     }
 
@@ -241,7 +253,7 @@ public class ApiCommon {
         checkIfInMaintenanceMode();
         checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
-        checkSinceTime(since);
+        checkSinceTime(since, version);
         checkUntilTime(since, until, version);
         checkServiceDates(serviceDates);
         return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,

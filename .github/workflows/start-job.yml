@@ -28,11 +28,15 @@ on:
           - R4V3
         default: STU3
       since:
-        description: 'Since date to use for a job. The earliest accepted date is 2020-02-13T00:00:00.000-05:00'
+        description: 'Since date to use for a job. For V3 (R4V3), the earliest accepted date is 2026-04-01T00:00:00.000-05:00. For V1/V2, the earliest accepted date is 2020-02-13T00:00:00.000-05:00. Leave blank to use the default (last successful job date).'
         type: string
-        required: true
+        required: false
       until:
         description: 'Until date to use for a job. Accepted date format for V2 is 2020-02-13T00:00:00.000-05:00'
+        type: string
+        required: false
+      serviceDates:
+        description: 'service-date param value to use for a job. V3 only. Example FHIR date param format is gt2026-01-01 or gt2026-01-01,lt2026-02-01'
         type: string
         required: false
       apiUrlPrefix:
@@ -53,25 +57,21 @@ jobs:
       FHIR_VERSION: ${{ inputs.fhirVersion }}
       SINCE: ${{ inputs.since }}
       UNTIL: ${{ inputs.until }}
+      SERVICE_DATES: ${{ inputs.serviceDates }}
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
       AB2D_ENV: ${{ inputs.environment }}
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
 
       - name: Set environment-specific variables
         run: |
           # AB2D_ENV is now strictly one of: dev, test, sandbox, prod
           PARENT_ENV="${AB2D_ENV}"
           echo "PARENT_ENV=${PARENT_ENV}" >> $GITHUB_ENV
-          
-          # do not allow V3 jobs in sandbox or prod
+
           if [[ "$PARENT_ENV" == "sandbox" || "$PARENT_ENV" == "prod" ]]; then
-            if [[ "$FHIR_VERSION" == "R4V3" ]]; then
-              echo "Error: V3 jobs are not allowed in the $PARENT_ENV environment."
-              exit 1
-            fi
             AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
           else
             AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
@@ -92,7 +92,7 @@ jobs:
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
 
       - name: Assume AWS role
-        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.PARENT_ENV }}-github-actions
@@ -129,6 +129,20 @@ jobs:
             export UNTIL="'${UNTIL}'"
           else
             export UNTIL="null"
+          fi
+
+          # Handle optional 'since' parameter — wrap in quotes for SQL or use null
+          if [[ -n "$SINCE" ]]; then
+            export SINCE="'${SINCE}'"
+          else
+            export SINCE="null"
+          fi
+          
+          # V3 only for service-date param
+          if [[ "$FHIR_VERSION" == "R4V3" && -n "$SERVICE_DATES" ]]; then
+            export SERVICE_DATES="'${SERVICE_DATES}'"
+          else
+            export SERVICE_DATES="null"
           fi
 
           if [[ -z "${API_URL_PREFIX}" ]]; then

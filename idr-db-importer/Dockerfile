@@ -1,4 +1,4 @@
-FROM --platform=linux/arm64 amazoncorretto:21-al2023-jdk
+FROM --platform=linux/arm64 amazoncorretto:25-alpine3.23
 
 WORKDIR /usr/src/ab2d-idr-db-importer
 

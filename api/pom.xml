@@ -68,6 +68,18 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-properties-migrator</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
@@ -94,7 +106,7 @@
         <dependency>
             <groupId>dev.akkinoc.spring.boot</groupId>
             <artifactId>logback-access-spring-boot-starter</artifactId>
-            <version>4.7.0</version>
+            <version>5.0.0</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback.access</groupId>
@@ -108,11 +120,15 @@
         </dependency>
 
         <dependency>
-            <groupId>com.newrelic.agent.java</groupId>
-            <artifactId>newrelic-java</artifactId>
-            <version>${newrelic.version}</version>
+            <groupId>com.datadoghq</groupId>
+            <artifactId>dd-java-agent</artifactId>
+            <version>${dd.java.agent.version}</version>
             <scope>provided</scope>
-            <type>zip</type>
+        </dependency>
+        <dependency>
+            <groupId>com.datadoghq</groupId>
+            <artifactId>java-dogstatsd-client</artifactId>
+            <version>${dogstatsd-client.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
@@ -182,27 +198,33 @@
                 </executions>
             </plugin>
 
-            <!-- Unzip New Relic Java agent into target/ -->
+            <!-- Copy the Datadog Java agent jar into target/datadog/ -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.6.0</version>
                 <executions>
                     <execution>
-                        <id>unpack-newrelic</id>
+                        <id>copy-dd-java-agent</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>unpack-dependencies</goal>
+                            <goal>copy</goal>
                         </goals>
                         <configuration>
-                            <includeGroupIds>com.newrelic.agent.java</includeGroupIds>
-                            <includeArtifactIds>newrelic-java</includeArtifactIds>
-                            <!-- you can optionally exclude files -->
-                            <!-- for example: <excludes>**/newrelic.yml</excludes> -->
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.datadoghq</groupId>
+                                    <artifactId>dd-java-agent</artifactId>
+                                    <version>${dd.java.agent.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/datadog</outputDirectory>
+                                    <destFileName>dd-java-agent.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

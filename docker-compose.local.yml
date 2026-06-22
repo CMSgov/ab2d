@@ -1,0 +1,70 @@
+services:
+  db:
+    volumes:
+      - ./local-dev/sql/init-local-db.sql:/docker-entrypoint-initdb.d/init-local-db.sql
+      - db-data:/var/lib/postgresql/data
+
+  localstack:
+    image: localstack/localstack:3.8
+
+  mock-bfd:
+    image: mockserver/mockserver:5.15.0
+    ports:
+      - "9999:1080"
+    environment:
+      MOCKSERVER_LOG_LEVEL: WARN
+      MOCKSERVER_SERVER_PORT: 1080
+    volumes:
+      - ./local-dev/mock-bfd/fixtures:/fixtures:ro
+
+  mock-bfd-init:
+    image: curlimages/curl:8.10.1
+    depends_on:
+      mock-bfd:
+        condition: service_started
+    environment:
+      - MOCK_PUBLIC_URL
+    volumes:
+      - ./local-dev/mock-bfd/load-expectations.sh:/load.sh:ro
+      - ./local-dev/mock-bfd/fixtures:/fixtures:ro
+    entrypoint: ["sh", "/load.sh"]
+    restart: "no"
+
+  api:
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AB2D_V2_ENABLED=true
+      - AB2D_V3_ENABLED=false
+
+  worker:
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      # BFDClientConfiguration still requires a key
+      - AB2D_BFD_KEYSTORE_PASSWORD=changeit
+      - AB2D_BFD_KEYSTORE_LOCATION=/opt/bfd-keystore.p12
+      - AB2D_BFD_KEYSTORE_BASE64=
+      - AB2D_BFD_TRUSTSTORE_CERT=
+      - AB2D_BFD_V3_TRUSTSTORE_CERT=
+      - AB2D_BFD_URL=http://host.docker.internal:9999
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./libs/ab2d-bfd/src/test/resources/bb.keystore:/opt/bfd-keystore.p12:ro
+
+  contracts:
+    image: ab2d-contracts-local:latest
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8070/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:

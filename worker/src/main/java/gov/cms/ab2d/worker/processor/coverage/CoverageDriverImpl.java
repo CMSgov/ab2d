@@ -1,31 +1,27 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
-import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
-import gov.cms.ab2d.coverage.util.CoverageV3Utils;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
-import gov.cms.ab2d.worker.processor.coverage.check.v3.CoverageV3PresentCheck;
+import gov.cms.ab2d.worker.processor.coverage.check.v3.CoverageV3CoveragePeriodsPresentCheck;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
@@ -444,7 +440,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @throws CoverageDriverException if enrollment state violates assumed preconditions or database lock cannot be retrieved
      * @throws InterruptedException    if trying to lock the table is interrupted
      */
-    @Trace(metricName = "EnrollmentIsAvailable", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_is_available")
     @Override
     public boolean isCoverageAvailable(Job job, ContractDTO contract) throws InterruptedException {
         String contractNumber = job.getContractNumber();
@@ -513,7 +509,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    @Trace(metricName = "EnrollmentIsAvailableV3", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_is_available_v3")
     @Override
     public boolean isCoverageAvailableV3(Job job, ContractDTO contract) {
         /**
@@ -524,24 +520,14 @@ public class CoverageDriverImpl implements CoverageDriver {
         return true;
     }
 
-    @Trace(metricName = "EnrollmentCountV3", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_count_v3")
     @Override
     public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
-        final ZonedDateTime endTime = getEndDateTime();
-
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
 
-        final ZonedDateTime startDateTime = getStartDateTime(contract);
-        final CoverageV3Periods coverageV3Periods = CoverageV3Utils.enumerateCoveragePeriods(startDateTime, endTime);
-
-        log.info("[V3] counting number of beneficiaries for {} coverage periods for job {}",
-                coverageV3Periods.getHistoricalCoverage().size() + coverageV3Periods.getRecentCoverage().size(),
-                job.getJobUuid()
-        );
-
-        int count = coverageV3Service.countBeneficiariesByCoveragePeriod(coverageV3Periods, contract.getContractNumber());
+        int count = coverageV3Service.getDistinctPatientCount(contract.getContractNumber());
         log.info("[V3] number of beneficiaries for job {}: {}", job.getJobUuid(), count);
         return count;
     }
@@ -555,7 +541,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      *
      * @throws CoverageDriverException job has no contract which should not be possible
      */
-    @Trace(metricName = "EnrollmentCount", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_count")
     @Override
     public int numberOfBeneficiariesToProcess(Job job, ContractDTO contract) {
 
@@ -596,7 +582,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      *
      * @throws CoverageDriverException if coverage period or some other precondition necessary for paging is missing
      */
-    @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_load_from_db")
     @Override
     public CoveragePagingResult pageCoverage(Job job, ContractDTO contract) {
         ZonedDateTime now = getEndDateTime();
@@ -760,20 +746,34 @@ public class CoverageDriverImpl implements CoverageDriver {
 
     @Override
     public void verifyCoverageV3() {
-        val issues = new ArrayList<String>();
+        if (!propertiesService.isToggleOn(V3_COVERAGE_PERIOD_CHECK_ENABLED, false)) {
+            log.info("[V3] Coverage period checks are disabled - skipping");
+            return;
+        }
 
-        // Only filter contracts that matter
-        List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts()
+        val issues = new ArrayList<String>();
+        val hpmsEndDateCutOff = CoverageV3SyncService.CUT_OFF_DATE_FOR_INACTIVE_CONTRACT.get();
+
+        val enabledContracts = pdpClientService.getAllEnabledContracts()
             .stream()
             .filter(contract -> !contract.isTestContract())
             .filter(contract -> contractNotBeingUpdatedV3(issues, contract))
+            .filter(contract -> {
+                val endDate = contract.getHpmsEndDate();
+                if (endDate == null) {
+                    return true;
+                } else {
+                    return !endDate.toLocalDate().isBefore(hpmsEndDateCutOff);
+                }
+            })
             .map(Contract::toDTO)
             .toList();
 
-        val coverageCounts = coverageV3Service.getCoverageCount();
+
+        val coveragePeriods = coverageV3Service.getCoveragePeriods(enabledContracts);
 
         long passingContracts = enabledContracts.stream()
-            .filter(new CoverageV3PresentCheck(coverageV3Service, coverageCounts, issues))
+            .filter(new CoverageV3CoveragePeriodsPresentCheck(coverageV3Service, coveragePeriods, issues))
             .count();
 
         String message = String.format("Verified that %d contracts pass all coverage checks out of %d",
@@ -783,7 +783,6 @@ public class CoverageDriverImpl implements CoverageDriver {
         if (!issues.isEmpty()) {
             throw new CoverageVerificationException(message, issues);
         }
-
     }
 
     private boolean contractNotBeingUpdatedV3(List<String> issues, Contract contract) {

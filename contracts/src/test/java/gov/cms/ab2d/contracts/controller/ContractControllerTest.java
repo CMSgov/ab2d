@@ -4,14 +4,16 @@ import gov.cms.ab2d.contracts.SpringBootApp;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.repository.ContractRepository;
 import gov.cms.ab2d.contracts.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -30,6 +32,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ContractControllerTest {
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    @SuppressWarnings("unused")
+    private SQSEventClient eventLogger;
 
     @Autowired
     private ContractRepository contractRepository;

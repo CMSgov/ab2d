@@ -2,7 +2,6 @@ version = "$bfdVersion"
 
 dependencies {
     implementation project(':ab2d-fhir')
-    implementation "gov.cms.ab2d:ab2d-fhir:$fhirVersion"
     implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
     implementation("org.apache.httpcomponents.client5:httpclient5:5.5")
@@ -10,7 +9,7 @@ dependencies {
     implementation "ca.uhn.hapi.fhir:hapi-fhir-structures-dstu3:${hapiVersion}"
     implementation "ca.uhn.hapi.fhir:hapi-fhir-structures-r4:${hapiVersion}"
     implementation "org.springframework.retry:spring-retry:2.0.8"
-    implementation "com.newrelic.agent.java:newrelic-api:${newRelicVersion}"
+    implementation "com.datadoghq:dd-trace-api:${ddTraceApiVersion}"
     testImplementation "org.testcontainers:testcontainers:${testContainerVersion}"
     testImplementation "org.testcontainers:postgresql:${testContainerVersion}"
     testImplementation "org.testcontainers:junit-jupiter:${testContainerVersion}"

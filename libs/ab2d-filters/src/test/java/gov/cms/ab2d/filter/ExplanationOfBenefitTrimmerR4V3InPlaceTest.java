@@ -161,6 +161,47 @@ class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
     }
 
     @Test
+    void removableElementsAreTheComplementOfTheAllowlist() {
+        // The allowlist is the source of truth. Every element the resource declares must be either
+        // kept (allowlisted) or removable — nothing may fall through the cracks, and the two sets
+        // must be disjoint. This proves the trimmer is allowlist-driven rather than denylist-driven.
+        List<String> declared = new ExplanationOfBenefit().children().stream()
+                .map(Property::getName)
+                .toList();
+
+        for (String name : declared) {
+            boolean kept = ExplanationOfBenefitTrimmerR4V3.KEPT_ELEMENTS.contains(name);
+            boolean removable = ExplanationOfBenefitTrimmerR4V3.REMOVABLE_ELEMENTS.contains(name);
+            assertTrue(kept ^ removable,
+                    "Element '" + name + "' must be exactly one of kept/removable (kept=" + kept
+                            + ", removable=" + removable + ")");
+        }
+
+        assertTrue(ExplanationOfBenefitTrimmerR4V3.REMOVABLE_ELEMENTS.stream()
+                        .noneMatch(ExplanationOfBenefitTrimmerR4V3.KEPT_ELEMENTS::contains),
+                "removable set must not intersect the allowlist");
+    }
+
+    @Test
+    void elementNotInAllowlistIsStrippedInPlace() {
+        // A field that is NOT in KEPT_ELEMENTS must be removed even though getBenefitInPlace never
+        // names it explicitly — it is dropped purely because it is absent from the allowlist.
+        // This is the "new field is excluded by default" / opt-in guarantee from the ticket.
+        String dropped = "disposition";
+        assertFalse(ExplanationOfBenefitTrimmerR4V3.KEPT_ELEMENTS.contains(dropped),
+                "precondition: '" + dropped + "' must not be allowlisted");
+
+        ExplanationOfBenefit eob = buildFullEob();
+        eob.setDisposition("should-be-removed");
+        assertTrue(eob.hasDisposition());
+
+        ExplanationOfBenefit result =
+                (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefitInPlace(eob);
+
+        assertFalse(result.hasDisposition(), "non-allowlisted element should be stripped in place");
+    }
+
+    @Test
     void allocationCountNotWorseThanLegacy() {
         // Warm up
         for (int i = 0; i < 1000; i++) {

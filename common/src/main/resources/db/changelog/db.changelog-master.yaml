@@ -189,3 +189,15 @@ databaseChangeLog:
       file: db/changelog/v2026/add_v3_idr_importer_progress_status.sql
   - include:
       file: db/changelog/v2026/add_eob_v3_inplace_property.sql
+  - include:
+      file: db/changelog/v2026/add_v3_history_summary_table.sql
+  - include:
+      file: db/changelog/v2026/add_bfd_metrics_enabled_property.sql
+  - include:
+      file: db/changelog/v2026/add_v3_coverage_period_history_summary.sql
+  - include:
+      file: db/changelog/v2026/add_v3_audit_logging.sql
+  - include:
+      file: db/changelog/v2026/add_v3_coverage_check_enabled.sql
+  - include:
+      file: db/changelog/v2026/add_int_lock_expired_after.sql

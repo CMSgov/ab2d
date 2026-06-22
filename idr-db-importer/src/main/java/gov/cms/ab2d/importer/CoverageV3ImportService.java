@@ -29,7 +29,7 @@ public class CoverageV3ImportService {
             "patient_id,contract,year,month,current_mbi";
 
     private static final String COPY_OPTIONS =
-            "(format csv, header true, null 'NULL')";
+            "(format csv, null 'NULL')";
 
     private static final String IMPORT_SQL =
             "SELECT aws_s3.table_import_from_s3(?, ?, ?, aws_commons.create_s3_uri(?, ?, ?))";

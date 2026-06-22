@@ -7,9 +7,11 @@ import org.hl7.fhir.r4.model.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -142,6 +144,63 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     );
 
     /**
+     * ALLOWLIST of the ExplanationOfBenefit top-level element names that AB2D shares with
+     * Part D providers. This is the single source of truth for what the in-place trimmer keeps,
+     * and it is derived EXACTLY from what {@link #copyData(ExplanationOfBenefit)} copies into the
+     * sanitized output:
+     * <ul>
+     *   <li>inherited: {@code id, meta, implicitRules, language, text}</li>
+     *   <li>{@code identifier, type, subType, status, use, outcome}</li>
+     *   <li>{@code patient, facility, provider}</li>
+     *   <li>{@code billablePeriod}</li>
+     *   <li>{@code careTeam, contained, supportingInfo, diagnosis, procedure, item, insurance}
+     *       (these are kept but partially trimmed — see the in-place special handling below)</li>
+     * </ul>
+     * Crucially this is an ALLOWLIST, not a denylist: any element that is NOT named here is removed.
+     * If a future HAPI/BFD base EOB introduces a new element, it is excluded by default and AB2D must
+     * consciously opt in by adding it here (and to {@code copyData}). That keeps the AB2D EOB payload
+     * completely under AB2D's control.
+     */
+    static final Set<String> KEPT_ELEMENTS = Set.of(
+            // inherited (Resource / DomainResource)
+            "id", "meta", "implicitRules", "language", "text", "contained",
+            // ExplanationOfBenefit
+            "identifier", "type", "subType", "status", "use", "outcome",
+            "patient", "facility", "provider", "billablePeriod",
+            "careTeam", "supportingInfo", "diagnosis", "procedure", "item", "insurance"
+    );
+
+    /**
+     * The set of top-level element names that the in-place trimmer must REMOVE, computed once from
+     * the allowlist. We navigate every element declared on a fresh {@link ExplanationOfBenefit} via
+     * the HAPI reflection API ({@code Base.children()} → {@code List<Property>}, each exposing
+     * {@code getName()}) and keep only the names that are NOT in {@link #KEPT_ELEMENTS}. This is the
+     * "iterate each element and remove it if it is not in the allow-list" navigation requested by the
+     * ticket — performed a single time at class-load rather than per call.
+     * <p>
+     * Why compute it once instead of walking {@code children()} on every invocation: {@code children()}
+     * allocates a fresh {@code ArrayList} plus ~50 {@code Property} wrapper objects on every call, which
+     * would dominate allocations and defeat the whole allocation-reduction goal of the in-place path
+     * (the {@code allocationCountNotWorseThanLegacy} / {@code highLoadAllocationComparison} tests assert
+     * the in-place path allocates no more than the copy path). By snapshotting the removable names once
+     * and clearing them per-op with typed, no-allocation setters in {@link #clearElement}, we keep the
+     * allowlist as the authoritative contract while preserving the allocation win.
+     */
+    static final List<String> REMOVABLE_ELEMENTS = computeRemovableElements();
+
+    private static List<String> computeRemovableElements() {
+        Set<String> removable = new LinkedHashSet<>();
+        // Generic HAPI navigation of every declared element on the resource.
+        for (Property property : new ExplanationOfBenefit().children()) {
+            String name = property.getName();
+            if (!KEPT_ELEMENTS.contains(name)) {
+                removable.add(name);
+            }
+        }
+        return List.copyOf(removable);
+    }
+
+    /**
      * Pass in an ExplanationOfBenefit, return the copy without the data
      *
      * @param resource - the original ExplanationOfBenefit
@@ -222,46 +281,14 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         benefit.setCareTeam(filteredCareTeam);
         benefit.setInsurance(filteredInsurance);
 
-        // Clear dropped top-level fields
-        benefit.setPatientTarget(null);
-        benefit.setCreated(null);
-        benefit.setEnterer(null);
-        benefit.setEntererTarget(null);
-        benefit.setInsurer(null);
-        benefit.setInsurerTarget(null);
-        benefit.setProviderTarget(null);
-        benefit.setReferral(null);
-        benefit.setReferralTarget(null);
-        benefit.setFacilityTarget(null);
-        benefit.setClaim(null);
-        benefit.setClaimTarget(null);
-        benefit.setClaimResponse(null);
-        benefit.setClaimResponseTarget(null);
-        benefit.setDisposition(null);
-        benefit.setPrescription(null);
-        benefit.setPrescriptionTarget(null);
-        benefit.setOriginalPrescription(null);
-        benefit.setOriginalPrescriptionTarget(null);
-        benefit.setPrecedenceElement(null);
-        benefit.setPriority(null);
-        benefit.setFundsReserveRequested(null);
-        benefit.setFundsReserve(null);
-        benefit.setFormCode(null);
-        benefit.setBenefitPeriod(null);
-        benefit.setPayee(null);
-        benefit.setAccident(null);
-        benefit.setPayment(null);
-        benefit.setForm(null);
-        benefit.setExtension(null);
-        benefit.setModifierExtension(null);
-        benefit.setPreAuthRef(null);
-        benefit.setPreAuthRefPeriod(null);
-        benefit.setRelated(null);
-        benefit.setAddItem(null);
-        benefit.setProcessNote(null);
-        benefit.setBenefitBalance(null);
-        benefit.setAdjudication(null);
-        benefit.setTotal(null);
+        // ALLOWLIST sweep: strip every top-level element that is not in KEPT_ELEMENTS.
+        // REMOVABLE_ELEMENTS was derived once (at class load) by navigating the resource's
+        // children() and excluding the allowlist, so a new base EOB element is dropped by default
+        // unless AB2D opts it into KEPT_ELEMENTS. Each name is cleared in place with a typed,
+        // no-allocation setter (see clearElement) to preserve the allocation advantage of this path.
+        for (String element : REMOVABLE_ELEMENTS) {
+            clearElement(benefit, element);
+        }
 
         // Mutate items in-place without creating a new list
         if (benefit.getItem() != null) {
@@ -657,6 +684,65 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     static void clearOutList(List<?> list) {
         if (list != null) {
             list.clear();
+        }
+    }
+
+    /**
+     * Clear a single top-level element of the EOB in place. Called only for element names in
+     * {@link #REMOVABLE_ELEMENTS} (i.e. names that are NOT in the {@link #KEPT_ELEMENTS} allowlist).
+     * <p>
+     * We use a name-keyed dispatch to the typed HAPI setters rather than the generic
+     * {@code Base.removeChild}/{@code setProperty} API because, in this HAPI version, the generic API
+     * cannot clear a whole repeating element in one call (it removes a single value or appends) and the
+     * surrounding navigation allocates {@code Property} wrappers per call. The typed setters null a
+     * singleton field or clear a backing list with zero per-op allocation, which is what keeps the
+     * in-place path under the legacy copy path's allocation budget.
+     * <p>
+     * Any element name reaching the {@code default} branch is a base-EOB element that is neither
+     * allowlisted nor handled here — failing fast surfaces it so a maintainer makes a deliberate
+     * keep-or-drop decision (preserving the opt-in guarantee) rather than silently leaking it.
+     *
+     * @param benefit the EOB being trimmed in place
+     * @param element the top-level element name to clear
+     */
+    @SuppressWarnings({"deprecation", "java:S1479"})
+    private static void clearElement(ExplanationOfBenefit benefit, String element) {
+        switch (element) {
+            // inherited
+            case "extension" -> benefit.setExtension(null);
+            case "modifierExtension" -> benefit.setModifierExtension(null);
+            // ExplanationOfBenefit-declared
+            case "created" -> benefit.setCreated(null);
+            case "enterer" -> benefit.setEnterer(null);
+            case "insurer" -> benefit.setInsurer(null);
+            case "priority" -> benefit.setPriority(null);
+            case "fundsReserveRequested" -> benefit.setFundsReserveRequested(null);
+            case "fundsReserve" -> benefit.setFundsReserve(null);
+            case "related" -> benefit.setRelated(null);
+            case "prescription" -> benefit.setPrescription(null);
+            case "originalPrescription" -> benefit.setOriginalPrescription(null);
+            case "payee" -> benefit.setPayee(null);
+            case "referral" -> benefit.setReferral(null);
+            case "claim" -> benefit.setClaim(null);
+            case "claimResponse" -> benefit.setClaimResponse(null);
+            case "disposition" -> benefit.setDisposition(null);
+            case "preAuthRef" -> benefit.setPreAuthRef(null);
+            case "preAuthRefPeriod" -> benefit.setPreAuthRefPeriod(null);
+            case "precedence" -> benefit.setPrecedenceElement(null);
+            case "accident" -> benefit.setAccident(null);
+            case "addItem" -> benefit.setAddItem(null);
+            case "adjudication" -> benefit.setAdjudication(null);
+            case "total" -> benefit.setTotal(null);
+            case "payment" -> benefit.setPayment(null);
+            case "formCode" -> benefit.setFormCode(null);
+            case "form" -> benefit.setForm(null);
+            case "processNote" -> benefit.setProcessNote(null);
+            case "benefitPeriod" -> benefit.setBenefitPeriod(null);
+            case "benefitBalance" -> benefit.setBenefitBalance(null);
+            default -> throw new IllegalStateException(
+                    "Unhandled removable EOB element '" + element + "'. It is not in the AB2D allowlist "
+                            + "(KEPT_ELEMENTS) and has no in-place clear in clearElement(). Decide whether "
+                            + "to keep it (add to KEPT_ELEMENTS + copyData) or drop it (add a case here).");
         }
     }
 }

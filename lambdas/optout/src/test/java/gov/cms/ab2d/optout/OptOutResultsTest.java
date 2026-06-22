@@ -1,12 +1,12 @@
 package gov.cms.ab2d.optout;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class OptOutResultsTest {
-    
-    @Test 
+
+    @Test
     public void itStoresValuesCorrectly() {
         int todayOptIn = 1;
         int todayOptOut = 1;

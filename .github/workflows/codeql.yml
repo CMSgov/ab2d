@@ -3,11 +3,11 @@ name: CodeQL
 on:
   push:
     branches: [ "main" ]
-
+    
 jobs:
   analyze:
     name: CodeQL scan
-    runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
 
     permissions:
       contents: read
@@ -16,37 +16,25 @@ jobs:
 
     steps:
       - name: Assume AWS role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v3
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "25"
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: java
           build-mode: none
-
-      - name: Set env vars from AWS params in BCDA management account
-        uses: cmsgov/cdap/actions/aws-params-env-action@main
-        with:
-          params: |
-            ARTIFACTORY_URL=/artifactory/url
-            ARTIFACTORY_USER=/artifactory/user
-            ARTIFACTORY_PASSWORD=/artifactory/password
-
-      - name: Build package
-        run: mvn -U clean package -s settings.xml -Dcheckstyle.skip -DskipTests -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
-
 
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v4

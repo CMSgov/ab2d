@@ -42,7 +42,7 @@ public class AdminAPI {
     public ResponseEntity<PdpClientDTO> createClient(@RequestBody PdpClientDTO pdpClientDTO) {
         PdpClientDTO client = pdpClientService.createClient(pdpClientDTO);
         log.info("client {} created", client.getOrganization());
-        return new ResponseEntity<>(client, null, HttpStatus.CREATED);
+        return new ResponseEntity<>(client, HttpStatus.CREATED);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
@@ -50,7 +50,7 @@ public class AdminAPI {
     public ResponseEntity<PdpClientDTO> udpateClient(@RequestBody PdpClientDTO pdpClientDTO) {
         PdpClientDTO client = pdpClientService.updateClient(pdpClientDTO);
         log.info("client {} updated", pdpClientDTO.getOrganization());
-        return new ResponseEntity<>(client, null, HttpStatus.OK);
+        return new ResponseEntity<>(client, HttpStatus.OK);
     }
 
     @PostMapping("/job/{contractNumber}")
@@ -68,18 +68,18 @@ public class AdminAPI {
     @ResponseStatus(value = HttpStatus.OK)
     @PutMapping("/client/{contractNumber}/enable")
     public ResponseEntity<PdpClientDTO> enableClient(@PathVariable @NotBlank String contractNumber) {
-        return new ResponseEntity<>(pdpClientService.enableClient(contractNumber), null, HttpStatus.OK);
+        return new ResponseEntity<>(pdpClientService.enableClient(contractNumber), HttpStatus.OK);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
     @PutMapping("/client/{contractNumber}/disable")
     public ResponseEntity<PdpClientDTO> disableClient(@PathVariable @NotBlank String contractNumber) {
-        return new ResponseEntity<>(pdpClientService.disableClient(contractNumber), null, HttpStatus.OK);
+        return new ResponseEntity<>(pdpClientService.disableClient(contractNumber), HttpStatus.OK);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping("/client/{contractNumber}")
     public ResponseEntity<PdpClientDTO> getClient(@PathVariable @NotBlank String contractNumber) {
-        return new ResponseEntity<>(pdpClientService.getClient(contractNumber), null, HttpStatus.OK);
+        return new ResponseEntity<>(pdpClientService.getClient(contractNumber), HttpStatus.OK);
     }
 }

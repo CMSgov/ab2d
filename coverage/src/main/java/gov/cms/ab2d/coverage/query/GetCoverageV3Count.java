@@ -1,14 +1,9 @@
 package gov.cms.ab2d.coverage.query;
 
-import gov.cms.ab2d.coverage.model.CoverageCount;
-import gov.cms.ab2d.coverage.model.YearMonthRecord;
-import gov.cms.ab2d.coverage.model.v3.CoverageV3;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Count;
 import lombok.val;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -18,12 +13,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
+// To be replaced with a different approach in AB2D-7272 as this causes the prod database to run out of disk space
 public class GetCoverageV3Count extends CoverageV3BaseQuery {
 
 	private static final String QUERY =
 	"""
 	SELECT contract, year, month, COUNT(*)
-	FROM v3.coverage_v3
+	FROM (
+		select * from v3.coverage_v3
+		UNION select *
+		from v3.coverage_v3_historical
+	)
 	GROUP BY contract, year, month
 	ORDER BY contract, month desc, year desc
 	""";
@@ -32,6 +33,7 @@ public class GetCoverageV3Count extends CoverageV3BaseQuery {
 		super(dataSource);
 	}
 
+	@Deprecated
 	public Map<String, List<CoverageV3Count>> coverageCounts() {
 		val template = new JdbcTemplate(this.dataSource);
 		List<CoverageV3Count> queryResult = template.query(QUERY, new CoverageV3CountRowMapper());
@@ -42,14 +44,15 @@ public class GetCoverageV3Count extends CoverageV3BaseQuery {
 			var list = map.get(contract);
 			if (list == null) {
 				list = new ArrayList<>();
-				map.put(contract, list);
 			}
+			map.put(contract, list);
 			list.add(coverageV3Count);
 		}
 
 		return map;
 	}
 
+	@Deprecated
 	private static class CoverageV3CountRowMapper implements RowMapper<CoverageV3Count> {
 		@Override
 		public CoverageV3Count mapRow(ResultSet rs, int rowNum) throws SQLException {

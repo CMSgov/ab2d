@@ -1,8 +1,11 @@
 package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditAction;
+import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -12,30 +15,39 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
-import static gov.cms.ab2d.common.util.PropertyConstants.IDR_IMPORTER_STATUS_IN_PROGRESS;
-import static gov.cms.ab2d.common.util.PropertyConstants.IDR_IMPORTER_STATUS_PROPERTY;
+import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl.executeTimedQuery;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncSource.CRON_JOB;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult.*;
+import static gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditAction.COPY_FROM_STAGING;
+import static gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditAction.COPY_TO_HISTORICAL;
 import static java.lang.String.format;
 
 @Slf4j
 @Component
 public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
-    private final CoverageV3LockWrapper lockWrapper;
+    private final CoverageV3LockWrapper recentCoverageLock;
+    private final CoverageV3LockWrapper historicalCoverageLock;
+    private final CoverageV3AuditLog audit;
     private final PropertiesService propertiesService;
     private final DataSource dataSource;
 
     public CoverageV3SyncServiceImpl(
             DataSource dataSource,
-            CoverageV3LockWrapper lockWrapper,
+            @Qualifier("recentCoverageLock") CoverageV3LockWrapper recentCoverageLock,
+            @Qualifier("historicalCoverageLock") CoverageV3LockWrapper historicalCoverageLock,
+            CoverageV3AuditLog audit,
             PropertiesService propertiesService) {
         this.dataSource = dataSource;
-        this.lockWrapper = lockWrapper;
+        this.recentCoverageLock = recentCoverageLock;
+        this.historicalCoverageLock = historicalCoverageLock;
+        this.audit = audit;
         this.propertiesService = propertiesService;
     }
 
@@ -54,7 +66,6 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     )
     select count(*) from deleted_rows
     """;
-
 
     private static final String COPY_FROM_STAGING_TO_COVERAGE_V3 =
     """
@@ -101,8 +112,25 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     select count(*) from deleted_rows;
     """.formatted(COVERAGE_V3_TABLE_RECENT);
 
+    private static final String DELETE_HISTORY_SUMMARY_FOR_CONTRACT =
+        "DELETE FROM v3.coverage_v3_history_summary WHERE contract = :contract";
+
+    private static final String INSERT_HISTORY_SUMMARY_FOR_CONTRACT =
+    """
+    INSERT INTO v3.coverage_v3_history_summary
+        (contract, patient_id, current_mbi, historical_coverage_summaries)
+    SELECT contract, patient_id, current_mbi,
+           array_agg(array[year, month] ORDER BY year ASC, month ASC)
+    FROM v3.coverage_v3_historical
+    WHERE contract = :contract
+    GROUP BY contract, patient_id, current_mbi
+    """;
+
     private static final String GET_CONTRACTS_WITH_ACTIVE_V3_JOBS =
-        "select distinct contract_number from job where status in ('IN_PROGRESS', 'SUBMITTED')";
+        "select distinct contract_number from job where status in ('IN_PROGRESS', 'SUBMITTED') and fhir_version='R4V3'" ;
+
+    private static final String IS_CONTRACT_ATTESTED =
+        "select count(*) from contract.contract where contract_number = :contract and attested_on is not null";
 
     private static final String GET_CONTRACTS_WITH_COVERAGE_IN_STAGING =
         "select distinct contract from %s"
@@ -112,16 +140,73 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         "select distinct contract from %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
 
+    private static final String GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY =
+    """
+    SELECT DISTINCT contract FROM v3.coverage_v3_history_summary
+    WHERE contract IN (
+        SELECT contract_number FROM contract.contract
+        WHERE attested_on IS NULL
+           OR (hpms_end_date IS NOT NULL AND hpms_end_date < :cutoff)
+    )
+    """;
 
+    private static final String DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY =
+    """
+    with deleted_rows as (
+        DELETE FROM v3.coverage_v3_history_summary
+        WHERE contract IN (
+            SELECT contract_number FROM contract.contract
+            WHERE attested_on IS NULL
+               OR (hpms_end_date IS NOT NULL AND hpms_end_date < :cutoff)
+        )
+        RETURNING contract
+    )
+    select contract from deleted_rows;
+    """;
+
+    private static final String POPULATE_HISTORY_SUMMARY_COVERAGE_PERIODS_FOR_CONTRACT =
+    """
+    WITH
+    coverage_periods_unparsed AS (
+        SELECT DISTINCT json_array_elements(to_json(historical_coverage_summaries))::TEXT as text
+        FROM v3.coverage_v3_history_summary
+        WHERE contract='%s'
+    ),
+    coverage_periods_parsed AS (
+        SELECT
+        '%s' as contract,
+        split_part(translate(text, '[]', ''), ',', 1)::INT AS year,
+        split_part(translate(text, '[]', ''), ',', 2)::INT AS month
+        FROM coverage_periods_unparsed
+        ORDER BY year ASC, month ASC
+    )
+    
+    INSERT INTO v3.coverage_v3_history_summary_coverage_periods
+    SELECT * FROM coverage_periods_parsed
+    ON CONFLICT (contract, year, month)
+    DO NOTHING
+    """;
 
     @Transactional
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
+        val action = COPY_FROM_STAGING;
+        CoverageV3SyncResult result = null;
+
         if (isTestContract(contract)) {
             return NO_COVERAGE_FOUND_FOR_CONTRACT;
+        } else if (!isContractAttested(contract)) {
+            log.info("[V3] Contract {} is not attested; skipping staging copy", contract);
+            result = NO_COVERAGE_FOUND_FOR_CONTRACT;
+            audit.log(action, result, contract, "Contract is not attested", null);
+            return result;
         } else if (idrImporterInProgress()) {
-            return IDR_IMPORTER_IN_PROGRESS;
+            result = IDR_IMPORTER_IN_PROGRESS;
+            audit.log(action, result, contract, null, null);
+            return result;
         } else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
-            return JOB_IN_PROGRESS_FOR_CONTRACT;
+            result = JOB_IN_PROGRESS_FOR_CONTRACT;
+            audit.log(action, result, contract, null, null);
+            return result;
         }
 
         val rowsInStaging = executeTimedQuery(
@@ -129,18 +214,25 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             () -> getCoveragePeriodCountForCoverageV3Staging(contract)
         );
         log.info("[V3] Found {} rows in staging table for contract {}", rowsInStaging, contract);
+
         if (rowsInStaging == 0) {
-            return NO_COVERAGE_FOUND_FOR_CONTRACT;
+            result = NO_COVERAGE_FOUND_FOR_CONTRACT;
+            audit.log(action, result, contract, null, Map.of("rowsInStaging", 0));
+            return result;
+        } else {
+            audit.log(action, null, contract, null, Map.of("rowsInStaging", rowsInStaging));
         }
 
-        val lock = lockWrapper.getCoverageLock(contract);
+        val lock = recentCoverageLock.getCoverageLock(contract);
         val locked = lock.tryLock();
         try {
             if (locked) {
                 return copyFromStagingToRecentCoverageTable(contract, rowsInStaging);
             } else {
+                result = UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT;
                 log.info("[V3] Unable to acquire lock for contract {}", contract);
-                return UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT;
+                audit.log(action, result, contract, null, null);
+                return result;
             }
         } finally {
             if (locked) {
@@ -150,11 +242,15 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     }
 
     private CoverageV3SyncResult copyFromStagingToRecentCoverageTable(final String contract, final int rowsInStaging) {
+        val action = COPY_FROM_STAGING;
+        CoverageV3SyncResult result = null;
+
         val rowsInCoverageBeforeCopy = executeTimedQuery(
                 format("[V3] getCoveragePeriodCountForCoverageV3 contract=%s", contract),
                 () -> getCoveragePeriodCountForCoverageV3(contract)
         );
         log.info("Found {} rows in coverage table for contract {}", rowsInCoverageBeforeCopy, contract);
+        audit.log(action, null, contract, null, Map.of("rowsInCoverageBeforeCopy", rowsInCoverageBeforeCopy));
 
         log.info("[V3] Preparing to delete rows in coverage table for contract {}...", contract);
         val rowsInCoverageDeleted = executeTimedQuery(
@@ -162,6 +258,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                 () -> deleteFromCoverageAndGetRowsDeleted(contract)
         );
         log.info("[V3] Deleted {} rows in coverage table for contract {}", rowsInCoverageDeleted, contract);
+        audit.log(action, null, contract, null, Map.of("rowsInCoverageDeleted", rowsInCoverageDeleted));
 
         log.info("[V3] Preparing to copy rows from staging to coverage for contract {}...", contract);
         val rowsInserted = executeTimedQuery(
@@ -169,12 +266,14 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                 () -> copyFromStagingToCoverage(contract)
         );
         log.info("[V3] Copied {} rows from staging to coverage for contract {}", rowsInserted, contract);
+        audit.log(action, null, contract, null, Map.of("rowsInserted", rowsInserted));
 
         val rowsInCoverageAfterCopy = executeTimedQuery(
                 format("[V3] getCoveragePeriodCountForCoverageV3 contract=%s", contract),
                 () -> getCoveragePeriodCountForCoverageV3(contract)
         );
         log.info("[V3] Coverage table now contains {} rows for contract {}", rowsInCoverageAfterCopy, contract);
+        audit.log(action, null, contract, null, Map.of("rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
 
         if (rowsInStaging != rowsInCoverageAfterCopy) {
             log.error("[V3] Row count in staging ({}) != row count in coverage ({}) for contract {}",
@@ -182,7 +281,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                     rowsInCoverageBeforeCopy,
                     contract
             );
-            return SYNC_FAILED_FOR_CONTRACT;
+            result = SYNC_FAILED_FOR_CONTRACT;
+            audit.log(action, result, contract, "rowsInStaging does not match rowsInCoverageBeforeCopy", Map.of("rowsInStaging", rowsInStaging, "rowsInCoverageBeforeCopy", rowsInCoverageBeforeCopy));
+            return result;
         }
 
         log.info("[V3] Preparing to delete rows in staging for contract {}", contract);
@@ -190,6 +291,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                 format("[V3] deleteFromStagingAndGetRowsDeleted contract=%s", contract),
                 () -> deleteFromStagingAndGetRowsDeleted(contract)
         );
+        audit.log(action, result, contract, null, Map.of("rowsInStagingDeleted", rowsInStagingDeleted));
 
         if (!rowsInStagingDeleted.equals(rowsInCoverageAfterCopy)) {
             log.error("[V3] Row count deleted from staging ({}) != row count in coverage ({}) for contract {}",
@@ -197,41 +299,79 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                     rowsInCoverageAfterCopy,
                     contract
             );
-            return SYNC_FAILED_FOR_CONTRACT;
+            result = SYNC_FAILED_FOR_CONTRACT;
+            audit.log(action, result, contract, "rowsInStagingDeleted does not match rowsInCoverageAfterCopy",
+                    Map.of("rowsInStagingDeleted", rowsInStagingDeleted, "rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
+            return result;
         }
 
         log.info("[V3] Coverage data successfully copied from staging table for contract {}", contract);
-        return SYNC_SUCCESSFUL_FOR_CONTRACT;
+        result = SYNC_SUCCESSFUL_FOR_CONTRACT;
+        audit.log(action, result, contract, null, Map.of("rowsInStagingDeleted", rowsInStagingDeleted, "rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
+        return result;
     }
 
-    @Transactional
+    // Set query timeout of 1 hour, otherwise large contracts may cause org.springframework.dao.QueryTimeoutException
+    @Transactional(timeout=3600)
     public CoverageV3SyncResult moveToHistorical(String contract, CoverageV3SyncSource source) {
+        val action = COPY_TO_HISTORICAL;
+        CoverageV3SyncResult result = null;
+
         if (isTestContract(contract)) {
-            return NO_COVERAGE_FOUND_FOR_CONTRACT;
+            result = NO_COVERAGE_FOUND_FOR_CONTRACT;
+            return result;
         } else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
-            return JOB_IN_PROGRESS_FOR_CONTRACT;
+            result = JOB_IN_PROGRESS_FOR_CONTRACT;
+            audit.log(action, result, contract, null, null);
+            return result;
         }
 
-        val lock = lockWrapper.getCoverageLock(contract);
+        val lock = historicalCoverageLock.getCoverageLock(contract);
         val locked = lock.tryLock();
         try {
             if (locked) {
                 int rowsMoved = moveToHistoricalInternal(contract);
                 log.info("[V3] Moved {} rows to historical coverage table for contract {}", rowsMoved, contract);
                 if (rowsMoved == 0) {
+                    // skip audit logging to prevent noise - this operation would only copy records > 0 once a month
                     return NO_COVERAGE_FOUND_FOR_CONTRACT;
+                } else {
+                    audit.log(action, null, contract, null, Map.of("rowsMoved", rowsMoved));
+
+                    try {
+                        populateHistorySummaryForContract(contract);
+                        audit.log(action, null, contract, "Populated history summary table", null);
+                    } catch (Exception e) {
+                        audit.log(action, null, contract, "Failed to populate history summary table", null);
+                        throw e;
+                    }
+
+                    try {
+                        populateHistorySummaryCoveragePeriodsForContract(contract);
+                        audit.log(action, null, contract, "Populated history summary coverage period table", null);
+                    } catch (Exception e) {
+                        audit.log(action, null, contract, "Failed to populate history summary coverage period table", null);
+                        throw e;
+                    }
+
                 }
                 int rowsDeleted = deleteMonthsOldCoverage(contract);
                 log.info("[V3] Deleted {} rows from recent coverage table for contract {}", rowsDeleted, contract);
 
                 if (rowsDeleted != rowsMoved) {
-                    return SYNC_FAILED_FOR_CONTRACT;
+                    result = SYNC_FAILED_FOR_CONTRACT;
+                    audit.log(action, result, contract, "rowsDeleted does not match rowsMoved", Map.of("rowsDeleted", rowsDeleted, "rowsMoved", rowsMoved));
+                    return result;
                 } else {
-                    return SYNC_SUCCESSFUL_FOR_CONTRACT;
+                    result = SYNC_SUCCESSFUL_FOR_CONTRACT;
+                    audit.log(action, result, contract, null, Map.of("rowsDeleted", rowsDeleted, "rowsMoved", rowsMoved));
+                    return result;
                 }
             } else {
                 log.info("[V3] Unable to acquire lock for contract {}", contract);
-                return UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT;
+                result = UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT;
+                audit.log(action, result, contract, null, null);
+                return result;
             }
         } finally {
             if (locked) {
@@ -240,18 +380,19 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         }
     }
 
-
-
+    @Override
     public List<String> getContractsInRecentCoverageTable() {
         val template = new JdbcTemplate(this.dataSource);
         return template.queryForList(GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE, String.class);
     }
 
+    @Override
     public List<String> getContractsInCoverageStagingTable() {
         val template = new JdbcTemplate(this.dataSource);
         return template.queryForList(GET_CONTRACTS_WITH_COVERAGE_IN_STAGING, String.class);
     }
 
+    @Override
     public List<String> getContractsWithActiveV3Jobs() {
         val template = new JdbcTemplate(this.dataSource);
         return template.queryForList(GET_CONTRACTS_WITH_ACTIVE_V3_JOBS, String.class);
@@ -297,6 +438,14 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return DataAccessUtils.intResult(template.queryForList(query, parameters, Integer.class));
     }
 
+    void populateHistorySummaryForContract(String contract) {
+        val parameters = new MapSqlParameterSource().addValue("contract", contract);
+        val template = new NamedParameterJdbcTemplate(dataSource);
+        template.update(DELETE_HISTORY_SUMMARY_FOR_CONTRACT, parameters);
+        int rowsInserted = template.update(INSERT_HISTORY_SUMMARY_FOR_CONTRACT, parameters);
+        log.info("[V3] Inserted {} rows into coverage_v3_history_summary for contract {}", rowsInserted, contract);
+    }
+
     boolean isTestContract(String contract) {
         return contract.toUpperCase(Locale.ROOT).startsWith("Z");
     }
@@ -305,11 +454,40 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return getContractsWithActiveV3Jobs().contains(contract);
     }
 
-    boolean idrImporterInProgress() {
-        val idrImporterStatus = propertiesService.getProperty(IDR_IMPORTER_STATUS_PROPERTY, "");
-        return IDR_IMPORTER_STATUS_IN_PROGRESS.equals(idrImporterStatus);
+    boolean isContractAttested(String contract) {
+        val parameters = new MapSqlParameterSource().addValue("contract", contract);
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+        Integer count = DataAccessUtils.intResult(template.queryForList(IS_CONTRACT_ATTESTED, parameters, Integer.class));
+        return count != null && count > 0;
     }
 
+    @Override
+    public boolean idrImporterInProgress() {
+        val idrImporterStatus = propertiesService.getProperty(V3_IDR_IMPORTER_STATUS, "");
+        return V3_IDR_IMPORTER_STATUS_IN_PROGRESS.equals(idrImporterStatus);
+    }
 
+    @Override
+    @Transactional
+    public int deleteInactiveContractsFromHistorySummary() {
+        val cutoff = CUT_OFF_DATE_FOR_INACTIVE_CONTRACT.get();
+        val parameters = new MapSqlParameterSource().addValue("cutoff", cutoff);
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+
+        List<String> inactiveContracts = template.queryForList(GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY, parameters, String.class);
+        log.info("[V3] Inactive contracts to be purged from history summary ({}): {}", inactiveContracts.size(), inactiveContracts);
+
+        List<String> deletedContracts = template.queryForList(DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY, parameters, String.class);
+        log.info("[V3] Deleted {} rows from coverage_v3_history_summary for unattested contracts or contracts ended > 2 years ago", deletedContracts.size());
+        audit.log(CoverageV3AuditAction.DELETE_INACTIVE_CONTACTS, null, null, null, Map.of("deletedContracts", deletedContracts));
+        return deletedContracts.size();
+    }
+
+    void populateHistorySummaryCoveragePeriodsForContract(String contract) {
+        val template = new JdbcTemplate(this.dataSource);
+        // Note: Using String.format here because MessageFormat.format requires escaping all string literals
+        val query = POPULATE_HISTORY_SUMMARY_COVERAGE_PERIODS_FOR_CONTRACT.formatted(contract, contract);
+        template.execute(query);
+    }
 
 }

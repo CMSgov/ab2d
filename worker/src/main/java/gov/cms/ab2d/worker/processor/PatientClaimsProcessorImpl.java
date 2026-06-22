@@ -1,12 +1,14 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.parser.IParser;
-import com.newrelic.api.agent.Token;
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.util.DatadogSpans;
+import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.query.BfdMetricsUtility;
 import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.BeneficiarySearchEvent;
@@ -26,15 +28,15 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -43,16 +45,25 @@ import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 import static gov.cms.ab2d.common.util.PropertyConstants.EOB_V3_IN_PLACE;
-import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_EOB;
-import static gov.cms.ab2d.worker.processor.BfdRequestTracking.BfdRequestType.REQUEST_NEXT_BUNDLE;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
-    // Set to false by default to prevent excess logging; enable explicitly for testing
-    public static final boolean TIME_BFD_REQUESTS = false;
+    /**
+     * If true, proceed to check if 'bfd.metrics.enabled' is enabled in the properties table for each request
+     * If false, skip query to properties table
+     *
+     * Note: Will likely be removed after DataDog migration (?)
+     */
+    private static final boolean ENABLE_BFD_METRICS = true;
+
+    /**
+     * FHIR search prefix for an inclusive ("greater than or equal") lower bound used when defaulting the
+     * service-date filter to the contract's attestation date.
+     */
+    private static final String SERVICE_DATE_GE_PREFIX = "ge";
 
     // Null when the JVM does not support per-thread allocation tracking
     private static final com.sun.management.ThreadMXBean THREAD_BEAN;
@@ -73,6 +84,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final SQSEventClient logManager;
     private final SearchConfig searchConfig;
     private final PropertiesService propertiesService;
+    private final DataSource dataSource;
 
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
@@ -87,8 +99,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     @Async("patientProcessorThreadPool")
     public Future<ProgressTrackerUpdate> process(PatientClaimsRequest request) {
         ProgressTrackerUpdate update = new ProgressTrackerUpdate();
-        final Token token = request.getToken();
-        token.link();
         FhirVersion fhirVersion = request.getVersion();
         try {
             String anyErrors = writeOutData(request, fhirVersion, update);
@@ -96,18 +106,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 writeOutErrors(anyErrors, request);
             }
         } catch (Exception ex) {
+            DatadogSpans.markError(ex);
             return AsyncResult.forExecutionException(ex);
-        } finally {
-            token.expire();
         }
         return AsyncResult.forValue(update);
     }
 
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
-        val bfdRequestTracking = TIME_BFD_REQUESTS
-                ? new BfdRequestTracking(request.getJob())
-                : BfdRequestTracking.NOOP;
-
         boolean useInPlace   = propertiesService.isToggleOn(EOB_V3_IN_PLACE, false);
         long    allocBefore  = threadAllocBytes();
         long[]  gcBefore     = gcSnapshot();
@@ -120,13 +125,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             file = stream.getFile();
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             for (CoverageSummary patient : request.getCoverageSummary()) {
-                List<IBaseResource> eobs = getEobBundleResources(request, patient, bfdRequestTracking);
+                List<IBaseResource> eobs = getEobBundleResources(request, patient);
                 anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
                 update.incPatientProcessCount();
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
-            bfdRequestTracking.summarizeResponseTimes();
         }
 
         long   elapsedMs        = (System.nanoTime() - nsBefore) / 1_000_000;
@@ -161,7 +165,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    @Trace(metricName = "EOBWriteToFile", dispatcher = true)
+    @Trace(operationName = "ab2d.eob.write_to_file")
     private String writeOutResource(FhirVersion version, ProgressTrackerUpdate update, List<IBaseResource> eobs, ClaimsStream stream) {
         IParser parser = version.getJsonParser().setPrettyPrint(false);
         if (eobs == null) {
@@ -171,6 +175,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (eobs.isEmpty()) {
             return null;
         }
+
         int eobsWritten = 0;
         int eobsError = 0;
 
@@ -210,13 +215,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * @return list of matching claims after filtering claims not meeting requirements and stripping fields that AB2D
      * cannot provide
      */
-    @Trace(metricName = "EOBRequest", dispatcher = true)
+    @Trace(operationName = "ab2d.eob.request")
     private List<IBaseResource> getEobBundleResources(
             PatientClaimsRequest request,
-            CoverageSummary patient,
-            BfdRequestTracking bfdRequestTracking
+            CoverageSummary patient
     ) {
         OffsetDateTime requestStartTime = OffsetDateTime.now();
+        DatadogSpans.setTag("contract", request.getContractNum());
+        DatadogSpans.setTag("organization", request.getOrganization());
+        DatadogSpans.setTag("component", "eob");
 
         Date earliestDate = getEarliestDataDate();
 
@@ -233,8 +240,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Guarantee that since and until dates provided with job don't violate AB2D requirements
         OffsetDateTime sinceTime = getSinceTime(request);
         OffsetDateTime untilTime = getUntilTime(request, sinceTime);
-        List<String> serviceDates = request.getServiceDates();
+        List<String> serviceDates = getServiceDates(request);
 
+        final BfdMetricsUtility.BfdRequestMetric bfdMetric = bfdMetricsEnabled()
+            ? new BfdMetricsUtility.BfdRequestMetric()
+            : null;
 
         try {
 
@@ -242,22 +252,28 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdRequestTracking.executeRequest(
-                REQUEST_EOB,
-                () -> bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum())
-            );
-            collector.filterAndAddEntries(eobBundle, patient);
+            if (bfdMetric != null) {
+                eobBundle = callBfdForEob(request, patientIdentifier, sinceTime, untilTime, serviceDates, bfdMetric);
+            } else {
+                eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+            }
+
+            if (bfdMetric == null) {
+                collector.filterAndAddEntries(eobBundle, patient);
+            } else {
+                val filterStart = System.nanoTime();
+                collector.filterAndAddEntries(eobBundle, patient);
+                val filterEnd = System.nanoTime();
+                val filterTimeNs = (filterEnd - filterStart);
+                bfdMetric.setFilterNs(filterTimeNs);
+            }
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
-                val currentEobBundle = eobBundle;
-                eobBundle = bfdRequestTracking.executeRequest(
-                    REQUEST_NEXT_BUNDLE,
-                    () -> bfdClient.requestNextBundleFromServer(request.getVersion(), currentEobBundle, request.getContractNum())
-                );
+                eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
 
-            // Log request to Kinesis and NewRelic
+            // Log request to Kinesis
             logSuccessful(request, patientIdentifier, requestStartTime);
 
             collector.logBundleEvent(sinceTime, untilTime);
@@ -274,11 +290,79 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         .build());
             }
             logError(request, patientIdentifier, requestStartTime, ex);
+            DatadogSpans.markError(ex);
             throw ex;
         } finally {
+            try {
+                if (bfdMetric != null) {
+                    val metricsUtility = new BfdMetricsUtility(dataSource);
+                    metricsUtility.addMetric(request.getJob(), bfdMetric);
+                }
+            } catch (Exception e) {
+                log.error("Error writing metrics for job " + request.getJob(), e);
+            }
+
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
     }
+
+    @Trace(operationName = "ab2d.bfd.call")
+    private IBaseBundle callBfdForEob(
+            PatientClaimsRequest request,
+            long patientIdentifier,
+            OffsetDateTime sinceTime,
+            OffsetDateTime untilTime,
+            List<String> serviceDates,
+            BfdMetricsUtility.BfdRequestMetric bfdMetric
+    ) {
+        val bfdStart = System.nanoTime();
+        final byte[] response = bfdClient.requestEOBFromServerRaw(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+        val bfdEnd = System.nanoTime();
+        final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
+        val parseBundleEnd = System.nanoTime();
+
+        populateMetric(bfdStart, bfdEnd, parseBundleEnd, response.length, request.getVersion(), bundle, bfdMetric);
+        return bundle;
+    }
+
+    private boolean bfdMetricsEnabled() {
+        if (!ENABLE_BFD_METRICS) {
+            return false;
+        }
+        return propertiesService.isToggleOn(PropertyConstants.BFD_METRICS_ENABLED, false);
+    }
+
+    // populate everything except filter execution time
+    private static void populateMetric(
+            long bfdStart, long bfdEnd, long parseBundleEnd, long responseBytesSize,
+            FhirVersion version, IBaseBundle bundle, BfdMetricsUtility.BfdRequestMetric bfdMetric) {
+
+        int bundleCount = -1;
+	    try {
+            switch (version) {
+                case STU3:
+                    org.hl7.fhir.dstu3.model.Bundle dstu3Bundle = (org.hl7.fhir.dstu3.model.Bundle) bundle;
+                    bundleCount = dstu3Bundle.getEntry().size();
+                    break;
+                case R4:
+                case R4V3:
+                    org.hl7.fhir.r4.model.Bundle r4Bundle = (org.hl7.fhir.r4.model.Bundle) bundle;
+                    bundleCount = r4Bundle.getEntry().size();
+                    break;
+            }
+        } catch (Exception e) {
+            log.error("Error calculating bundle count", e);
+        }
+
+        val bfdResponseNs = (bfdEnd - bfdStart);
+        val parseBundleNs = (parseBundleEnd - bfdEnd);
+
+        bfdMetric.setResponseNs(bfdResponseNs);
+        bfdMetric.setParseBundleNs(parseBundleNs);
+        bfdMetric.setBundleCount(bundleCount);
+        bfdMetric.setNumBytes(responseBytesSize);
+    }
+
 
     /**
      * Determine what since date to use if any.
@@ -310,6 +394,21 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
 
         return sinceTime;
+    }
+
+    private List<String> getServiceDates(PatientClaimsRequest request) {
+        List<String> serviceDates = request.getServiceDates();
+
+        if (serviceDates != null && !serviceDates.isEmpty()) {
+            return serviceDates;
+        }
+
+        // No service-date provided: default the lower bound to the (inclusive) attestation date
+        OffsetDateTime attTime = request.getAttTime();
+        if (attTime == null) {
+            return serviceDates;
+        }
+        return List.of(SERVICE_DATE_GE_PREFIX + attTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
     }
 
     private OffsetDateTime getUntilTime(PatientClaimsRequest request, OffsetDateTime updatedSinceTime) {

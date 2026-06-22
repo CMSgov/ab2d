@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.coverage.service.v3.CoverageV3LockWrapper;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -37,9 +36,6 @@ class JobHandlerTest {
     @Mock
     private CoverageV3Service coverageV3Service;
 
-    @Mock
-    private CoverageV3LockWrapper coverageV3LockWrapper;
-    
     @DisplayName("Job is not started if worker is set to neutral")
     @Test
     void processingNotTriggeredInNeutral() {
@@ -47,7 +43,7 @@ class JobHandlerTest {
         ReentrantLock lock = new ReentrantLock();
         when(workerService.getEngagement()).thenReturn(FeatureEngagement.NEUTRAL);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
@@ -70,7 +66,7 @@ class JobHandlerTest {
         ReentrantLock lock = new ReentrantLock();
         when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
 
         List<Map<String, Object>> payload = List.of();
 
@@ -95,7 +91,7 @@ class JobHandlerTest {
         when(lockRegistry.obtain(anyString())).thenReturn(lock);
         when(workerService.process(anyString())).thenReturn(submittedJob);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
@@ -122,7 +118,7 @@ class JobHandlerTest {
         when(lockRegistry.obtain(anyString())).thenReturn(lock);
         when(workerService.process(anyString())).thenThrow(ResourceNotFoundException.class);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
@@ -156,7 +152,7 @@ class JobHandlerTest {
 
         when(workerService.process(anyString())).thenReturn(submittedJob, submittedJob, startedJob, startedJob);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service, coverageV3LockWrapper);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
 
         Map<String, Object> first = new HashMap<>() {{
             put("job_uuid", "first job id");

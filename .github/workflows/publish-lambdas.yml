@@ -34,12 +34,12 @@ jobs:
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+      - uses: actions/setup-java@v5
         with:
-          distribution: adopt
-          java-version: '17'
-      - uses: aws-actions/configure-aws-credentials@v4
+          distribution: temurin
+          java-version: '25'
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: >-
@@ -65,13 +65,13 @@ jobs:
           ldconfig -p | grep "zlib" || echo "zlib is missing!"
 
       - name: Build Lambdas
-        run: ./gradlew -b build.gradle
+        run: ./gradlew
 
       - name: Test Lambdas
-        run: ./gradlew clean test --info -b build.gradle
+        run: ./gradlew clean test --info
 
       - name: Build Jars
-        run: ./gradlew buildZip --info -b build.gradle
+        run: ./gradlew buildZip --info
 
       - name: SonarQube Analysis
         if: ${{ inputs.run_sonar == true }}
@@ -90,13 +90,12 @@ jobs:
         timeout-minutes: 10
       - name: Publish Lambdas
         id: publish_lambdas
-        run: >
+        run: |
           echo "Checking for unpublished artifacts..."
 
           DEPLOY_SCRIPT=""
 
-          VERSION_PUBLISHED_LIST=$(./gradlew -q lookForArtifacts |  tr "'''"
-          "\n")
+          VERSION_PUBLISHED_LIST=$(./gradlew -q lookForArtifacts | tr "'''" "\n")
 
           while IFS= read -r line; do
             ARTIFACTORY_INFO=($(echo $line | tr ":" "\n"))
@@ -108,7 +107,7 @@ jobs:
 
           if [[ -n "$DEPLOY_SCRIPT" ]]; then
             echo "Publishing: $DEPLOY_SCRIPT"
-            ./gradlew $DEPLOY_SCRIPT -b build.gradle \
+            ./gradlew $DEPLOY_SCRIPT \
               -Dusername="${ARTIFACTORY_USER}" \
               -Dpassword="${ARTIFACTORY_PASSWORD}" \
               -Drepository_url="${ARTIFACTORY_URL}"
@@ -116,8 +115,7 @@ jobs:
             echo "No new artifacts to publish."
           fi
 
-          BUILD_VERSION=$(./gradlew properties -q | grep "version:" | awk
-          '{print $2}')
+          BUILD_VERSION=$(./gradlew properties -q | grep "version:" | awk '{print $2}')
 
           echo "Build version: $BUILD_VERSION"
 
@@ -125,4 +123,4 @@ jobs:
 
       - name: SBOM
         run: |
-          ./gradlew cyclonedxBom --info -b build.gradle
+          ./gradlew cyclonedxBom --info
