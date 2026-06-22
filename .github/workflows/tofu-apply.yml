@@ -160,6 +160,7 @@ jobs:
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           tofu plan -var=release_version=${{ inputs.lambda_version }} -out=tfplan
+          tofu apply -input=false tfplan
       - name: tofu apply - worker
         working-directory: ops/services/30-worker/
         run: |
