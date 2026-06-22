@@ -29,7 +29,7 @@ on:
         default: ""
         type: string
       lambda_version:
-        description: Lambda version
+        description: Lambda version - optional, but must be provided to run tofu plan/apply
         default: ""
         type: string
   workflow_dispatch:
@@ -64,7 +64,7 @@ on:
         default: ""
         type: string
       lambda_version:
-        description: Lambda version
+        description: Lambda version - optional, but must be provided to run tofu plan/apply
         default: ""
         type: string
 
