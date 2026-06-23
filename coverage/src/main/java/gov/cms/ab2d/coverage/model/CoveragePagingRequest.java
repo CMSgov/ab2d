@@ -25,7 +25,6 @@ public class CoveragePagingRequest {
      *
      * Internal beneficiary id that last page ended on {@link Identifiers#getBeneficiaryId()}
      */
-    @ToString.Exclude
     private final Long cursor;
 
     private final boolean isV3;

@@ -150,32 +150,4 @@ public class JobHandler implements MessageHandler {
 
     }
 
-    private String getContractNumber(Map<String, Object> submittedJob) {
-        return String.valueOf(submittedJob.get("contract_number"));
-    }
-
-    private FhirVersion getFhirVersion(Map<String, Object> submittedJob) {
-        return FhirVersion.valueOf(String.valueOf(submittedJob.get("fhir_version")));
-    }
-
-    private boolean trySyncCoverageV3(Map<String, Object> submittedJob) throws InterruptedException {
-        val fhirVersion = getFhirVersion(submittedJob);
-        if (fhirVersion != FhirVersion.R4V3) {
-            return true;
-        }
-
-        val contract = getContractNumber(submittedJob);
-        coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, JOB_HANDLER);
-        val result = coverageV3Service.moveFromStagingToRecentCoverage(contract, JOB_HANDLER);
-        if (result == CoverageV3SyncResult.SYNC_SUCCESSFUL_FOR_CONTRACT ||
-            result == CoverageV3SyncResult.NO_COVERAGE_FOUND_FOR_CONTRACT ||
-            result == CoverageV3SyncResult.IDR_IMPORTER_IN_PROGRESS) {
-            return true;
-        }
-
-        log.error("trySyncCoverageV3 failed with result {}", result);
-        return false;
-
-    }
-
 }

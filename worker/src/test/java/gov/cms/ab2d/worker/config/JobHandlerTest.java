@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.coverage.service.v3.CoverageV3LockWrapper;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -35,6 +36,9 @@ class JobHandlerTest {
 
     @Mock
     private CoverageV3Service coverageV3Service;
+
+    @Mock
+    private CoverageV3LockWrapper coverageV3LockWrapper;
 
     @DisplayName("Job is not started if worker is set to neutral")
     @Test

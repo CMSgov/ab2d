@@ -89,7 +89,7 @@ class AggregatorJobTest {
         SearchConfig searchConfig = new SearchConfig(tempDir.getAbsolutePath(), STREAMING,
                 FINISHED, 0, 0, 1, 2);
 
-        processor = new PatientClaimsProcessorImpl(bfdClient, logManager, searchConfig, propertiesService, dataSource);
+        processor = new PatientClaimsProcessorImpl(bfdClient, logManager, searchConfig, propertiesService,dataSource);
     }
 
     @Test
