@@ -21,7 +21,7 @@ on:
         default: ""
         type: string
       idr_db_importer_image_tag:
-        description: ECR image tag for idr-db-importer service
+        description: ECR image tag for idr-db-importer service - temporarily ignored for production environment
         default: ""
         type: string
       worker_image_tag:
@@ -57,7 +57,7 @@ on:
         default: ""
         type: string
       idr_db_importer_image_tag:
-        description: ECR image tag for idr-db-importer service
+        description: ECR image tag for idr-db-importer service - temporarily ignored for production environment
         default: ""
         type: string
       worker_image_tag:
