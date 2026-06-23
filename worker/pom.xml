@@ -126,16 +126,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Kept at compile scope until the source migration (separate ticket) removes the
-             runtime com.newrelic.api.agent.* calls (e.g. Insights.recordCustomEvent, Transaction
-             tokens). Dropping it from the fat jar now would cause NoClassDefFoundError at runtime
-             once the New Relic agent is no longer attached. -->
-        <dependency>
-            <groupId>com.newrelic.agent.java</groupId>
-            <artifactId>newrelic-api</artifactId>
-            <version>${newrelic.version}</version>
-        </dependency>
-
         <!-- DogStatsD client for emitting Datadog custom metrics. -->
         <dependency>
             <groupId>com.datadoghq</groupId>

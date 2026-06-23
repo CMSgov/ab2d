@@ -70,15 +70,13 @@ locals {
   max_concurrent_eob_jobs    = "2"
   worker_desired_instances   = 1
 
-  ab2d_db_host              = data.aws_rds_cluster.this.endpoint
-  db_name_arn               = nonsensitive(module.platform.ssm.core.database_name.arn)
-  db_password_arn           = nonsensitive(module.platform.ssm.core.database_password.arn)
-  db_username_arn           = nonsensitive(module.platform.ssm.core.database_user.arn)
-  contracts_url             = module.platform.ssm.contracts.url.value
-  new_relic_app_name        = module.platform.ssm.common.new_relic_app_name.value
-  new_relic_license_key_arn = nonsensitive(module.platform.ssm.common.new_relic_license_key.arn)
-  slack_alert_webhooks_arn  = nonsensitive(module.platform.ssm.common.slack_alert_webhooks.arn)
-  slack_trace_webhooks_arn  = nonsensitive(module.platform.ssm.common.slack_trace_webhooks.arn)
+  ab2d_db_host             = data.aws_rds_cluster.this.endpoint
+  db_name_arn              = nonsensitive(module.platform.ssm.core.database_name.arn)
+  db_password_arn          = nonsensitive(module.platform.ssm.core.database_password.arn)
+  db_username_arn          = nonsensitive(module.platform.ssm.core.database_user.arn)
+  contracts_url            = module.platform.ssm.contracts.url.value
+  slack_alert_webhooks_arn = nonsensitive(module.platform.ssm.common.slack_alert_webhooks.arn)
+  slack_trace_webhooks_arn = nonsensitive(module.platform.ssm.common.slack_trace_webhooks.arn)
 
   # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
   worker_image_repo = split("@", data.aws_ecr_image.worker.image_uri)[0]
@@ -156,7 +154,6 @@ module "service" {
     { name = "AWS_SQS_URL", value = data.aws_sqs_queue.events.url },
     { name = "AWS_SNS_TOPIC_PREFIX", value = "ab2d-${local.parent_env}" },
     { name = "IMAGE_VERSION", value = local.worker_image_tag },
-    { name = "NEW_RELIC_APP_NAME", value = local.new_relic_app_name },
     { name = "MICROSERVICES_URL", value = local.contracts_url }
   ]
 
@@ -169,8 +166,7 @@ module "service" {
     { name = "AB2D_DB_PASSWORD", valueFrom = local.db_password_arn },
     { name = "AB2D_DB_USER", valueFrom = local.db_username_arn },
     { name = "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom = local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
-    { name = "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom = local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
-    { name = "NEW_RELIC_LICENSE_KEY", valueFrom = local.new_relic_license_key_arn }     #FIXME: Is this even used?
+    { name = "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom = local.slack_trace_webhooks_arn }  #FIXME: Is this even used?
   ]
 
   mount_points = [
@@ -181,11 +177,6 @@ module "service" {
     {
       "containerPath" = "/tmp",
       "sourceVolume"  = "tmp",
-      "readOnly"      = false
-    },
-    {
-      "containerPath" = "/newrelic/logs",
-      "sourceVolume"  = "newrelic_logs",
       "readOnly"      = false
     },
     {
@@ -209,9 +200,6 @@ module "service" {
     },
     {
       name = "tmp"
-    },
-    {
-      name = "newrelic_logs"
     },
     {
       name = "var_logs"
