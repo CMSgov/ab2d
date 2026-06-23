@@ -70,8 +70,6 @@ locals {
   kms_master_key_id            = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   microservices_url            = lookup(module.platform.ssm.microservices, "url", { value : "none" }).value
   network_access_logs_bucket   = module.platform.splunk_logging_bucket.bucket
-  new_relic_app_name           = module.platform.ssm.common.new_relic_app_name.value
-  new_relic_license_key_arn    = nonsensitive(module.platform.ssm.common.new_relic_license_key.arn)
   private_subnet_ids           = keys(module.platform.private_subnets)
   public_subnet_ids            = keys(module.platform.public_subnets)
   slack_alert_webhooks_arn     = nonsensitive(module.platform.ssm.common.slack_alert_webhooks.arn)
@@ -269,7 +267,6 @@ module "service" {
     { name = "AB2D_V3_ENABLED", value = "true" },
     { name = "AWS_SQS_FEATURE_FLAG", value = "true" },
     { name = "AWS_SQS_URL", value = data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
-    { name = "NEW_RELIC_APP_NAME", value = local.new_relic_app_name },
     { name = "MICROSERVICES_URL", value = local.microservices_url },
   ]
   container_secrets = [
@@ -284,7 +281,6 @@ module "service" {
     { name = "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom = local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
     { name = "HPMS_AUTH_KEY_ID", valueFrom = local.hpms_auth_key_id_arn },              #FIXME: Is this even used?
     { name = "HPMS_AUTH_KEY_SECRET", valueFrom = local.hpms_auth_key_secret_arn },      #FIXME: Is this even used?
-    { name = "NEW_RELIC_LICENSE_KEY", valueFrom = local.new_relic_license_key_arn },    #FIXME: Is this even used?
   ]
   mount_points = [
     {
@@ -294,10 +290,6 @@ module "service" {
     {
       "containerPath" = "/tmp",
       "sourceVolume"  = "tmp",
-    },
-    {
-      "containerPath" = "/newrelic/logs",
-      "sourceVolume"  = "newrelic_logs",
     },
     {
       "containerPath" = "/var/log",
@@ -318,9 +310,6 @@ module "service" {
     },
     {
       name = "tmp"
-    },
-    {
-      name = "newrelic_logs"
     },
     {
       name = "var_log"

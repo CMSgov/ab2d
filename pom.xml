@@ -34,7 +34,6 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>9.0</logback-encoder.version>
         <testcontainers.version>1.21.4</testcontainers.version>
-        <newrelic.version>8.22.0</newrelic.version>
         <dd.java.agent.version>1.63.0</dd.java.agent.version>
         <dd-trace-api.version>1.63.0</dd-trace-api.version>
         <dogstatsd-client.version>4.4.5</dogstatsd-client.version>

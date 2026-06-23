@@ -12,9 +12,6 @@ API_URL="https://localhost:${API_PORT:-8443}"
 MOCK_URL="http://localhost:9999"
 
 export API_PORT="${API_PORT:-8443}"
-# will be empty for local
-export NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY:-}"
-export NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME:-local}"
 export AB2D_KEYSTORE_LOCATION="${AB2D_KEYSTORE_LOCATION:-}"
 export AB2D_KEYSTORE_PASSWORD="${AB2D_KEYSTORE_PASSWORD:-}"
 export AB2D_KEY_ALIAS="${AB2D_KEY_ALIAS:-}"
