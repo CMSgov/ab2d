@@ -143,6 +143,7 @@ jobs:
           tofu plan ${{ inputs.api_image_tag != '' && format('{0}{1}', '-var=api_service_image_tag=', inputs.api_image_tag) || '-var=api_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan
       - name: tofu plan - idr-db-importer
+        if: ${{ inputs.environment != 'prod' }}
         working-directory: ops/services/30-idr-db-importer/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure

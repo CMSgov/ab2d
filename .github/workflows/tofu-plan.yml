@@ -138,6 +138,7 @@ jobs:
           export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-api --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[?name != 'datadog-agent'].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.api_image_tag != '' && format('{0}{1}', '-var=api_service_image_tag=', inputs.api_image_tag) || '-var=api_service_image_tag="$ACTIVE_IMAGE_TAG"' }}
       - name: tofu plan - idr-db-importer
+        if: ${{ inputs.environment != 'prod' }}
         working-directory: ops/services/30-idr-db-importer/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
