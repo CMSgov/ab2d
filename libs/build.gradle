@@ -37,16 +37,16 @@ ext {
 
     commonsLangVersion='3.18.0'
     lombokVersion = '1.18.38'
-    springBootVersion='4.0.6'
+    springBootVersion='4.0.7'
     springCloudAwsVersion='4.0.0'
     hapiVersion = '8.8.0'
     ddTraceApiVersion='1.63.0'
     testContainerVersion='1.21.4'
     mockServerVersion='5.15.0'
     liquibaseVersion="5.0.0"
-    jacksonVersion = "2.20.0"
+    jacksonVersion = "2.21.2"
     slackAPIVersion='1.35.0'
-    hl7Version = '6.9.7'
+    hl7Version = '6.9.10'
 
 }
 
@@ -150,12 +150,39 @@ subprojects {
     group 'gov.cms.ab2d'
 
     dependencies {
+        implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
         implementation(platform("org.liquibase:liquibase-core:$liquibaseVersion"))
         implementation(platform("org.testcontainers:testcontainers:$testContainerVersion"))
         implementation(platform("org.testcontainers:postgresql:$testContainerVersion"))
         implementation(platform("org.testcontainers:junit-jupiter:$testContainerVersion"))
         implementation(platform("org.testcontainers:localstack:$testContainerVersion"))
         implementation(platform(annotationProcessor("org.projectlombok:lombok:$lombokVersion")))
+
+        // constrain packages not managed by springboot
+        constraints {
+            implementation('com.github.jnr:jnr-posix:3.1.8')
+            implementation('io.opentelemetry:opentelemetry-api:1.62.0')
+            implementation('commons-beanutils:commons-beanutils:1.11.0')
+            implementation('org.springframework.retry:spring-retry:2.0.13')
+            implementation('org.bouncycastle:bcprov-jdk18on:1.84')
+            implementation('org.bouncycastle:bcpkix-jdk18on:1.84')
+            implementation('com.nimbusds:nimbus-jose-jwt:9.37.4')
+            implementation('org.mozilla:rhino:1.8.1')
+            implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
+            implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+            implementation("ca.uhn.hapi.fhir:org.hl7.fhir.utilities:$hl7Version")
+            implementation("ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:$hl7Version")
+            implementation("ca.uhn.hapi.fhir:org.hl7.fhir.r4:$hl7Version")
+        }
+    }
+
+    // special downstream cases, these cannot be constrained normally
+    configurations.all {
+        resolutionStrategy.force(
+            'org.apache.commons:commons-lang3:3.18.0',
+            'commons-beanutils:commons-beanutils:1.11.0',
+            'org.apache.httpcomponents.core5:httpcore5-h2:5.3.6'
+        )
     }
 
     processResources {
