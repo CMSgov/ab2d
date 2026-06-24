@@ -41,6 +41,7 @@ data "aws_iam_policy_document" "worker" {
     sid    = "SQSAccess"
     effect = "Allow"
     actions = [
+      "sqs:SendMessage",
       "sqs:ReceiveMessage",
       "sqs:DeleteMessage",
       "sqs:ChangeMessageVisibility",

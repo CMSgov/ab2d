@@ -21,13 +21,18 @@ on:
         default: ""
         type: string
       idr_db_importer_image_tag:
-        description: ECR image tag for idr-db-importer service
+        description: ECR image tag for idr-db-importer service - temporarily ignored for production environment
         default: ""
         type: string
       worker_image_tag:
         description: ECR image tag for worker service
         default: ""
         type: string
+      lambda_version:
+        description: Lambda version - optional, but must be provided to run tofu plan
+        default: ""
+        type: string
+
   workflow_dispatch:
     inputs:
       environment:
@@ -52,11 +57,15 @@ on:
         default: ""
         type: string
       idr_db_importer_image_tag:
-        description: ECR image tag for idr-db-importer service
+        description: ECR image tag for idr-db-importer service - temporarily ignored for production environment
         default: ""
         type: string
       worker_image_tag:
         description: ECR image tag for worker service
+        default: ""
+        type: string
+      lambda_version:
+        description: Lambda version - optional, but must be provided to run tofu plan
         default: ""
         type: string
 
@@ -129,6 +138,7 @@ jobs:
           export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-api --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[?name != 'datadog-agent'].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.api_image_tag != '' && format('{0}{1}', '-var=api_service_image_tag=', inputs.api_image_tag) || '-var=api_service_image_tag="$ACTIVE_IMAGE_TAG"' }}
       - name: tofu plan - idr-db-importer
+        if: ${{ inputs.environment != 'prod' }}
         working-directory: ops/services/30-idr-db-importer/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
@@ -137,11 +147,12 @@ jobs:
           export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[?name != 'datadog-agent'].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.idr_db_importer_image_tag != '' && format('{0}{1}', '-var=image_tag=', inputs.idr_db_importer_image_tag) || '-var=image_tag="$ACTIVE_IMAGE_TAG"' }}
       - name: tofu plan - lambda
+        if: ${{ inputs.lambda_version != '' }}
         working-directory: ops/services/30-lambda/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan
+          tofu plan -var=release_version=${{ inputs.lambda_version }}
       - name: tofu plan - worker
         working-directory: ops/services/30-worker/
         run: |
