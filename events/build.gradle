@@ -29,6 +29,8 @@ allprojects {
     apply plugin: 'org.springframework.boot'
     dependencies {
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+        // spring boot 4 uses an older version, so just pin the one we want here
+        testImplementation enforcedPlatform("org.testcontainers:testcontainers-bom:${testContainerVersion}")
         implementation "com.squareup.okhttp3:okhttp:5.0.0"
         implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
         runtimeOnly "org.springframework.boot:spring-boot-properties-migrator:${springBootVersion}"
