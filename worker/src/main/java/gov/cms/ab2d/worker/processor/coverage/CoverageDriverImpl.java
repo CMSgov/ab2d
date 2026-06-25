@@ -12,6 +12,7 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
 import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.snsclient.messages.AB2DServices;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
 import gov.cms.ab2d.worker.processor.coverage.check.v3.CoverageV3CoveragePeriodsPresentCheck;
@@ -27,6 +28,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
@@ -140,9 +142,13 @@ public class CoverageDriverImpl implements CoverageDriver {
                     log.info("Attempting to add {}-{}-{} to queue", period.getContractNumber(),
                             period.getYear(), period.getMonth());
                 }
-                //commented out, needs to be moved elsewhere due to do timeout
-                //Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
-                //coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
+                Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
+
+                // Sending coverage counts runs a heavy aggregate query and publishes to SNS. It is invoked
+                // asynchronously (see CoverageSnapshotServiceImpl#sendCoverageCounts) so that it does not block
+                // queueing of stale coverage periods while the coverage lock is held, which previously caused
+                // the lock acquisition to time out.
+                coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
                 for (CoveragePeriod period : outOfDateInfo) {
                     coverageProcessor.queueCoveragePeriod(period, false);
                 }
