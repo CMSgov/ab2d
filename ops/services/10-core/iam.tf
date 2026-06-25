@@ -238,6 +238,12 @@ resource "aws_iam_role_policy_attachment" "idr_db_importer_task_execution" {
   policy_arn = aws_iam_policy.idr_db_importer_task_execution.arn
 }
 
+
+resource "aws_iam_role_policy_attachment" "idr_kms" {
+  role       = aws_iam_role.idr_db_importer_task_execution.name
+  policy_arn = aws_iam_policy.kms_key_access.arn
+}
+
 resource "aws_iam_role" "idr_db_importer_task" {
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
   name                 = "${local.service_prefix}-idr-db-importer-task"
