@@ -19,7 +19,7 @@ ext {
     liquibaseVersion='5.0.0'
     jacksonVersion='2.21.2'
     testContainerVersion='1.21.4'
-    eventClientVersion='3.3.14'
+    eventClientVersion='3.3.15'
     lombokVersion = '1.18.38'
     commonsLangVersion='3.18.0'
 }
