@@ -2,7 +2,6 @@ package gov.cms.ab2d.e2etest;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.fhir.FhirVersion;
-import gov.cms.ab2d.filter.EOBLoadUtilities;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Attachment;
@@ -21,6 +20,9 @@ import org.hl7.fhir.r4.model.Reference;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -29,6 +31,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -113,6 +116,21 @@ class ExplanationOfBenefitTrimmerEquivalenceTest {
     }
 
     /**
+     * Loads an EOB fixture from the test classpath. Uses this test's own classloader (not the
+     * thread context classloader) so it resolves reliably across runners, and fails loudly with the
+     * offending path if the resource is missing rather than yielding a null EOB downstream.
+     */
+    private static ExplanationOfBenefit loadFixture(String resourcePath) {
+        try (InputStream is =
+                     ExplanationOfBenefitTrimmerEquivalenceTest.class.getClassLoader().getResourceAsStream(resourcePath)) {
+            assertNotNull(is, "Fixture not found on test classpath: " + resourcePath);
+            return FHIR_CONTEXT.newJsonParser().parseResource(ExplanationOfBenefit.class, is);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read fixture: " + resourcePath, e);
+        }
+    }
+
+    /**
      * All inputs to exercise: every R4/R4V3 fixture (including the richer {@code *-R4v3} variants)
      * plus programmatically-built EOBs covering branches the static fixtures do not reliably hit.
      */
@@ -136,7 +154,7 @@ class ExplanationOfBenefitTrimmerEquivalenceTest {
                 "eobdata/EOB-for-1-R4v3.json",
                 "eobdata/EOB-for-2-R4v3.json",
                 "eobdata/EOB-for-3-R4v3.json")) {
-            inputs.put(path, () -> EOBLoadUtilities.getR4EOBFromFileInClassPath(path));
+            inputs.put(path, () -> loadFixture(path));
         }
 
         inputs.put("built: mixed careTeam and contained providers",
