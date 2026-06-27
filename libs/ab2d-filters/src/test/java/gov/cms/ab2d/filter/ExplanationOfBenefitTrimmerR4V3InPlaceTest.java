@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -375,20 +376,21 @@ class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
         eob.setType(new CodeableConcept().setText("type"));
         eob.setSubType(new CodeableConcept().setText("subtype"));
         eob.setBillablePeriod(new Period().setStart(new java.util.Date()));
-        eob.setInsurance(List.of(
+        // Mutable lists mirror real parsed EOBs; getBenefitInPlace prunes these in place
+        eob.setInsurance(new ArrayList<>(List.of(
                 new ExplanationOfBenefit.InsuranceComponent()
                         .setCoverage(new Reference("coverage"))
-                        .setFocal(true)));
+                        .setFocal(true))));
         eob.setIdentifier(List.of(new Identifier().setValue("id1")));
         eob.setDiagnosis(List.of(new ExplanationOfBenefit.DiagnosisComponent().setSequence(1)));
         eob.setProcedure(List.of(new ExplanationOfBenefit.ProcedureComponent().setSequence(1)));
 
         String drgSystem = "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType";
         String msDrgSystem = "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software";
-        eob.setSupportingInfo(List.of(
+        eob.setSupportingInfo(new ArrayList<>(List.of(
                 new ExplanationOfBenefit.SupportingInformationComponent()
                         .setCategory(new CodeableConcept().addCoding(new Coding().setSystem(drgSystem).setCode("drg")))
-                        .setCode(new CodeableConcept().addCoding(new Coding().setSystem(msDrgSystem).setCode("123")))));
+                        .setCode(new CodeableConcept().addCoding(new Coding().setSystem(msDrgSystem).setCode("123"))))));
 
         ExplanationOfBenefit.ItemComponent item = new ExplanationOfBenefit.ItemComponent()
                 .setSequence(3)
@@ -402,13 +404,13 @@ class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
         attending.setId("careteam-attending");
         attending.addIdentifier().setSystem("http://hl7.org/fhir/sid/us-npi").setValue("npi-1");
 
-        eob.setContained(List.of(attending));
-        eob.setCareTeam(List.of(
+        eob.setContained(new ArrayList<>(List.of(attending)));
+        eob.setCareTeam(new ArrayList<>(List.of(
                 new ExplanationOfBenefit.CareTeamComponent()
                         .setSequence(1)
                         .setRole(new CodeableConcept().addCoding(
                                 new Coding().setSystem("http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole").setCode("attending")))
-                        .setProvider(new Reference("#careteam-attending"))));
+                        .setProvider(new Reference("#careteam-attending")))));
 
         return eob;
     }

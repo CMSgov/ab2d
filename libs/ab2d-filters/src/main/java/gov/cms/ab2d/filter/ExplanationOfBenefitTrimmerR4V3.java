@@ -7,9 +7,11 @@ import org.hl7.fhir.r4.model.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -195,9 +197,11 @@ public class ExplanationOfBenefitTrimmerR4V3 {
 
     /**
      * Mutates the given ExplanationOfBenefit in-place, removing unauthorized fields and
-     * filtering contained/careTeam/supportingInfo/insurance without allocating new copies
-     * of each sub-object. Functionally equivalent to {@link #getBenefit(IBaseResource)} but
-     * with significantly fewer object allocations and no GC pressure from .copy() calls.
+     * filtering contained/careTeam/supportingInfo/insurance without copying the resource or
+     * its sub-objects. The existing HAPI-backed lists are pruned with {@code removeIf} and
+     * insurance entries are trimmed field-by-field, so no new collections or component
+     * objects are allocated. Functionally equivalent to {@link #getBenefit(IBaseResource)}
+     * but with no GC pressure from .copy() calls.
      *
      * @param resource - the original ExplanationOfBenefit (will be mutated directly)
      * @return the same instance, sanitized
@@ -206,54 +210,28 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         if (resource == null) return null;
         ExplanationOfBenefit benefit = (ExplanationOfBenefit) resource;
 
-        // Compute all filtered collections before mutating, since lookups depend on original contained
-        List<ExplanationOfBenefit.CareTeamComponent> filteredCareTeam = getCareTeamsByRoleCodes(benefit, roleCodes);
-
         // Build lookup map once — avoids O(N×M) repeated linear scans of the contained list
         Map<String, Resource> containedById = new HashMap<>(benefit.getContained().size() * 2);
         for (Resource r : benefit.getContained()) {
             if (r.getIdPart() != null) containedById.put(r.getIdPart(), r);
         }
 
-        // Single pass: collect contained resources satisfying either criterion; ArrayList dedup via contains (list is typically ≤ 5 items)
-        List<Resource> filteredContained = new ArrayList<>();
-        for (ExplanationOfBenefit.CareTeamComponent ct : filteredCareTeam) {
-            if (!ct.hasProvider() || !ct.getProvider().hasReference()) continue;
+
+        Set<Resource> containedToKeep = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (ExplanationOfBenefit.CareTeamComponent ct : benefit.getCareTeam()) {
+            if (!matchesRoleCode(ct) || !ct.hasProvider() || !ct.getProvider().hasReference()) continue;
             String ref = ct.getProvider().getReference();
             String id = ref.startsWith("#") ? ref.substring(1) : ref;
             Resource r = containedById.get(id);
-            if (r == null || filteredContained.contains(r)) continue;
-
-            boolean hasNpi = false;
-            for (Identifier ident : extractIdentifiers(r)) {
-                if (NPI_SYSTEM.equals(ident.getSystem())) { hasNpi = true; break; }
-            }
-
-            boolean hasRenderingExt = false;
-            if (!hasNpi && r instanceof DomainResource dr) {
-                for (Extension ext : dr.getExtension()) {
-                    if (RENDERING_EXT_URLS.contains(ext.getUrl())
-                            && ext.getValue() instanceof CodeableConcept cc) {
-                        for (Coding coding : cc.getCoding()) {
-                            if (coding.hasCode()) { hasRenderingExt = true; break; }
-                        }
-                        if (hasRenderingExt) break;
-                    }
-                }
-            }
-
-            if (hasNpi || hasRenderingExt) filteredContained.add(r);
+            if (r == null || containedToKeep.contains(r)) continue;
+            if (hasNpiIdentifier(r) || hasRenderingExtension(r)) containedToKeep.add(r);
         }
 
-        List<ExplanationOfBenefit.SupportingInformationComponent> filteredSupportingInfo =
-                filterSupportingInfo(benefit.getSupportingInfo());
-
-        List<ExplanationOfBenefit.InsuranceComponent> filteredInsurance = buildInsuranceInPlace(benefit);
-
-        benefit.setContained(filteredContained);
-        benefit.setSupportingInfo(filteredSupportingInfo);
-        benefit.setCareTeam(filteredCareTeam);
-        benefit.setInsurance(filteredInsurance);
+        // Prune the original lists in place — no new collections allocated
+        benefit.getContained().removeIf(r -> !containedToKeep.contains(r));
+        benefit.getCareTeam().removeIf(ct -> !matchesRoleCode(ct));
+        benefit.getSupportingInfo().removeIf(si -> !(matchesNlRecord(si) || matchesDrg(si)));
+        trimInsuranceInPlace(benefit);
 
         for (String element : REMOVABLE_ELEMENTS) {
             clearElement(benefit, element);
@@ -265,6 +243,46 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         }
 
         return benefit;
+    }
+
+    private static boolean matchesRoleCode(ExplanationOfBenefit.CareTeamComponent ct) {
+        if (ct == null || ct.getRole() == null) return false;
+        for (Coding c : ct.getRole().getCoding()) {
+            if (c.hasCode() && roleCodes.contains(c.getCode())) return true;
+        }
+        return false;
+    }
+
+    private static boolean hasNpiIdentifier(Resource r) {
+        for (Identifier ident : extractIdentifiers(r)) {
+            if (NPI_SYSTEM.equals(ident.getSystem())) return true;
+        }
+        return false;
+    }
+
+    private static boolean hasRenderingExtension(Resource r) {
+        if (!(r instanceof DomainResource dr)) return false;
+        for (Extension ext : dr.getExtension()) {
+            if (RENDERING_EXT_URLS.contains(ext.getUrl()) && ext.getValue() instanceof CodeableConcept cc) {
+                for (Coding coding : cc.getCoding()) {
+                    if (coding.hasCode()) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Trim each insurance entry in place to keep only {@code focal} and {@code coverage},
+     * dropping the entry's id and (modifier)extensions without allocating new components.
+     */
+    private static void trimInsuranceInPlace(ExplanationOfBenefit benefit) {
+        benefit.getInsurance().removeIf(Objects::isNull);
+        for (ExplanationOfBenefit.InsuranceComponent ins : benefit.getInsurance()) {
+            ins.setId(null);
+            ins.setExtension(null);
+            ins.setModifierExtension(null);
+        }
     }
 
     /**
@@ -397,16 +415,6 @@ public class ExplanationOfBenefitTrimmerR4V3 {
             if (c != null && MS_DRG_SYSTEM.equals(c.getSystem()) && c.hasCode()) return true;
         }
         return false;
-    }
-
-    private static List<ExplanationOfBenefit.SupportingInformationComponent> filterSupportingInfo(
-            List<ExplanationOfBenefit.SupportingInformationComponent> supportingInfo) {
-        if (supportingInfo == null) return new ArrayList<>();
-        List<ExplanationOfBenefit.SupportingInformationComponent> result = new ArrayList<>();
-        for (ExplanationOfBenefit.SupportingInformationComponent si : supportingInfo) {
-            if (matchesNlRecord(si) || matchesDrg(si)) result.add(si);
-        }
-        return result;
     }
 
     /**
@@ -551,18 +559,6 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         return benefit.getContained().stream()
                 .filter(r -> containedId.equals(r.getIdPart()))
                 .findFirst();
-    }
-
-    private static List<ExplanationOfBenefit.InsuranceComponent> buildInsuranceInPlace(ExplanationOfBenefit benefit) {
-        List<ExplanationOfBenefit.InsuranceComponent> result = new ArrayList<>();
-        for (ExplanationOfBenefit.InsuranceComponent src : benefit.getInsurance()) {
-            if (src == null) continue;
-            ExplanationOfBenefit.InsuranceComponent dst = new ExplanationOfBenefit.InsuranceComponent();
-            dst.setCoverage(src.getCoverage());
-            dst.setFocal(src.getFocal());
-            result.add(dst);
-        }
-        return result;
     }
 
     private static List<ExplanationOfBenefit.InsuranceComponent> copyInsuranceWithFocalAndCoverage(ExplanationOfBenefit benefit) {
