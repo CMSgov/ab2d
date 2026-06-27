@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -202,6 +203,10 @@ class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
         assertFalse(result.hasDisposition(), "non-allowlisted element should be stripped in place");
     }
 
+    // Disabled in normal builds: this allocation/GC metric test runs tens of thousands of
+    // parse+trim iterations and takes too long (~5 min), dominating the build. Enable manually
+    // when validating allocation behavior.
+    @Disabled("Metrics test takes too long to run in normal builds")
     @Test
     void allocationCountNotWorseThanLegacy() {
         // Warm up
@@ -238,6 +243,10 @@ class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
      *
      * Prints per-op bytes, GC counts, and throughput. Fails if in-place allocates more than legacy.
      */
+    // Disabled in normal builds: this high-load allocation metric test runs 60k+ parse+trim
+    // iterations and takes too long to run as part of the regular suite. Enable manually when
+    // validating allocation behavior.
+    @Disabled("Metrics test takes too long to run in normal builds")
     @Test
     @Tag("allocation")
     void highLoadAllocationComparison() throws InterruptedException {
