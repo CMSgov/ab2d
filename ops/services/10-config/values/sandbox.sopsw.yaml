@@ -72,8 +72,8 @@
 /ab2d/${env}/core/sensitive/database_user: ENC[AES256_GCM,data:U+3s8zElxow=,iv:gge5jrImaJO8uxltyIJnOVmau8SVEabpSKWW2nBuju8=,tag:xnKgOmydgpGjv6uyTFV4Tw==,type:str]
 /ab2d/${env}/core/sensitive/hicn_hash_iter: ENC[AES256_GCM,data:vuXFbA==,iv:N/fQG9SEU1YmSKGF3obmLoSwyOcznLDWHnq/G0yXzjw=,tag:iraoBKkaQh+HSSqffetdAQ==,type:str]
 /ab2d/${env}/core/sensitive/hpms_api_params: ENC[AES256_GCM,data:go9/PEbOPa5RXWASH48QRBMLZmk819uauF4EnQ==,iv:Vc8YqrUY03shU5XbX9MqB8DfSwae5GEI1JcZ67f+WD0=,tag:mZjXbIbqVvmSm9POS6sh8w==,type:str]
-/ab2d/${env}/core/sensitive/hpms_auth_key_id: ENC[AES256_GCM,data:Z2UxH9VYDQ5SzXmD5jsKaX6fUvl4aGt9CE888V6TuS1xZXXO,iv:t8e5KxFlQs7Qa1/AT0ysljg4TczSbI7YSUUklyAZw04=,tag:5bTb+sye+ejTGNgxumOn5Q==,type:str]
-/ab2d/${env}/core/sensitive/hpms_auth_key_secret: ENC[AES256_GCM,data:r6KueFe33AZ4Nwkw9JkcyGWtgivGrx/59W1Z8fkdbpJgjmCBwUlwflIHMOJbinOVt0dlnUfch4CM2MQ1Sg3rAbzNBg+ZI17z/jcns3fAZJGLXX8F6tnEHg==,iv:/X5fyvNgV9eEq1RgmZPzYEYMV/uWfQv8EFwVRncSXGs=,tag:sW4wo2U6zHHdm7Z+XipW/Q==,type:str]
+/ab2d/${env}/core/sensitive/hpms_auth_key_id: ENC[AES256_GCM,data:Wd13JqiAibJBjbEE6WViV17XDaYHqhZqREQf7+i16Nn0we8b,iv:H0+TZWfiPyeAvuNjhSkC26/KZvpE4STfM5lgIvbdUKA=,tag:buSmq6Vl9d8pudl7jIK/MQ==,type:str]
+/ab2d/${env}/core/sensitive/hpms_auth_key_secret: ENC[AES256_GCM,data:zlnoH3BJhCrD/diucNCiCUWhCC2ZgnoXgu6AVTxzUm0bFEAdoul4VrlUjm/qaIN4dZ6gSEP3MJAKtEEUqFeUuDRut8IP9o9PW8Tmtp4CxOeJFY2A5aHAmw==,iv:R6H/G/vHJyY91pIFfIUzNoI4g7bGHt0teynJmahvNLc=,tag:0BORrZ2iU/wD8/coepZomA==,type:str]
 /ab2d/${env}/core/sensitive/hpms_url: ENC[AES256_GCM,data:wTt7Nm8iJuRxrRY+SESSUQIVNyI716WI,iv:mMvsSSD873MpF+aAzmogVGdb8edkp/8753V3zFwuK/A=,tag:7Sux6VlZSBezctw0UlS63g==,type:str]
 /ab2d/${env}/core/sensitive/okta_jwt_issuer: ENC[AES256_GCM,data:haKLfkOUCV3LpVP3SZ8itg746juG5Cec/zJku5/dXPa+6ABLvvpiaOhr48oRl7e2u7YHmqTvciE=,iv:lzWRrD+vk2iMI24HvARH59zBTGwg72i4OnP+BgnTLgU=,tag:aNJNA5IV63cGqcx6EmJxCg==,type:str]
 /ab2d/${env}/worker/nonsensitive/bfd_keystore_location: /mnt/efs/bfd-keystore/sandbox/ab2d_sandbox_keystore
@@ -270,13 +270,13 @@
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/ab2d-sandbox
-      aws_profile: ""
       created_at: "2025-06-10T18:25:37Z"
       enc: AQICAHiZ4WiGk/DtFENC01xNOBbq998ASzrUNStr3vnFqU8m3wEpLHZ92sM82cg9zmHA74/EAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMdwRi4RDZbP7seN0KAgEQgDulm4PGEd2oOhf47TXGHK2kbFLj4d9OoDS0TcvLKhkA6xGkhSCXX6Gmvud4E9ExcfJfdu1d7QI70iR9NA==
-    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/ab2d-sandbox
       aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/ab2d-sandbox
       created_at: "2025-06-10T18:25:37Z"
       enc: AQICAHjY2WLHzeN2Xwccx6XYrRtiwLsLEQb45qjQlWy2ggwPZgHidASSjkUTQ3ZDNWK0ypNLAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMlJ4W0weQVhHaO2FQAgEQgDu/rVyZA84Y3XJFCqN9or+jqcMotFavycT1FBp74lIII99S1SoES79KV68MIzQMCX3p+TDu+FfKPxn+/w==
-  mac_only_encrypted: true
+      aws_profile: ""
   unencrypted_regex: /nonsensitive/
+  mac_only_encrypted: true
   version: 3.13.1
