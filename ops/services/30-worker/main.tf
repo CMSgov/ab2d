@@ -154,7 +154,10 @@ module "service" {
     { name = "AWS_SQS_URL", value = data.aws_sqs_queue.events.url },
     { name = "AWS_SNS_TOPIC_PREFIX", value = "ab2d-${local.parent_env}" },
     { name = "IMAGE_VERSION", value = local.worker_image_tag },
-    { name = "MICROSERVICES_URL", value = local.contracts_url }
+    { name = "MICROSERVICES_URL", value = local.contracts_url },
+    { name = "DD_DYNAMIC_INSTRUMENTATION_ENABLED", value = "false" },
+    { name = "DD_EXCEPTION_REPLAY_ENABLED", value = "false" },
+    { name = "DD_CODE_ORIGIN_FOR_SPANS_ENABLED", value = "false" }
   ]
 
   container_secrets = [

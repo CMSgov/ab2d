@@ -268,6 +268,9 @@ module "service" {
     { name = "AWS_SQS_FEATURE_FLAG", value = "true" },
     { name = "AWS_SQS_URL", value = data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
     { name = "MICROSERVICES_URL", value = local.microservices_url },
+    { name = "DD_DYNAMIC_INSTRUMENTATION_ENABLED", value = "false" },
+    { name = "DD_EXCEPTION_REPLAY_ENABLED", value = "false" },
+    { name = "DD_CODE_ORIGIN_FOR_SPANS_ENABLED", value = "false" },
   ]
   container_secrets = [
     { name = "AB2D_DB_DATABASE", valueFrom = local.db_name_arn },
