@@ -53,4 +53,7 @@ public final class PropertyConstants {
 
     public static final String V3_AUDIT_LOGGING_ENABLED = "v3.audit-logging.enabled";
 
+    // prototype feature flag
+    public static final String PAUSE_RESUME_PROTOTYPE_ENABLED = "pause-resume.prototype.enabled";
+
 }

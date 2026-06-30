@@ -19,6 +19,7 @@ import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
+import gov.cms.ab2d.worker.processor.prototype.PrototypeJobProcessor;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ class WorkerServiceImplTest {
     ShutDownService shutDownService = mock(ShutDownService.class);
     PropertiesService propertiesService = mock(PropertiesService.class);
     CoverageV3Service coverageV3Service = mock(CoverageV3Service.class);
+    PrototypeJobProcessor prototypeJobProcessor = mock(PrototypeJobProcessor.class);
 
     Job job = new Job();
     job.setStatus(status);
@@ -40,7 +42,7 @@ class WorkerServiceImplTest {
 
     // assertDoesNotThrow is really the best we can do here... all the function does is log.
     assertDoesNotThrow(() -> {
-      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service);
+      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service, prototypeJobProcessor);
       workerServiceImpl.process("jobUuid");
     });
   }
@@ -52,9 +54,10 @@ class WorkerServiceImplTest {
     ShutDownService shutDownService = mock(ShutDownService.class);
     PropertiesService propertiesService = mock(PropertiesService.class);
     CoverageV3Service coverageV3Service = mock(CoverageV3Service.class);
+    PrototypeJobProcessor prototypeJobProcessor = mock(PrototypeJobProcessor.class);
 
 
-    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service);
+    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service, prototypeJobProcessor);
 
     // verify "resetInProgressJobs" wasn't called, because "activeJobs" is empty
     workerServiceImpl.resetInProgressJobs();

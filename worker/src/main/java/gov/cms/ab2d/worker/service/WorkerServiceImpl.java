@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
+import gov.cms.ab2d.worker.processor.prototype.PrototypeJobProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_ENABLED;
 import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 
 /**
@@ -32,6 +34,7 @@ public class WorkerServiceImpl implements WorkerService {
     private final ShutDownService shutDownService;
     private final PropertiesService propertiesService;
     private final CoverageV3Service coverageV3Service;
+    private final PrototypeJobProcessor prototypeJobProcessor;
 
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
@@ -40,6 +43,12 @@ public class WorkerServiceImpl implements WorkerService {
 
         activeJobs.add(jobUuid);
         try {
+            // when prototype pause/resume feature is enabled, reroute the entire job to the prototype
+            if (propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false)) {
+                log.info("{} routed to pause/resume prototype processor", jobUuid);
+                return prototypeJobProcessor.process(jobUuid);
+            }
+
             Job job = jobPreprocessor.preprocess(jobUuid);
 
             if (job.getStatus() == JobStatus.IN_PROGRESS) {
