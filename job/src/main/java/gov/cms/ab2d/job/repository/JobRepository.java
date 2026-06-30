@@ -14,7 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-@Repository
+// Spring batch also defines a bean with name "JobRepository", so we give this repo
+// a unique name.
+// All injection of this repository is by type, so the bean name is otherwise irrelevant
+@Repository("ab2dJobRepository")
 public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Modifying
