@@ -8,7 +8,7 @@ dependencies {
     implementation "ca.uhn.hapi.fhir:hapi-fhir-client:${hapiVersion}"
     implementation "ca.uhn.hapi.fhir:hapi-fhir-structures-dstu3:${hapiVersion}"
     implementation "ca.uhn.hapi.fhir:hapi-fhir-structures-r4:${hapiVersion}"
-    implementation "org.springframework.retry:spring-retry:2.0.8"
+    implementation "org.springframework.retry:spring-retry:2.0.13"
     implementation "com.datadoghq:dd-trace-api:${ddTraceApiVersion}"
     testImplementation "org.testcontainers:testcontainers:${testContainerVersion}"
     testImplementation "org.testcontainers:postgresql:${testContainerVersion}"

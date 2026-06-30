@@ -4,7 +4,7 @@ plugins {
     id "org.sonarqube" version "7.3.0.8198"
     id 'org.cyclonedx.bom' version '3.0.0' apply true
 }
-version = "1.1.7"
+version = "1.1.8"
 group = "gov.cms.ab2d"
 
 dependencies {
@@ -72,6 +72,20 @@ subprojects {
 
     dependencies {
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.9.2'
+        // transitive dependencies
+        implementation platform("io.netty:netty-bom:4.2.15.Final")
+    }
+    // transitive dependencies for all configs
+    configurations.all {
+        resolutionStrategy.force(
+            'commons-beanutils:commons-beanutils:1.11.0',
+            'org.apache.commons:commons-lang3:3.18.0',
+            'org.apache.commons:commons-compress:1.28.0',
+            'org.apache.httpcomponents.core5:httpcore5-h2:5.3.6',
+            'org.springframework.retry:spring-retry:2.0.13',
+            'com.fasterxml.jackson.core:jackson-core:2.21.2',
+            'com.fasterxml.jackson.core:jackson-databind:2.21.2'
+        )
     }
     ext {
         //override this in subprojects using ext.set("zipName", '{new value}')
