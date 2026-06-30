@@ -1,7 +1,7 @@
 package gov.cms.ab2d.eventclient.events;
 
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import org.springframework.http.HttpStatus;
