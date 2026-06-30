@@ -69,7 +69,7 @@ public class FileDownloadCommon {
             if (requestedEncoding == GZIP_COMPRESSED) {
                 response.setHeader("Content-Encoding", Constants.GZIP_ENCODING);
             }
-            final String fileDownloadName = getSwaggerDownloadFilename(downloadResource);
+            final String fileDownloadName = sanitizeFilename(getSwaggerDownloadFilename(downloadResource));
             response.setHeader("Content-Disposition", "inline; swaggerDownload=\"attachment\"; filename=\"" + fileDownloadName + "\"");
 
             // write to response stream, compressing or decompressing file contents depending on 'Accept-Encoding' header
