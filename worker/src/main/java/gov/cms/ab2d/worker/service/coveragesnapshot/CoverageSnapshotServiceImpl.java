@@ -44,9 +44,11 @@ public class CoverageSnapshotServiceImpl implements CoverageSnapshotService {
      * <p>
      * This runs a heavy aggregate query ({@link CoverageService#countBeneficiariesForContracts}) and is therefore
      * executed asynchronously so that callers (notably the coverage driver, which holds the coverage lock while
-     * queueing staxle coverage periods) are not blocked. All exceptions are swallowed to protect the calling flow.
+     * queueing stale coverage periods) are not blocked. It is dispatched on the dedicated, hard-capped
+     * {@code coverageCountsExecutor} pool (see {@code WorkerConfig}) rather than the default executor so it can
+     * never spawn unbounded threads. All exceptions are swallowed to protect the calling flow.
      */
-    @Async
+    @Async("coverageCountsExecutor")
     @Override
     public void sendCoverageCounts(AB2DServices services, Set<String> contracts) {
 
