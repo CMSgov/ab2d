@@ -17,6 +17,7 @@ import org.springframework.batch.core.listener.ChunkListener;
 import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.infrastructure.item.ItemStreamWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -50,7 +51,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
     private final BeneficiaryItemReader beneficiaryItemReader;
     private final EobItemProcessor eobItemProcessor;
-    private final NdjsonItemWriter ndjsonItemWriter;
+    private final ItemStreamWriter<List<IBaseResource>> ndjsonItemWriter;
 
     public PrototypeJobProcessorImpl(
             JobRepository jobRepository,
@@ -60,7 +61,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             CoverageV3Service coverageV3Service,
             BeneficiaryItemReader beneficiaryItemReader,
             EobItemProcessor eobItemProcessor,
-            NdjsonItemWriter ndjsonItemWriter,
+            ItemStreamWriter<List<IBaseResource>> ndjsonItemWriter,
             @Value("${eob.job.patient.queue.page.size}") int pageSize,
             @Value("${pause-resume.prototype.chunk-size:100}") int chunkSize) {
         this.jobRepository = jobRepository;
