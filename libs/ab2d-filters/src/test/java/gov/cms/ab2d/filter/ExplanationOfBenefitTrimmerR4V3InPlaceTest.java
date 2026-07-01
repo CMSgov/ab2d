@@ -1,26 +1,16 @@
 package gov.cms.ab2d.filter;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
 
@@ -201,155 +191,6 @@ class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
                 (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefitInPlace(eob);
 
         assertFalse(result.hasDisposition(), "non-allowlisted element should be stripped in place");
-    }
-
-    // Disabled in normal builds: this allocation/GC metric test runs tens of thousands of
-    // parse+trim iterations and takes too long (~5 min), dominating the build. Enable manually
-    // when validating allocation behavior.
-    @Disabled("Metrics test takes too long to run in normal builds")
-    @Test
-    void allocationCountNotWorseThanLegacy() {
-        // Warm up
-        for (int i = 0; i < 1000; i++) {
-            IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Inpatient-R4V3.json");
-            ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
-        }
-        for (int i = 0; i < 1000; i++) {
-            IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Inpatient-R4V3.json");
-            ExplanationOfBenefitTrimmerR4V3.getBenefitInPlace(eob);
-        }
-
-        long gcBefore = totalGcCount();
-        for (int i = 0; i < 10_000; i++) {
-            IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Inpatient-R4V3.json");
-            ExplanationOfBenefitTrimmerR4V3.getBenefit(eob);
-        }
-        long legacyGc = totalGcCount() - gcBefore;
-
-        gcBefore = totalGcCount();
-        for (int i = 0; i < 10_000; i++) {
-            IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-Inpatient-R4V3.json");
-            ExplanationOfBenefitTrimmerR4V3.getBenefitInPlace(eob);
-        }
-        long inPlaceGc = totalGcCount() - gcBefore;
-
-        assertTrue(inPlaceGc <= legacyGc,
-                "In-place GC count (%d) must not exceed legacy GC count (%d)".formatted(inPlaceGc, legacyGc));
-    }
-
-    /**
-     * High-load allocation comparison: measures thread-local bytes allocated by the legacy
-     * copy-based path vs the in-place mutation path across all claim types.
-     *
-     * Prints per-op bytes, GC counts, and throughput. Fails if in-place allocates more than legacy.
-     */
-    // Disabled in normal builds: this high-load allocation metric test runs 60k+ parse+trim
-    // iterations and takes too long to run as part of the regular suite. Enable manually when
-    // validating allocation behavior.
-    @Disabled("Metrics test takes too long to run in normal builds")
-    @Test
-    @Tag("allocation")
-    void highLoadAllocationComparison() throws InterruptedException {
-        final int WARMUP = 3_000;
-        final int ITERATIONS = 30_000;
-        final String[] FIXTURES = {
-            "eobdata/EOB-for-Inpatient-R4V3.json",
-            "eobdata/EOB-for-HHA-R4.json",
-            "eobdata/EOB-for-Hospice-R4.json",
-            "eobdata/EOB-for-Outpatient-R4.json",
-            "eobdata/EOB-for-SNF-R4.json",
-            "eobdata/EOB-for-Carrier-R4.json",
-            "eobdata/EOB-for-DME-R4.json"
-        };
-
-        String[] rawJsons = loadFixtureJsons(FIXTURES);
-        IParser parser = FHIR_CONTEXT.newJsonParser();
-
-        com.sun.management.ThreadMXBean threadBean =
-                (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
-        assumeTrue(threadBean.isThreadAllocatedMemorySupported(),
-                "Thread allocated memory tracking not supported on this JVM");
-        assumeTrue(threadBean.isThreadAllocatedMemoryEnabled(),
-                "Thread allocated memory tracking not enabled on this JVM");
-        long threadId = Thread.currentThread().getId();
-
-        // Warm up both paths to JIT steady state
-        for (int i = 0; i < WARMUP; i++) {
-            String json = rawJsons[i % rawJsons.length];
-            ExplanationOfBenefitTrimmerR4V3.getBenefit(parser.parseResource(json));
-            ExplanationOfBenefitTrimmerR4V3.getBenefitInPlace(parser.parseResource(json));
-        }
-
-        System.gc();
-        Thread.sleep(200);
-
-        // --- Measure legacy (copy-based) ---
-        long gcBefore    = totalGcCount();
-        long allocBefore = threadBean.getThreadAllocatedBytes(threadId);
-        long nsBefore    = System.nanoTime();
-
-        for (int i = 0; i < ITERATIONS; i++) {
-            ExplanationOfBenefitTrimmerR4V3.getBenefit(
-                    parser.parseResource(rawJsons[i % rawJsons.length]));
-        }
-
-        long legacyNs    = System.nanoTime() - nsBefore;
-        long legacyBytes = threadBean.getThreadAllocatedBytes(threadId) - allocBefore;
-        long legacyGcs   = totalGcCount() - gcBefore;
-
-        System.gc();
-        Thread.sleep(200);
-
-        // --- Measure in-place (mutation-based) ---
-        gcBefore    = totalGcCount();
-        allocBefore = threadBean.getThreadAllocatedBytes(threadId);
-        nsBefore    = System.nanoTime();
-
-        for (int i = 0; i < ITERATIONS; i++) {
-            ExplanationOfBenefitTrimmerR4V3.getBenefitInPlace(
-                    parser.parseResource(rawJsons[i % rawJsons.length]));
-        }
-
-        long inPlaceNs    = System.nanoTime() - nsBefore;
-        long inPlaceBytes = threadBean.getThreadAllocatedBytes(threadId) - allocBefore;
-        long inPlaceGcs   = totalGcCount() - gcBefore;
-
-        double savedPct = 100.0 * (legacyBytes - inPlaceBytes) / legacyBytes;
-
-        System.out.printf(
-                "%n=== EOB Trimmer High-Load Allocation Report (%,d iterations) ===%n" +
-                "Legacy  : %,15d bytes | %,10.0f bytes/op | GCs: %2d | %.2f µs/op%n" +
-                "In-Place: %,15d bytes | %,10.0f bytes/op | GCs: %2d | %.2f µs/op%n" +
-                "Saved   : %,.0f bytes/op  (%.1f%% reduction in allocations)%n",
-                ITERATIONS,
-                legacyBytes,  (double) legacyBytes  / ITERATIONS, legacyGcs,  legacyNs  / 1e3 / ITERATIONS,
-                inPlaceBytes, (double) inPlaceBytes  / ITERATIONS, inPlaceGcs, inPlaceNs / 1e3 / ITERATIONS,
-                (double) (legacyBytes - inPlaceBytes) / ITERATIONS, savedPct);
-
-        assertTrue(inPlaceBytes < legacyBytes,
-                "In-place must allocate fewer bytes than legacy. " +
-                "Legacy: %,d bytes, In-place: %,d bytes".formatted(legacyBytes, inPlaceBytes));
-    }
-
-    private static String[] loadFixtureJsons(String[] paths) {
-        return Arrays.stream(paths)
-                .map(path -> {
-                    try (InputStream is = ExplanationOfBenefitTrimmerR4V3InPlaceTest.class
-                            .getClassLoader().getResourceAsStream(path)) {
-                        if (is == null) throw new IllegalStateException("Resource not found: " + path);
-                        return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                    } catch (IOException e) {
-                        throw new RuntimeException("Failed to load fixture: " + path, e);
-                    }
-                })
-                .toArray(String[]::new);
-    }
-
-    private static long totalGcCount() {
-        return ManagementFactory.getGarbageCollectorMXBeans().stream()
-                .mapToLong(GarbageCollectorMXBean::getCollectionCount)
-                .filter(c -> c >= 0)
-                .sum();
     }
 
     private static ExplanationOfBenefit buildFullEob() {
