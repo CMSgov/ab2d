@@ -6,8 +6,14 @@ import org.hl7.fhir.r4.model.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -140,6 +146,37 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     );
 
     /**
+     * ALLOWLIST of the ExplanationOfBenefit top-level element names that AB2D shares with
+     * Part D providers
+     */
+    static final Set<String> KEPT_ELEMENTS = Set.of(
+            // inherited (Resource / DomainResource)
+            "id", "meta", "implicitRules", "language", "text", "contained",
+            // ExplanationOfBenefit
+            "identifier", "type", "subType", "status", "use", "outcome",
+            "patient", "facility", "provider", "billablePeriod",
+            "careTeam", "supportingInfo", "diagnosis", "procedure", "item", "insurance"
+    );
+
+    /**
+     * The set of top-level element names that the in-place trimmer must REMOVE, computed once from
+     * the allowlist
+     */
+    static final List<String> REMOVABLE_ELEMENTS = computeRemovableElements();
+
+    private static List<String> computeRemovableElements() {
+        Set<String> removable = new LinkedHashSet<>();
+        // Generic HAPI navigation of every declared element on the resource.
+        for (Property property : new ExplanationOfBenefit().children()) {
+            String name = property.getName();
+            if (!KEPT_ELEMENTS.contains(name)) {
+                removable.add(name);
+            }
+        }
+        return List.copyOf(removable);
+    }
+
+    /**
      * Pass in an ExplanationOfBenefit, return the copy without the data
      *
      * @param resource - the original ExplanationOfBenefit
@@ -156,6 +193,96 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         cleanOutUnNeededData(newBenefit);
         // Return the sanitized data
         return newBenefit;
+    }
+
+    /**
+     * Mutates the given ExplanationOfBenefit in-place, removing unauthorized fields and
+     * filtering contained/careTeam/supportingInfo/insurance without copying the resource or
+     * its sub-objects. The existing HAPI-backed lists are pruned with {@code removeIf} and
+     * insurance entries are trimmed field-by-field, so no new collections or component
+     * objects are allocated. Functionally equivalent to {@link #getBenefit(IBaseResource)}
+     * but with no GC pressure from .copy() calls.
+     *
+     * @param resource - the original ExplanationOfBenefit (will be mutated directly)
+     * @return the same instance, sanitized
+     */
+    public static IBaseResource getBenefitInPlace(IBaseResource resource) {
+        if (resource == null) return null;
+        ExplanationOfBenefit benefit = (ExplanationOfBenefit) resource;
+
+        // Build lookup map once -- avoids O(NxM) repeated linear scans of the contained list
+        Map<String, Resource> containedById = new HashMap<>(benefit.getContained().size() * 2);
+        for (Resource r : benefit.getContained()) {
+            if (r.getIdPart() != null) containedById.put(r.getIdPart(), r);
+        }
+
+
+        Set<Resource> containedToKeep = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (ExplanationOfBenefit.CareTeamComponent ct : benefit.getCareTeam()) {
+            if (!matchesRoleCode(ct) || !ct.hasProvider() || !ct.getProvider().hasReference()) continue;
+            String ref = ct.getProvider().getReference();
+            String id = ref.startsWith("#") ? ref.substring(1) : ref;
+            Resource r = containedById.get(id);
+            if (r == null || containedToKeep.contains(r)) continue;
+            if (hasNpiIdentifier(r) || hasRenderingExtension(r)) containedToKeep.add(r);
+        }
+
+        // Prune the original lists in place -- no new collections allocated
+        benefit.getContained().removeIf(r -> !containedToKeep.contains(r));
+        benefit.getCareTeam().removeIf(ct -> !matchesRoleCode(ct));
+        benefit.getSupportingInfo().removeIf(si -> !(matchesNlRecord(si) || matchesDrg(si)));
+        trimInsuranceInPlace(benefit);
+
+        for (String element : REMOVABLE_ELEMENTS) {
+            clearElement(benefit, element);
+        }
+
+        // Mutate items in-place without creating a new list
+        if (benefit.getItem() != null) {
+            benefit.getItem().forEach(ExplanationOfBenefitTrimmerR4V3::cleanOutItemComponent);
+        }
+
+        return benefit;
+    }
+
+    private static boolean matchesRoleCode(ExplanationOfBenefit.CareTeamComponent ct) {
+        if (ct == null || ct.getRole() == null) return false;
+        for (Coding c : ct.getRole().getCoding()) {
+            if (c.hasCode() && roleCodes.contains(c.getCode())) return true;
+        }
+        return false;
+    }
+
+    private static boolean hasNpiIdentifier(Resource r) {
+        for (Identifier ident : extractIdentifiers(r)) {
+            if (NPI_SYSTEM.equals(ident.getSystem())) return true;
+        }
+        return false;
+    }
+
+    private static boolean hasRenderingExtension(Resource r) {
+        if (!(r instanceof DomainResource dr)) return false;
+        for (Extension ext : dr.getExtension()) {
+            if (RENDERING_EXT_URLS.contains(ext.getUrl()) && ext.getValue() instanceof CodeableConcept cc) {
+                for (Coding coding : cc.getCoding()) {
+                    if (coding.hasCode()) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Trim each insurance entry in place to keep only {@code focal} and {@code coverage},
+     * dropping the entry's id and (modifier)extensions without allocating new components.
+     */
+    private static void trimInsuranceInPlace(ExplanationOfBenefit benefit) {
+        benefit.getInsurance().removeIf(Objects::isNull);
+        for (ExplanationOfBenefit.InsuranceComponent ins : benefit.getInsurance()) {
+            ins.setId(null);
+            ins.setExtension(null);
+            ins.setModifierExtension(null);
+        }
     }
 
     /**
@@ -261,6 +388,35 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         }
     }
 
+    private static boolean matchesNlRecord(ExplanationOfBenefit.SupportingInformationComponent si) {
+        CodeableConcept code = si.getCode();
+        if (code == null) return false;
+        for (Coding c : code.getCoding()) {
+            if (NL_RECORD_IDENTIFICATION.equalsIgnoreCase(c.getSystem())) return true;
+        }
+        return false;
+    }
+
+    private static boolean matchesDrg(ExplanationOfBenefit.SupportingInformationComponent si) {
+        CodeableConcept category = si.getCategory();
+        if (category == null || !category.hasCoding()) return false;
+        boolean isDrgCategory = false;
+        for (Coding c : category.getCoding()) {
+            if (c != null && C4BB_SUPPORTING_INFO_TYPE_SYSTEM.equals(c.getSystem())
+                    && "drg".equals(c.getCode())) {
+                isDrgCategory = true;
+                break;
+            }
+        }
+        if (!isDrgCategory) return false;
+        CodeableConcept codeConcept = si.getCode();
+        if (codeConcept == null || !codeConcept.hasCoding()) return false;
+        for (Coding c : codeConcept.getCoding()) {
+            if (c != null && MS_DRG_SYSTEM.equals(c.getSystem()) && c.hasCode()) return true;
+        }
+        return false;
+    }
+
     /**
      * Retrieve specific supporting information in the list based on the specified system
      *
@@ -349,8 +505,10 @@ public class ExplanationOfBenefitTrimmerR4V3 {
                 continue;
             }
 
-            boolean matchesRole = ct.getRole().getCoding().stream()
-                    .anyMatch(c -> c.hasCode() && roleCodes.contains(c.getCode()));
+            boolean matchesRole = false;
+            for (Coding c : ct.getRole().getCoding()) {
+                if (c.hasCode() && roleCodes.contains(c.getCode())) { matchesRole = true; break; }
+            }
 
             if (matchesRole) {
                 result.add(ct);
@@ -491,6 +649,53 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     static void clearOutList(List<?> list) {
         if (list != null) {
             list.clear();
+        }
+    }
+
+    /**
+     * Clear a single top-level element of the EOB in place
+     *
+     * @param benefit the EOB being trimmed in place
+     * @param element the top-level element name to clear
+     */
+    @SuppressWarnings({"deprecation", "java:S1479"})
+    private static void clearElement(ExplanationOfBenefit benefit, String element) {
+        switch (element) {
+            // inherited
+            case "extension" -> benefit.setExtension(null);
+            case "modifierExtension" -> benefit.setModifierExtension(null);
+            // ExplanationOfBenefit-declared
+            case "created" -> benefit.setCreated(null);
+            case "enterer" -> benefit.setEnterer(null);
+            case "insurer" -> benefit.setInsurer(null);
+            case "priority" -> benefit.setPriority(null);
+            case "fundsReserveRequested" -> benefit.setFundsReserveRequested(null);
+            case "fundsReserve" -> benefit.setFundsReserve(null);
+            case "related" -> benefit.setRelated(null);
+            case "prescription" -> benefit.setPrescription(null);
+            case "originalPrescription" -> benefit.setOriginalPrescription(null);
+            case "payee" -> benefit.setPayee(null);
+            case "referral" -> benefit.setReferral(null);
+            case "claim" -> benefit.setClaim(null);
+            case "claimResponse" -> benefit.setClaimResponse(null);
+            case "disposition" -> benefit.setDisposition(null);
+            case "preAuthRef" -> benefit.setPreAuthRef(null);
+            case "preAuthRefPeriod" -> benefit.setPreAuthRefPeriod(null);
+            case "precedence" -> benefit.setPrecedenceElement(null);
+            case "accident" -> benefit.setAccident(null);
+            case "addItem" -> benefit.setAddItem(null);
+            case "adjudication" -> benefit.setAdjudication(null);
+            case "total" -> benefit.setTotal(null);
+            case "payment" -> benefit.setPayment(null);
+            case "formCode" -> benefit.setFormCode(null);
+            case "form" -> benefit.setForm(null);
+            case "processNote" -> benefit.setProcessNote(null);
+            case "benefitPeriod" -> benefit.setBenefitPeriod(null);
+            case "benefitBalance" -> benefit.setBenefitBalance(null);
+            default -> throw new IllegalStateException(
+                    "Unhandled removable EOB element '" + element + "'. It is not in the AB2D allowlist "
+                            + "(KEPT_ELEMENTS) and has no in-place clear in clearElement(). Decide whether "
+                            + "to keep it (add to KEPT_ELEMENTS + copyData) or drop it (add a case here).");
         }
     }
 }
