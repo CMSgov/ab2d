@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface CoverageV3Service {
     int countBeneficiariesByCoveragePeriod(CoverageV3Periods coveragePeriods, String contract);
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
+    CoveragePagingResult pageCoverageByRowRange(String contract, long startRow, long endRow, Optional<Long> cursor, int pageSize);
     CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3SyncSource source);
     CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source);
     Map<String, List<YearMonthRecord>> getCoveragePeriods(List<ContractDTO> contracts);
