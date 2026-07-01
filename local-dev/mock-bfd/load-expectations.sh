@@ -106,4 +106,31 @@ for id in 20140000008325 20140000009893; do
   register "/v2/fhir/ExplanationOfBenefit" "$(eob_query "$id")" "v2/eob/$id.json"
 done
 
+# === V3 stubs ===
+# prototype/v3 needs matching patient id in the eob
+# so use a template and inject whatever id we need
+
+register "/v3/fhir/metadata" "" "v3/meta.json"
+
+v3_eob_bundle="$FIX/v3/eob/eob-bundle.json"
+if [ -f "$v3_eob_bundle" ]; then
+  echo "  + GET /v3/fhir/ExplanationOfBenefit (templated: patient=[0-9]+)"
+  jq -n --rawfile bundle "$v3_eob_bundle" '{
+    httpRequest: {
+      method: "GET",
+      path: "/v3/fhir/ExplanationOfBenefit",
+      queryStringParameters: { patient: ["[0-9]+"] }
+    },
+    httpResponseTemplate: {
+      templateType: "MUSTACHE",
+      template: ("{ \"statusCode\": 200, \"headers\": { \"content-type\": [\"application/json;charset=UTF-8\"] }, \"body\": " + ($bundle | tojson) + " }")
+    }
+  }' | curl -sS -X PUT "$MS/mockserver/expectation" \
+    -H 'Content-Type: application/json' \
+    --data-binary @- \
+    -o /dev/null
+else
+  echo "[mock-bfd-init] WARN: fixture not found: $v3_eob_bundle — skipping /v3/fhir/ExplanationOfBenefit" >&2
+fi
+
 echo "[mock-bfd-init] Done."
