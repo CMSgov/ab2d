@@ -144,11 +144,14 @@ public class CoverageDriverImpl implements CoverageDriver {
                 }
                 Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
 
-                // Sending coverage counts runs a heavy aggregate query and publishes to SNS. It is invoked
-                // asynchronously (see CoverageSnapshotServiceImpl#sendCoverageCounts) so that it does not block
-                // queueing of stale coverage periods while the coverage lock is held, which previously caused
-                // the lock acquisition to time out.
-                coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
+                // Sending coverage counts runs a heavy aggregate query and publishes to SNS.
+                // Guard it so a failure to dispatch the counts (e.g. a rejected async task)
+                // can never prevent stale coverage periods from being queued below.
+                try {
+                    coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
+                } catch (Exception e) {
+                    log.error("Failed to send coverage counts; continuing to queue stale coverage periods", e);
+                }
                 for (CoveragePeriod period : outOfDateInfo) {
                     coverageProcessor.queueCoveragePeriod(period, false);
                 }

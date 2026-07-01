@@ -42,6 +42,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -55,6 +56,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
@@ -399,6 +401,38 @@ class CoverageDriverUnitTest {
                 lockWrapper, mapping, localSnapshotService);
 
         driver.queueStaleCoveragePeriods();
+
+        verify(localSnapshotService, times(1)).sendCoverageCounts(eq(AB2DServices.AB2D), eq(Set.of("Z1234")));
+        verify(coverageProcessor, times(1)).queueCoveragePeriod(eq(period), anyBoolean());
+    }
+
+    @DisplayName("When sending coverage counts fails stale coverage periods are still queued")
+    @Test
+    void queueStaleCoveragePeriodsContinuesWhenCoverageCountsFail() {
+
+        CoverageSnapshotService localSnapshotService = mock(CoverageSnapshotService.class);
+
+        when(lockWrapper.getCoverageLock()).thenReturn(tryLockTrue);
+
+        CoveragePeriod period = new CoveragePeriod();
+        period.setId(1);
+        period.setContractNumber("Z1234");
+        period.setMonth(1);
+        period.setYear(2024);
+
+        doReturn(List.of(period)).when(coverageService).coveragePeriodNeverSearchedSuccessfully();
+        when(coverageService.coveragePeriodStuckJobs(any())).thenReturn(Collections.emptyList());
+        when(coverageService.coveragePeriodNotUpdatedSince(anyInt(), anyInt(), any())).thenReturn(Collections.emptyList());
+
+        // Simulate a failure dispatching the coverage counts (e.g. a rejected async task)
+        doThrow(new RuntimeException("boom")).when(localSnapshotService)
+                .sendCoverageCounts(eq(AB2DServices.AB2D), eq(Set.of("Z1234")));
+
+        driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, propertiesService, coverageProcessor,
+                lockWrapper, mapping, localSnapshotService);
+
+        // The failure must be swallowed so that queueing of stale coverage periods still happens
+        assertDoesNotThrow(driver::queueStaleCoveragePeriods);
 
         verify(localSnapshotService, times(1)).sendCoverageCounts(eq(AB2DServices.AB2D), eq(Set.of("Z1234")));
         verify(coverageProcessor, times(1)).queueCoveragePeriod(eq(period), anyBoolean());
