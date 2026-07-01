@@ -129,6 +129,23 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     FETCH FIRST :limit ROWS WITH TIES
     """;
 
+    private static final String FETCH_FROM_AGGREGATED_TABLE_BY_ROW_RANGE =
+            """
+            SELECT patient_id,
+               current_mbi,
+               contract_history,
+               contract_recent,
+               historical_coverage_summaries,
+               recent_coverage_summaries,
+               share_data,
+               row_number
+            FROM v3.coverage_v3_aggregated_{0}
+                WHERE row_number > :row_cursor
+                AND row_number <= :end_row
+            ORDER BY row_number asc
+            FETCH FIRST :limit ROWS ONLY
+            """;
+
     public void createAggregatedAttributionTable(final String contract) {
         val tableName = MessageFormat.format(AGGREGATED_TABLE_NAME, contract);
         log.info("Attempting to create aggregated attribution table {}", tableName);
@@ -183,6 +200,21 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
             query = MessageFormat.format(FETCH_FROM_AGGREGATED_TABLE_WITHOUT_CURSOR, contractDto.getContractNumber());
         }
 
+        return jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
+    }
+    public List<CoverageSummary> fetchAggregatedDataByRowRange(
+            final ContractForCoverageDTO contractDto,
+            final long startRow,
+            final long endRow,
+            final long limit,
+            final Optional<Long> cursor) {
+        val rowCursor = cursor.orElse(startRow-1);
+        val parameters = new MapSqlParameterSource()
+                .addValue("row_cursor", rowCursor)
+                .addValue("end_row", endRow)
+                .addValue("limit", limit);
+
+        val query = MessageFormat.format(FETCH_FROM_AGGREGATED_TABLE_BY_ROW_RANGE, contractDto.getContractNumber());
         return jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
     }
 

@@ -178,7 +178,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * cannot provide
      */
     @Trace(operationName = "ab2d.eob.request")
-    private List<IBaseResource> getEobBundleResources(
+    public List<IBaseResource> getEobBundleResources(
             PatientClaimsRequest request,
             CoverageSummary patient
     ) {
