@@ -210,7 +210,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         if (resource == null) return null;
         ExplanationOfBenefit benefit = (ExplanationOfBenefit) resource;
 
-        // Build lookup map once — avoids O(N×M) repeated linear scans of the contained list
+        // Build lookup map once -- avoids O(NxM) repeated linear scans of the contained list
         Map<String, Resource> containedById = new HashMap<>(benefit.getContained().size() * 2);
         for (Resource r : benefit.getContained()) {
             if (r.getIdPart() != null) containedById.put(r.getIdPart(), r);
@@ -227,7 +227,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
             if (hasNpiIdentifier(r) || hasRenderingExtension(r)) containedToKeep.add(r);
         }
 
-        // Prune the original lists in place — no new collections allocated
+        // Prune the original lists in place -- no new collections allocated
         benefit.getContained().removeIf(r -> !containedToKeep.contains(r));
         benefit.getCareTeam().removeIf(ct -> !matchesRoleCode(ct));
         benefit.getSupportingInfo().removeIf(si -> !(matchesNlRecord(si) || matchesDrg(si)));

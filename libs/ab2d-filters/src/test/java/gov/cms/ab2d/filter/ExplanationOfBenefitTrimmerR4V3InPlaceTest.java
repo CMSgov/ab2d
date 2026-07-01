@@ -155,7 +155,7 @@ class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
     @Test
     void removableElementsAreTheComplementOfTheAllowlist() {
         // The allowlist is the source of truth. Every element the resource declares must be either
-        // kept (allowlisted) or removable — nothing may fall through the cracks, and the two sets
+        // kept (allowlisted) or removable, nothing may fall through the cracks, and the two sets
         // must be disjoint. This proves the trimmer is allowlist-driven rather than denylist-driven.
         List<String> declared = new ExplanationOfBenefit().children().stream()
                 .map(Property::getName)
@@ -177,7 +177,7 @@ class ExplanationOfBenefitTrimmerR4V3InPlaceTest {
     @Test
     void elementNotInAllowlistIsStrippedInPlace() {
         // A field that is NOT in KEPT_ELEMENTS must be removed even though getBenefitInPlace never
-        // names it explicitly — it is dropped purely because it is absent from the allowlist.
+        // names it explicitly, it is dropped purely because it is absent from the allowlist.
         // This is the "new field is excluded by default" / opt-in guarantee from the ticket.
         String dropped = "disposition";
         assertFalse(ExplanationOfBenefitTrimmerR4V3.KEPT_ELEMENTS.contains(dropped),

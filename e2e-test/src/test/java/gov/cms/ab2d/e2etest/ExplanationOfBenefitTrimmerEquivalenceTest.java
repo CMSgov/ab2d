@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>The test reproduces the production sequence: it first runs the trimmer for every input with the
  * in-place property <b>off</b> (legacy copy-based logic), then <b>switches the property on</b>, then
  * runs the trimmer again for the same inputs (in-place logic), and finally asserts the two passes
- * produced identical output — both as encoded JSON and as a HAPI structural deep-equals.
+ * produced identical output, both as encoded JSON and as a HAPI structural deep-equals.
  *
  * <p>The {@link #inPlaceEnabled} flag mirrors the toggle the worker reads via
  * {@code propertiesService.isToggleOn(EOB_V3_IN_PLACE, false)} in {@code PatientClaimsProcessorImpl};
@@ -70,7 +70,7 @@ class ExplanationOfBenefitTrimmerEquivalenceTest {
 
     @Test
     void switchingInPlacePropertyDoesNotChangeOutput() {
-        // Every named input as a fresh supplier — the in-place path mutates its input, so each pass
+        // Every named input as a fresh supplier -- the in-place path mutates its input, so each pass
         // must operate on its own freshly-parsed/built EOB instance.
         Map<String, Supplier<IBaseResource>> inputs = inputs();
 
@@ -108,7 +108,7 @@ class ExplanationOfBenefitTrimmerEquivalenceTest {
 
     /**
      * Trims an EOB through the real {@link ExplanationOfBenefitTrimmer} dispatcher, feeding it the
-     * current {@link #inPlaceEnabled} toggle value — exactly as the worker does with the value it
+     * current {@link #inPlaceEnabled} toggle value -- exactly as the worker does with the value it
      * reads from {@code propertiesService.isToggleOn(EOB_V3_IN_PLACE, false)}.
      */
     private ExplanationOfBenefit trim(IBaseResource eob) {
