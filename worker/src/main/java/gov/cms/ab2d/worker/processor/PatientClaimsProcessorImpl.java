@@ -42,6 +42,7 @@ import java.util.concurrent.Future;
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
+import static gov.cms.ab2d.common.util.PropertyConstants.EOB_V3_IN_PLACE;
 
 @Slf4j
 @Component
@@ -190,7 +191,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         Date earliestDate = getEarliestDataDate();
 
         // Aggregate claims into a single list
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
+        boolean useInPlace = propertiesService.isToggleOn(EOB_V3_IN_PLACE, false);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate, useInPlace);
 
         final long patientIdentifier = (request.getVersion() == FhirVersion.R4V3)
             ? patient.getIdentifiers().getPatientIdV3()

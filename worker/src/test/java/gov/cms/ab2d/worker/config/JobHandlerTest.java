@@ -39,7 +39,7 @@ class JobHandlerTest {
 
     @Mock
     private CoverageV3LockWrapper coverageV3LockWrapper;
-    
+
     @DisplayName("Job is not started if worker is set to neutral")
     @Test
     void processingNotTriggeredInNeutral() {
