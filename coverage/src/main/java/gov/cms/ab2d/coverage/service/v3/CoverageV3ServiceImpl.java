@@ -101,6 +101,27 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return new CoveragePagingResult(beneficiarySummaries, request);
     }
 
+    @Override
+    public CoveragePagingResult pageCoverageByRowRange(String contract, long startRow, long endRow, Optional<Long> cursor, int pageSize) {
+        // prototype assumes normal contract type TODO: update on transition out of prototype
+        val contractDto = new ContractForCoverageDTO(contract, null, ContractForCoverageDTO.ContractType.NORMAL);
+        val membership = new GetAggregatedCoverageMembership(dataSource);
+        val summaries = executeTimedQuery(
+                format("fetchAggregatedDataByRowRange contract=%s startRow=%d endRow=%d cursor=%s", contract, startRow, endRow, cursor),
+                () -> membership.fetchAggregatedDataByRowRange(contractDto, startRow, endRow, pageSize, cursor)
+        );
+        val fetched = summaries.size();
+        Long lastRowNumber = summaries.isEmpty()
+                ? null
+                : summaries.get(summaries.size() - 1).getIdentifiers().getRowNumberV3();
+        membership.reduceAndFilter(summaries);
+        CoveragePagingRequest next = null;
+        if(fetched >= pageSize && lastRowNumber !=null && lastRowNumber < endRow) {
+            next = CoveragePagingRequest.ofV3(pageSize, lastRowNumber, contractDto, null);
+        }
+        return new CoveragePagingResult(summaries, next);
+    }
+
 
     @Override
     public Map<String, List<YearMonthRecord>> getCoveragePeriods(List<ContractDTO> contracts) {
