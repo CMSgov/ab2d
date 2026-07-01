@@ -13,8 +13,6 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
-import org.springframework.batch.core.listener.ChunkListener;
-import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemStreamWriter;
@@ -78,7 +76,6 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
     @Override
     public Job process(String jobUuid) {
-        log.info("v4");
         Job job = jobRepository.findByJobUuid(jobUuid);
         if (job == null) {
             throw new IllegalArgumentException("Job " + jobUuid + " was not found");
@@ -173,7 +170,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .processor(eobItemProcessor)
                 .writer(ndjsonItemWriter)
                 .allowStartIfComplete(false)
-                .startLimit(3)
+                .startLimit(MAX_RESTART_ATTEMPTS)
                 .transactionManager(transactionManager)
                 .build();
 
