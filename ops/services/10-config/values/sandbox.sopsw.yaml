@@ -65,6 +65,7 @@
 /ab2d/${env}/common/sensitive/new_relic_license_key: ENC[AES256_GCM,data:OB27G2utzWM+j+bsyJ0G5SGbZEg8B5uuo/9ajRt4B2MLHqSW3CkLMw==,iv:bHzbCAHobrU1xy8kfFDyYcGLJZawzxQKPAHCBveLVe4=,tag:nHn0gPyX/Yhv+tyW2flsew==,type:str]
 /ab2d/${env}/common/sensitive/slack_trace_webhooks: ENC[AES256_GCM,data:Kbdem4waIs74WkB1afbxdJb8hosJkecSbGL2x2LD2smyhRgbnNx5smyFx/qpdXsuE0aULwt/D6xf9lT5N5bH2hiGWU3kOjNZKyt+WGsKMg==,iv:80zMLm7wN8rt+S/71TqLXxvUF12OCsgzJgm8LNF6U7c=,tag:0Pc7fUkqsNgjK1BXVEG3Zg==,type:str]
 /ab2d/${env}/common/sensitive/slack_alert_webhooks: ENC[AES256_GCM,data:ajmQYl1BkNssOTru4SdGgTZBTa1j1o0695olbobHeqaNaZQbr+Oq5yc5ZGix7oWHJZ/Fy4rwOlsiKyjHD1JbcnDqGAyMgFx1CGJJPzLy2A==,iv:Nb5hHkum4ctlWQhqQcAGh0EqQxQhkneni2Vhk77wzOw=,tag:l5eOmpiw3j+gIu2AQdBrzA==,type:str]
+/ab2d/${env}/common/sensitive/splunk_oauth_token: ENC[AES256_GCM,data:k43GwfHOvx414ph7Y+c84VotBB6ce6wQydt8Etj2bhExXXgCCMAs8ImNJJE8ZjSjXvjbJn75GNg5,iv:EBpYrj4BUlxk7X2gne7az5hLOBVeZAw7bMfNTXnMa98=,tag:TLA8jqoRMredxO9W6I3mMw==,type:str]
 /ab2d/${env}/core/nonsensitive/keystore_location: classpath:ab2d.p12
 /ab2d/${env}/core/nonsensitive/database_name: main
 /ab2d/${env}/core/sensitive/database_password: ENC[AES256_GCM,data:F6HB9qJoDaDIu/r347uc59m5bES75fq1qx9NdkkBA/M=,iv:uBTaILDHvSQCCjLkINemnCTrzbEESO7dfpMC3GbEJdw=,tag:Y07k1+UABVW/n5eMb0H9DA==,type:str]
