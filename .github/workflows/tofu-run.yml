@@ -44,7 +44,7 @@ jobs:
       - name: tofu plan
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
-          tofu workspace select -var=parent_env=$ENV -or-create=true ab2d-$ENV
+          tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           tofu plan -no-color -input=false -out=tfplan
 
       - name: tofu apply
