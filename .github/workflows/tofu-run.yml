@@ -1,61 +1,23 @@
 name: tofu-run
-run-name: "[${{ inputs.apply && 'APPLY' || 'PLAN' }}] ${{ inputs.service }} → ${{ inputs.environment }}${{ inputs.branch != '' && format(' ({0})', inputs.branch) || '' }}"
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       service:
-        description: "Service directory"
         required: true
-        type: choice
-        options:
-          - "60-monitors"
-          - "65-dashboard"
-      environment:
-        description: "AB2D environment"
-        required: true
-        type: choice
-        options:
-          - dev
-          - test
-          - sandbox
-          - prod
-      apply:
-        description: "Run apply (vs plan only)"
-        type: boolean
-        default: false
-      branch:
-        description: "Branch or ref to checkout"
-        required: false
         type: string
-        default: ""
-
-concurrency:
-  group: tofu-plan-or-apply
-
-env:
-  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      environment:
+        required: true
+        type: string
+      apply:
+        required: true
+        type: string
+      branch:
+        required: true
+        type: string
 
 jobs:
-  setup:
-    runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
-    outputs:
-      account_id: ${{ steps.check.outputs.account_id }}
-      apply: ${{ steps.check.outputs.apply }}
-      branch: ${{ steps.check.outputs.branch }}
-    steps:
-      - id: check
-        run: |
-          if [[ "${{ contains(fromJSON('["dev", "test"]'), inputs.environment) }}" == "true" ]]; then
-            echo "account_id=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
-          else
-            echo "account_id=${{ secrets.PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
-          fi
-          echo "apply=${{ inputs.apply }}" >> $GITHUB_OUTPUT
-          echo "branch=${{ inputs.branch || github.ref }}" >> $GITHUB_OUTPUT
-
   tofu:
-    needs: setup
     permissions:
       contents: read
       id-token: write
@@ -63,27 +25,20 @@ jobs:
     env:
       APP: ab2d
       ENV: ${{ inputs.environment }}
-
     defaults:
       run:
         working-directory: ops/services/${{ inputs.service }}
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
         with:
-          ref: ${{ needs.setup.outputs.branch }}
-
-      - uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003
-
+          ref: ${{ inputs.branch }}
+      - uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
       - uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
-
       - uses: cmsgov/cdap/actions/setup-sops@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
-
       - uses: cmsgov/cdap/actions/setup-yq@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
-
-      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ needs.setup.outputs.account_id }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: tofu plan
@@ -93,5 +48,5 @@ jobs:
           tofu plan -no-color -input=false -out=tfplan
 
       - name: tofu apply
-        if: needs.setup.outputs.apply == 'true'
+        if: inputs.apply == 'true'
         run: tofu apply -no-color -input=false tfplan
