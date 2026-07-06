@@ -16,6 +16,10 @@ on:
 concurrency:
   group: tofu-plan-or-apply
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

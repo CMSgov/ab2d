@@ -16,14 +16,15 @@ on:
 concurrency:
   group: tofu-plan-or-apply
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   setup:
-    permissions:
-      contents: read
-      id-token: write
     runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
     outputs:
       apply: ${{ steps.check.outputs.apply }}
