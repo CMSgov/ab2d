@@ -1,6 +1,6 @@
 package gov.cms.ab2d.coverage.service;
 
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
@@ -176,7 +176,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    @Trace(metricName = "InsertingCoverage", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.insert")
     public CoverageSearchEvent insertCoverage(long searchEventId, Set<Identifiers> beneficiaryIds) {
 
         // Make sure that coverage period and searchEvent actually exist in the database before inserting
@@ -194,7 +194,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    @Trace
+    @Trace(operationName = "ab2d.coverage.page")
     public CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest) {
         return coverageServiceRepo.pageCoverage(pagingRequest);
     }
@@ -202,7 +202,7 @@ public class CoverageServiceImpl implements CoverageService {
     // todo: consider removing now that the CoverageDeltaRepository functionality exists
     //  We can write alarms using that delta table if we need to.
     @Override
-    @Trace(metricName = "SearchDiff", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.search_diff")
     public CoverageSearchDiff searchDiff(int periodId) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);

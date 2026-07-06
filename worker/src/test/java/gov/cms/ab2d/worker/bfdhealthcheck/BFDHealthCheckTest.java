@@ -10,11 +10,16 @@ import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.Enumerations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -29,6 +34,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = SpringBootApp.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @Testcontainers
 @Import(AB2DSQSMockConfig.class)
 public class BFDHealthCheckTest {
@@ -41,7 +48,7 @@ public class BFDHealthCheckTest {
     @Mock
     private BFDClient bfdClient;
 
-    @Autowired
+    @MockitoBean
     private SQSEventClient logManager;
 
     @Autowired

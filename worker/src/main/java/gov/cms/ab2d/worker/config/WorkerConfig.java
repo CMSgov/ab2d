@@ -83,6 +83,27 @@ public class WorkerConfig {
         return taskExecutor;
     }
 
+    /**
+     * Dedicated, hard-capped pool for the asynchronous coverage-count work
+     * ({@code CoverageSnapshotService#sendCoverageCounts}). It is kept separate from the job and
+     * aggregation pools so this infrequent but heavy aggregate query plus SNS publish never steals
+     * their slots, and it is explicitly bounded (single thread, small queue) so it can never spawn
+     * unbounded threads/DB connections the way Spring's default {@code SimpleAsyncTaskExecutor}
+     * fallback would when no executor is qualified on {@code @Async}. Excess work is discarded
+     * rather than blocking the caller (which holds the coverage lock); counts are republished on the
+     * next coverage cycle.
+     */
+    @Bean(name = "coverageCountsExecutor")
+    public Executor coverageCountsExecutor() {
+        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(1);
+        taskExecutor.setMaxPoolSize(1);
+        taskExecutor.setQueueCapacity(2);
+        taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
+        taskExecutor.setThreadNamePrefix("cc-");
+        return taskExecutor;
+    }
+
     @Bean
     public LockRepository lockRepository(DataSource dataSource) {
         final DefaultLockRepository defaultLockRepository = new DefaultLockRepository(dataSource);

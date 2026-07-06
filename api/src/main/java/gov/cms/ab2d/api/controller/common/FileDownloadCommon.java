@@ -69,7 +69,7 @@ public class FileDownloadCommon {
             if (requestedEncoding == GZIP_COMPRESSED) {
                 response.setHeader("Content-Encoding", Constants.GZIP_ENCODING);
             }
-            final String fileDownloadName = getSwaggerDownloadFilename(downloadResource);
+            final String fileDownloadName = sanitizeFilename(getSwaggerDownloadFilename(downloadResource));
             response.setHeader("Content-Disposition", "inline; swaggerDownload=\"attachment\"; filename=\"" + fileDownloadName + "\"");
 
             // write to response stream, compressing or decompressing file contents depending on 'Accept-Encoding' header
@@ -84,7 +84,7 @@ public class FileDownloadCommon {
             eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.OK, "File Download",
                     "File " + filename + " was downloaded", (String) request.getAttribute(REQUEST_ID)));
             jobClient.incrementDownload(downloadResource.getFile(), jobUuid);
-            return new ResponseEntity<>(null, null, HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         }
     }
 

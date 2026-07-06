@@ -10,6 +10,7 @@ import gov.cms.ab2d.snsclient.messages.CoverageCountDTO;
 import gov.cms.ab2d.snsclient.messages.AB2DServices;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -38,6 +39,16 @@ public class CoverageSnapshotServiceImpl implements CoverageSnapshotService {
         this.snsClient = snsClient;
     }
 
+    /**
+     * Counts beneficiaries for the given contracts and publishes the resulting coverage counts to SNS.
+     * <p>
+     * This runs a heavy aggregate query ({@link CoverageService#countBeneficiariesForContracts}) and is therefore
+     * executed asynchronously so that callers (notably the coverage driver, which holds the coverage lock while
+     * queueing stale coverage periods) are not blocked. It is dispatched on the dedicated, hard-capped
+     * {@code coverageCountsExecutor} pool (see {@code WorkerConfig}) rather than the default executor so it can
+     * never spawn unbounded threads. All exceptions are swallowed to protect the calling flow.
+     */
+    @Async("coverageCountsExecutor")
     @Override
     public void sendCoverageCounts(AB2DServices services, Set<String> contracts) {
 

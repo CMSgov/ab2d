@@ -68,6 +68,6 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
                 .message(ex.getMessage())
                 .path(request.getServletPath())
                 .timestamp(new java.util.Date())
-                .build(), null, status);
+                .build(), status);
     }
 }

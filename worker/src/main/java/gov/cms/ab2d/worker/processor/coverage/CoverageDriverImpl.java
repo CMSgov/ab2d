@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.DateUtil;
@@ -12,6 +12,7 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
 import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.snsclient.messages.AB2DServices;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.*;
 import gov.cms.ab2d.worker.processor.coverage.check.v3.CoverageV3CoveragePeriodsPresentCheck;
@@ -27,6 +28,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
@@ -140,9 +142,16 @@ public class CoverageDriverImpl implements CoverageDriver {
                     log.info("Attempting to add {}-{}-{} to queue", period.getContractNumber(),
                             period.getYear(), period.getMonth());
                 }
-                //commented out, needs to be moved elsewhere due to do timeout
-                //Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
-                //coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
+                Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
+
+                // Sending coverage counts runs a heavy aggregate query and publishes to SNS.
+                // Guard it so a failure to dispatch the counts (e.g. a rejected async task)
+                // can never prevent stale coverage periods from being queued below.
+                try {
+                    coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
+                } catch (Exception e) {
+                    log.error("Failed to send coverage counts; continuing to queue stale coverage periods", e);
+                }
                 for (CoveragePeriod period : outOfDateInfo) {
                     coverageProcessor.queueCoveragePeriod(period, false);
                 }
@@ -440,7 +449,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @throws CoverageDriverException if enrollment state violates assumed preconditions or database lock cannot be retrieved
      * @throws InterruptedException    if trying to lock the table is interrupted
      */
-    @Trace(metricName = "EnrollmentIsAvailable", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_is_available")
     @Override
     public boolean isCoverageAvailable(Job job, ContractDTO contract) throws InterruptedException {
         String contractNumber = job.getContractNumber();
@@ -509,7 +518,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    @Trace(metricName = "EnrollmentIsAvailableV3", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_is_available_v3")
     @Override
     public boolean isCoverageAvailableV3(Job job, ContractDTO contract) {
         /**
@@ -520,7 +529,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         return true;
     }
 
-    @Trace(metricName = "EnrollmentCountV3", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_count_v3")
     @Override
     public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
         if (contract == null) {
@@ -541,7 +550,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      *
      * @throws CoverageDriverException job has no contract which should not be possible
      */
-    @Trace(metricName = "EnrollmentCount", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_count")
     @Override
     public int numberOfBeneficiariesToProcess(Job job, ContractDTO contract) {
 
@@ -582,7 +591,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      *
      * @throws CoverageDriverException if coverage period or some other precondition necessary for paging is missing
      */
-    @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
+    @Trace(operationName = "ab2d.coverage.enrollment_load_from_db")
     @Override
     public CoveragePagingResult pageCoverage(Job job, ContractDTO contract) {
         ZonedDateTime now = getEndDateTime();

@@ -21,11 +21,15 @@ on:
         default: ""
         type: string
       idr_db_importer_image_tag:
-        description: ECR image tag for idr-db-importer service
+        description: ECR image tag for idr-db-importer service - temporarily ignored for production environment
         default: ""
         type: string
       worker_image_tag:
         description: ECR image tag for worker service
+        default: ""
+        type: string
+      lambda_version:
+        description: Lambda version - optional, but must be provided to run tofu plan/apply
         default: ""
         type: string
   workflow_dispatch:
@@ -52,11 +56,15 @@ on:
         default: ""
         type: string
       idr_db_importer_image_tag:
-        description: ECR image tag for idr-db-importer service
+        description: ECR image tag for idr-db-importer service - temporarily ignored for production environment
         default: ""
         type: string
       worker_image_tag:
         description: ECR image tag for worker service
+        default: ""
+        type: string
+      lambda_version:
+        description: Lambda version - optional, but must be provided to run tofu plan/apply
         default: ""
         type: string
 
@@ -113,7 +121,7 @@ jobs:
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-contracts --service ab2d-$ENV-contracts --query 'taskArns[0]' --output text)
-          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-contracts --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
+          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-contracts --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[?name != 'datadog-agent'].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.contracts_image_tag != '' && format('{0}{1}', '-var=contracts_service_image_tag=', inputs.contracts_image_tag) || '-var=contracts_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan
       - name: tofu apply - events
@@ -122,39 +130,42 @@ jobs:
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-events --service ab2d-$ENV-events --query 'taskArns[0]' --output text)
-          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-events --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
+          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-events --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[?name != 'datadog-agent'].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.events_image_tag != '' && format('{0}{1}', '-var=events_service_image_tag=', inputs.events_image_tag) || '-var=events_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
+          tofu apply -input=false tfplan
       - name: tofu apply - api
         working-directory: ops/services/30-api/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-api --service ab2d-$ENV-api --query 'taskArns[0]' --output text)
-          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-api --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
+          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-api --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[?name != 'datadog-agent'].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.api_image_tag != '' && format('{0}{1}', '-var=api_service_image_tag=', inputs.api_image_tag) || '-var=api_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan
       - name: tofu plan - idr-db-importer
+        if: ${{ inputs.environment != 'prod' }}
         working-directory: ops/services/30-idr-db-importer/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV --service ab2d-$ENV-idr-db-importer --query 'taskArns[0]' --output text)
-          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
+          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[?name != 'datadog-agent'].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.idr_db_importer_image_tag != '' && format('{0}{1}', '-var=image_tag=', inputs.idr_db_importer_image_tag) || '-var=image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan
       - name: tofu apply - lambda
+        if: ${{ inputs.lambda_version != '' }}
         working-directory: ops/services/30-lambda/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
-          tofu plan -out=tfplan
-          tofu apply -input=false tfplan 
+          tofu plan -var=release_version=${{ inputs.lambda_version }} -out=tfplan
+          tofu apply -input=false tfplan
       - name: tofu apply - worker
         working-directory: ops/services/30-worker/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
           tofu workspace select -var=parent_env=$ENV -or-create=true $ENV
           export ACTIVE_TASK_ARN=$(aws ecs list-tasks --cluster ab2d-$ENV-worker --service ab2d-$ENV-worker --query 'taskArns[0]' --output text)
-          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-worker --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[].image" --output text | cut -d ':' -f 2)
+          export ACTIVE_IMAGE_TAG=$(aws ecs describe-tasks --cluster ab2d-$ENV-worker --tasks $ACTIVE_TASK_ARN --query "tasks[].containers[?name != 'datadog-agent'].image" --output text | cut -d ':' -f 2)
           tofu plan ${{ inputs.worker_image_tag != '' && format('{0}{1}', '-var=worker_service_image_tag=', inputs.worker_image_tag) || '-var=worker_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan 

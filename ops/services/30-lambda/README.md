@@ -16,7 +16,7 @@ This terraform module is responsible for creating AWS Lambdas and related resour
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_archive"></a> [archive](#provider\_archive) | 2.7.1 |
 | <a name="provider_artifactory"></a> [artifactory](#provider\_artifactory) | 12.9.4 |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
@@ -29,9 +29,9 @@ This terraform module is responsible for creating AWS Lambdas and related resour
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_artifactory"></a> [artifactory](#requirement\_artifactory) | 12.9.4 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -41,10 +41,10 @@ This terraform module is responsible for creating AWS Lambdas and related resour
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_release_version"></a> [release\_version](#input\_release\_version) | Release version for common lambdas stored in artifactory | `string` | n/a | yes |
 | <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br/>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br/>will be divined from `terraform.workspace`. | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-east-1"` | no |
-| <a name="input_release_version"></a> [release\_version](#input\_release\_version) | Release version for common lambdas stored in artifactory | `string` | `"1.1.0-aurora"` | no |
 | <a name="input_secondary_region"></a> [secondary\_region](#input\_secondary\_region) | n/a | `string` | `"us-west-2"` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -55,8 +55,8 @@ This terraform module is responsible for creating AWS Lambdas and related resour
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
-| <a name="module_platform"></a> [platform](#module\_platform) | github.com/CMSgov/cdap//terraform/modules/platform | ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66 |
+| ---- | ------ | ------- |
+| <a name="module_platform"></a> [platform](#module\_platform) | github.com/CMSgov/cdap//terraform/modules/platform | 8a6527c0689bb46ae0e74bd47e4087ab59cff1b0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -66,23 +66,22 @@ This terraform module is responsible for creating AWS Lambdas and related resour
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_cloudwatch_event_rule.audit_lambda_event_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
-| [aws_cloudwatch_event_rule.export](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
 | [aws_cloudwatch_event_rule.hpms_counts_lambda_event_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
 | [aws_cloudwatch_event_target.audit_lambda_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
-| [aws_cloudwatch_event_target.export](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
 | [aws_cloudwatch_event_target.hpms_counts_lambda_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
 | [aws_cloudwatch_log_group.audit](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_log_subscription_filter.audit_svc_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_subscription_filter) | resource |
 | [aws_iam_policy.slack_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_iam_role.export](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.import](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.lambda_database_sns_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.lambda_sns_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.metrics_transform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.microservices_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.slack_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy.import_assume_bucket_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy.import_default_function](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy_attachment.lambda_db_sns_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.lambda_sns_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.metrics_transform_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
@@ -93,7 +92,6 @@ This terraform module is responsible for creating AWS Lambdas and related resour
 | [aws_lambda_function.audit_svc_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
 | [aws_lambda_function.coverage_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
 | [aws_lambda_function.database_management](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
-| [aws_lambda_function.export](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
 | [aws_lambda_function.hpms_counts](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
 | [aws_lambda_function.import](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
 | [aws_lambda_function.metrics_transform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
@@ -102,9 +100,9 @@ This terraform module is responsible for creating AWS Lambdas and related resour
 | [aws_lambda_permission.allow_cloudwatch_to_call_hpms_counts_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_lambda_permission.audit_svc_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_lambda_permission.coverage_count_sns_permission](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
-| [aws_lambda_permission.export](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_security_group.audit_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.database_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.microservices_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group_rule.audit_efs_egress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.contract_lambda_sg_ingress_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.db_access_lambda_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
@@ -118,6 +116,7 @@ This terraform module is responsible for creating AWS Lambdas and related resour
 | [aws_sqs_queue.import](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
 | [aws_sqs_queue_policy.import](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_policy) | resource |
 | [aws_sqs_queue_redrive_allow_policy.import](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_redrive_allow_policy) | resource |
+| [aws_vpc_security_group_ingress_rule.lambda_sg_ingress_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [archive_file.monitoring_audit](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [archive_file.python_lambda_package](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [artifactory_file.lambdas](https://registry.terraform.io/providers/jfrog/artifactory/12.9.4/docs/data-sources/file) | data source |
@@ -128,12 +127,11 @@ This terraform module is responsible for creating AWS Lambdas and related resour
 | [aws_iam_policy_document.import](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_lambda_invocation.update_database_schema](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/lambda_invocation) | data source |
 | [aws_rds_cluster.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/rds_cluster) | data source |
-| [aws_s3_object.export](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_object) | data source |
 | [aws_s3_object.import](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_object) | data source |
 | [aws_security_group.db](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_security_group.efs_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_security_group.microservices_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
-| [aws_security_group.microservices_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
+| [aws_sqs_queue.events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/sqs_queue) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

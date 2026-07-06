@@ -2,7 +2,7 @@
 plugins {
     id 'java'
     id 'jacoco'
-    id 'org.springframework.boot' version '3.5.14'
+    id 'org.springframework.boot' version '4.0.7'
     id "org.sonarqube" version "7.3.0.8198"
     id 'maven-publish'
     id 'org.cyclonedx.bom' version '2.0.0' apply true
@@ -14,22 +14,26 @@ version="2.0.1"
 group = "gov.cms.ab2d"
 
 ext {
-    springBootVersion= '3.5.14'
-    springCloudAwsVersion = '3.4.0'
+    springBootVersion= '4.0.7'
+    springCloudAwsVersion = '4.0.0'
     liquibaseVersion='5.0.0'
-    jacksonVersion='2.20.0'
+    jacksonVersion='2.21.2'
     testContainerVersion='1.21.4'
-    eventClientVersion='3.3.14'
+    eventClientVersion='3.3.15'
     lombokVersion = '1.18.38'
-    commonsLangVersion='3.18.0' // // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
+    commonsLangVersion='3.18.0'
 }
 
 allprojects {
     apply plugin: "org.cyclonedx.bom"
     apply plugin: 'org.springframework.boot'
     dependencies {
+        implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+        // spring boot 4 uses an older version, so just pin the one we want here
+        testImplementation enforcedPlatform("org.testcontainers:testcontainers-bom:${testContainerVersion}")
         implementation "com.squareup.okhttp3:okhttp:5.0.0"
         implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
+        runtimeOnly "org.springframework.boot:spring-boot-properties-migrator:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-jdbc:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
@@ -41,6 +45,7 @@ allprojects {
 
         implementation "commons-codec:commons-codec:1.18.0"
         implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+        implementation "org.springframework.boot:spring-boot-liquibase:${springBootVersion}"
         implementation "com.amazonaws:amazon-kinesis-client:1.15.3"
         implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
         implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
@@ -67,15 +72,20 @@ allprojects {
             implementation('org.apache.thrift:libthrift:0.23.0')
             implementation('org.bouncycastle:bcprov-jdk18on:1.84')
             implementation('org.bouncycastle:bcpkix-jdk18on:1.84')
-
-            // remove all below on upgrade to Spring Boot >= 4.0.0
-            implementation('org.apache.tomcat.embed:tomcat-embed-core:10.1.55')
-            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:10.1.55')
-            implementation('io.netty:netty-codec:4.1.133.Final')
-            implementation('io.netty:netty-codec-http:4.1.133.Final')
-            implementation('io.netty:netty-codec-http2:4.1.133.Final')
-            implementation('io.netty:netty-codec-dns:4.1.133.Final')
             implementation('org.apache.commons:commons-compress:1.28.0')
+
+            // unmanaged dependencies
+            implementation('com.github.jnr:jnr-posix:3.1.8')
+            implementation('io.opentelemetry:opentelemetry-api:1.62.0')
+            implementation('commons-beanutils:commons-beanutils:1.11.0')
+            implementation('org.mozilla:rhino:1.8.1')
+            implementation("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
+            implementation("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+        }
+
+        // make sure this doesn't cause any issues
+        configurations.all {
+            resolutionStrategy.force('org.springframework.retry:spring-retry:2.0.13')
         }
     }
 

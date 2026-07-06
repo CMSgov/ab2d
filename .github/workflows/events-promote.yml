@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: ECR image tag for selected module (events-service-<branch>-<SHA>)
+        description: ECR image tag for selected module (event-service-<branch>-<SHA>)
         required: true
         type: string
 

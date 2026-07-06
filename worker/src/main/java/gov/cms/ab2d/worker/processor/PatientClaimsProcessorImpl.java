@@ -1,13 +1,11 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.parser.IParser;
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Segment;
-import com.newrelic.api.agent.Token;
-import com.newrelic.api.agent.Trace;
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.query.BfdMetricsUtility;
@@ -44,6 +42,7 @@ import java.util.concurrent.Future;
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
+import static gov.cms.ab2d.common.util.PropertyConstants.EOB_V3_IN_PLACE;
 
 @Slf4j
 @Component
@@ -83,8 +82,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     @Async("patientProcessorThreadPool")
     public Future<ProgressTrackerUpdate> process(PatientClaimsRequest request) {
         ProgressTrackerUpdate update = new ProgressTrackerUpdate();
-        final Token token = request.getToken();
-        token.link();
         FhirVersion fhirVersion = request.getVersion();
         try {
             String anyErrors = writeOutData(request, fhirVersion, update);
@@ -92,9 +89,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 writeOutErrors(anyErrors, request);
             }
         } catch (Exception ex) {
+            DatadogSpans.markError(ex);
             return AsyncResult.forExecutionException(ex);
-        } finally {
-            token.expire();
         }
         return AsyncResult.forValue(update);
     }
@@ -132,7 +128,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    @Trace(metricName = "EOBWriteToFile", dispatcher = true)
+    @Trace(operationName = "ab2d.eob.write_to_file")
     private String writeOutResource(FhirVersion version, ProgressTrackerUpdate update, List<IBaseResource> eobs, ClaimsStream stream) {
         IParser parser = version.getJsonParser().setPrettyPrint(false);
         if (eobs == null) {
@@ -182,17 +178,21 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * @return list of matching claims after filtering claims not meeting requirements and stripping fields that AB2D
      * cannot provide
      */
-    @Trace(metricName = "EOBRequest", dispatcher = true)
+    @Trace(operationName = "ab2d.eob.request")
     private List<IBaseResource> getEobBundleResources(
             PatientClaimsRequest request,
             CoverageSummary patient
     ) {
         OffsetDateTime requestStartTime = OffsetDateTime.now();
+        DatadogSpans.setTag("contract", request.getContractNum());
+        DatadogSpans.setTag("organization", request.getOrganization());
+        DatadogSpans.setTag("component", "eob");
 
         Date earliestDate = getEarliestDataDate();
 
         // Aggregate claims into a single list
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
+        boolean useInPlace = propertiesService.isToggleOn(EOB_V3_IN_PLACE, false);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate, useInPlace);
 
         final long patientIdentifier = (request.getVersion() == FhirVersion.R4V3)
             ? patient.getIdentifiers().getPatientIdV3()
@@ -216,21 +216,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             // Make first request and begin looping over remaining pages
             if (bfdMetric != null) {
-                /** Replicate same NewRelic logic as {@link BFDClient#requestEOBFromServer} */
-                final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientIdentifier +
-                        " using since " + sinceTime + " and until " + untilTime + " and serviceDates " + serviceDates);
-                bfdSegment.setMetricName("RequestEOB");
-
-                val bfdStart = System.nanoTime();
-                final byte[] response = bfdClient.requestEOBFromServerRaw(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
-                val bfdEnd = System.nanoTime();
-                final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
-                val parseBundleEnd = System.nanoTime();
-
-                bfdSegment.end();
-
-                populateMetric(bfdStart, bfdEnd, parseBundleEnd, response.length, request.getVersion(), bundle, bfdMetric);
-                eobBundle = bundle;
+                eobBundle = callBfdForEob(request, patientIdentifier, sinceTime, untilTime, serviceDates, bfdMetric);
             } else {
                 eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
             }
@@ -250,7 +236,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 collector.filterAndAddEntries(eobBundle, patient);
             }
 
-            // Log request to Kinesis and NewRelic
+            // Log request to Kinesis
             logSuccessful(request, patientIdentifier, requestStartTime);
 
             collector.logBundleEvent(sinceTime, untilTime);
@@ -267,6 +253,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         .build());
             }
             logError(request, patientIdentifier, requestStartTime, ex);
+            DatadogSpans.markError(ex);
             throw ex;
         } finally {
             try {
@@ -280,6 +267,25 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
+    }
+
+    @Trace(operationName = "ab2d.bfd.call")
+    private IBaseBundle callBfdForEob(
+            PatientClaimsRequest request,
+            long patientIdentifier,
+            OffsetDateTime sinceTime,
+            OffsetDateTime untilTime,
+            List<String> serviceDates,
+            BfdMetricsUtility.BfdRequestMetric bfdMetric
+    ) {
+        val bfdStart = System.nanoTime();
+        final byte[] response = bfdClient.requestEOBFromServerRaw(request.getVersion(), patientIdentifier, sinceTime, untilTime, serviceDates, request.getContractNum());
+        val bfdEnd = System.nanoTime();
+        final IBaseBundle bundle = bfdClient.parseBundle(request.getVersion(), response);
+        val parseBundleEnd = System.nanoTime();
+
+        populateMetric(bfdStart, bfdEnd, parseBundleEnd, response.length, request.getVersion(), bundle, bfdMetric);
+        return bundle;
     }
 
     private boolean bfdMetricsEnabled() {
