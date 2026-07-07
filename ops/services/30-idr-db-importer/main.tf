@@ -37,7 +37,7 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
     cpu_architecture        = "ARM64"
     operating_system_family = "LINUX"
   }
-  container_definitions = nonsensitive(jsonencode([
+  container_definitions = jsonencode([
     {
       image                  = "${local.image_repo_uri}:${var.image_tag}"
       name                   = local.service
@@ -47,6 +47,10 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
         {
           name      = "AB2D_DB_PASSWORD"
           valueFrom = data.aws_ssm_parameter.ab2d_db_password.arn
+        },
+        {
+          name      = "AB2D_DB_USER"
+          valueFrom = data.aws_ssm_parameter.ab2d_db_user.arn
         }
         ],
         module.platform.parent_env == "prod" ? [
@@ -57,6 +61,14 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
           {
             name      = "IDR_SNOWFLAKE_WAREHOUSE"
             valueFrom = data.aws_ssm_parameter.idr_snowflake_warehouse[0].arn
+          },
+          {
+            name      = "IDR_SNOWFLAKE_USER"
+            valueFrom = data.aws_ssm_parameter.idr_snowflake_user[0].arn
+          },
+          {
+            name      = "IDR_SNOWFLAKE_ROLE"
+            valueFrom = data.aws_ssm_parameter.idr_snowflake_role[0].arn
           }
         ] : []
       )
@@ -76,10 +88,6 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
             value = "5432"
           },
           {
-            name  = "AB2D_DB_USER"
-            value = data.aws_ssm_parameter.ab2d_db_user.value
-          },
-          {
             name  = "S3_BUCKET"
             value = data.aws_ssm_parameter.idr_db_importer_bucket.value
           },
@@ -92,14 +100,6 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
           {
             name  = "IDR_SNOWFLAKE_URL"
             value = "jdbc:snowflake://cms-idr.privatelink.snowflakecomputing.com"
-          },
-          {
-            name  = "IDR_SNOWFLAKE_USER"
-            value = data.aws_ssm_parameter.idr_snowflake_user[0].value
-          },
-          {
-            name  = "IDR_SNOWFLAKE_ROLE"
-            value = data.aws_ssm_parameter.idr_snowflake_role[0].value
           },
           {
             name  = "IDR_SNOWFLAKE_DB"
@@ -122,7 +122,7 @@ resource "aws_ecs_task_definition" "idr_db_importer" {
         }
       }
     }
-  ]))
+  ])
 }
 
 resource "aws_scheduler_schedule" "idr_db_importer" {
