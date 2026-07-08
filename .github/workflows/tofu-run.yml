@@ -16,6 +16,9 @@ on:
         required: true
         type: string
 
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
   tofu:
     permissions:
