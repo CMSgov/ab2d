@@ -25,12 +25,6 @@ module "platform" {
 }
 
 
-# The IDR importer is a cron-driven batch task (invoked by the EventBridge scheduler
-# below via RunTask), not a long-running service. We use the shared `service` module
-# only to build the task definition, execution/task roles, security group, and log
-# config; `desired_count = 0` keeps ECS from running the task continuously, and the
-# scheduler drives execution instead. The existing execution role is reused so its
-# SSM/KMS permissions (defined in 10-core) carry over unchanged.
 module "service" {
   source = "github.com/CMSgov/cdap//terraform/modules/service?ref=52af0763fab4e65b29ead8bf88774f0bad4bdd87"
 
@@ -45,8 +39,6 @@ module "service" {
   security_groups      = [data.aws_security_group.idr_db_importer.id]
   subnets              = keys(module.platform.private_subnets)
 
-  # The importer task's S3/KMS access (bucket read/write) lives in 10-core as a
-  # standalone managed policy; attach it to the module-managed task role.
   additional_task_role_policies = { s3 = data.aws_iam_policy.idr_db_importer_task.arn }
 
   container_environment = concat(

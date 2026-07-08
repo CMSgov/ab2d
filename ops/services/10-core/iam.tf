@@ -244,9 +244,7 @@ resource "aws_iam_role_policy_attachment" "idr_kms" {
   policy_arn = aws_iam_policy.kms_key_access.arn
 }
 
-# The importer ECS task role is now created by the `service` module in the
-# 30-idr-db-importer terraservice; this policy is attached to that role there via
-# `additional_task_role_policies` (looked up by name with a data source).
+
 resource "aws_iam_policy" "idr_db_importer_task" {
   name        = "${module.platform.app}-${module.platform.env}-idr-db-importer-task"
   description = "IDR DB Importer ECS task access to S3 bucket and KMS key."

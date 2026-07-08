@@ -10,8 +10,7 @@ data "aws_iam_role" "idr_db_importer_task_execution" {
   name = "${local.service_prefix}-${local.service}-task-execution"
 }
 
-# S3/KMS access policy for the importer task, defined as a standalone managed policy
-# in 10-core. Attached to the `service` module's task role via additional_task_role_policies.
+
 data "aws_iam_policy" "idr_db_importer_task" {
   name = "${local.app}-${local.env}-idr-db-importer-task"
 }
