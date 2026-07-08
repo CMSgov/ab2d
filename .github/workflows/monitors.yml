@@ -7,11 +7,15 @@ on:
       - main
     paths:
       - "ops/services/60-monitors/**"
+      - ".github/workflows/tofu-monitors.yml"
+      - ".github/workflows/tofu-run.yml"
   pull_request:
     branches:
       - main
     paths:
       - "ops/services/60-monitors/**"
+      - ".github/workflows/tofu-monitors.yml"
+      - ".github/workflows/tofu-run.yml"
 
 concurrency:
   group: tofu-plan-or-apply
