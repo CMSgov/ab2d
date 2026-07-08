@@ -25,104 +25,57 @@ module "platform" {
 }
 
 
-resource "aws_ecs_task_definition" "idr_db_importer" {
-  cpu                      = 1024
-  execution_role_arn       = data.aws_iam_role.idr_db_importer_task_execution.arn
-  family                   = "${local.service_prefix}-${local.service}"
-  memory                   = 2048
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  task_role_arn            = data.aws_iam_role.idr_db_importer_task.arn
-  runtime_platform {
-    cpu_architecture        = "ARM64"
-    operating_system_family = "LINUX"
-  }
-  container_definitions = jsonencode([
-    {
-      image                  = "${local.image_repo_uri}:${var.image_tag}"
-      name                   = local.service
-      readonlyRootFilesystem = true
+# The IDR importer is a cron-driven batch task (invoked by the EventBridge scheduler
+# below via RunTask), not a long-running service. We use the shared `service` module
+# only to build the task definition, execution/task roles, security group, and log
+# config; `desired_count = 0` keeps ECS from running the task continuously, and the
+# scheduler drives execution instead. The existing execution role is reused so its
+# SSM/KMS permissions (defined in 10-core) carry over unchanged.
+module "service" {
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=52af0763fab4e65b29ead8bf88774f0bad4bdd87"
 
-      secrets = concat([
-        {
-          name      = "AB2D_DB_PASSWORD"
-          valueFrom = data.aws_ssm_parameter.ab2d_db_password.arn
-        },
-        {
-          name      = "AB2D_DB_USER"
-          valueFrom = data.aws_ssm_parameter.ab2d_db_user.arn
-        }
-        ],
-        module.platform.parent_env == "prod" ? [
-          {
-            name      = "IDR_SNOWFLAKE_PRIVATE_KEY"
-            valueFrom = data.aws_ssm_parameter.idr_private_key[0].arn
-          },
-          {
-            name      = "IDR_SNOWFLAKE_WAREHOUSE"
-            valueFrom = data.aws_ssm_parameter.idr_snowflake_warehouse[0].arn
-          },
-          {
-            name      = "IDR_SNOWFLAKE_USER"
-            valueFrom = data.aws_ssm_parameter.idr_snowflake_user[0].arn
-          },
-          {
-            name      = "IDR_SNOWFLAKE_ROLE"
-            valueFrom = data.aws_ssm_parameter.idr_snowflake_role[0].arn
-          }
-        ] : []
-      )
+  cluster_arn          = data.aws_ecs_cluster.shared.arn
+  cpu                  = 1024
+  memory               = 2048
+  desired_count        = 0
+  enable_datadog_agent = false
+  execution_role_arn   = data.aws_iam_role.idr_db_importer_task_execution.arn
+  image                = "${local.image_repo_uri}:${var.image_tag}"
+  platform             = module.platform
+  security_groups      = [data.aws_security_group.idr_db_importer.id]
+  subnets              = keys(module.platform.private_subnets)
 
-      environment = concat(
-        [
-          {
-            name  = "AB2D_DB_DATABASE"
-            value = data.aws_ssm_parameter.ab2d_db_database.value
-          },
-          {
-            name  = "AB2D_DB_HOST"
-            value = data.aws_ssm_parameter.ab2d_db_host.value
-          },
-          {
-            name  = "AB2D_DB_PORT"
-            value = "5432"
-          },
-          {
-            name  = "S3_BUCKET"
-            value = data.aws_ssm_parameter.idr_db_importer_bucket.value
-          },
-          {
-            name  = "ENVIRONMENT"
-            value = local.env
-          }
-        ],
-        module.platform.parent_env == "prod" ? [
-          {
-            name  = "IDR_SNOWFLAKE_URL"
-            value = "jdbc:snowflake://cms-idr.privatelink.snowflakecomputing.com"
-          },
-          {
-            name  = "IDR_SNOWFLAKE_DB"
-            value = "IDRC_PRD"
-          },
-          {
-            name  = "IDR_SNOWFLAKE_SCHEMA"
-            value = "CMS_VDM_VIEW_MDCR_PRD"
-          }
-        ] : []
-      )
+  # The importer task's S3/KMS access (bucket read/write) lives in 10-core as a
+  # standalone managed policy; attach it to the module-managed task role.
+  additional_task_role_policies = { s3 = data.aws_iam_policy.idr_db_importer_task.arn }
 
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = "/aws/ecs/fargate/${local.app}-${local.env}/${local.service}"
-          awslogs-create-group  = "true"
-          awslogs-region        = var.region
-          awslogs-stream-prefix = "${local.app}-${local.env}"
-        }
-      }
-    }
-  ])
+  container_environment = concat(
+    [
+      { name = "AB2D_DB_DATABASE", value = data.aws_ssm_parameter.ab2d_db_database.value },
+      { name = "AB2D_DB_HOST", value = data.aws_ssm_parameter.ab2d_db_host.value },
+      { name = "AB2D_DB_PORT", value = "5432" },
+      { name = "S3_BUCKET", value = data.aws_ssm_parameter.idr_db_importer_bucket.value },
+      { name = "ENVIRONMENT", value = local.env }
+    ],
+    module.platform.parent_env == "prod" ? [
+      { name = "IDR_SNOWFLAKE_URL", value = "jdbc:snowflake://cms-idr.privatelink.snowflakecomputing.com" },
+      { name = "IDR_SNOWFLAKE_DB", value = "IDRC_PRD" },
+      { name = "IDR_SNOWFLAKE_SCHEMA", value = "CMS_VDM_VIEW_MDCR_PRD" }
+    ] : []
+  )
+
+  container_secrets = concat(
+    [
+      { name = "AB2D_DB_PASSWORD", valueFrom = data.aws_ssm_parameter.ab2d_db_password.arn },
+      { name = "AB2D_DB_USER", valueFrom = data.aws_ssm_parameter.ab2d_db_user.arn }
+    ],
+    module.platform.parent_env == "prod" ? [
+      { name = "IDR_SNOWFLAKE_PRIVATE_KEY", valueFrom = data.aws_ssm_parameter.idr_private_key[0].arn },
+      { name = "IDR_SNOWFLAKE_WAREHOUSE", valueFrom = data.aws_ssm_parameter.idr_snowflake_warehouse[0].arn },
+      { name = "IDR_SNOWFLAKE_USER", valueFrom = data.aws_ssm_parameter.idr_snowflake_user[0].arn },
+      { name = "IDR_SNOWFLAKE_ROLE", valueFrom = data.aws_ssm_parameter.idr_snowflake_role[0].arn }
+    ] : []
+  )
 }
 
 resource "aws_scheduler_schedule" "idr_db_importer" {
@@ -142,7 +95,7 @@ resource "aws_scheduler_schedule" "idr_db_importer" {
       launch_type = "FARGATE"
 
       task_definition_arn = trimsuffix(
-        aws_ecs_task_definition.idr_db_importer.arn, ":${aws_ecs_task_definition.idr_db_importer.revision}"
+        module.service.task_definition.arn, ":${module.service.task_definition.revision}"
       )
 
       network_configuration {
@@ -183,8 +136,8 @@ resource "aws_iam_policy" "idr_db_importer_eventbridge_scheduler" {
           "ecs:RunTask"
         ],
         Resource = [
-          trimsuffix(aws_ecs_task_definition.idr_db_importer.arn, ":${aws_ecs_task_definition.idr_db_importer.revision}"),
-          "${trimsuffix(aws_ecs_task_definition.idr_db_importer.arn, ":${aws_ecs_task_definition.idr_db_importer.revision}")}:*"
+          trimsuffix(module.service.task_definition.arn, ":${module.service.task_definition.revision}"),
+          "${trimsuffix(module.service.task_definition.arn, ":${module.service.task_definition.revision}")}:*"
         ],
         Condition = {
           "ArnLike" = {
@@ -198,7 +151,7 @@ resource "aws_iam_policy" "idr_db_importer_eventbridge_scheduler" {
           "iam:PassRole"
         ]
         Resource = [
-          data.aws_iam_role.idr_db_importer_task.arn,
+          module.service.task_role_arn,
           data.aws_iam_role.idr_db_importer_task_execution.arn
         ]
       },

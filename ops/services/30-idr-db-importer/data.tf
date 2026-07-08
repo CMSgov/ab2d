@@ -6,12 +6,14 @@ data "aws_ecs_cluster" "shared" {
   cluster_name = "${local.app}-${local.env}"
 }
 
-data "aws_iam_role" "idr_db_importer_task" {
-  name = "${local.service_prefix}-${local.service}-task"
-}
-
 data "aws_iam_role" "idr_db_importer_task_execution" {
   name = "${local.service_prefix}-${local.service}-task-execution"
+}
+
+# S3/KMS access policy for the importer task, defined as a standalone managed policy
+# in 10-core. Attached to the `service` module's task role via additional_task_role_policies.
+data "aws_iam_policy" "idr_db_importer_task" {
+  name = "${local.app}-${local.env}-idr-db-importer-task"
 }
 
 data "aws_security_group" "idr_db_importer" {
