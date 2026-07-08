@@ -25,7 +25,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
     outputs:
       apply: ${{ steps.check.outputs.apply }}
       branch: ${{ steps.check.outputs.branch }}
