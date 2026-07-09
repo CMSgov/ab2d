@@ -38,19 +38,36 @@ ext {
     commonsLangVersion='3.18.0'
     lombokVersion = '1.18.38'
     springBootVersion='4.0.7'
-    springCloudAwsVersion='4.0.0'
+    springCloudAwsVersion = '4.0.2'
     hapiVersion = '8.8.0'
     ddTraceApiVersion='1.63.0'
     testContainerVersion='1.21.4'
     mockServerVersion='5.15.0'
     liquibaseVersion="5.0.0"
-    jacksonVersion = "2.21.2"
+    jacksonVersion = "2.21.4"
     slackAPIVersion='1.35.0'
     hl7Version = '6.9.10'
 
 }
 
 allprojects {
+
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
+    // Resolves every resolvable configuration across all projects so lockfiles can
+    // be written for the whole multi-project build in one pass.
+    tasks.register('resolveAndLockAll') {
+        notCompatibleWithConfigurationCache('Resolves configurations at execution time')
+        doFirst {
+            assert gradle.startParameter.writeDependencyLocks : 'Run with --write-locks'
+        }
+        doLast {
+            configurations.findAll { it.canBeResolved }.each { it.resolve() }
+        }
+    }
 
     tasks.withType(Test).configureEach { testTask ->
         def taskFailedTests = []
@@ -173,6 +190,13 @@ subprojects {
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.utilities:$hl7Version")
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:$hl7Version")
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.r4:$hl7Version")
+            // spring boot dependencies - should be removed when spring boot upgrades these
+            implementation('org.apache.tomcat.embed:tomcat-embed-core:11.0.23')
+            implementation('org.apache.tomcat.embed:tomcat-embed-el:11.0.23')
+            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23')
+            implementation('ch.qos.logback:logback-core:1.5.36')
+            implementation('ch.qos.logback:logback-classic:1.5.36')
+            implementation('org.apache.thrift:libthrift:0.23.0')
         }
     }
 
@@ -181,7 +205,9 @@ subprojects {
         resolutionStrategy.force(
             'org.apache.commons:commons-lang3:3.18.0',
             'commons-beanutils:commons-beanutils:1.11.0',
-            'org.apache.httpcomponents.core5:httpcore5-h2:5.3.6'
+            'org.apache.httpcomponents.core5:httpcore5:5.4.2',
+            'org.apache.httpcomponents.core5:httpcore5-h2:5.4.2',
+            'org.apache.httpcomponents.client5:httpclient5:5.6.1'
         )
     }
 

@@ -30,16 +30,16 @@ dependencies {
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
     implementation 'com.amazonaws:aws-java-sdk-sqs:1.12.793'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.21.2'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2'
-    implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.21.2'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.21.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.21.4'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.4'
+    implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.21.4'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.21.4'
     annotationProcessor 'org.projectlombok:lombok:1.18.42'
     compileOnly 'org.projectlombok:lombok:1.18.42'
     implementation 'org.slf4j:slf4j-api:2.0.5'
     implementation project(':database-management')
     implementation 'org.liquibase:liquibase-core:4.33.0'
-    implementation 'org.postgresql:postgresql:42.7.11'
+    implementation 'org.postgresql:postgresql:42.7.12'
     implementation('gov.cms.ab2d:ab2d-sns-client:0.0.1'){
         // Gradle is including these transient dependencies in the zip making it huge
         exclude group: 'org.springframework'
@@ -64,7 +64,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter:1.17.6'
     testImplementation "org.testcontainers:postgresql:1.17.6"
     testImplementation 'org.liquibase:liquibase-core:4.21.0'
-    testImplementation 'org.postgresql:postgresql:42.7.11'
+    testImplementation 'org.postgresql:postgresql:42.7.12'
     testImplementation project(':database-management')
     testImplementation project(':lambda-test-utils')
 
