@@ -34,12 +34,12 @@ dependencies {
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.5'
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation project(':lambda-lib')
-    implementation('gov.cms.ab2d:ab2d-contracts-client:1.1')
+    implementation('gov.cms.ab2d:ab2d-contracts-client:2.2.2')
     implementation 'org.slf4j:slf4j-api:2.0.5'
     implementation 'com.amazonaws:aws-java-sdk-sns:1.12.793'
 
-    implementation('gov.cms.ab2d:ab2d-sns-client:0.0.1')
-    implementation('gov.cms.ab2d:ab2d-events-client:1.11.2')
+    implementation('gov.cms.ab2d:ab2d-sns-client:1.1.11')
+    implementation('gov.cms.ab2d:ab2d-events-client:3.3.16')
 
     testImplementation 'org.mockito:mockito-core:5.20.0'
     testImplementation project(':lambda-lib')
