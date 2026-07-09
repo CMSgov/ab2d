@@ -7,14 +7,14 @@ on:
       - main
     paths:
       - "ops/services/65-dashboard/**"
-      - ".github/workflows/tofu-dashboard.yml"
+      - ".github/workflows/dashboard.yml"
       - ".github/workflows/tofu-run.yml"
   pull_request:
     branches:
       - main
     paths:
       - "ops/services/65-dashboard/**"
-      - ".github/workflows/tofu-dashboard.yml"
+      - ".github/workflows/dashboard.yml"
       - ".github/workflows/tofu-run.yml"
 
 concurrency:
