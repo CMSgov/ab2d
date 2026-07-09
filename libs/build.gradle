@@ -22,14 +22,14 @@ ext {
             : System.getenv()['ARTIFACTORY_PASSWORD']
 
     // AB2D libraries
-    fhirVersion='2.5.7'
-    bfdVersion='4.8.1'
-    aggregatorVersion='2.1.5'
-    filtersVersion='3.2.0' // AB2D-7222 Refactor EOB Processing to Eliminate Excess Allocations and Improve Reusability
-    eventClientVersion='3.3.15'
+    fhirVersion='2.5.8'
+    bfdVersion='4.8.2'
+    aggregatorVersion='2.1.6'
+    filtersVersion='3.2.1' // AB2D-7222 Refactor EOB Processing to Eliminate Excess Allocations and Improve Reusability
+    eventClientVersion='3.3.16'
     propertiesClientVersion='2.1.1'
-    contractClientVersion='2.2.1'
-    snsClientVersion='1.1.10'
+    contractClientVersion='2.2.2'
+    snsClientVersion='1.1.11'
 
     sourcesRepo = 'ab2d-maven-repo'
     deployerRepo = 'ab2d-main'
@@ -169,10 +169,13 @@ subprojects {
     dependencies {
         implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
         implementation(platform("org.liquibase:liquibase-core:$liquibaseVersion"))
-        implementation(platform("org.testcontainers:testcontainers:$testContainerVersion"))
-        implementation(platform("org.testcontainers:postgresql:$testContainerVersion"))
-        implementation(platform("org.testcontainers:junit-jupiter:$testContainerVersion"))
-        implementation(platform("org.testcontainers:localstack:$testContainerVersion"))
+        // testcontainers is test-only: keep it on testImplementation so it is not published
+        // into the runtimeElements variant of the module metadata (.module), which would
+        // otherwise leak testcontainers onto consumers' runtimeClasspath.
+        testImplementation(platform("org.testcontainers:testcontainers:$testContainerVersion"))
+        testImplementation(platform("org.testcontainers:postgresql:$testContainerVersion"))
+        testImplementation(platform("org.testcontainers:junit-jupiter:$testContainerVersion"))
+        testImplementation(platform("org.testcontainers:localstack:$testContainerVersion"))
         implementation(platform(annotationProcessor("org.projectlombok:lombok:$lombokVersion")))
 
         // constrain packages not managed by springboot

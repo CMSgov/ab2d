@@ -17,8 +17,8 @@ ext {
     springBootVersion='4.0.7'
     testContainerVersion='1.21.4'
     liquibaseVersion = '5.0.0'
-    eventClientVersion='3.3.15'
-    contractClientVersion='2.2.1'
+    eventClientVersion='3.3.16'
+    contractClientVersion='2.2.2'
 }
 
 allprojects {
