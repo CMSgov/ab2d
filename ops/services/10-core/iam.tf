@@ -244,42 +244,6 @@ resource "aws_iam_role_policy_attachment" "idr_kms" {
   policy_arn = aws_iam_policy.kms_key_access.arn
 }
 
-
-resource "aws_iam_policy" "idr_db_importer_task" {
-  name        = "${module.platform.app}-${module.platform.env}-idr-db-importer-task"
-  description = "IDR DB Importer ECS task access to S3 bucket and KMS key."
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "S3Access"
-        Effect = "Allow"
-        Action = [
-          "s3:AbortMultipartUpload",
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          module.idr_db_importer_bucket.arn,
-          "${module.idr_db_importer_bucket.arn}/*"
-        ]
-      },
-      {
-        Sid    = "KmsAccessForS3"
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt",
-          "kms:GenerateDataKey"
-        ]
-        Resource = module.platform.kms_alias_primary.target_key_arn
-      }
-    ]
-  })
-}
-
 resource "aws_iam_role" "idr_db_importer" {
   name                 = "${module.platform.app}-${module.platform.env}-idr-db-importer"
   path                 = "/delegatedadmin/developer/"
@@ -363,10 +327,6 @@ data "aws_iam_policy_document" "idr_db_importer_additional_bucket_policy" {
       variable = "aws:PrincipalArn"
       values = [
         aws_iam_role.idr_db_importer.arn,
-        # The importer ECS task role is created by the `service` module in the
-        # 30-idr-db-importer terraservice. It has no IAM path, so its ARN is
-        # constructed here as a string to avoid a reverse cross-state dependency
-        # (10-core applies before 30-idr-db-importer).
         "arn:aws:iam::${local.aws_account_number}:role/${local.service_prefix}-idr-db-importer-task-role"
       ]
     }

@@ -39,7 +39,7 @@ module "service" {
   security_groups      = [data.aws_security_group.idr_db_importer.id]
   subnets              = keys(module.platform.private_subnets)
 
-  additional_task_role_policies = { s3 = data.aws_iam_policy.idr_db_importer_task.arn }
+  additional_task_role_policies = { s3 = aws_iam_policy.idr_db_importer_task.arn }
 
   container_environment = concat(
     [
@@ -68,6 +68,41 @@ module "service" {
       { name = "IDR_SNOWFLAKE_ROLE", valueFrom = data.aws_ssm_parameter.idr_snowflake_role[0].arn }
     ] : []
   )
+}
+
+resource "aws_iam_policy" "idr_db_importer_task" {
+  name        = "${local.app}-${local.env}-idr-db-importer-task"
+  description = "IDR DB Importer ECS task access to S3 bucket and KMS key."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3Access"
+        Effect = "Allow"
+        Action = [
+          "s3:AbortMultipartUpload",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::${data.aws_ssm_parameter.idr_db_importer_bucket.value}",
+          "arn:aws:s3:::${data.aws_ssm_parameter.idr_db_importer_bucket.value}/*"
+        ]
+      },
+      {
+        Sid    = "KmsAccessForS3"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ]
+        Resource = module.platform.kms_alias_primary.target_key_arn
+      }
+    ]
+  })
 }
 
 resource "aws_scheduler_schedule" "idr_db_importer" {
