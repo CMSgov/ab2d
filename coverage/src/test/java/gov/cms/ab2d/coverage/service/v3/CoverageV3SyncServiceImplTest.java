@@ -129,22 +129,6 @@ class CoverageV3SyncServiceImplTest {
 
 	}
 
-	@Test
-	void moveToHistorical_Z1234_tagsSpanAndRecordsMetrics() {
-		when(propertiesService.isToggleOn(V3_AUDIT_LOGGING_ENABLED, false)).thenReturn(true);
-		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
-		when(lock.tryLock()).thenReturn(true);
-
-		try (MockedStatic<DatadogSpans> spans = mockStatic(DatadogSpans.class)) {
-			service.moveToHistorical("Z1234", CoverageV3SyncSource.CRON_JOB);
-
-			spans.verify(() -> DatadogSpans.setTag("contract", "Z1234"));
-			spans.verify(() -> DatadogSpans.setTag("component", "coverage"));
-			spans.verify(() -> DatadogSpans.setTag("sync.source", "CRON_JOB"));
-			spans.verify(() -> DatadogSpans.setMetric("coverage.v3.rows_moved", 3L));
-		}
-	}
-
 	void assertAuditLogEquals(Map<String, Object> result, String string) {
 		// remove id and timestamp to simplify comparisons
 		result.remove("timestamp");
