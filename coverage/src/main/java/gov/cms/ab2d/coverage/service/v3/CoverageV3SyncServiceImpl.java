@@ -1,6 +1,8 @@
 package gov.cms.ab2d.coverage.service.v3;
 
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditAction;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -188,7 +189,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     """;
 
     @Transactional
+    @Trace(operationName = "ab2d.coverage.sync_from_staging_v3")
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
+        DatadogSpans.setTag("contract", contract);
+        DatadogSpans.setTag("component", "coverage");
+        DatadogSpans.setTag("sync.source", source.name());
         val action = COPY_FROM_STAGING;
         CoverageV3SyncResult result = null;
 
@@ -213,6 +218,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             format("[V3] getCoveragePeriodCountForCoverageV3Staging contract=%s", contract),
             () -> getCoveragePeriodCountForCoverageV3Staging(contract)
         );
+        DatadogSpans.setMetric("coverage.v3.rows_in_staging", rowsInStaging);
         log.info("[V3] Found {} rows in staging table for contract {}", rowsInStaging, contract);
 
         if (rowsInStaging == 0) {
@@ -313,7 +319,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
     // Set query timeout of 1 hour, otherwise large contracts may cause org.springframework.dao.QueryTimeoutException
     @Transactional(timeout=3600)
+    @Trace(operationName = "ab2d.coverage.sync_to_historical_v3")
     public CoverageV3SyncResult moveToHistorical(String contract, CoverageV3SyncSource source) {
+        DatadogSpans.setTag("contract", contract);
+        DatadogSpans.setTag("component", "coverage");
+        DatadogSpans.setTag("sync.source", source.name());
         val action = COPY_TO_HISTORICAL;
         CoverageV3SyncResult result = null;
 
@@ -331,6 +341,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         try {
             if (locked) {
                 int rowsMoved = moveToHistoricalInternal(contract);
+                DatadogSpans.setMetric("coverage.v3.rows_moved", rowsMoved);
                 log.info("[V3] Moved {} rows to historical coverage table for contract {}", rowsMoved, contract);
                 if (rowsMoved == 0) {
                     // skip audit logging to prevent noise - this operation would only copy records > 0 once a month
@@ -356,6 +367,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
                 }
                 int rowsDeleted = deleteMonthsOldCoverage(contract);
+                DatadogSpans.setMetric("coverage.v3.rows_deleted", rowsDeleted);
                 log.info("[V3] Deleted {} rows from recent coverage table for contract {}", rowsDeleted, contract);
 
                 if (rowsDeleted != rowsMoved) {
@@ -469,7 +481,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
     @Override
     @Transactional
+    @Trace(operationName = "ab2d.coverage.delete_inactive_contracts_v3")
     public int deleteInactiveContractsFromHistorySummary() {
+        DatadogSpans.setTag("component", "coverage");
         val cutoff = CUT_OFF_DATE_FOR_INACTIVE_CONTRACT.get();
         val parameters = new MapSqlParameterSource().addValue("cutoff", cutoff);
         val template = new NamedParameterJdbcTemplate(this.dataSource);
@@ -479,6 +493,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
         List<String> deletedContracts = template.queryForList(DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY, parameters, String.class);
         log.info("[V3] Deleted {} rows from coverage_v3_history_summary for unattested contracts or contracts ended > 2 years ago", deletedContracts.size());
+        DatadogSpans.setMetric("coverage.v3.inactive_contracts_deleted", deletedContracts.size());
         audit.log(CoverageV3AuditAction.DELETE_INACTIVE_CONTACTS, null, null, null, Map.of("deletedContracts", deletedContracts));
         return deletedContracts.size();
     }

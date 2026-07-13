@@ -1,6 +1,7 @@
 package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLogImpl;
@@ -9,9 +10,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.OutputCaptureExtension;
-import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -23,6 +24,7 @@ import java.util.concurrent.locks.Lock;
 import static gov.cms.ab2d.common.util.PropertyConstants.V3_AUDIT_LOGGING_ENABLED;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 @Testcontainers
@@ -125,6 +127,22 @@ class CoverageV3SyncServiceImplTest {
 		{action=COPY_FROM_STAGING, result=SYNC_SUCCESSFUL_FOR_CONTRACT, contract=Z9999, log=, data={"rowsInStagingDeleted": 4, "rowsInCoverageAfterCopy": 4}}
 		""");
 
+	}
+
+	@Test
+	void moveToHistorical_Z1234_tagsSpanAndRecordsMetrics() {
+		when(propertiesService.isToggleOn(V3_AUDIT_LOGGING_ENABLED, false)).thenReturn(true);
+		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
+		when(lock.tryLock()).thenReturn(true);
+
+		try (MockedStatic<DatadogSpans> spans = mockStatic(DatadogSpans.class)) {
+			service.moveToHistorical("Z1234", CoverageV3SyncSource.CRON_JOB);
+
+			spans.verify(() -> DatadogSpans.setTag("contract", "Z1234"));
+			spans.verify(() -> DatadogSpans.setTag("component", "coverage"));
+			spans.verify(() -> DatadogSpans.setTag("sync.source", "CRON_JOB"));
+			spans.verify(() -> DatadogSpans.setMetric("coverage.v3.rows_moved", 3L));
+		}
 	}
 
 	void assertAuditLogEquals(Map<String, Object> result, String string) {
