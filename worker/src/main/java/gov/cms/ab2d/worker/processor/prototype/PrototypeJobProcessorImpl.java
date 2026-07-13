@@ -17,6 +17,8 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemStreamWriter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -44,8 +46,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private final org.springframework.batch.core.repository.JobRepository batchJobRepository;
     private final PlatformTransactionManager transactionManager;
     private final CoverageV3Service coverageV3Service;
-    private final int pageSize;
+    private final int partitionSize;
     private final int chunkSize;
+    private final int concurrency;
 
     private final BeneficiaryItemReader beneficiaryItemReader;
     private final EobItemProcessor eobItemProcessor;
@@ -60,18 +63,20 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             BeneficiaryItemReader beneficiaryItemReader,
             EobItemProcessor eobItemProcessor,
             ItemStreamWriter<List<IBaseResource>> ndjsonItemWriter,
-            @Value("${eob.job.patient.queue.page.size}") int pageSize,
-            @Value("${pause-resume.prototype.chunk-size:100}") int chunkSize) {
+            @Value("${pause-resume.prototype.partition-size:1000}") int partitionSize,
+            @Value("${pause-resume.prototype.chunk-size:100}") int chunkSize,
+            @Value("${pause-resume.prototype.concurrency:4}") int concurrency) {
         this.jobRepository = jobRepository;
         this.jobOperator = jobOperator;
         this.batchJobRepository = batchJobRepository;
         this.transactionManager = transactionManager;
         this.coverageV3Service = coverageV3Service;
-        this.pageSize = pageSize;
+        this.partitionSize = partitionSize;
         this.beneficiaryItemReader = beneficiaryItemReader;
         this.eobItemProcessor = eobItemProcessor;
         this.ndjsonItemWriter = ndjsonItemWriter;
         this.chunkSize = chunkSize;
+        this.concurrency = concurrency;
     }
 
     @Override
@@ -114,7 +119,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 job.setStatus(SUCCESSFUL);
                 job.setStatusMessage("Completed via prototype");
                 coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
-            } else if (execution.getStatus() == BatchStatus.STOPPED) {
+            } else if (execution.getStatus() == BatchStatus.STOPPED || wasInterrupted(execution)) {
+                // this is sort of redundant since the shutdown hook also sets job status to
+                // submitted, but it's helpful to do it here too so there's no gaps
                 job.setStatus(SUBMITTED);
                 job.setStatusMessage("Paused via prototype");
             } else {
@@ -148,16 +155,34 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             return last;
         }
 
-        if (last.getStatus().isRunning()) {
-            // stale execution left behind by a crash
-            // clear it so restart is allowed
-            log.info("recovering stale batch execution {} with status {}", last.getId(), last.getStatus());
+        // Worker crashing/stopping can leave orphaned steps
+        // recover any orphaned steps before attempting to resume a job
+        // otherwise it might think the job is already running
+        if (last.getStatus().isRunning() || hasRunningStepExecution(last)) {
+            log.info("recovering stale batch execution {} (job status {}) before resume", last.getId(), last.getStatus());
             jobOperator.recover(last);
         }
 
         // resume is based on jobuuid
         log.info("resuming from prior batch execution {} (status {})", last.getId(), last.getStatus());
         return jobOperator.start(batchJob, parameters);
+    }
+
+    /**
+     * True if the execution failed because it was interrupted
+     */
+    private boolean wasInterrupted(JobExecution execution) {
+        return execution.getAllFailureExceptions().stream()
+                .anyMatch(InterruptedException.class::isInstance);
+    }
+
+    /**
+     * True if any exec step of the given job execution is still in a running state
+     * makes sure we can avoid a situation where a "running" step blocks restarting
+     */
+    private boolean hasRunningStepExecution(JobExecution jobExecution) {
+        return jobExecution.getStepExecutions().stream()
+                .anyMatch(stepExecution -> stepExecution.getStatus().isRunning());
     }
 
     /**
@@ -174,17 +199,31 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .transactionManager(transactionManager)
                 .build();
 
-        BeneficiaryPartitioner partitioner = new BeneficiaryPartitioner(coverageV3Service, contractNumber, pageSize);
+        BeneficiaryPartitioner partitioner = new BeneficiaryPartitioner(coverageV3Service, contractNumber, partitionSize);
 
+        // the manager partitions the work, and each partition gets its own
+        // workerStep, which brings along its own reader/processor/writer
+        // and writes to its own ndjson file
         Step managerStep = new StepBuilder(MANAGER_STEP_NAME, batchJobRepository)
                 .partitioner(WORKER_STEP_NAME, partitioner)
                 .step(workerStep)
-                .gridSize(1)
+                .taskExecutor(partitionTaskExecutor())
+                .gridSize(concurrency)
                 .build();
 
         return new JobBuilder(PROTOTYPE_JOB_NAME, batchJobRepository)
                 .start(managerStep)
                 .build();
+    }
+
+    /**
+     * Executor for the partitioned worker steps
+     * Async allows for concurrent work
+     */
+    private TaskExecutor partitionTaskExecutor() {
+        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("proto-partition-");
+        executor.setConcurrencyLimit(Math.max(1, concurrency));
+        return executor;
     }
 
 }
