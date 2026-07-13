@@ -58,9 +58,11 @@ submit_v3() {
   local uuid="33333333-$(date +%s)-${RANDOM}"
 
   log "Inserting V3 job for contract $CONTRACT ..."
-  psql_q "INSERT INTO ab2d.job (id, job_uuid, created_at, status, fhir_version, started_by,
+  # omit id so the job_seq default assigns it, keeping the sequence in sync with
+  # Hibernate-inserted rows (a manual MAX(id)+1 desyncs job_seq and later collides)
+  psql_q "INSERT INTO ab2d.job (job_uuid, created_at, status, fhir_version, started_by,
                                 contract_number, organization, resource_types, output_format, progress)
-          VALUES ((SELECT COALESCE(MAX(id),0)+1 FROM ab2d.job), '$uuid', now(), 'SUBMITTED', 'R4V3', 'PDP',
+          VALUES ('$uuid', now(), 'SUBMITTED', 'R4V3', 'PDP',
                   '$CONTRACT', '$ORG', 'ExplanationOfBenefit', 'application/fhir+ndjson', 0);" >/dev/null
   log "Job UUID: $uuid"
 
