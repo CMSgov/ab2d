@@ -11,6 +11,8 @@ import gov.cms.ab2d.worker.processor.JobProcessor;
 import gov.cms.ab2d.worker.processor.prototype.PrototypeJobProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PreDestroy;
@@ -80,6 +82,15 @@ public class WorkerServiceImpl implements WorkerService {
     @Override
     public FeatureEngagement getEngagement() {
         return FeatureEngagement.fromString(propertiesService.getProperty(WORKER_ENGAGEMENT, FeatureEngagement.IN_GEAR.getSerialValue()));
+    }
+
+    /**
+     * Signal any running prototype batch executions to stop and drain before Spring
+     * tears down context
+     */
+    @EventListener(ContextClosedEvent.class)
+    public void stopPrototypeJobsBeforeClose() {
+        prototypeJobProcessor.stopForShutdown();
     }
 
     @PreDestroy

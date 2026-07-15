@@ -5,6 +5,7 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
+import gov.cms.ab2d.worker.processor.prototype.PrototypeBatchMetadataRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -27,16 +28,19 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
     private final SQSEventClient eventLogger;
     private final int cancelThreshold;
     private final CoverageV3Service coverageV3Service;
+    private final PrototypeBatchMetadataRepository batchMeta;
 
     public CancelStuckJobsProcessorImpl(
             JobRepository jobRepository,
             SQSEventClient eventLogger,
             @Value("${stuck.job.cancel.threshold}") int cancelThreshold,
-            CoverageV3Service coverageV3Service) {
+            CoverageV3Service coverageV3Service,
+            PrototypeBatchMetadataRepository batchMeta) {
         this.jobRepository = jobRepository;
         this.eventLogger = eventLogger;
         this.cancelThreshold = cancelThreshold;
         this.coverageV3Service = coverageV3Service;
+        this.batchMeta = batchMeta;
     }
 
     @Override
@@ -49,6 +53,17 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
         log.info("Found {} jobs that appears to be stuck", stuckJobs.size());
 
         for (Job stuckJob : stuckJobs) {
+            // For pause/resume jobs, the runtime of the job must not include time spent paused
+            if (stuckJob.getFhirVersion() == FhirVersion.R4V3) {
+                final long activeSeconds = batchMeta.activeRuntimeSeconds(stuckJob.getJobUuid());
+                final long thresholdSeconds = (long) cancelThreshold * 3600L;
+                if (activeSeconds < thresholdSeconds) {
+                    log.info("Skipping stuck-cancel for v3 job {} (likely paused)",
+                            stuckJob.getJobUuid());
+                    continue;
+                }
+            }
+
             log.warn("Cancelling job - uuid:{} - created at:{} - status :{} - completed_at {}",
                             stuckJob.getJobUuid(), stuckJob.getCreatedAt(), stuckJob.getStatus(), stuckJob.getCompletedAt());
             eventLogger.logAndAlert(stuckJob.buildJobStatusChangeEvent(CANCELLED, EOB_JOB_CANCELLED + " Cancelling stuck job"),
