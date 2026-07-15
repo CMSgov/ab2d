@@ -13,17 +13,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Splits contract benes into partitions.
- * On restart, it reuses the checked in partitions.
+ * Splits a contract's beneficiaries into partitions along patient_id boundaries.
+ * The partitions are built off patient_id to avoid splitting patients between partitions if
+ * they are on the boundary.
  */
 @Slf4j
 public class BeneficiaryPartitioner implements Partitioner, PartitionNameProvider {
 
     static final String KEY_CONTRACT = "contractNumber";
     static final String KEY_PARTITION_INDEX = "partitionIndex";
-    static final String KEY_START_ROW = "startRow";
-    static final String KEY_END_ROW = "endRow";
-    static final String KEY_BENES = "benesInPartition";
+    static final String KEY_START_PATIENT = "startPatientId"; // exclusive lower bound
+    static final String KEY_END_PATIENT = "endPatientId";     // inclusive upper bound
+
+    static final long UNBOUNDED_START = Long.MIN_VALUE;
+    static final long UNBOUNDED_END = Long.MAX_VALUE;
 
     private final CoverageV3Service coverageV3Service;
     private final String contractNumber;
@@ -37,29 +40,27 @@ public class BeneficiaryPartitioner implements Partitioner, PartitionNameProvide
 
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {
-        int total = coverageV3Service.getDistinctPatientCount(contractNumber);
+        List<Long> upperBounds = computeUpperBounds();
 
         Map<String, ExecutionContext> partitions = new HashMap<>();
-        if (total <= 0) {
+        if (upperBounds == null) {
             log.info("no patients found");
             return partitions;
         }
 
-        int size = partitionSize <= 0 ? total : partitionSize;
-        int numPartitions = numPartitions(total, size);
-
+        int numPartitions = upperBounds.size() + 1;
+        long lower = UNBOUNDED_START;
         for (int i = 0; i < numPartitions; i++) {
-            long startRow = (long) i * size + 1;
-            long endRow = Math.min((long) (i + 1) * size, total);
+            long upper = i < upperBounds.size() ? upperBounds.get(i) : UNBOUNDED_END;
 
             ExecutionContext ec = new ExecutionContext();
             ec.putString(KEY_CONTRACT, contractNumber);
             ec.putInt(KEY_PARTITION_INDEX, i);
-            ec.putLong(KEY_START_ROW, startRow);
-            ec.putLong(KEY_END_ROW, endRow);
-            ec.putInt(KEY_BENES, (int) (endRow - startRow + 1));
+            ec.putLong(KEY_START_PATIENT, lower);
+            ec.putLong(KEY_END_PATIENT, upper);
 
             partitions.put(partitionName(i), ec);
+            lower = upper;
         }
 
         log.info("made {} partitions", numPartitions);
@@ -67,16 +68,15 @@ public class BeneficiaryPartitioner implements Partitioner, PartitionNameProvide
     }
 
     /**
-     * Grab the partitions from context
+     * Names of the partitions to reload on restart
      */
     @Override
     public Collection<String> getPartitionNames(int gridSize) {
-        int total = coverageV3Service.getDistinctPatientCount(contractNumber);
-        if (total <= 0) {
+        List<Long> upperBounds = computeUpperBounds();
+        if (upperBounds == null) {
             return List.of();
         }
-        int size = partitionSize <= 0 ? total : partitionSize;
-        int numPartitions = numPartitions(total, size);
+        int numPartitions = upperBounds.size() + 1;
 
         List<String> names = new ArrayList<>(numPartitions);
         for (int i = 0; i < numPartitions; i++) {
@@ -86,8 +86,18 @@ public class BeneficiaryPartitioner implements Partitioner, PartitionNameProvide
         return names;
     }
 
-    private static int numPartitions(int total, int size) {
-        return (total + size - 1) / size;
+    /**
+     * returns a list of partition boundaries
+     * returns null if theres no coverage data and empty list if
+     * there is only enough patients for 1 partition
+     */
+    private List<Long> computeUpperBounds() {
+        long maxRow = coverageV3Service.getMaxRowNumber(contractNumber);
+        if (maxRow <= 0) {
+            return null;
+        }
+        int size = partitionSize <= 0 ? (int) Math.min(maxRow, Integer.MAX_VALUE) : partitionSize;
+        return coverageV3Service.getPartitionBoundaryPatientIds(contractNumber, size);
     }
 
     private static String partitionName(int index) {

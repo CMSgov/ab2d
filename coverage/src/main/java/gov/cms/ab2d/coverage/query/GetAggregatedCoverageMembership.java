@@ -129,7 +129,8 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     FETCH FIRST :limit ROWS WITH TIES
     """;
 
-    private static final String FETCH_FROM_AGGREGATED_TABLE_BY_ROW_RANGE =
+    // used by prototype to page coverage by patient_id
+    private static final String FETCH_FROM_AGGREGATED_TABLE_BY_PATIENT_RANGE =
             """
             SELECT patient_id,
                current_mbi,
@@ -140,10 +141,24 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
                share_data,
                row_number
             FROM v3.coverage_v3_aggregated_{0}
-                WHERE row_number > :row_cursor
-                AND row_number <= :end_row
+                WHERE patient_id > :patient_id_cursor
+                AND patient_id <= :end_patient_id
+            ORDER BY patient_id asc
+            FETCH FIRST :limit ROWS WITH TIES
+            """;
+
+    // true total count of rows for coverage
+    private static final String MAX_ROW_NUMBER =
+            "SELECT COALESCE(MAX(row_number), 0) FROM v3.coverage_v3_aggregated_{0}";
+
+    // patient_id at every :size-th row
+    private static final String BOUNDARY_PATIENT_IDS =
+            """
+            SELECT patient_id
+            FROM v3.coverage_v3_aggregated_{0}
+            WHERE MOD(row_number, :size) = 0
+              AND row_number < (SELECT MAX(row_number) FROM v3.coverage_v3_aggregated_{0})
             ORDER BY row_number asc
-            FETCH FIRST :limit ROWS ONLY
             """;
 
     public void createAggregatedAttributionTable(final String contract) {
@@ -202,20 +217,44 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
 
         return jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
     }
-    public List<CoverageSummary> fetchAggregatedDataByRowRange(
+    public List<CoverageSummary> fetchAggregatedDataByPatientRange(
             final ContractForCoverageDTO contractDto,
-            final long startRow,
-            final long endRow,
-            final long limit,
-            final Optional<Long> cursor) {
-        val rowCursor = cursor.orElse(startRow-1);
+            final long cursorExclusive,
+            final long endInclusive,
+            final long limit) {
         val parameters = new MapSqlParameterSource()
-                .addValue("row_cursor", rowCursor)
-                .addValue("end_row", endRow)
+                .addValue("patient_id_cursor", cursorExclusive)
+                .addValue("end_patient_id", endInclusive)
                 .addValue("limit", limit);
 
-        val query = MessageFormat.format(FETCH_FROM_AGGREGATED_TABLE_BY_ROW_RANGE, contractDto.getContractNumber());
+        val query = MessageFormat.format(FETCH_FROM_AGGREGATED_TABLE_BY_PATIENT_RANGE, contractDto.getContractNumber());
         return jdbcTemplate.query(query, parameters, new AggregatedDataRowMapper(contractDto));
+    }
+
+    /**
+     * total row count including opt-outs and dupes
+     */
+    public long getMaxRowNumber(final String contract) {
+        val query = MessageFormat.format(MAX_ROW_NUMBER, contract);
+        return jdbcTemplate.getJdbcOperations().queryForObject(query, Long.class);
+    }
+
+    /**
+     * de-duplicated patient_id upper bounds that split the contract into partitions
+     * of size "size"
+     */
+    public List<Long> getPartitionBoundaryPatientIds(final String contract, final int size) {
+        val parameters = new MapSqlParameterSource().addValue("size", size);
+        val query = MessageFormat.format(BOUNDARY_PATIENT_IDS, contract);
+        val raw = jdbcTemplate.queryForList(query, parameters, Long.class);
+
+        val deduped = new ArrayList<Long>(raw.size());
+        for (Long id : raw) {
+            if (deduped.isEmpty() || !deduped.get(deduped.size() - 1).equals(id)) {
+                deduped.add(id);
+            }
+        }
+        return deduped;
     }
 
     // Returns last patient ID
