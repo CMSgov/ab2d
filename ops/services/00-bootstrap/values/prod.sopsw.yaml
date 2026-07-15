@@ -15,7 +15,7 @@
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/banner-health: ENC[AES256_GCM,data:NvZoTH6QqFfXI3/oMO7selKqvMRfQJshuyLfjEGCu+PfDwtWNvVDFLXAwYl+PHd3Frxr9KCEew==,iv:cGN88c4sAyDlTViLKoccMROsIua5ujqp/onhkrt2atI=,tag:3Kik5s4J5qHZetXt4TMgBA==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/cambia-health: ENC[AES256_GCM,data:GuhvhQ+Nifr7oD5WGvSOcBY=,iv:Yyji3CIzQgVEmSXUFJkTefhqBUEZr4/1wrYVQvfDA3I=,tag:wX9fejAN94AoWmeCI0cgvQ==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/centene-wellcare: ENC[AES256_GCM,data:SEoblPqEA107h2F9IdS81i3rjzwJ3yKuUDKqx1cJTPVi072vFRtfZH4zP0wc4OVdKPrcyR3si42wU8dXcMJq1N7fcFacv+XMPycey8SexCSQ+ZtWPSgJip9SU9NmsOU6domBAyNresT6aXoUrzEz3YTkr+632t91NUfr62FQlzSeaxi7oOSjqOnbUmO+3rXOsrZyobjj1MamJmZh7TOuSs2kYqp+2C9emQaBe+YGQipD9unKk7tbXNlYsPm+Sx9wpVGFmTOgY65eUEz3DMBJ+Cd6Vj+WufS18fZexl9d+Co4ySGEuSKWXMrtKc9pjp5iPApinTDGT4w=,iv:OtJtVFFOKw49F8hjyvvROeZwzhvNBSjHYzzQbdt/gTE=,tag:iRyaNPKoNKvwnG7bI3MZqw==,type:str]
-/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/cigna-health: ENC[AES256_GCM,data:O92pamKzWYc5xnKv/mw=,iv:fNXRONBE8SfWlhaIfTTlUtJWbfg1nPJ50YzlbXlaZSA=,tag:3yaTh0LJiOlIRR7BoUKxdQ==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/cigna-health: ENC[AES256_GCM,data:214eNiRhThgJr8aakHFkyoyWyjx76tXidDfNQ4PiJm7kKc4dP1S3qPXTypcWalUfKt06mmNoSGHTUOZwM47Huu6Q7n5HyHBPydVoiVv/aPekarpbuIMm6554AGD3OA==,iv:Eh2dccZv3n2OE6NibOH34rALvq1McKGq+b4oHbTg+zA=,tag:Bdx13WXSTx5gIXvf1ptZng==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/clear-spring: ENC[AES256_GCM,data:/2mFubwlkBM8Tl4soNz2AzRkG5gCnrwNB/XAbqKxCJWepA==,iv:vcsCgIQ+MGBLWSzIBQTL7zgK7Mvi7k0SVZQPe397BI4=,tag:1P0xanISD3Xo6/gDFp4hhw==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/humana: ENC[AES256_GCM,data:xwB1X1VWoQDNqOQOXoZYXZpvoPI/+YnNeD5jyY+ylErcmacll7R6o2oJRHVzDat2hMEWh9f8IMqqUHUGDAVCKHRssqFckg==,iv:RyE6MvaKL/i1WiA/12pZ6c1ZCsYXwpcY/jIh9RfOxKc=,tag:rLgXMIBPMFWDhNbeWSEx8Q==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/mutual-of-omaha: ENC[AES256_GCM,data:LQqJsqct44A4fxRb2fsbIenmP/vZiyiwhE1ZQ9SSaSb25k1IYndiq5OugRLp+QNkdBAEout4aS5lYL00+VDiRglu+w5pG1X2XCB0kmR4oZytJQJ9iEhd1mPJ1Ya/+LvZhfke2zYDjxWZ2376sWi1TttsRwkDcN6n,iv:kkwuAmVCWz1xYQjD6sk5hb14eGhRwBgh2z2EwD014JI=,tag:e7Pvws9HkPdPB62rLQA/Mg==,type:str]
@@ -37,13 +37,13 @@
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/ab2d-prod
-      aws_profile: ""
       created_at: "2025-06-30T19:15:02Z"
       enc: AQICAHiiBcH1zXWffn77hoG6y6pEPZ+4jjugLfsVfebBM+L/LgHlCl+ZPjCo8JOcN+bft1xHAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMgPYKsm4D+zfL36ByAgEQgDtAhv+GhjCNaxDzir/C4y7RDWMunWNoBhCrfkEUYO/LGI7e/Y3NtNwzLgSR87sI+GXER0s9NJ6vtW9+Cg==
-    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/ab2d-prod
       aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/ab2d-prod
       created_at: "2025-06-30T19:15:02Z"
       enc: AQICAHhQOCwYYioO/Y8DTCCF3UDslbqq7E89gMxakADNsQ0frwHZhUFhT3cxecuIluMEm26wAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMn3o8iTDE/yxepTTnAgEQgDsZ1rfL+6FMEpIK10eiNjmMM8E2jNVeGGQbAZSvpnWYdxBUet6iCZtDaHs7Od70oegQvAJjpTbA12+ecQ==
-  mac_only_encrypted: true
+      aws_profile: ""
   unencrypted_regex: /nonsensitive/
+  mac_only_encrypted: true
   version: 3.13.1
