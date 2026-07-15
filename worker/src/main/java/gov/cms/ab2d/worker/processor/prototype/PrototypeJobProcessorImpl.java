@@ -21,9 +21,16 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
@@ -39,16 +46,28 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     static final String MANAGER_STEP_NAME = "ab2dPrototypePartitionManagerStep";
     static final String WORKER_STEP_NAME = "ab2dPrototypeWorkerStep";
     static final String JOB_UUID_PARAM = "jobUuid";
-    static final int MAX_RESTART_ATTEMPTS = 3;
+
+    // IO exceptions from contacting BFD are worth retrying
+    private static final List<Class<? extends Throwable>> TRANSIENT_EXCEPTIONS = List.of(
+            IOException.class,
+            SocketTimeoutException.class,
+            ConnectException.class,
+            ResourceAccessException.class,
+            HttpServerErrorException.class);
 
     private final JobRepository jobRepository;
     private final JobOperator jobOperator;
     private final org.springframework.batch.core.repository.JobRepository batchJobRepository;
     private final PlatformTransactionManager transactionManager;
     private final CoverageV3Service coverageV3Service;
+    private final PrototypeBatchMetadataRepository batchMeta;
     private final int partitionSize;
     private final int chunkSize;
     private final int concurrency;
+    private final int maxFailureAttempts;
+    private final int maxStartAttempts;
+    private final int itemRetryLimit;
+    private final long shutdownAwaitMs;
 
     private final BeneficiaryItemReader beneficiaryItemReader;
     private final EobItemProcessor eobItemProcessor;
@@ -60,23 +79,33 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             org.springframework.batch.core.repository.JobRepository batchJobRepository,
             PlatformTransactionManager transactionManager,
             CoverageV3Service coverageV3Service,
+            PrototypeBatchMetadataRepository batchMeta,
             BeneficiaryItemReader beneficiaryItemReader,
             EobItemProcessor eobItemProcessor,
             ItemStreamWriter<List<IBaseResource>> ndjsonItemWriter,
             @Value("${pause-resume.prototype.partition-size:1000}") int partitionSize,
             @Value("${pause-resume.prototype.chunk-size:100}") int chunkSize,
-            @Value("${pause-resume.prototype.concurrency:4}") int concurrency) {
+            @Value("${pause-resume.prototype.concurrency:4}") int concurrency,
+            @Value("${pause-resume.prototype.max-failure-attempts:3}") int maxFailureAttempts,
+            @Value("${pause-resume.prototype.max-start-attempts:50}") int maxStartAttempts,
+            @Value("${pause-resume.prototype.item-retry-limit:3}") int itemRetryLimit,
+            @Value("${pause-resume.prototype.shutdown-await-ms:30000}") long shutdownAwaitMs) {
         this.jobRepository = jobRepository;
         this.jobOperator = jobOperator;
         this.batchJobRepository = batchJobRepository;
         this.transactionManager = transactionManager;
         this.coverageV3Service = coverageV3Service;
+        this.batchMeta = batchMeta;
         this.partitionSize = partitionSize;
         this.beneficiaryItemReader = beneficiaryItemReader;
         this.eobItemProcessor = eobItemProcessor;
         this.ndjsonItemWriter = ndjsonItemWriter;
         this.chunkSize = chunkSize;
         this.concurrency = concurrency;
+        this.maxFailureAttempts = maxFailureAttempts;
+        this.maxStartAttempts = maxStartAttempts;
+        this.itemRetryLimit = itemRetryLimit;
+        this.shutdownAwaitMs = shutdownAwaitMs;
     }
 
     @Override
@@ -101,19 +130,33 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
         String contractNumber = job.getContractNumber();
 
-        // table not created yet due to bypass
-        coverageV3Service.createAggregatedAttributionTable(contractNumber);
-
-        org.springframework.batch.core.job.Job batchJob = buildPartitionedJob(contractNumber);
-
         // jobUuid is the identifying parameter
         JobParameters parameters = new JobParametersBuilder()
                 .addString(JOB_UUID_PARAM, jobUuid)
                 .toJobParameters();
 
+        // Only build the aggregated attribution table on a fresh start
+        JobExecution last = batchJobRepository.getLastJobExecution(PROTOTYPE_JOB_NAME, parameters);
+        if (last == null) {
+            log.info("no prior batch execution for job {} - creating aggregated attribution table", jobUuid);
+            coverageV3Service.createAggregatedAttributionTable(contractNumber);
+        } else {
+            log.info("prior batch execution {} for job {} - reusing existing aggregated table", last.getId(), jobUuid);
+        }
+
+        org.springframework.batch.core.job.Job batchJob = buildPartitionedJob(contractNumber, jobUuid);
+
         try {
-            JobExecution execution = launchOrResume(batchJob, parameters);
+            JobExecution execution = launchOrResume(batchJob, parameters, last);
             log.info("prototype job {} finished with status {}", jobUuid, execution.getStatus());
+
+            // update job object if we're shutting down
+            Job current = jobRepository.findByJobUuid(jobUuid);
+            if (current != null && current.getStatus() == CANCELLED) {
+                log.warn("prototype job {} was cancelled during processing; leaving CANCELLED and cleaning up", jobUuid);
+                coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
+                return current;
+            }
 
             if (execution.getStatus() == BatchStatus.COMPLETED) {
                 job.setStatus(SUCCESSFUL);
@@ -125,26 +168,78 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 job.setStatus(SUBMITTED);
                 job.setStatusMessage("Paused via prototype");
             } else {
-                job.setStatus(FAILED);
-                job.setStatusMessage("Prototype failed with status " + execution.getStatus());
+                // A run that failed is resumable, up to some tolerance for retrying
+                applyFailureOutcome(job, contractNumber, jobUuid,
+                        "Prototype failed with status " + execution.getStatus());
             }
         } catch (Exception e) {
-                log.error("prototype job {} failed to launch", jobUuid, e);
-                job.setStatus(FAILED);
-                job.setStatusMessage("Prototype execution failed: " + e.getMessage());
+            // issues with launching are terminal and fail the job without retry
+            log.error("prototype job {} failed to launch", jobUuid, e);
+            job.setStatus(FAILED);
+            job.setStatusMessage("Prototype execution failed: " + e.getMessage());
+            coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
         }
 
         return jobRepository.save(job);
     }
 
     /**
+     * Increment the jobs failed attempts, then send it back to be resubmitted
+     */
+    private void applyFailureOutcome(Job job, String contractNumber, String jobUuid, String message) {
+        int failures = batchMeta.failedExecutionCount(jobUuid);
+        if (failures < maxFailureAttempts) {
+            job.setStatus(SUBMITTED);
+            job.setStatusMessage(message + " (attempt " + failures + " of " + maxFailureAttempts + "; will resume)");
+            log.warn("prototype job {} failed ({}/{} attempts) - resubmitting for resume", jobUuid, failures, maxFailureAttempts);
+        } else {
+            job.setStatus(FAILED);
+            job.setStatusMessage(message + " (failed after " + failures + " attempts)");
+            log.error("prototype job {} exhausted {} failure attempts - marking FAILED", jobUuid, maxFailureAttempts);
+            coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
+        }
+    }
+
+    @Override
+    public void stopForShutdown() {
+        Set<JobExecution> running = batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME);
+        if (running.isEmpty()) {
+            return;
+        }
+        log.info("shutdown: stopping {} running prototype batch execution(s) before releasing jobs", running.size());
+        for (JobExecution je : running) {
+            try {
+                jobOperator.stop(je);
+            } catch (Exception e) {
+                log.warn("shutdown: failed to signal stop for batch execution {}", je.getId(), e);
+            }
+        }
+
+        // Wait for the partition threads to actually finish before changing status
+        // might need a TODO for a more robust system than a sleep
+        long deadline = System.currentTimeMillis() + shutdownAwaitMs;
+        while (System.currentTimeMillis() < deadline) {
+            if (batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME).isEmpty()) {
+                log.info("shutdown: all prototype batch executions stopped");
+                return;
+            }
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+        log.warn("shutdown: prototype batch executions still running after {}ms; proceeding with status reset anyway",
+                shutdownAwaitMs);
+    }
+
+    /**
      * Start a fresh batch execution, or resume a prior one for the same jobUuid.
      * Spring Batch will restart a job if the same jobUuid is submitted.
      */
-    private JobExecution launchOrResume(org.springframework.batch.core.job.Job batchJob, JobParameters parameters)
-            throws Exception {
-        JobExecution last = batchJobRepository.getLastJobExecution(PROTOTYPE_JOB_NAME, parameters);
-
+    private JobExecution launchOrResume(org.springframework.batch.core.job.Job batchJob, JobParameters parameters,
+            JobExecution last) throws Exception {
         if (last == null) {
             log.info("no prior batch execution found - starting fresh");
             return jobOperator.start(batchJob, parameters);
@@ -188,14 +283,23 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     /**
      * build the partitioned batch job for a contract
      */
-    private org.springframework.batch.core.job.Job buildPartitionedJob(String contractNumber) {
-        Step workerStep = new StepBuilder(WORKER_STEP_NAME, batchJobRepository)
+    private org.springframework.batch.core.job.Job buildPartitionedJob(String contractNumber, String jobUuid) {
+        var workerStepBuilder = new StepBuilder(WORKER_STEP_NAME, batchJobRepository)
                 .<CoverageSummary, List<IBaseResource>>chunk(chunkSize)
                 .reader(beneficiaryItemReader)
                 .processor(eobItemProcessor)
                 .writer(ndjsonItemWriter)
+                // retry transient item level failures before failing the chunk
+                .faultTolerant()
+                .retryLimit(itemRetryLimit);
+        TRANSIENT_EXCEPTIONS.forEach(workerStepBuilder::retry);
+
+        Step workerStep = workerStepBuilder
+                // abort the step at the next chunk boundary if the job is cancelled mid-run
+                .listener(new JobCancellationChunkListener(jobRepository, jobUuid))
                 .allowStartIfComplete(false)
-                .startLimit(MAX_RESTART_ATTEMPTS)
+                // should basically never trip
+                .startLimit(maxStartAttempts)
                 .transactionManager(transactionManager)
                 .build();
 

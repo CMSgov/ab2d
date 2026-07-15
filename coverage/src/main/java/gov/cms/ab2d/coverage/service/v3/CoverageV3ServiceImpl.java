@@ -102,22 +102,24 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
-    public CoveragePagingResult pageCoverageByRowRange(String contract, long startRow, long endRow, Optional<Long> cursor, int pageSize) {
+    public CoveragePagingResult pageCoverageByPatientRange(String contract, long startPatientExclusive, long endPatientInclusive, Optional<Long> cursor, int pageSize) {
         // prototype assumes normal contract type TODO: update on transition out of prototype
         val contractDto = new ContractForCoverageDTO(contract, null, ContractForCoverageDTO.ContractType.NORMAL);
         val membership = new GetAggregatedCoverageMembership(dataSource);
+        val cursorExclusive = cursor.orElse(startPatientExclusive);
         val summaries = executeTimedQuery(
-                format("fetchAggregatedDataByRowRange contract=%s startRow=%d endRow=%d cursor=%s", contract, startRow, endRow, cursor),
-                () -> membership.fetchAggregatedDataByRowRange(contractDto, startRow, endRow, pageSize, cursor)
+                format("fetchAggregatedDataByPatientRange contract=%s cursor=%d end=%d", contract, cursorExclusive, endPatientInclusive),
+                () -> membership.fetchAggregatedDataByPatientRange(contractDto, cursorExclusive, endPatientInclusive, pageSize)
         );
+        // Number of raw rows fetched
         val fetched = summaries.size();
-        Long lastRowNumber = summaries.isEmpty()
+        Long lastPatientId = summaries.isEmpty()
                 ? null
-                : summaries.get(summaries.size() - 1).getIdentifiers().getRowNumberV3();
+                : summaries.get(summaries.size() - 1).getIdentifiers().getPatientIdV3();
         membership.reduceAndFilter(summaries);
         CoveragePagingRequest next = null;
-        if(fetched >= pageSize && lastRowNumber !=null && lastRowNumber < endRow) {
-            next = CoveragePagingRequest.ofV3(pageSize, lastRowNumber, contractDto, null);
+        if (fetched >= pageSize && lastPatientId != null && lastPatientId < endPatientInclusive) {
+            next = CoveragePagingRequest.ofV3(pageSize, lastPatientId, contractDto, null);
         }
         return new CoveragePagingResult(summaries, next);
     }
@@ -184,6 +186,16 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     @Override
     public int getDistinctPatientCount(String contract) {
         return new GetAggregatedCoverageMembership(dataSource).getDistinctPatientCount(contract);
+    }
+
+    @Override
+    public long getMaxRowNumber(String contract) {
+        return new GetAggregatedCoverageMembership(dataSource).getMaxRowNumber(contract);
+    }
+
+    @Override
+    public List<Long> getPartitionBoundaryPatientIds(String contract, int size) {
+        return new GetAggregatedCoverageMembership(dataSource).getPartitionBoundaryPatientIds(contract, size);
     }
 
     @Override
