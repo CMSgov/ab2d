@@ -285,8 +285,8 @@ resource "aws_iam_policy" "idr_db_importer" {
           "s3:ListBucket"
         ]
         Resource = [
-          "${module.idr_db_importer_bucket.arn}",
-          "${module.idr_db_importer_bucket.arn}/*"
+          "arn:aws:s3:::${module.platform.app}-${module.platform.env}-idr-db-importer-*",
+          "arn:aws:s3:::${module.platform.app}-${module.platform.env}-idr-db-importer-*/*"
         ]
       },
       {
@@ -311,36 +311,6 @@ resource "aws_rds_cluster_role_association" "idr_db_importer" {
   db_cluster_identifier = module.db.aurora_cluster.id
   feature_name          = "s3Import"
   role_arn              = aws_iam_role.idr_db_importer.arn
-}
-
-data "aws_iam_policy_document" "idr_db_importer_additional_bucket_policy" {
-  statement {
-    sid    = "DenyReadAccess"
-    effect = "Deny"
-
-    actions = [
-      "s3:GetObject"
-    ]
-
-    condition {
-      test     = "StringNotEquals"
-      variable = "aws:PrincipalArn"
-      values = [
-        aws_iam_role.idr_db_importer.arn,
-        "arn:aws:iam::${local.aws_account_number}:role/${local.service_prefix}-idr-db-importer-task-role"
-      ]
-    }
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [
-      module.idr_db_importer_bucket.arn,
-      "${module.idr_db_importer_bucket.arn}/*",
-    ]
-  }
 }
 
 # Create KMS policy
