@@ -1,0 +1,51 @@
+name: 65-dashboard
+run-name: "[${{ github.event_name == 'push' && 'APPLY' || 'PLAN' }}] 65-dashboard → ${{ github.event_name == 'push' && github.ref_name || github.head_ref }}"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ops/services/65-dashboard/**"
+      - ".github/workflows/dashboard.yml"
+      - ".github/workflows/tofu-run.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "ops/services/65-dashboard/**"
+      - ".github/workflows/dashboard.yml"
+      - ".github/workflows/tofu-run.yml"
+
+concurrency:
+  group: tofu-dashboard-plan-or-apply
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  setup:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    outputs:
+      apply: ${{ steps.check.outputs.apply }}
+      branch: ${{ steps.check.outputs.branch }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+      - id: check
+        run: |
+          echo "apply=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.head_ref || github.ref }}" >> $GITHUB_OUTPUT
+
+  prod:
+    needs: setup
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "65-dashboard"
+      environment: "prod"
+      apply: ${{ needs.setup.outputs.apply }}
+      branch: ${{ needs.setup.outputs.branch }}
+    secrets: inherit
