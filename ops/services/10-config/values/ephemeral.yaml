@@ -1,6 +1,7 @@
 copy:
   - /ab2d/${env}/common/sensitive/slack_alert_webhooks
   - /ab2d/${env}/common/sensitive/slack_trace_webhooks
+  - /ab2d/${env}/common/sensitive/splunk_oauth_token
   - /ab2d/${env}/core/nonsensitive/database_name
   - /ab2d/${env}/core/nonsensitive/keystore_location
   - /ab2d/${env}/core/sensitive/database_password

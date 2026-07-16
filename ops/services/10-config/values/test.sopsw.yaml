@@ -65,6 +65,7 @@
 /ab2d/${env}/common/sensitive/new_relic_license_key: ENC[AES256_GCM,data:qzRQe/s+9PEJyn43Fm14pdrssaNEXat5qnhK0bKEUUBPJbnTPxlw1w==,iv:3yH9aqGCrcUIwPFUMIgRjYhIZiwOhw4bjofzTXOyR+g=,tag:Rdp+c/FzXWYT3cVJouMS0Q==,type:str]
 /ab2d/${env}/common/sensitive/slack_alert_webhooks: ENC[AES256_GCM,data:BP/IhhCnD31CEqxsMVEyCQWIvj0zSkhZvpQhhZWmedgXxYmpN+cnFInbf4yTsHyn9nMgzT9G7hpD/iaG9EQ6+OcsHF9xOkpyCq/RCLQfsg==,iv:y4SAeno70CNbZVcOBHoudrqV8gIPfk1kZ1h6AmO7WYY=,tag:odnRkQBXZJW1R3zm40LcCA==,type:str]
 /ab2d/${env}/common/sensitive/slack_trace_webhooks: ENC[AES256_GCM,data:VOBBuGVBXFh5+2vlIFSmSZW7SIHPI6YscvKY0FQoHsjYSBOT+ZajiGyZRHPponhcnmdUJCuXme3n94Gz7k4YvY7zT9AxZ65Web6zpD908w==,iv:wEescNfaWJF28rIy4CMeacyWdauduUnk3PsRMi/ui4g=,tag:C2VS0Cpy0RiMjMg4Olk+mA==,type:str]
+/ab2d/${env}/common/sensitive/splunk_oauth_token: ENC[AES256_GCM,data:FnQbezLzV0TcR8/akHHZnA2gRYoPwWxbvJmREiJAz5Lafg/+fvNu1KqrgQ2QDqdTlMWLKjCjI1Gd,iv:+d72G8tbGbn+ETVUybd8SLyI3/nGWO5qS4mWjDq1cHM=,tag:K4g4swK3ekDxHZdXqzId5w==,type:str]
 /ab2d/${env}/core/nonsensitive/database_name: main
 /ab2d/${env}/core/nonsensitive/keystore_location: classpath:ab2d.p12
 /ab2d/${env}/core/sensitive/database_password: ENC[AES256_GCM,data:ErwN28TDOPd1PE4Wy9shCINA7YQ3fJqxz38QncFINH4=,iv:n3XtF6Gsb75Ico9C7b4eXoikCd8Uk8Zapyi7oAheUFE=,tag:AWtoQQ+SvEYFvTNbkoOOlQ==,type:str]
@@ -241,13 +242,13 @@
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/ab2d-test
-      aws_profile: ""
       created_at: "2025-06-02T18:25:44Z"
       enc: AQICAHieQbEmk17B5WDxP9ZbssNWaBXaOMPBrnVqrvEMaeLytwGKOir9K4KfHbk8AWQavtlYAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMCSjWBMn/pJf4vCjGAgEQgDtzyO65ZwXu7s8Bbhv01wvk+ivE1TlHqIzFCAnvKUgTPorL+4l233e+PhyA5rBgrxR/C6kd6b7nR3KO3Q==
-    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/ab2d-test
       aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/ab2d-test
       created_at: "2025-06-02T18:25:44Z"
       enc: AQICAHgJRNGY1npk30Hair/yhcKNRMjEO1Ac57p4o8l/f+IR2AFRPQtgKjyMsAG4qopN/mzdAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMECXg4LvCB4Hb7VjTAgEQgDtYgnB+rEK0LOqnaH5v7VJWNtUdK3roScHEadAEoZL0pLz8PQWgeIYRjQA4/8t+LHzqJOmOu4gwlsxFhw==
-  mac_only_encrypted: true
+      aws_profile: ""
   unencrypted_regex: /nonsensitive/
+  mac_only_encrypted: true
   version: 3.13.1
