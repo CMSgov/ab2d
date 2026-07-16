@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # Submit an export job, poll until complete, download the output
-# submit-job.sh [--v v1|v2] default v1
+# submit-job.sh [--version v1|v2|v3] default v1
+#
+#   prototype requires the flag pause-resume.prototype.enabled=true and seeded V3 data
+#   do this locally with:
+#   docker exec ab2d-db-1 psql -U ab2d -d ab2d \
+#  -c "UPDATE property.properties SET value='true' WHERE key='pause-resume.prototype.enabled';"
+#   Seed v3 benes:
+#   docker exec -i ab2d-db-1 psql -U ab2d -d ab2d < local-dev/sql/seed-v3.sql
 
 
 set -euo pipefail
@@ -34,6 +41,90 @@ cd "$ROOT"
 mkdir -p "$OUT_DIR"
 
 log() { printf '[job] %s\n' "$*"; }
+
+# --- prototype path -----
+DB_CONTAINER="${DB_CONTAINER:-ab2d-db-1}"
+DB_USER="${DB_USER:-ab2d}"
+DB_NAME="${DB_NAME:-ab2d}"
+CONTRACT="${CONTRACT:-Z0001}"
+ORG="${ORG:-Local Test Org}"
+
+WORKER_CONTAINER="${WORKER_CONTAINER:-ab2d-worker-1}"
+EFS_MOUNT="${EFS_MOUNT:-/opt/ab2d}"
+
+psql_q() { docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -tAc "$1"; }
+
+submit_v3() {
+  local uuid="33333333-$(date +%s)-${RANDOM}"
+
+  log "Inserting V3 job for contract $CONTRACT ..."
+  # omit id so the job_seq default assigns it, keeping the sequence in sync with
+  # Hibernate-inserted rows (a manual MAX(id)+1 desyncs job_seq and later collides)
+  psql_q "INSERT INTO ab2d.job (job_uuid, created_at, status, fhir_version, started_by,
+                                contract_number, organization, resource_types, output_format, progress)
+          VALUES ('$uuid', now(), 'SUBMITTED', 'R4V3', 'PDP',
+                  '$CONTRACT', '$ORG', 'ExplanationOfBenefit', 'application/fhir+ndjson', 0);" >/dev/null
+  log "Job UUID: $uuid"
+
+  log "Polling job status ..."
+  local status="" tries=0
+  while :; do
+    status="$(psql_q "SELECT status FROM ab2d.job WHERE job_uuid='$uuid'")"
+    case "$status" in
+      SUCCESSFUL|FAILED|CANCELLED) break ;;
+    esac
+    tries=$(( tries + 1 ))
+    if [ "$tries" -gt 30 ]; then echo; log "Timed out waiting (last status: ${status:-none})"; break; fi
+    printf '.'
+    sleep "$POLL_SECONDS"
+  done
+  echo
+
+  local msg
+  msg="$(psql_q "SELECT COALESCE(status_message,'') FROM ab2d.job WHERE job_uuid='$uuid'")"
+  log "Final status: ${status:-unknown}${msg:+ - $msg}"
+
+  log "Partition tasks created (Spring Batch step executions):"
+  docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c \
+    "SELECT se.step_name, se.status
+     FROM ab2d.batch_step_execution se
+     JOIN ab2d.batch_job_execution_params p ON p.job_execution_id = se.job_execution_id
+     WHERE p.parameter_name = 'jobUuid' AND p.parameter_value = '$uuid'
+     ORDER BY se.step_execution_id;"
+
+  if [ "$status" = "SUCCESSFUL" ]; then
+    local dest="$OUT_DIR/$uuid"
+    # copy the files out of the docker volume so we can see them in the local directory
+    # only needed if we're running the worker in docker
+    local src=""
+    if ls "$dest/finished"/*.ndjson >/dev/null 2>&1; then
+      src="$dest/finished"
+      log "files already present locally in $src ..."
+    else
+      mkdir -p "$dest"
+      log "Copying files from $WORKER_CONTAINER:$EFS_MOUNT/$uuid/finished -> $dest ..."
+      if docker cp "$WORKER_CONTAINER:$EFS_MOUNT/$uuid/finished/." "$dest/" 2>/dev/null; then
+        src="$dest"
+      else
+        log "  (nothing to copy)"
+      fi
+    fi
+    if [ -n "$src" ]; then
+      for f in "$src"/*.ndjson; do
+        [ -e "$f" ] || { log "  (no files produced)"; break; }
+        log "  $(basename "$f"): $(wc -c < "$f" | tr -d ' ') bytes, $(wc -l < "$f" | tr -d ' ') line(s)"
+      done
+    fi
+  fi
+
+  [ "$status" = "SUCCESSFUL" ] || exit 1
+}
+
+if [ "$VERSION" = "v3" ]; then
+  submit_v3
+  log "Done. Files in $OUT_DIR/"
+  exit 0
+fi
 
 log "GET $API_BASE/Patient/\$export ($TYPE) ..."
 RAW="$(curl -ski -X GET "$API$API_BASE/Patient/\$export?_type=$TYPE" \
