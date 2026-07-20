@@ -21,6 +21,10 @@ repositories {
 	mavenCentral()
 }
 
+dependencyLocking {
+	lockAllConfigurations()
+}
+
 ext {
 	awssdkVersion = '2.41.5'
 }
@@ -39,7 +43,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-persistence'
 	implementation 'org.springframework.retry:spring-retry'
-	implementation 'org.postgresql:postgresql:42.7.11'
+	implementation 'org.postgresql:postgresql:42.7.12'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
@@ -51,8 +55,8 @@ dependencies {
 		implementation('com.github.jnr:jnr-posix:3.1.8')
 		implementation('commons-beanutils:commons-beanutils:1.11.0')
 		implementation('org.apache.commons:commons-compress:1.28.0')
-		implementation('com.fasterxml.jackson.core:jackson-core:2.21.2')
-		implementation('com.fasterxml.jackson.core:jackson-databind:2.21.2')
+		implementation('com.fasterxml.jackson.core:jackson-core:2.21.4')
+		implementation('com.fasterxml.jackson.core:jackson-databind:2.21.4')
 	}
 }
 
@@ -71,6 +75,16 @@ dependencyManagement {
 		dependency 'io.opentelemetry:opentelemetry-api:1.62.0'
 		dependency 'io.opentelemetry:opentelemetry-context:1.62.0'
 		dependency 'io.opentelemetry:opentelemetry-common:1.62.0'
+		// spring boot dependencies, remove as spring boot upgrades these
+		dependency 'org.apache.tomcat.embed:tomcat-embed-core:11.0.23'
+		dependency 'org.apache.tomcat.embed:tomcat-embed-el:11.0.23'
+		dependency 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23'
+		dependency 'ch.qos.logback:logback-core:1.5.36'
+		dependency 'ch.qos.logback:logback-classic:1.5.36'
+		dependency 'org.apache.httpcomponents.core5:httpcore5:5.4.2'
+		dependency 'org.apache.httpcomponents.core5:httpcore5-h2:5.4.2'
+		dependency 'org.apache.thrift:libthrift:0.23.0'
+		dependency 'io.awspring.cloud:spring-cloud-aws-autoconfigure:4.0.2'
 	}
 }
 

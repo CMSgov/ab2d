@@ -4,7 +4,7 @@ plugins {
     id "org.sonarqube" version "7.3.0.8198"
     id 'org.cyclonedx.bom' version '3.0.0' apply true
 }
-version = "1.1.8"
+version = "1.1.9"
 group = "gov.cms.ab2d"
 
 dependencies {
@@ -41,16 +41,6 @@ ext {
     resolverRepo = 'ab2d-main'
 }
 
-configurations {
-    all.collect { configuration ->
-        configuration.exclude group: 'com.amazonaws:aws-java-sdk-core'
-        configuration.exclude group: 'com.fasterxml.jackson.core:jackson-annotations'
-        configuration.exclude group: 'com.fasterxml.jackson.core:jackson-databind'
-    }
-
-}
-
-
 repositories {
     mavenCentral()
     maven {
@@ -81,10 +71,11 @@ subprojects {
             'commons-beanutils:commons-beanutils:1.11.0',
             'org.apache.commons:commons-lang3:3.18.0',
             'org.apache.commons:commons-compress:1.28.0',
-            'org.apache.httpcomponents.core5:httpcore5-h2:5.3.6',
+            'org.apache.httpcomponents.core5:httpcore5:5.4.2',
+            'org.apache.httpcomponents.core5:httpcore5-h2:5.4.2',
             'org.springframework.retry:spring-retry:2.0.13',
-            'com.fasterxml.jackson.core:jackson-core:2.21.2',
-            'com.fasterxml.jackson.core:jackson-databind:2.21.2'
+            'com.fasterxml.jackson.core:jackson-core:2.21.4',
+            'com.fasterxml.jackson.core:jackson-databind:2.21.4'
         )
     }
     ext {
@@ -166,6 +157,21 @@ subprojects {
 }
 
 allprojects {
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
+    // write lockfiles for all subprojects
+    tasks.register('resolveAndLockAll') {
+        notCompatibleWithConfigurationCache('Resolves configurations at execution time')
+        doFirst {
+            assert gradle.startParameter.writeDependencyLocks : 'Run with --write-locks'
+        }
+        doLast {
+            configurations.findAll { it.canBeResolved }.each { it.resolve() }
+        }
+    }
 
     tasks.register('lookForArtifacts') {
         doLast {

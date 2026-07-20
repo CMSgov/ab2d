@@ -27,14 +27,14 @@ repositories {
 }
 
 dependencies {
-    implementation 'gov.cms.ab2d:ab2d-events-client:3.3.13'
+    implementation 'gov.cms.ab2d:ab2d-events-client:3.3.16'
 
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
     implementation 'com.amazonaws:aws-java-sdk-sqs:1.12.793'
 
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.21.2'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.21.4'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.4'
 
     annotationProcessor 'org.projectlombok:lombok:1.18.42'
     compileOnly 'org.projectlombok:lombok:1.18.42'

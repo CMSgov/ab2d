@@ -37,9 +37,13 @@
         <dd.java.agent.version>1.63.0</dd.java.agent.version>
         <dd-trace-api.version>1.63.0</dd-trace-api.version>
         <dogstatsd-client.version>4.4.5</dogstatsd-client.version>
-        <spring-cloud-aws.version>4.0.0</spring-cloud-aws.version>
-        <postgresql.version>42.7.11</postgresql.version>
+        <spring-cloud-aws.version>4.0.2</spring-cloud-aws.version>
+        <postgresql.version>42.7.12</postgresql.version>
         <kotlin.version>2.1.0</kotlin.version>
+        <!-- remove below once spring boot updates these versions -->
+        <tomcat.version>11.0.23</tomcat.version>
+        <logback.version>1.5.36</logback.version>
+        <httpcore5.version>5.4.2</httpcore5.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.14</jacoco.version>
@@ -47,13 +51,13 @@
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
         <!-- AB2D lib versions -->
-        <bfd-lib.version>4.8.1</bfd-lib.version>
-        <events-client.version>3.3.15</events-client.version>
-        <fhir-lib.version>2.5.7</fhir-lib.version>
-        <aggregator-lib.version>2.1.5</aggregator-lib.version>
-        <filters-lib.version>3.2.0</filters-lib.version>
-        <contract-client.version>2.2.1</contract-client.version>
-        <sns-client.version>1.1.10</sns-client.version>
+        <bfd-lib.version>4.8.2</bfd-lib.version>
+        <events-client.version>3.3.16</events-client.version>
+        <fhir-lib.version>2.5.8</fhir-lib.version>
+        <aggregator-lib.version>2.1.6</aggregator-lib.version>
+        <filters-lib.version>3.2.1</filters-lib.version>
+        <contract-client.version>2.2.2</contract-client.version>
+        <sns-client.version>1.1.11</sns-client.version>
 
         <!-- Dependency versions -->
         <commons-compress.version>1.28.0</commons-compress.version>
@@ -72,7 +76,7 @@
             <dependency>
                 <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>3.1.1</version>
+                <version>3.1.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
