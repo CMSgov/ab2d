@@ -61,6 +61,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private final PlatformTransactionManager transactionManager;
     private final CoverageV3Service coverageV3Service;
     private final PrototypeBatchMetadataRepository batchMeta;
+    private final PrototypeJobLockRenewer lockRenewer;
     private final int partitionSize;
     private final int chunkSize;
     private final int concurrency;
@@ -80,6 +81,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             PlatformTransactionManager transactionManager,
             CoverageV3Service coverageV3Service,
             PrototypeBatchMetadataRepository batchMeta,
+            PrototypeJobLockRenewer lockRenewer,
             BeneficiaryItemReader beneficiaryItemReader,
             EobItemProcessor eobItemProcessor,
             ItemStreamWriter<List<IBaseResource>> ndjsonItemWriter,
@@ -96,6 +98,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         this.transactionManager = transactionManager;
         this.coverageV3Service = coverageV3Service;
         this.batchMeta = batchMeta;
+        this.lockRenewer = lockRenewer;
         this.partitionSize = partitionSize;
         this.beneficiaryItemReader = beneficiaryItemReader;
         this.eobItemProcessor = eobItemProcessor;
@@ -146,6 +149,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
         org.springframework.batch.core.job.Job batchJob = buildPartitionedJob(contractNumber, jobUuid);
 
+        // keep this job's distributed lock alive for as long as we're processing it, so a crash (which
+        // stops renewal) is what lets another worker see the job as recoverable
+        lockRenewer.track(jobUuid);
         try {
             JobExecution execution = launchOrResume(batchJob, parameters, last);
             log.info("prototype job {} finished with status {}", jobUuid, execution.getStatus());
@@ -178,6 +184,8 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             job.setStatus(FAILED);
             job.setStatusMessage("Prototype execution failed: " + e.getMessage());
             coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
+        } finally {
+            lockRenewer.untrack(jobUuid);
         }
 
         return jobRepository.save(job);
