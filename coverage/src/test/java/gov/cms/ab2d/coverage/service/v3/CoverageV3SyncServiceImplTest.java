@@ -46,6 +46,9 @@ class CoverageV3SyncServiceImplTest {
 	@Mock
 	Lock lock;
 
+	@Mock
+	CoverageV3SyncMetrics metrics;
+
 	@BeforeEach
 	void setup() {
 
@@ -56,6 +59,7 @@ class CoverageV3SyncServiceImplTest {
 			lockWrapper,
 			lockWrapper,
 			audit,
+			metrics,
 			propertiesService
 		) {
 			@Override
