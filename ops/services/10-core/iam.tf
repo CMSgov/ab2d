@@ -244,68 +244,6 @@ resource "aws_iam_role_policy_attachment" "idr_kms" {
   policy_arn = aws_iam_policy.kms_key_access.arn
 }
 
-resource "aws_iam_role" "idr_db_importer_task" {
-  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
-  name                 = "${local.service_prefix}-idr-db-importer-task"
-  path                 = "/delegatedadmin/developer/"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = [
-            "ecs-tasks.amazonaws.com"
-          ]
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy" "idr_db_importer_task" {
-  name        = "${module.platform.app}-${module.platform.env}-idr-db-importer-task"
-  description = "IDR DB Importer ECS task access to S3 bucket and KMS key."
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "S3Access"
-        Effect = "Allow"
-        Action = [
-          "s3:AbortMultipartUpload",
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          module.idr_db_importer_bucket.arn,
-          "${module.idr_db_importer_bucket.arn}/*"
-        ]
-      },
-      {
-        Sid    = "KmsAccessForS3"
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt",
-          "kms:GenerateDataKey"
-        ]
-        Resource = module.platform.kms_alias_primary.target_key_arn
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "idr_db_importer_task" {
-  role       = aws_iam_role.idr_db_importer_task.name
-  policy_arn = aws_iam_policy.idr_db_importer_task.arn
-}
-
 resource "aws_iam_role" "idr_db_importer" {
   name                 = "${module.platform.app}-${module.platform.env}-idr-db-importer"
   path                 = "/delegatedadmin/developer/"
@@ -347,8 +285,8 @@ resource "aws_iam_policy" "idr_db_importer" {
           "s3:ListBucket"
         ]
         Resource = [
-          "${module.idr_db_importer_bucket.arn}",
-          "${module.idr_db_importer_bucket.arn}/*"
+          "arn:aws:s3:::${module.platform.app}-${module.platform.env}-idr-db-importer-*",
+          "arn:aws:s3:::${module.platform.app}-${module.platform.env}-idr-db-importer-*/*"
         ]
       },
       {
@@ -373,36 +311,6 @@ resource "aws_rds_cluster_role_association" "idr_db_importer" {
   db_cluster_identifier = module.db.aurora_cluster.id
   feature_name          = "s3Import"
   role_arn              = aws_iam_role.idr_db_importer.arn
-}
-
-data "aws_iam_policy_document" "idr_db_importer_additional_bucket_policy" {
-  statement {
-    sid    = "DenyReadAccess"
-    effect = "Deny"
-
-    actions = [
-      "s3:GetObject"
-    ]
-
-    condition {
-      test     = "StringNotEquals"
-      variable = "aws:PrincipalArn"
-      values = [
-        aws_iam_role.idr_db_importer.arn,
-        aws_iam_role.idr_db_importer_task.arn
-      ]
-    }
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [
-      module.idr_db_importer_bucket.arn,
-      "${module.idr_db_importer_bucket.arn}/*",
-    ]
-  }
 }
 
 # Create KMS policy
