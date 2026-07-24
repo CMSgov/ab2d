@@ -71,11 +71,6 @@ module "datadog_dashboard" {
     apm    = "1h"
   }
 
-  # Coverage V3 import row counts and deltas, sourced from the DogStatsD custom metrics emitted by
-  # CoverageV3SyncMetrics (ab2d.coverage.v3.*). These surface the same before/after/delta counts that
-  # are written to the v3.coverage_v3_audit table so the team can confirm an import updated data
-  # without inspecting logs or querying the database. Queries use the dashboard-wide $env template
-  # variable (prefix "environment"), which matches the environment tag on these metrics.
   custom_widgets = [
     {
       type         = "timeseries"
