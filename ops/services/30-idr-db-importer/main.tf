@@ -38,11 +38,9 @@ module "service" {
   cpu                  = 1024
   memory               = 2048
   desired_count        = 0
-  enable_datadog_agent = false
-  execution_role_arn   = data.aws_iam_role.idr_db_importer_task_execution.arn
+  enable_datadog_agent = true
   image                = "${local.image_repo_uri}:${var.image_tag}"
   platform             = module.platform
-  security_groups      = [data.aws_security_group.idr_db_importer.id]
   subnets              = keys(module.platform.private_subnets)
 
   additional_task_role_policies = { s3 = aws_iam_policy.idr_db_importer_task.arn }
@@ -134,8 +132,7 @@ data "aws_iam_policy_document" "idr_db_importer_additional_bucket_policy" {
       test     = "StringNotEquals"
       variable = "aws:PrincipalArn"
       values = [
-        data.aws_iam_role.idr_db_importer_s3_import.arn,
-        "arn:aws:iam::${local.aws_account_number}:role/${local.service_prefix}-idr-db-importer-task-role"
+        module.service.task_role_arn
       ]
     }
 
@@ -173,7 +170,7 @@ resource "aws_scheduler_schedule" "idr_db_importer" {
 
       network_configuration {
         assign_public_ip = false
-        security_groups  = [data.aws_security_group.idr_db_importer.id]
+        security_groups  = [module.service.task_security_group_id]
         subnets          = keys(module.platform.private_subnets)
       }
     }
@@ -225,7 +222,6 @@ resource "aws_iam_policy" "idr_db_importer_eventbridge_scheduler" {
         ]
         Resource = [
           module.service.task_role_arn,
-          data.aws_iam_role.idr_db_importer_task_execution.arn
         ]
       },
     ]

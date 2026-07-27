@@ -3,20 +3,11 @@ data "aws_ecr_repository" "idr_db_importer" {
 }
 
 data "aws_ecs_cluster" "shared" {
-  cluster_name = "${local.app}-${local.env}"
+  cluster_name = local.service_prefix
 }
 
-data "aws_iam_role" "idr_db_importer_task_execution" {
-  name = "${local.service_prefix}-${local.service}-task-execution"
-}
-
-data "aws_iam_role" "idr_db_importer_s3_import" {
-  name = "${local.app}-${local.env}-idr-db-importer"
-}
-
-data "aws_security_group" "idr_db_importer" {
-  name   = "${local.service_prefix}-idr-db-importer"
-  vpc_id = module.platform.vpc_id
+data "aws_rds_cluster" "this" {
+  cluster_identifier = local.service_prefix
 }
 
 ### SSM parameters
@@ -37,3 +28,10 @@ data "aws_ssm_parameter" "ab2d_db_user" {
   name = "/ab2d/${local.env}/core/sensitive/database_user"
 }
 
+# data "aws_ssm_parameter" "ab2d_aurora_database_security_group" {
+#   name = "/ab2d/${local.env}/aurora/nonsensitive/db-security-group-id"
+# }
+#
+# data "aws_ssm_parameter" "ab2d_aurora_writer_endpoint_id" {
+#   name = "/ab2d/${local.env}/aurora/nonsensitive/writer-endpoint"
+# }
