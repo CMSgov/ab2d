@@ -56,8 +56,8 @@ resource "aws_iam_policy" "database_s3_import" {
   })
 }
 
-# resource "aws_rds_cluster_role_association" "database_s3_import" {
-#   db_cluster_identifier = data.aws_ssm_parameter.ab2d_aurora_writer_endpoint_id.value
-#   feature_name          = "s3Import"
-#   role_arn              = aws_iam_role.database_s3_import.arn
-# }
+resource "aws_rds_cluster_role_association" "database_s3_import" {
+  db_cluster_identifier = data.aws_rds_cluster.this.id
+  feature_name          = "s3Import"
+  role_arn              = aws_iam_role.database_s3_import.arn
+}

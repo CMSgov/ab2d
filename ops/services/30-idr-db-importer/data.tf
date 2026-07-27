@@ -28,10 +28,10 @@ data "aws_ssm_parameter" "ab2d_db_user" {
   name = "/ab2d/${local.env}/core/sensitive/database_user"
 }
 
-# data "aws_ssm_parameter" "ab2d_aurora_database_security_group" {
-#   name = "/ab2d/${local.env}/aurora/nonsensitive/db-security-group-id"
-# }
-#
-# data "aws_ssm_parameter" "ab2d_aurora_writer_endpoint_id" {
-#   name = "/ab2d/${local.env}/aurora/nonsensitive/writer-endpoint"
-# }
+data "aws_ssm_parameter" "ab2d_aurora_database_security_group" {
+  name = "/ab2d/${local.env}/aurora/nonsensitive/db-security-group-id"
+}
+
+data "aws_ssm_parameter" "ab2d_aurora_writer_endpoint_id" {
+  name = "/ab2d/${local.env}/aurora/nonsensitive/writer-endpoint"
+}
