@@ -13,16 +13,21 @@ group = "gov.cms.ab2d"
 
 ext {
     lombokVersion = '1.18.38'
-    springCloudAwsVersion = '4.0.0'
+    springCloudAwsVersion = '4.0.2'
     springBootVersion='4.0.7'
     testContainerVersion='1.21.4'
     liquibaseVersion = '5.0.0'
-    eventClientVersion='3.3.15'
-    contractClientVersion='2.2.1'
+    eventClientVersion='3.3.16'
+    contractClientVersion='2.2.2'
 }
 
 allprojects {
     apply plugin: "org.cyclonedx.bom"
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
     dependencies {
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
         testImplementation enforcedPlatform("org.testcontainers:testcontainers-bom:${testContainerVersion}")
@@ -34,7 +39,7 @@ allprojects {
         implementation "io.awspring.cloud:spring-cloud-aws-starter-sqs:${springCloudAwsVersion}"
         implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
         implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
-        implementation 'org.postgresql:postgresql:42.7.11'
+        implementation 'org.postgresql:postgresql:42.7.12'
         runtimeOnly "org.springframework.boot:spring-boot-properties-migrator:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-quartz:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
@@ -64,8 +69,14 @@ allprojects {
             implementation 'io.opentelemetry:opentelemetry-api:1.62.0'
             implementation 'commons-beanutils:commons-beanutils:1.11.0'
             implementation 'org.mozilla:rhino:1.7.15'
-            implementation 'com.fasterxml.jackson.core:jackson-core:2.21.2'
-            implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.2'
+            implementation 'com.fasterxml.jackson.core:jackson-core:2.21.4'
+            implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.4'
+            // spring boot dependencies, remove as spring boot upgrades these
+            implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.23'
+            implementation 'org.apache.tomcat.embed:tomcat-embed-el:11.0.23'
+            implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23'
+            implementation 'ch.qos.logback:logback-core:1.5.36'
+            implementation 'ch.qos.logback:logback-classic:1.5.36'
         }
     }
 

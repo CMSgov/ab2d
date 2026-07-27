@@ -15,11 +15,11 @@ group = "gov.cms.ab2d"
 
 ext {
     springBootVersion= '4.0.7'
-    springCloudAwsVersion = '4.0.0'
+    springCloudAwsVersion = '4.0.2'
     liquibaseVersion='5.0.0'
-    jacksonVersion='2.21.2'
+    jacksonVersion='2.21.4'
     testContainerVersion='1.21.4'
-    eventClientVersion='3.3.15'
+    eventClientVersion='3.3.16'
     lombokVersion = '1.18.38'
     commonsLangVersion='3.18.0'
 }
@@ -27,6 +27,11 @@ ext {
 allprojects {
     apply plugin: "org.cyclonedx.bom"
     apply plugin: 'org.springframework.boot'
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
     dependencies {
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
         // spring boot 4 uses an older version, so just pin the one we want here
@@ -53,7 +58,7 @@ allprojects {
         implementation "gov.cms.ab2d:ab2d-events-client:${eventClientVersion}"
         implementation 'com.slack.api:slack-api-client:1.29.2'
         runtimeOnly "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
-        runtimeOnly 'org.postgresql:postgresql:42.7.11'
+        runtimeOnly 'org.postgresql:postgresql:42.7.12'
         testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
         testRuntimeOnly "org.junit.platform:junit-platform-launcher"
         testImplementation "commons-io:commons-io:2.18.0"
@@ -81,6 +86,12 @@ allprojects {
             implementation('org.mozilla:rhino:1.8.1')
             implementation("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
             implementation("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+            // spring boot dependencies, remove as spring boot upgrades these
+            implementation('org.apache.tomcat.embed:tomcat-embed-core:11.0.23')
+            implementation('org.apache.tomcat.embed:tomcat-embed-el:11.0.23')
+            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23')
+            implementation('ch.qos.logback:logback-core:1.5.36')
+            implementation('ch.qos.logback:logback-classic:1.5.36')
         }
 
         // make sure this doesn't cause any issues
