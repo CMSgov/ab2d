@@ -1,5 +1,7 @@
+# FIXME Move conditional logic into a config/<env>.yml or workspace vars file and process with a locals block
+# TODO change the commit hash once these aurora changes are merged in CDAP
 module "db" {
-  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=b0e43ec5b235d8fddc9cf2aaf3440b73e185d47f"
+  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=1b4ae3a625562fd9317f047f34bc2047ec949bed"
 
   snapshot_identifier = var.aurora_snapshot
   deletion_protection = true
@@ -74,6 +76,8 @@ module "db" {
   ]
 }
 
+# FIXME Move into security_group_rules.tf in api terraservice
+## Use the aurora module generated ssm parameter storing db security group information
 resource "aws_security_group_rule" "db_access_api" {
   type                     = "ingress"
   description              = "${local.service_prefix} api connections"
@@ -84,16 +88,7 @@ resource "aws_security_group_rule" "db_access_api" {
   security_group_id        = module.db.security_group.id
 }
 
-resource "aws_security_group_rule" "db_access_idr_db_importer" {
-  type                     = "ingress"
-  description              = "${local.service_prefix} idr-db-importer connections"
-  from_port                = "5432"
-  to_port                  = "5432"
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.idr_db_importer.id
-  security_group_id        = module.db.security_group.id
-}
-
+#FIXME Reference ssm parameter created by aurora module
 resource "aws_ssm_parameter" "writer_endpoint" {
   name  = "/ab2d/${local.env}/core/nonsensitive/writer_endpoint"
   value = "${module.db.aurora_cluster.endpoint}:${module.db.aurora_cluster.port}"
