@@ -8,6 +8,15 @@ resource "aws_vpc_security_group_ingress_rule" "aurora" {
   to_port     = 5432
 }
 
+resource "aws_vpc_security_group_egress_rule" "aurora" {
+  security_group_id            = module.service.task_security_group_id
+  referenced_security_group_id = data.aws_ssm_parameter.ab2d_aurora_database_security_group.value
+
+  from_port   = 5432
+  ip_protocol = "tcp"
+  to_port     = 5432
+}
+
 resource "aws_security_group" "idr_endpoint" {
   name        = "${local.service_prefix}-idr-endpoint"
   description = "For the PrivateLink endpoint for IDR Snowflake"

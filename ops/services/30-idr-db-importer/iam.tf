@@ -188,6 +188,7 @@ resource "aws_iam_policy" "idr_db_importer_eventbridge_scheduler" {
         ]
         Resource = [
           module.service.task_role_arn,
+          module.service.task_definition.execution_role_arn,
         ]
       },
     ]
