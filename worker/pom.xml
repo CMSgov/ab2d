@@ -20,7 +20,8 @@
             **/CoverageDriverImpl.java,
             **/JobProcessorImpl.java,
             **/ContractProcessingException.java,
-            **/CoverageV3CheckQuartzJob.java
+            **/CoverageV3CheckQuartzJob.java,
+            **/SpringBootApp.java
         </sonar.coverage.exclusions>
     </properties>
 
