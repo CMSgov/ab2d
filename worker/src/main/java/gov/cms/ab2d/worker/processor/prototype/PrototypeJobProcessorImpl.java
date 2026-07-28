@@ -5,6 +5,9 @@ import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
+import gov.cms.ab2d.worker.processor.prototype.lease.JobLeaseRepository;
+import gov.cms.ab2d.worker.processor.prototype.lease.PrototypeFenceGuard;
+import gov.cms.ab2d.worker.processor.prototype.lease.PrototypeJobLeaseRenewer;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.batch.core.BatchStatus;
@@ -46,6 +49,10 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     static final String MANAGER_STEP_NAME = "ab2dPrototypePartitionManagerStep";
     static final String WORKER_STEP_NAME = "ab2dPrototypeWorkerStep";
     static final String JOB_UUID_PARAM = "jobUuid";
+    // the fence token allows this worker to prove ownership of a job. The token
+    // is used to namespace outputs so that different workers cannot corrupt the work
+    // of other workers.
+    static final String FENCE_TOKEN_PARAM = "fenceToken";
 
     // IO exceptions from contacting BFD are worth retrying
     private static final List<Class<? extends Throwable>> TRANSIENT_EXCEPTIONS = List.of(
@@ -61,7 +68,11 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private final PlatformTransactionManager transactionManager;
     private final CoverageV3Service coverageV3Service;
     private final PrototypeBatchMetadataRepository batchMeta;
-    private final PrototypeJobLockRenewer lockRenewer;
+    private final PrototypeOutputAssembler outputAssembler;
+    private final PrototypeJobLeaseRenewer leaseRenewer;
+    private final JobLeaseRepository jobLease;
+    // per-JVM diagnostic identity recorded on the lease so logs/monitoring can attribute ownership
+    private final String owner = "worker-" + java.util.UUID.randomUUID();
     private final int partitionSize;
     private final int chunkSize;
     private final int concurrency;
@@ -81,7 +92,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             PlatformTransactionManager transactionManager,
             CoverageV3Service coverageV3Service,
             PrototypeBatchMetadataRepository batchMeta,
-            PrototypeJobLockRenewer lockRenewer,
+            PrototypeOutputAssembler outputAssembler,
+            PrototypeJobLeaseRenewer leaseRenewer,
+            JobLeaseRepository jobLease,
             BeneficiaryItemReader beneficiaryItemReader,
             EobItemProcessor eobItemProcessor,
             ItemStreamWriter<List<IBaseResource>> ndjsonItemWriter,
@@ -98,7 +111,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         this.transactionManager = transactionManager;
         this.coverageV3Service = coverageV3Service;
         this.batchMeta = batchMeta;
-        this.lockRenewer = lockRenewer;
+        this.outputAssembler = outputAssembler;
+        this.leaseRenewer = leaseRenewer;
+        this.jobLease = jobLease;
         this.partitionSize = partitionSize;
         this.beneficiaryItemReader = beneficiaryItemReader;
         this.eobItemProcessor = eobItemProcessor;
@@ -133,28 +148,57 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
         String contractNumber = job.getContractNumber();
 
-        // jobUuid is the identifying parameter
-        JobParameters parameters = new JobParametersBuilder()
-                .addString(JOB_UUID_PARAM, jobUuid)
-                .toJobParameters();
+        // we either adopt the current token (restarting from a graceful pause) or we get a new one
+        // Getting a new token "fences" out potentially still-living workers that think they still own this job
+        Optional<Long> adopted = jobLease.tryAdoptCleanSuspend(jobUuid, owner);
+        long fenceToken = adopted.orElseGet(() -> jobLease.bump(jobUuid, owner));
+        boolean softResume = adopted.isPresent();
 
-        // Only build the aggregated attribution table on a fresh start
-        JobExecution last = batchJobRepository.getLastJobExecution(PROTOTYPE_JOB_NAME, parameters);
-        if (last == null) {
-            log.info("no prior batch execution for job {} - creating aggregated attribution table", jobUuid);
-            coverageV3Service.createAggregatedAttributionTable(contractNumber);
-        } else {
-            log.info("prior batch execution {} for job {} - reusing existing aggregated table", last.getId(), jobUuid);
+        // after we bump the token, we heal the state of the job by failing the in-progress steps
+        // note that this includes UNKNOWN status, which Spring Batch refuses to restart generally.
+        // TODO: Special-case the UNKNOWN steps so we can recover from hard-crash with copy-forward
+        //      this means separating the recover cases from hard-crash and hung/frozen worker
+        //      This also might be moot when doing remote partitioning
+        // Since the reader/writer are scoped to the current fence token, after we bump the token, we will
+        // be redoing the partition anyway, so we don't care if the status of the old step is UNKNOWN.
+        // Just fail the step, the zombie is fenced out now anyway.
+        if (!softResume) {
+            batchMeta.healIndeterminateExecutions(jobUuid);
         }
 
-        org.springframework.batch.core.job.Job batchJob = buildPartitionedJob(contractNumber, jobUuid);
-
-        // keep this job's distributed lock alive for as long as we're processing it, so a crash (which
-        // stops renewal) is what lets another worker see the job as recoverable
-        lockRenewer.track(jobUuid);
+        // Start renewing the heartbeat
+        leaseRenewer.track(jobUuid, fenceToken);
         try {
+            // jobUuid identifies the instance
+            JobParameters parameters = new JobParametersBuilder()
+                    .addString(JOB_UUID_PARAM, jobUuid)
+                    .addLong(FENCE_TOKEN_PARAM, fenceToken, false)
+                    .toJobParameters();
+
+            // Only build the aggregated attribution table on a fresh start
+            JobExecution last = batchJobRepository.getLastJobExecution(PROTOTYPE_JOB_NAME, parameters);
+            if (last == null) {
+                log.info("no prior batch execution for job {} - creating aggregated attribution table", jobUuid);
+                coverageV3Service.createAggregatedAttributionTable(contractNumber);
+            } else {
+                log.info("prior batch execution {} for job {} - {} at token {} (reusing aggregated table)",
+                        last.getId(), jobUuid, softResume ? "soft resume" : "hard recovery", fenceToken);
+            }
+
+            org.springframework.batch.core.job.Job batchJob = buildPartitionedJob(contractNumber, jobUuid, fenceToken);
+
             JobExecution execution = launchOrResume(batchJob, parameters, last);
             log.info("prototype job {} finished with status {}", jobUuid, execution.getStatus());
+
+            // If we don't have the highest token anymore, someone else owns the job now
+            // so we just quit. Any partition we had in progress is going to be overwritten/restarted anyway.
+            // There is no shutdown work to do, the other worker that owns the job now will be doing any
+            // necessary cleanup
+            if (wasFencedOut(jobUuid, fenceToken)) {
+                log.info("prototype job {} was superseded (ran under token {}, newer token now holds the lease) - "
+                        + "exiting quietly with no resubmit", jobUuid, fenceToken);
+                return jobRepository.findByJobUuid(jobUuid);
+            }
 
             // update job object if we're shutting down
             Job current = jobRepository.findByJobUuid(jobUuid);
@@ -165,12 +209,18 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             }
 
             if (execution.getStatus() == BatchStatus.COMPLETED) {
+                // Failure during assembly is terminal and fails the job. We can recover from a crash during
+                // assembly, but we can't recover from an exception e.g. missing files in a "completed" job.
+                outputAssembler.assemble(job, jobUuid, contractNumber);
                 job.setStatus(SUCCESSFUL);
                 job.setStatusMessage("Completed via prototype");
                 coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
             } else if (execution.getStatus() == BatchStatus.STOPPED || wasInterrupted(execution)) {
-                // this is sort of redundant since the shutdown hook also sets job status to
-                // submitted, but it's helpful to do it here too so there's no gaps
+                // Graceful shutdown ensures that the batch job is fully stopped and every file has been closed
+                // and fsynced its file to the saved offset.
+                // The last thing we do is mark the job as suspended. If we crash here, we'll just hard-recover
+                // anyway, which is unfortunate, but will avoid corruption/mistakes.
+                jobLease.markCleanSuspend(jobUuid, fenceToken);
                 job.setStatus(SUBMITTED);
                 job.setStatusMessage("Paused via prototype");
             } else {
@@ -185,7 +235,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             job.setStatusMessage("Prototype execution failed: " + e.getMessage());
             coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
         } finally {
-            lockRenewer.untrack(jobUuid);
+            leaseRenewer.untrack(jobUuid);
         }
 
         return jobRepository.save(job);
@@ -208,6 +258,12 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         }
     }
 
+    /**
+     * Signal every running step execution to stop at the next chunk boundary and wait for them
+     * to drain.
+     *
+     * If we don't drain in time, we don't mark the job as suspended, so it will be hard-recovered.
+     */
     @Override
     public void stopForShutdown() {
         Set<JobExecution> running = batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME);
@@ -258,9 +314,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             return last;
         }
 
-        // Worker crashing/stopping can leave orphaned steps
-        // recover any orphaned steps before attempting to resume a job
-        // otherwise it might think the job is already running
+        // Hard crash recovery already handles this, so normally this will do nothing
+        // because there will be nothing left to recover. In the soft-resume case, there will usually
+        // be nothing to recover either, since we suspend cleanly, but this covers any edge cases
         if (last.getStatus().isRunning() || hasRunningStepExecution(last)) {
             log.info("recovering stale batch execution {} (job status {}) before resume", last.getId(), last.getStatus());
             jobOperator.recover(last);
@@ -280,6 +336,14 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     }
 
     /**
+     * If our token is lower than the current token in the DB, someone else took over our job, probably for
+     * a good reason. Only should happen when this worker misses its heartbeat repeatedly.
+     */
+    private boolean wasFencedOut(String jobUuid, long ranUnderToken) {
+        return jobLease.currentToken(jobUuid).map(current -> current > ranUnderToken).orElse(false);
+    }
+
+    /**
      * True if any exec step of the given job execution is still in a running state
      * makes sure we can avoid a situation where a "running" step blocks restarting
      */
@@ -291,12 +355,16 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     /**
      * build the partitioned batch job for a contract
      */
-    private org.springframework.batch.core.job.Job buildPartitionedJob(String contractNumber, String jobUuid) {
+    private org.springframework.batch.core.job.Job buildPartitionedJob(String contractNumber, String jobUuid,
+            long fenceToken) {
         var workerStepBuilder = new StepBuilder(WORKER_STEP_NAME, batchJobRepository)
                 .<CoverageSummary, List<IBaseResource>>chunk(chunkSize)
                 .reader(beneficiaryItemReader)
                 .processor(eobItemProcessor)
                 .writer(ndjsonItemWriter)
+                // each chunk commit comes with a fence token which prevents
+                // us from committing work if we've lost the job
+                .listener(new PrototypeFenceGuard(jobLease, jobUuid, fenceToken))
                 // retry transient item level failures before failing the chunk
                 .faultTolerant()
                 .retryLimit(itemRetryLimit);
