@@ -16,7 +16,9 @@
         <okta-jwt.version>0.5.12</okta-jwt.version>
         <sonar.coverage.exclusions>
             **/JobClient.java,
-            **/SwaggerConstants.java
+            **/SwaggerConstants.java,
+            **/SpringBootApp.java,
+            **/OpenAPIConfig.java
         </sonar.coverage.exclusions>
         <!-- 
             - AB2D-6099 -
