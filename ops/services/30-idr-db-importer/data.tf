@@ -10,6 +10,10 @@ data "aws_rds_cluster" "this" {
   cluster_identifier = local.service_prefix
 }
 
+data "aws_iam_policy" "developer_boundary_policy" {
+  name = "developer-boundary-policy"
+}
+
 ### SSM parameters
 
 data "aws_ssm_parameter" "ab2d_db_database" {
@@ -30,8 +34,4 @@ data "aws_ssm_parameter" "ab2d_db_user" {
 
 data "aws_ssm_parameter" "ab2d_aurora_database_security_group" {
   name = "/ab2d/${local.env}/aurora/nonsensitive/db-security-group-id"
-}
-
-data "aws_ssm_parameter" "ab2d_aurora_writer_endpoint_id" {
-  name = "/ab2d/${local.env}/aurora/nonsensitive/writer-endpoint"
 }

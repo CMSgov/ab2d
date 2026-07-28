@@ -1,7 +1,9 @@
 # Database IAM role
 ## enables RDS to pull data from S3 Bucket with IDR data
 resource "aws_iam_role" "database_import_s3" {
-  name = "${module.platform.app}-${module.platform.env}-database-import-s3"
+  name                 = "${module.platform.app}-${module.platform.env}-database-import-s3"
+  path                 = "/delegatedadmin/developer/"
+  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -16,12 +18,50 @@ resource "aws_iam_role" "database_import_s3" {
         }
         Condition = {
           "StringLike" = {
-            "aws:SourceAccount" = "${local.aws_account_number}"
+            "aws:SourceAccount" = module.platform.aws_caller_identity.account_id
           }
         }
       },
     ]
   })
+}
+
+data "aws_iam_policy_document" "database_import_s3" {
+  statement {
+    sid = "S3Import"
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket"
+    ]
+
+    resources = [
+      module.idr_db_importer_bucket.arn,
+      "${module.idr_db_importer_bucket.arn}/*"
+    ]
+  }
+
+  statement {
+    sid = "SharedKeyAccess"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
+    ]
+
+    resources = [
+      module.platform.kms_alias_primary.target_key_arn
+    ]
+  }
+}
+
+resource "aws_iam_policy" "database_import_s3" {
+  name        = "${module.platform.app}-${module.platform.env}-database-import-s3"
+  description = "Aurora s3Import access to the IDR DB Importer bucket."
+  policy      = data.aws_iam_policy_document.database_import_s3.json
+}
+
+resource "aws_iam_role_policy_attachment" "database_import_s3" {
+  role       = aws_iam_role.database_import_s3.name
+  policy_arn = aws_iam_policy.database_import_s3.arn
 }
 
 resource "aws_rds_cluster_role_association" "database_import_s3" {
@@ -71,11 +111,14 @@ resource "aws_iam_policy" "idr_db_importer_bucket_write_and_read" {
 
 data "aws_iam_policy_document" "idr_db_importer_bucket_extended_deny_policy" {
   statement {
-    sid    = "DenyReadAccessExceptIDRDBImporterRole"
+    sid    = "DenyObjectAccessExceptIDRDBImporterRoles"
     effect = "Deny"
 
     actions = [
-      "s3:GetObject"
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:AbortMultipartUpload"
     ]
 
     condition {

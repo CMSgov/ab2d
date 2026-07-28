@@ -8,11 +8,10 @@ terraform {
 }
 
 locals {
-  aws_account_number = nonsensitive(module.platform.aws_caller_identity.account_id)
-  default_tags       = module.platform.default_tags
-  env                = terraform.workspace
-  image_repo_uri     = data.aws_ecr_repository.idr_db_importer.repository_url
-  service            = "idr-db-importer"
+  default_tags   = module.platform.default_tags
+  env            = terraform.workspace
+  image_repo_uri = data.aws_ecr_repository.idr_db_importer.repository_url
+  service        = "idr-db-importer"
 
   ssm_root_map = {
     this = "/ab2d/${local.env}/idr-db-importer/"
