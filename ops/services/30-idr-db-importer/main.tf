@@ -43,7 +43,7 @@ module "service" {
   platform             = module.platform
   subnets              = keys(module.platform.private_subnets)
 
-  additional_task_role_policies = { s3 = aws_iam_policy.idr_db_importer_task.arn }
+  additional_task_role_policies = { idr_db_importer_bucket_write_and_read = aws_iam_policy.idr_db_importer_bucket_write_and_read.arn }
 
   container_environment = concat(
     [
@@ -74,79 +74,16 @@ module "service" {
   )
 }
 
-resource "aws_iam_policy" "idr_db_importer_task" {
-  name        = "${local.app}-${local.env}-idr-db-importer-task"
-  description = "IDR DB Importer ECS task access to S3 bucket and KMS key."
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "S3Access"
-        Effect = "Allow"
-        Action = [
-          "s3:AbortMultipartUpload",
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          module.idr_db_importer_bucket.arn,
-          "${module.idr_db_importer_bucket.arn}/*"
-        ]
-      },
-      {
-        Sid    = "KmsAccessForS3"
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt",
-          "kms:GenerateDataKey"
-        ]
-        Resource = module.platform.kms_alias_primary.target_key_arn
-      }
-    ]
-  })
-}
-
 module "idr_db_importer_bucket" {
   source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=7c070cd2e8c6b1407961c35976553446df8fafd3"
 
-  additional_bucket_policies = [data.aws_iam_policy_document.idr_db_importer_additional_bucket_policy.json]
+  additional_bucket_policies = [data.aws_iam_policy_document.idr_db_importer_bucket_extended_deny_policy.json]
   app                        = module.platform.app
   env                        = local.parent_env
   name                       = "${module.platform.app}-${module.platform.env}-idr-db-importer"
   ssm_parameter              = "/ab2d/${module.platform.env}/core/nonsensitive/idr-db-importer-bucket"
 }
 
-data "aws_iam_policy_document" "idr_db_importer_additional_bucket_policy" {
-  statement {
-    sid    = "DenyReadAccess"
-    effect = "Deny"
-
-    actions = [
-      "s3:GetObject"
-    ]
-
-    condition {
-      test     = "StringNotEquals"
-      variable = "aws:PrincipalArn"
-      values = [
-        module.service.task_role_arn
-      ]
-    }
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [
-      module.idr_db_importer_bucket.arn,
-      "${module.idr_db_importer_bucket.arn}/*",
-    ]
-  }
-}
 
 resource "aws_scheduler_schedule" "idr_db_importer" {
   group_name          = "default"
@@ -175,60 +112,4 @@ resource "aws_scheduler_schedule" "idr_db_importer" {
       }
     }
   }
-}
-
-resource "aws_iam_role" "idr_db_importer_eventbridge_scheduler" {
-  name = "${local.service_prefix}-idr-db-importer-cron-scheduler-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = ["scheduler.amazonaws.com"]
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy" "idr_db_importer_eventbridge_scheduler" {
-  name = "${local.service_prefix}-idr-db-importer-cron-scheduler-policy"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "ecs:RunTask"
-        ],
-        Resource = [
-          trimsuffix(module.service.task_definition.arn, ":${module.service.task_definition.revision}"),
-          "${trimsuffix(module.service.task_definition.arn, ":${module.service.task_definition.revision}")}:*"
-        ],
-        Condition = {
-          "ArnLike" = {
-            "ecs:cluster" = "${data.aws_ecs_cluster.shared.arn}"
-          }
-        }
-      },
-      {
-        Effect = "Allow",
-        Action = [
-          "iam:PassRole"
-        ]
-        Resource = [
-          module.service.task_role_arn,
-        ]
-      },
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "idr_db_importer_eventbridge_scheduler" {
-  policy_arn = aws_iam_policy.idr_db_importer_eventbridge_scheduler.arn
-  role       = aws_iam_role.idr_db_importer_eventbridge_scheduler.name
 }
