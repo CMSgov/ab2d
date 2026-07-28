@@ -22,6 +22,8 @@ public interface CoverageV3Service {
     boolean idrImportInProgress();
     // called before starting a v3 job
     void createAggregatedAttributionTable(String contract);
+    // used by crash recovery to rebuild a table that a prior worker dropped
+    boolean aggregatedTableExists(String contract);
     // called when v3 job is completed, failed, or cancelled via API or manually in which case job UUID will be provided
     void deleteAggregatedTableForContract(String contract, Optional<String> jobUuid);
     // called by cron job to periodically clean up any old tables (in which case job UUID is not provided)

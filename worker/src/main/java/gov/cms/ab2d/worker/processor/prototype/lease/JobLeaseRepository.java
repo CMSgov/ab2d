@@ -125,11 +125,12 @@ public class JobLeaseRepository {
     }
 
     /**
-     * TODO: Might just be a duplicate of above...
+     * Same as above, but reports with a boolean instead of throwing. The scheduled renewer needs to keep
+     * looping over other jobs rather than fail on an exception so it uses this variant.
      */
     public boolean renewHeartbeat(String jobUuid, long token) {
         int rows = jdbc.update(ASSERT_AND_BEAT_SQL, Map.of("jobUuid", jobUuid, "token", token));
-        log.info("heartbeat renew for job {} at token {} affected {} row(s)", jobUuid, token, rows);
+        log.debug("heartbeat renew for job {} at token {} affected {} row(s)", jobUuid, token, rows);
         return rows == 1;
     }
 

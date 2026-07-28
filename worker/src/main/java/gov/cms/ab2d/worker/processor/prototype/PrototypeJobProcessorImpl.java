@@ -180,6 +180,13 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             if (last == null) {
                 log.info("no prior batch execution for job {} - creating aggregated attribution table", jobUuid);
                 coverageV3Service.createAggregatedAttributionTable(contractNumber);
+            } else if (!coverageV3Service.aggregatedTableExists(contractNumber)) {
+                // A prior worker that failed terminally or was fenced out may have dropped the aggregated
+                // table. We safely remake it because a hard recovery re-runs the partitioner from scratch anyway.
+                log.warn("prior batch execution {} for job {} but aggregated table for contract {} is missing - "
+                        + "rebuilding ({} at token {})",
+                        last.getId(), jobUuid, contractNumber, softResume ? "soft resume" : "hard recovery", fenceToken);
+                coverageV3Service.createAggregatedAttributionTable(contractNumber);
             } else {
                 log.info("prior batch execution {} for job {} - {} at token {} (reusing aggregated table)",
                         last.getId(), jobUuid, softResume ? "soft resume" : "hard recovery", fenceToken);
@@ -229,6 +236,15 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                         "Prototype failed with status " + execution.getStatus());
             }
         } catch (Exception e) {
+            // If we lost the lease, a newer owner is (or will be) running this job. Do not fail the job or
+            // delete the aggregated table out from under them - that would corrupt the live run and, since
+            // last != null on any later recovery, could leave the job permanently unable to complete.
+            // Exit quietly and let the current owner finish.
+            if (wasFencedOut(jobUuid, fenceToken)) {
+                log.info("prototype job {} threw while superseded (ran under token {}, newer token now holds the "
+                        + "lease) - exiting quietly, the current owner is responsible for this job", jobUuid, fenceToken);
+                return jobRepository.findByJobUuid(jobUuid);
+            }
             // issues with launching are terminal and fail the job without retry
             log.error("prototype job {} failed to launch", jobUuid, e);
             job.setStatus(FAILED);
