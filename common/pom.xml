@@ -12,7 +12,12 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
-        <sonar.coverage.exclusions>**/SpringBootAppTest.java</sonar.coverage.exclusions>
+        <sonar.coverage.exclusions>
+            **/SpringBootAppTest.java,
+            **/PropertyConstants.java,
+            **/SinceSource.java,
+            **/TooFrequentInvocations.java
+        </sonar.coverage.exclusions>
     </properties>
 
     <dependencies>

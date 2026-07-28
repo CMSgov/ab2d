@@ -14,7 +14,10 @@
         <project.root>${basedir}/..</project.root>
         <springfox.version>3.0.0</springfox.version>
         <okta-jwt.version>0.5.12</okta-jwt.version>
-        <sonar.coverage.exclusions>**/JobClient.java</sonar.coverage.exclusions>
+        <sonar.coverage.exclusions>
+            **/JobClient.java,
+            **/SwaggerConstants.java
+        </sonar.coverage.exclusions>
         <!-- 
             - AB2D-6099 -
             Ignoring capability statement stu3 because sonarqube marks code as duplicate

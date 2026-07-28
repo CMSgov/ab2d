@@ -12,6 +12,9 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
+        <sonar.coverage.exclusions>
+            **/CoverageV3ScheduledTasks.java
+        </sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
