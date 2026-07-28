@@ -3,6 +3,8 @@ package gov.cms.ab2d.coverage.service.v3;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import lombok.val;
@@ -17,6 +19,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.OutputStream;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -99,6 +102,14 @@ class CoverageV3ServiceImplTest {
 
         assertEquals(coveragePeriods.get("Z7777").toString(), "[YearMonthRecord(year=2026, month=2), YearMonthRecord(year=2026, month=1), YearMonthRecord(year=2025, month=12)]");
         assertEquals(coveragePeriods.get("Z9999").toString(), "[YearMonthRecord(year=2026, month=2), YearMonthRecord(year=2026, month=1), YearMonthRecord(year=2025, month=12), YearMonthRecord(year=2025, month=11), YearMonthRecord(year=2025, month=10), YearMonthRecord(year=2025, month=9)]");
+
+        val contractDto = new ContractForCoverageDTO();
+        contractDto.setContractType(ContractForCoverageDTO.ContractType.CLASSIC_TEST);
+        contractDto.setContractNumber("Z0001");
+
+//        val coveragePagingRequest = CoveragePagingRequest.ofV3(1000, -1L, contractDto, OffsetDateTime.now());
+
+//        service.pageCoverage(coveragePagingRequest);
 
     }
 
