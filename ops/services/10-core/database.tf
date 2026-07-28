@@ -1,7 +1,6 @@
 # FIXME Move conditional logic into a config/<env>.yml or workspace vars file and process with a locals block
-# TODO change the commit hash once these aurora changes are merged in CDAP
 module "db" {
-  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=1b4ae3a625562fd9317f047f34bc2047ec949bed"
+  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=8d95e6f238b98a1c3ae4464a60b47d59ab2e4e74"
 
   snapshot_identifier = var.aurora_snapshot
   deletion_protection = true

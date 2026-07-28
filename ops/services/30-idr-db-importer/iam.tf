@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "idr_db_importer_bucket_write_and_read" {
 resource "aws_iam_policy" "idr_db_importer_bucket_write_and_read" {
   name        = "${local.app}-${local.env}-idr-s3-bucket-write-and-read"
   description = "IDR DB Importer ECS task access to S3 bucket and encrypt resources."
-  policy      = data.aws_iam_policy_document.idr_db_importer_bucket_write_and_read
+  policy      = data.aws_iam_policy_document.idr_db_importer_bucket_write_and_read.json
 }
 
 data "aws_iam_policy_document" "idr_db_importer_bucket_extended_deny_policy" {
