@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
+import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
@@ -19,8 +20,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -46,7 +46,7 @@ class CoverageV3PresentCheckTest {
 	}
 
 	@Test
-	void testCoveragCheck_Z1234(CapturedOutput out) {
+	void testCoverageCheck_Z1234(CapturedOutput out) {
 		val issues = new ArrayList<String>();
 		val contractNumber = "Z1234";
 		val contractDto = new ContractDTO();
@@ -66,8 +66,20 @@ class CoverageV3PresentCheckTest {
 		assertFalse(out.getOut().contains("[V3] Z1234-2026-1 no enrollment found"));
 		assertFalse(out.getOut().contains("[V3] Z1234-2026-2 no enrollment found"));
 
-
 	}
 
+	@Test
+	void testCoverageCheck_NoEnrollment() {
+		val issues = new ArrayList<String>();
+		val contractNumber = "Z1234";
+		val contractDto = new ContractDTO();
+		contractDto.setContractNumber(contractNumber);
+
+		val emptyCoverageCounts = new HashMap<String, List<YearMonthRecord>>();
+		check = new CoverageV3CoveragePeriodsPresentCheck(coverageService, emptyCoverageCounts, issues);
+		check.test(contractDto);
+
+		assertTrue(issues.get(0).contains("[V3] Z1234 has no enrollment"));
+	}
 
 }
