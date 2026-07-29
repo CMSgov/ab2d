@@ -16,7 +16,8 @@
             **/SpringBootAppTest.java,
             **/PropertyConstants.java,
             **/SinceSource.java,
-            **/TooFrequentInvocations.java
+            **/TooFrequentInvocations.java,
+            **/DatadogSpans.java
         </sonar.coverage.exclusions>
     </properties>
 

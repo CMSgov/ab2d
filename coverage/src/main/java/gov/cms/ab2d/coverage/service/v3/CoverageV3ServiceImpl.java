@@ -267,10 +267,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         return new GetAggregatedCoverageMembership(dataSource).reduceAndFilter(summaries);
     }
 
-    private boolean isOptOutOn() {
-        return propertiesService.isToggleOn("OptOutOn", false);
-    }
-
     public static <T> T executeTimedQuery(String queryDescription, Supplier<T> supplier) {
         val start = LocalDateTime.now();
         val result = supplier.get();

@@ -3,10 +3,7 @@ package gov.cms.ab2d.coverage.service.v3;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
-import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
-import gov.cms.ab2d.coverage.model.CoveragePagingResult;
-import gov.cms.ab2d.coverage.model.YearMonthRecord;
+import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import lombok.val;
@@ -15,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.junit.jupiter.Container;
@@ -175,6 +173,21 @@ class CoverageV3ServiceImplTest {
         syncService.populateHistorySummaryForContract(contract);
         service.createAggregatedAttributionTable(contract);
         assertEquals(1, service.getDistinctPatientCount(contract));
+    }
+
+    @Test
+    void testLogRowsFetched(CapturedOutput out) {
+        val summaries = List.of(
+            new CoverageSummary(Identifiers.ofV3(1L, null, false, 1L), null, List.of()),
+            new CoverageSummary(Identifiers.ofV3(2L, null, false, 2L), null, List.of()),
+            new CoverageSummary(Identifiers.ofV3(2L, null, false, 3L), null, List.of()),
+            new CoverageSummary(Identifiers.ofV3(3L, null, false, 4L), null, List.of()),
+            new CoverageSummary(Identifiers.ofV3(4L, null, false, 5L), null, List.of())
+        );
+
+        service.logRowsFetched(summaries);
+        assertTrue(out.getOut().contains("First beneficiary record row number = 1"));
+        assertTrue(out.getOut().contains("Last beneficiary record row number = 5"));
     }
 
     boolean tableExists(String tableName)  {
