@@ -8,6 +8,7 @@ import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3ServiceImpl;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncService;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.Test;
@@ -144,7 +145,6 @@ class GetAggregatedCoverageMembershipTest {
 			new CoverageSummary(Identifiers.ofV3(6L, null, null, 9L), null, List.of())
 		));
 
-
 		val duplicateIndexes = aggregatedMembership.getIndexesOfDuplicatePatients(list);
 		// Rows 2,3 are duplicates as well as 6,7,8
 		assertEquals("[[1, 2], [5, 6, 7]]", duplicateIndexes.toString());
@@ -158,6 +158,57 @@ class GetAggregatedCoverageMembershipTest {
 		assertTrue(output.getOut().contains("Processing duplicate patient at row number 7"));
 		assertTrue(output.getOut().contains("Processing duplicate patient at row number 8"));
 		assertTrue(output.getOut().contains("Reduced duplicate patient records into record from row number 6"));
+	}
+
+	@Test
+	void testReduceAndFilter() {
+		val aggregatedMembership = new GetAggregatedCoverageMembership(container.getDataSource());
+		val dateRange1 = FilterOutByDate.getDateRange(1, 2020, 12, 2021);
+		val dateRange2 = FilterOutByDate.getDateRange(1, 2022, 12, 2023);
+
+		var summaries = new ArrayList<>(List.of(
+			new CoverageSummary(Identifiers.ofV3(1L, null, false, 1L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(2L, null, null, 2L), null, List.of(dateRange1)),
+			new CoverageSummary(Identifiers.ofV3(2L, null, null, 3L), null, List.of(dateRange2)),
+
+			new CoverageSummary(Identifiers.ofV3(3L, null, null, 4L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(4L, null, null, 5L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(5L, null, null, 6L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(5L, null, null, 7L), null, List.of()),
+			new CoverageSummary(Identifiers.ofV3(5L, null, false, 8L), null, List.of()),
+
+			new CoverageSummary(Identifiers.ofV3(6L, null, null, 9L), null, List.of())
+		));
+
+
+		val lastPatientId = aggregatedMembership.reduceAndFilter(summaries);
+		assertEquals(6L, lastPatientId);
+
+		// Verify (a) records associated with patient IDs 1 and 5 are removed and (b) duplicates for a
+		// beneficiary are reduced to a single record
+		assertEquals(4, summaries.size());
+		assertEquals(2L, summaries.get(0).getIdentifiers().getPatientIdV3());
+		assertEquals(3L, summaries.get(1).getIdentifiers().getPatientIdV3());
+		assertEquals(4L, summaries.get(2).getIdentifiers().getPatientIdV3());
+		assertEquals(6L, summaries.get(3).getIdentifiers().getPatientIdV3());
+
+		// Verify date ranges are combined and validate
+		val patientSummary2 = summaries.get(0);
+		val filterDateRange1 = patientSummary2.getDateRanges().get(0);
+		val filterDateRange2 = patientSummary2.getDateRanges().get(1);
+
+		assertTrue(filterDateRange1.inRange(dateRange1.getStart()));
+		assertTrue(filterDateRange1.inRange(dateRange1.getEnd()));
+		assertTrue(filterDateRange2.inRange(dateRange2.getStart()));
+		assertTrue(filterDateRange2.inRange(dateRange2.getEnd()));
+
+		assertFalse(filterDateRange2.inRange(dateRange1.getStart()));
+		assertFalse(filterDateRange2.inRange(dateRange1.getEnd()));
+		assertFalse(filterDateRange1.inRange(dateRange2.getStart()));
+		assertFalse(filterDateRange1.inRange(dateRange2.getEnd()));
 	}
 
 	boolean tableExists(String tableName) throws Exception {
