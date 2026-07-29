@@ -207,3 +207,5 @@ databaseChangeLog:
       file: db/changelog/v2026/optimize_find_benes_served_procedure.sql
   - include:
       file: db/changelog/v2026/add_pause_resume_prototype_property.sql
+  - include:
+      file: db/changelog/v2026/create_job_lease_table.sql

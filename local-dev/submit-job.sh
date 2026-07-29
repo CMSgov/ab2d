@@ -4,8 +4,7 @@
 #
 #   prototype requires the flag pause-resume.prototype.enabled=true and seeded V3 data
 #   do this locally with:
-#   docker exec ab2d-db-1 psql -U ab2d -d ab2d \
-#  -c "UPDATE property.properties SET value='true' WHERE key='pause-resume.prototype.enabled';"
+#   docker exec ab2d-db-1 psql -U ab2d -d ab2d -c "UPDATE property.properties SET value='true' WHERE key='pause-resume.prototype.enabled';"
 #   Seed v3 benes:
 #   docker exec -i ab2d-db-1 psql -U ab2d -d ab2d < local-dev/sql/seed-v3.sql
 
@@ -31,7 +30,7 @@ API="${API:-https://localhost:8443}"
 TOKEN="${TOKEN:-local-dev-token}"
 TYPE="${TYPE:-ExplanationOfBenefit}"
 OUT_DIR="${OUT_DIR:-local-dev/out}"
-POLL_SECONDS="${POLL_SECONDS:-10}"
+POLL_SECONDS="${POLL_SECONDS:-30}"
 API_BASE="/api/$VERSION/fhir"
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
