@@ -43,7 +43,7 @@
         <!-- remove below once spring boot updates these versions -->
         <tomcat.version>11.0.23</tomcat.version>
         <logback.version>1.5.36</logback.version>
-        <httpcore5.version>5.4.2</httpcore5.version>
+        <httpcore5.version>5.4.3</httpcore5.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.14</jacoco.version>
@@ -51,13 +51,13 @@
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
         <!-- AB2D lib versions -->
-        <bfd-lib.version>4.8.2</bfd-lib.version>
-        <events-client.version>3.3.16</events-client.version>
-        <fhir-lib.version>2.5.8</fhir-lib.version>
-        <aggregator-lib.version>2.1.6</aggregator-lib.version>
-        <filters-lib.version>3.2.1</filters-lib.version>
-        <contract-client.version>2.2.2</contract-client.version>
-        <sns-client.version>1.1.11</sns-client.version>
+        <bfd-lib.version>4.8.3</bfd-lib.version>
+        <events-client.version>3.3.17</events-client.version>
+        <fhir-lib.version>2.5.9</fhir-lib.version>
+        <aggregator-lib.version>2.1.7</aggregator-lib.version>
+        <filters-lib.version>3.2.2</filters-lib.version>
+        <contract-client.version>2.2.3</contract-client.version>
+        <sns-client.version>1.1.12</sns-client.version>
 
         <!-- Dependency versions -->
         <commons-compress.version>1.28.0</commons-compress.version>
@@ -76,7 +76,23 @@
             <dependency>
                 <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>3.1.4</version>
+                <version>3.1.5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- override spring boot's managed Jackson -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>2.21.5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- override spring boot's managed netty -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>4.2.16.Final</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
