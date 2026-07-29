@@ -17,7 +17,7 @@ ext {
     springBootVersion= '4.0.7'
     springCloudAwsVersion = '4.0.2'
     liquibaseVersion='5.0.0'
-    jacksonVersion='2.21.4'
+    jacksonVersion='2.21.5'
     testContainerVersion='1.21.4'
     eventClientVersion='3.3.16'
     lombokVersion = '1.18.38'
@@ -34,6 +34,9 @@ allprojects {
 
     dependencies {
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+        // override spring boot's managed versions, these two are removable once spring boot updates them
+        implementation platform("io.netty:netty-bom:4.2.16.Final")
+        implementation platform("tools.jackson:jackson-bom:3.1.5")
         // spring boot 4 uses an older version, so just pin the one we want here
         testImplementation enforcedPlatform("org.testcontainers:testcontainers-bom:${testContainerVersion}")
         implementation "com.squareup.okhttp3:okhttp:5.0.0"

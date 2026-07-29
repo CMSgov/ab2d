@@ -43,7 +43,7 @@
         <!-- remove below once spring boot updates these versions -->
         <tomcat.version>11.0.23</tomcat.version>
         <logback.version>1.5.36</logback.version>
-        <httpcore5.version>5.4.2</httpcore5.version>
+        <httpcore5.version>5.4.3</httpcore5.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.14</jacoco.version>
@@ -76,7 +76,23 @@
             <dependency>
                 <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>3.1.4</version>
+                <version>3.1.5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- override spring boot's managed Jackson -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>2.21.5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- override spring boot's managed netty -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>4.2.16.Final</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

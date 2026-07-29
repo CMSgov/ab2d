@@ -30,6 +30,11 @@ allprojects {
 
     dependencies {
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+
+        // override spring boot's managed versions, these two are removable once spring boot updates them
+        implementation platform("io.netty:netty-bom:4.2.16.Final")
+        implementation platform("tools.jackson:jackson-bom:3.1.5")
+
         testImplementation enforcedPlatform("org.testcontainers:testcontainers-bom:${testContainerVersion}")
         implementation "gov.cms.ab2d:ab2d-events-client:${eventClientVersion}"
         implementation "gov.cms.ab2d:ab2d-contracts-client:${contractClientVersion}"
@@ -69,8 +74,8 @@ allprojects {
             implementation 'io.opentelemetry:opentelemetry-api:1.62.0'
             implementation 'commons-beanutils:commons-beanutils:1.11.0'
             implementation 'org.mozilla:rhino:1.7.15'
-            implementation 'com.fasterxml.jackson.core:jackson-core:2.21.4'
-            implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.4'
+            implementation 'com.fasterxml.jackson.core:jackson-core:2.21.5'
+            implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.5'
             // spring boot dependencies, remove as spring boot upgrades these
             implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.23'
             implementation 'org.apache.tomcat.embed:tomcat-embed-el:11.0.23'

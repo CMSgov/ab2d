@@ -44,7 +44,7 @@ ext {
     testContainerVersion='1.21.4'
     mockServerVersion='5.15.0'
     liquibaseVersion="5.0.0"
-    jacksonVersion = "2.21.4"
+    jacksonVersion = "2.21.5"
     slackAPIVersion='1.35.0'
     hl7Version = '6.9.10'
 
@@ -168,6 +168,10 @@ subprojects {
 
     dependencies {
         implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+        // override spring boot's managed versions, these two are removable once spring boot updates them
+        implementation(platform("io.netty:netty-bom:4.2.16.Final"))
+        implementation(platform("tools.jackson:jackson-bom:3.1.5"))
+
         implementation(platform("org.liquibase:liquibase-core:$liquibaseVersion"))
         // testcontainers is test-only: keep it on testImplementation so it is not published
         // into the runtimeElements variant of the module metadata (.module), which would
@@ -208,8 +212,8 @@ subprojects {
         resolutionStrategy.force(
             'org.apache.commons:commons-lang3:3.18.0',
             'commons-beanutils:commons-beanutils:1.11.0',
-            'org.apache.httpcomponents.core5:httpcore5:5.4.2',
-            'org.apache.httpcomponents.core5:httpcore5-h2:5.4.2',
+            'org.apache.httpcomponents.core5:httpcore5:5.4.3',
+            'org.apache.httpcomponents.core5:httpcore5-h2:5.4.3',
             'org.apache.httpcomponents.client5:httpclient5:5.6.1'
         )
     }
