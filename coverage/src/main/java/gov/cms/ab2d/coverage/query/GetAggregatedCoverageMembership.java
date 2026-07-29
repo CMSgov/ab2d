@@ -174,6 +174,14 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
         log.info("Created table {}", tableName);
     }
 
+    public boolean aggregatedTableExists(final String contract) {
+        val tableName = MessageFormat.format(AGGREGATED_TABLE_NAME, contract);
+        // to_regclass returns NULL when the (schema-qualified) table does not exist
+        val exists = jdbcTemplate.getJdbcOperations()
+                .queryForObject("SELECT to_regclass(?) IS NOT NULL", Boolean.class, tableName);
+        return Boolean.TRUE.equals(exists);
+    }
+
     public int getDistinctPatientCount(final String contract) {
         val tableName = MessageFormat.format(AGGREGATED_TABLE_NAME, contract);
         log.info("Calculating row count for {}", tableName);

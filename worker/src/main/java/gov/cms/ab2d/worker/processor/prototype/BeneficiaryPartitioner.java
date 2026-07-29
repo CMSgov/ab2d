@@ -2,12 +2,9 @@ package gov.cms.ab2d.worker.processor.prototype;
 
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.partition.PartitionNameProvider;
 import org.springframework.batch.core.partition.Partitioner;
 import org.springframework.batch.infrastructure.item.ExecutionContext;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +13,12 @@ import java.util.Map;
  * Splits a contract's beneficiaries into partitions along patient_id boundaries.
  * The partitions are built off patient_id to avoid splitting patients between partitions if
  * they are on the boundary.
+ *
+ * Has no resume feature, if we have to restart a job at the partition step we'll just do it over
+ * entirely.
  */
 @Slf4j
-public class BeneficiaryPartitioner implements Partitioner, PartitionNameProvider {
+public class BeneficiaryPartitioner implements Partitioner {
 
     static final String KEY_CONTRACT = "contractNumber";
     static final String KEY_PARTITION_INDEX = "partitionIndex";
@@ -68,27 +68,8 @@ public class BeneficiaryPartitioner implements Partitioner, PartitionNameProvide
     }
 
     /**
-     * Names of the partitions to reload on restart
-     */
-    @Override
-    public Collection<String> getPartitionNames(int gridSize) {
-        List<Long> upperBounds = computeUpperBounds();
-        if (upperBounds == null) {
-            return List.of();
-        }
-        int numPartitions = upperBounds.size() + 1;
-
-        List<String> names = new ArrayList<>(numPartitions);
-        for (int i = 0; i < numPartitions; i++) {
-            names.add(partitionName(i));
-        }
-        log.info("resuming {} partitions", numPartitions);
-        return names;
-    }
-
-    /**
      * returns a list of partition boundaries
-     * returns null if theres no coverage data and empty list if
+     * returns null if there's no coverage data and empty list if
      * there is only enough patients for 1 partition
      */
     private List<Long> computeUpperBounds() {
