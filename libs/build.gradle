@@ -22,14 +22,14 @@ ext {
             : System.getenv()['ARTIFACTORY_PASSWORD']
 
     // AB2D libraries
-    fhirVersion='2.5.8'
-    bfdVersion='4.8.2'
-    aggregatorVersion='2.1.6'
-    filtersVersion='3.2.1' // AB2D-7222 Refactor EOB Processing to Eliminate Excess Allocations and Improve Reusability
-    eventClientVersion='3.3.16'
+    fhirVersion='2.5.9'
+    bfdVersion='4.8.3'
+    aggregatorVersion='2.1.7'
+    filtersVersion='3.2.2' // AB2D-7222 Refactor EOB Processing to Eliminate Excess Allocations and Improve Reusability
+    eventClientVersion='3.3.17'
     propertiesClientVersion='2.1.1'
-    contractClientVersion='2.2.2'
-    snsClientVersion='1.1.11'
+    contractClientVersion='2.2.3'
+    snsClientVersion='1.1.12'
 
     sourcesRepo = 'ab2d-maven-repo'
     deployerRepo = 'ab2d-main'
