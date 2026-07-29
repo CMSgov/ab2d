@@ -220,13 +220,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     boolean shouldDeleteAggregatedTable(final String tableName, final List<String> contractsWithActiveJobs) {
-        for (String contractWithActiveJob : contractsWithActiveJobs) {
-            val keepTable = keepAggregatedTable(tableName);
-            if (keepTable) {
-                log.info("Skipping deletion for aggregated table {}", tableName);
-                return false;
-            }
+        val keepTable = keepAggregatedTable(tableName);
+        if (keepTable) {
+            log.info("Skipping deletion for aggregated table {}", tableName);
+            return false;
+        }
 
+        for (String contractWithActiveJob : contractsWithActiveJobs) {
             if (tableName.toLowerCase().endsWith(contractWithActiveJob.toLowerCase())) {
                 return false;
             }
@@ -251,23 +251,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         DatadogSpans.setTag("component", "coverage");
 	    return coverageV3SyncService.moveToHistorical(contract, source);
     }
-
-    @Override
-    @Trace(operationName = "ab2d.coverage.count_beneficiaries_v3")
-    public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {
-        DatadogSpans.setTag("contract", contract);
-        DatadogSpans.setTag("component", "coverage");
-        return executeTimedQuery(
-            format("countBeneficiariesByCoveragePeriod historicalCoverage=%s; recentCoverage=%s; contract=%s",
-                    periods.getHistoricalCoverage(),
-                    periods.getRecentCoverage(),
-                    contract
-            ),
-            () -> new CountBeneficiariesByCoveragePeriods(dataSource)
-                    .countBeneficiaries(contract, periods, isOptOutOn())
-        );
-    }
-
 
     private List<CoverageSummary> queryAggregatedCoverageMembership(CoveragePagingRequest page, long limit) {
         return executeTimedQuery(
