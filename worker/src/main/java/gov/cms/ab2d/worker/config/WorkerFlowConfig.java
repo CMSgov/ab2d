@@ -33,18 +33,23 @@ public class WorkerFlowConfig {
     // How often we poll for matching jobs in the job table
     private final int pollingFrequency;
 
+    // An IN_PROGRESS job whose job_lease heartbeat is older than this is recoverable
+    private final int leaseTtlSeconds;
+
     public WorkerFlowConfig(DataSource dataSource, JobHandler handler,
                             @Qualifier("mainJobPool") Executor mainJobPool,
-                            @Value("${eob.job.queueing.frequency}") int pollingFrequency) {
+                            @Value("${eob.job.queueing.frequency}") int pollingFrequency,
+                            @Value("${job.lock.ttl}") int leaseTtlSeconds) {
         this.dataSource = dataSource;
         this.handler = handler;
         this.mainJobPool = mainJobPool;
         this.pollingFrequency = pollingFrequency;
+        this.leaseTtlSeconds = leaseTtlSeconds;
     }
 
     @Bean
     public IntegrationFlow flow() {
-        return IntegrationFlow.from(new JobMessageSource(dataSource), c -> c.poller(Pollers.fixedDelay(Duration.ofSeconds(pollingFrequency))))
+        return IntegrationFlow.from(new JobMessageSource(dataSource, leaseTtlSeconds), c -> c.poller(Pollers.fixedDelay(Duration.ofSeconds(pollingFrequency))))
                             .channel(new ExecutorChannel(mainJobPool))
                             .handle(handler)
                             .get();

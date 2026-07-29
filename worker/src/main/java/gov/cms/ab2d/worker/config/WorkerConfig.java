@@ -10,15 +10,19 @@ import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.jdbc.lock.LockRepository;
+import org.springframework.integration.support.locks.DistributedLock;
+import org.springframework.integration.support.locks.ExpirableLockRegistry;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Configures Spring Integration.
@@ -38,15 +42,18 @@ public class WorkerConfig {
     private final int jobCorePoolSize;
     private final int jobMaxPoolSize;
     private final int jobQueueCapacity;
+    private final int lockTimeToLive;
 
     public WorkerConfig(@Value("${pcp.core.pool.size}") int pcpCorePoolSize,
                         @Value("${job.core.pool.size}") int jobCorePoolSize,
                         @Value("${job.max.pool.size}") int jobMaxPoolSize,
-                        @Value("${job.queue.capacity}") int jobQueueCapacity) {
+                        @Value("${job.queue.capacity}") int jobQueueCapacity,
+                        @Value("${job.lock.ttl}") int lockTimeToLive) {
         this.pcpCorePoolSize = pcpCorePoolSize;
         this.jobCorePoolSize = jobCorePoolSize;
         this.jobMaxPoolSize = jobMaxPoolSize;
         this.jobQueueCapacity = jobQueueCapacity;
+        this.lockTimeToLive = lockTimeToLive;
     }
 
     @Bean
@@ -85,16 +92,14 @@ public class WorkerConfig {
 
     @Bean
     public LockRepository lockRepository(DataSource dataSource) {
-        final DefaultLockRepository defaultLockRepository = new DefaultLockRepository(dataSource);
-        defaultLockRepository.setTimeToLive(60_000);        // 60 seconds
-        return defaultLockRepository;
+        return new DefaultLockRepository(dataSource);
     }
 
     /**
      * Using {@link JdbcLockRegistry} is critical to avoid race condition among workers competing for requests.
      */
     @Bean
-    public LockRegistry lockRegistry(LockRepository lockRepository) {
-        return new JdbcLockRegistry(lockRepository);
+    public LockRegistry<DistributedLock> lockRegistry(LockRepository lockRepository) {
+        return new JdbcLockRegistry(lockRepository, Duration.ofSeconds(lockTimeToLive));
     }
 }

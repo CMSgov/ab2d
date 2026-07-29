@@ -203,3 +203,5 @@ databaseChangeLog:
       file: db/changelog/v2026/add_int_lock_expired_after.sql
   - include:
       file: db/changelog/v2026/add_pause_resume_prototype_property.sql
+  - include:
+      file: db/changelog/v2026/create_job_lease_table.sql
