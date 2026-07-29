@@ -23,13 +23,15 @@ import java.util.Optional;
 @Component
 @StepScope
 public class BeneficiaryItemReader implements ItemStreamReader<CoverageSummary> {
-    static final String CURSOR_KEY = "beneficiary.reader.cursor";
+    // the checkpoint key is named with the token so the reader/writer both reset together
+    static final String CURSOR_KEY_PREFIX = "beneficiary.reader.cursor.t";
 
     private final CoverageV3Service coverageV3Service;
     private final String contract;
     private final long startPatientId; // exclusive lower bound of this partition
     private final long endPatientId;   // inclusive upper bound of this partition
     private final int pageSize;
+    private final String cursorKey;
 
     private final Deque<CoverageSummary> buffer = new ArrayDeque<>(); // non-remote queue, for now
     private Long lastReadPatientId; // checkpoint
@@ -41,20 +43,22 @@ public class BeneficiaryItemReader implements ItemStreamReader<CoverageSummary> 
             @Value("#{stepExecutionContext['contractNumber']}") String contract,
             @Value("#{stepExecutionContext['startPatientId']}") long startPatientId,
             @Value("#{stepExecutionContext['endPatientId']}") long endPatientId,
+            @Value("#{jobParameters['fenceToken']}") long fenceToken,
             @Value("${eob.job.patient.queue.page.size}") int pageSize) {
         this.coverageV3Service = coverageV3Service;
         this.contract = contract;
         this.startPatientId = startPatientId;
         this.endPatientId = endPatientId;
         this.pageSize = pageSize;
+        this.cursorKey = CURSOR_KEY_PREFIX + fenceToken;
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         buffer.clear();
         exhausted = false;
-        if (executionContext.containsKey(CURSOR_KEY)) {
-            lastReadPatientId = executionContext.getLong(CURSOR_KEY);
+        if (executionContext.containsKey(cursorKey)) {
+            lastReadPatientId = executionContext.getLong(cursorKey);
             fetchCursor = lastReadPatientId;
             log.info("Resuming partition from patient {}", lastReadPatientId);
         } else {
@@ -92,7 +96,7 @@ public class BeneficiaryItemReader implements ItemStreamReader<CoverageSummary> 
     @Override
     public void update(@NonNull ExecutionContext executionContext) throws ItemStreamException {
         if (lastReadPatientId != null) {
-            executionContext.putLong(CURSOR_KEY, lastReadPatientId);
+            executionContext.putLong(cursorKey, lastReadPatientId);
         }
     }
 

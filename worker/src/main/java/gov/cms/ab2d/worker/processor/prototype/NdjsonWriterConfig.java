@@ -32,6 +32,7 @@ public class NdjsonWriterConfig {
             JobRepository jobRepository,
             SearchConfig searchConfig,
             @Value("#{jobParameters['jobUuid']}") String jobUuid,
+            @Value("#{jobParameters['fenceToken']}") long fenceToken,
             @Value("#{stepExecutionContext['contractNumber']}") String contract,
             @Value("#{stepExecutionContext['partitionIndex']}") int partitionIndex) throws IOException {
 
@@ -39,14 +40,20 @@ public class NdjsonWriterConfig {
         FhirVersion version = job.getFhirVersion();
         IParser parser = version.getJsonParser().setPrettyPrint(false);
 
-        Path outputFile = Path.of(searchConfig.getEfsMount(), jobUuid, searchConfig.getFinishedDir())
-                .resolve(contract + "_partition" + partitionIndex + ".ndjson");
+        // files are named with the fenceToken so that each time it bumps, there must be a new file
+        // no stale worker can modify another worker's file.
+        Path outputFile = Path.of(searchConfig.getEfsMount(), jobUuid, searchConfig.getStreamingDir())
+                .resolve(contract + "_partition" + partitionIndex + "_t" + fenceToken + ".ndjson");
         // FlatFileItemWriter does not create parent directories
         Files.createDirectories(outputFile.getParent());
 
+        // the writer and reader are kept in line along the same fence token.
+        // forceSync happens on every chunk flush and on close so we can actually guarantee safety
+        // when soft-resuming. The file will always match what the cursor says.
         return new FlatFileItemWriterBuilder<List<IBaseResource>>()
-                .name("ndjsonItemWriter")
+                .name("ndjsonItemWriter.t" + fenceToken)
                 .resource(new FileSystemResource(outputFile))
+                .forceSync(true)
                 .lineAggregator(eobs -> eobs.stream()
                         .map(parser::encodeResourceToString)
                         .collect(Collectors.joining("\n")))

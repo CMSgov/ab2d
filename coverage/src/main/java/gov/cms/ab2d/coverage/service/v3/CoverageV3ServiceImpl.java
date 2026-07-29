@@ -165,6 +165,11 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
+    public boolean aggregatedTableExists(String contract) {
+        return new GetAggregatedCoverageMembership(dataSource).aggregatedTableExists(contract);
+    }
+
+    @Override
     public void deleteAggregatedTableForContract(String contract, Optional<String> jobUuid) {
         val aggregatedTable = MessageFormat.format(GetAggregatedCoverageMembership.AGGREGATED_TABLE_NAME, contract.toLowerCase());
         if (keepAggregatedTable(aggregatedTable)) {
