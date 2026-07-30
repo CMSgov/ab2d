@@ -21,8 +21,20 @@ repositories {
 	mavenCentral()
 }
 
+dependencyLocking {
+	lockAllConfigurations()
+}
+
 ext {
 	awssdkVersion = '2.41.5'
+	ddTraceApiVersion = '1.63.0'
+	// override spring boot's managed versions
+	set('netty.version', '4.2.16.Final')
+	set('tomcat.version', '11.0.23')
+	set('logback.version', '1.5.36')
+	set('httpcore5.version', '5.4.3')
+	set('jackson-2-bom.version', '2.21.5')
+	set('jackson-bom.version', '3.1.5')
 }
 
 dependencies {
@@ -39,7 +51,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-persistence'
 	implementation 'org.springframework.retry:spring-retry'
-	implementation 'org.postgresql:postgresql:42.7.11'
+	implementation 'org.postgresql:postgresql:42.7.12'
+	implementation "com.datadoghq:dd-trace-api:${ddTraceApiVersion}"
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
@@ -51,8 +64,8 @@ dependencies {
 		implementation('com.github.jnr:jnr-posix:3.1.8')
 		implementation('commons-beanutils:commons-beanutils:1.11.0')
 		implementation('org.apache.commons:commons-compress:1.28.0')
-		implementation('com.fasterxml.jackson.core:jackson-core:2.21.2')
-		implementation('com.fasterxml.jackson.core:jackson-databind:2.21.2')
+		implementation('com.fasterxml.jackson.core:jackson-core:2.21.5')
+		implementation('com.fasterxml.jackson.core:jackson-databind:2.21.5')
 	}
 }
 

@@ -1,6 +1,8 @@
 package gov.cms.ab2d.importer;
 
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -33,7 +35,9 @@ public class SpringBootApp implements ApplicationRunner {
 
 
     @Override
+    @Trace(operationName = "ab2d.idr.import_task")
     public void run(ApplicationArguments args) {
+        DatadogSpans.setTag("component", "idr");
         log.info("IDR S3 import ECS task started");
         updateStatus(STATUS_IN_PROGRESS);
         int exitCode = 1;
@@ -42,6 +46,7 @@ public class SpringBootApp implements ApplicationRunner {
             exitCode = 0;
             log.info("IDR import ECS task completed successfully");
         } catch (Exception e) {
+            DatadogSpans.markError(e);
             log.error("IDR import ECS task failed", e);
         } finally {
             updateStatus(STATUS_NOT_IN_PROGRESS);

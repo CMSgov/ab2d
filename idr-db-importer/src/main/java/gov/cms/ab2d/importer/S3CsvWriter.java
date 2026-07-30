@@ -1,5 +1,7 @@
 package gov.cms.ab2d.importer;
 
+import datadog.trace.api.Trace;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,7 +26,11 @@ public class S3CsvWriter {
 
     private static final int PART_BYTES = 8 * 1024 * 1024;
 
+    @Trace(operationName = "ab2d.idr.export_to_s3")
     public void writeSnowflakeToS3(String bucket, String finalKey, ResultSet rs) throws Exception {
+        DatadogSpans.setTag("component", "idr");
+        DatadogSpans.setTag("s3.bucket", bucket);
+        DatadogSpans.setTag("s3.key", finalKey);
         String tmpKey = finalKey + ".tmp";
         String uploadId = s3.createMultipartUpload(
                 r -> r.bucket(bucket).key(tmpKey).contentType("text/csv")
@@ -63,6 +69,7 @@ public class S3CsvWriter {
             s3.deleteObject(r -> r.bucket(bucket).key(tmpKey));
 
         } catch (Exception e) {
+            DatadogSpans.markError(e);
             log.warn("Aborting multipart upload uploadId={} for s3://{}/{}", uploadId, bucket, tmpKey, e);
 
             try {

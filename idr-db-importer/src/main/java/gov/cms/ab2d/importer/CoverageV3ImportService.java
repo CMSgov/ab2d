@@ -1,5 +1,7 @@
 package gov.cms.ab2d.importer;
 
+import datadog.trace.api.Trace;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
@@ -44,8 +46,13 @@ public class CoverageV3ImportService {
             retryFor = Exception.class,
             backoff = @Backoff(delay = 1000, multiplier = 2.0)
     )
+    @Trace(operationName = "ab2d.idr.import")
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws SQLException {
         String stagingFqtn = fqtn + "_staging";
+        DatadogSpans.setTag("component", "idr");
+        DatadogSpans.setTag("target_table", stagingFqtn);
+        DatadogSpans.setTag("s3.bucket", bucket);
+        DatadogSpans.setTag("s3.key", key);
 
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
             connection.setAutoCommit(false);
@@ -55,6 +62,7 @@ public class CoverageV3ImportService {
                 verifyFileExists(bucket, key);
 
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
+                DatadogSpans.setMetric("idr.staged_rows", stagedRows);
 
                 connection.commit();
 
@@ -70,6 +78,7 @@ public class CoverageV3ImportService {
                 );
             } catch (Exception e) {
                 rollback(connection);
+                DatadogSpans.markError(e);
                 log.error(
                         "CoverageV3 import failed: source=s3://{}/{}, target={}",
                         bucket, key, stagingFqtn, e
