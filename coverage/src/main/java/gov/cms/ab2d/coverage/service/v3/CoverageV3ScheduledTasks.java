@@ -24,7 +24,8 @@ public class CoverageV3ScheduledTasks {
 		this.coverageV3Service = coverageV3Service;
 	}
 
-	@Scheduled(cron= "0 0 * * * ?") // every hour
+	// TEMP (Datadog metrics testing): every 5 min -- REVERT to "0 0 * * * ?" (every hour) before merge
+	@Scheduled(cron= "0 0/5 * * * ?")
 	public void copyFromStagingTablesToRecentForAllContracts() {
 		log.info("Calling copyFromStagingTablesToRecentForAllContracts()");
 		val contracts = syncService.getContractsInCoverageStagingTable();
@@ -55,7 +56,9 @@ public class CoverageV3ScheduledTasks {
 	}
 
 	// every day at 6:30am and 6:30pm -- staggered to not run during copyFromStagingTablesToRecentForAllContracts()
-	@Scheduled(cron= "0 30 6,18 * * *")
+	// TEMP (Datadog metrics testing): every 5 min, offset +2 to stay staggered from COPY_FROM_STAGING
+	//                                 -- REVERT to "0 30 6,18 * * *" before merge
+	@Scheduled(cron= "0 2/5 * * * ?")
 	public void moveToHistoricalForAllContracts() {
 		log.info("[V3] Calling moveToHistoricalForAllContracts()");
 		val contracts = syncService.getContractsInRecentCoverageTable();
