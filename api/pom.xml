@@ -14,7 +14,12 @@
         <project.root>${basedir}/..</project.root>
         <springfox.version>3.0.0</springfox.version>
         <okta-jwt.version>0.5.12</okta-jwt.version>
-        <sonar.coverage.exclusions>**/JobClient.java</sonar.coverage.exclusions>
+        <sonar.coverage.exclusions>
+            **/JobClient.java,
+            **/SwaggerConstants.java,
+            **/SpringBootApp.java,
+            **/OpenAPIConfig.java
+        </sonar.coverage.exclusions>
         <!-- 
             - AB2D-6099 -
             Ignoring capability statement stu3 because sonarqube marks code as duplicate
@@ -138,7 +143,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents.core5</groupId>
             <artifactId>httpcore5</artifactId>
-            <version>5.4.2</version>
+            <version>5.4.3</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
