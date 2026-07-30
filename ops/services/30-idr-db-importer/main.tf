@@ -65,10 +65,10 @@ module "service" {
       { name = "AB2D_DB_USER", valueFrom = data.aws_ssm_parameter.ab2d_db_user.arn }
     ],
     module.platform.parent_env == "prod" ? [
-      { name = "IDR_SNOWFLAKE_PRIVATE_KEY", valueFrom = module.platform.ssm.this.snowflake_private_key.arn },
-      { name = "IDR_SNOWFLAKE_WAREHOUSE", valueFrom = module.platform.ssm.this.snowflake_warehouse.arn },
-      { name = "IDR_SNOWFLAKE_USER", valueFrom = module.platform.ssm.this.snowflake_user.arn },
-      { name = "IDR_SNOWFLAKE_ROLE", valueFrom = module.platform.ssm.this.snowflake_role.arn }
+      { name = "IDR_SNOWFLAKE_PRIVATE_KEY", valueFrom = data.aws_ssm_parameter.snowflake_private_key[0].arn },
+      { name = "IDR_SNOWFLAKE_WAREHOUSE", valueFrom = data.aws_ssm_parameter.snowflake_warehouse[0].arn },
+      { name = "IDR_SNOWFLAKE_USER", valueFrom = data.aws_ssm_parameter.snowflake_user[0].arn },
+      { name = "IDR_SNOWFLAKE_ROLE", valueFrom = data.aws_ssm_parameter.snowflake_role[0].arn }
     ] : []
   )
 }

@@ -35,3 +35,23 @@ data "aws_ssm_parameter" "ab2d_db_user" {
 data "aws_ssm_parameter" "ab2d_aurora_database_security_group" {
   name = "/ab2d/${local.env}/aurora/nonsensitive/db-security-group-id"
 }
+
+data "aws_ssm_parameter" "snowflake_private_key" {
+  count = local.parent_env == "prod" ? 1 : 0
+  name  = "/ab2d/${local.parent_env}/idr-db-importer/sensitive/snowflake_private_key"
+}
+
+data "aws_ssm_parameter" "snowflake_role" {
+  count = local.parent_env == "prod" ? 1 : 0
+  name  = "/ab2d/${local.parent_env}/idr-db-importer/sensitive/snowflake_role"
+}
+
+data "aws_ssm_parameter" "snowflake_user" {
+  count = local.parent_env == "prod" ? 1 : 0
+  name  = "/ab2d/${local.parent_env}/idr-db-importer/sensitive/snowflake_user"
+}
+
+data "aws_ssm_parameter" "snowflake_warehouse" {
+  count = local.parent_env == "prod" ? 1 : 0
+  name  = "/ab2d/${local.parent_env}/idr-db-importer/sensitive/snowflake_warehouse"
+}
