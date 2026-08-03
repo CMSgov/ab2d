@@ -225,15 +225,24 @@ resource "aws_sns_topic_subscription" "splunk" {
   endpoint  = local.splunk_alert_email
 }
 
-# CDAP-managed alarm-to-slack service queue
+# CDAP-managed alarm-to-slack service queue.
+#
+# Only prod subscribes. The ab2d-slack-alerts channel is for production incidents, and sandbox would
+# otherwise land there too — it shares prod's alarm-to-slack deployment, and therefore prod's Slack
+# webhook. Lower environments keep their alarms; they just have no notification path, so alarm state
+# is still visible in the CloudWatch console and nothing pages the channel.
 data "aws_sqs_queue" "alarm_to_slack" {
+  count = local.env == "prod" ? 1 : 0
+
   name = "bcda-${local.slack_queue_env}-alarm-to-slack"
 }
 
 resource "aws_sns_topic_subscription" "slack" {
+  count = local.env == "prod" ? 1 : 0
+
   topic_arn = aws_sns_topic.alarms.arn
   protocol  = "sqs"
-  endpoint  = data.aws_sqs_queue.alarm_to_slack.arn
+  endpoint  = data.aws_sqs_queue.alarm_to_slack[0].arn
 }
 
 resource "aws_sns_topic" "alarms" {
