@@ -36,6 +36,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     private final CoverageV3LockWrapper recentCoverageLock;
     private final CoverageV3LockWrapper historicalCoverageLock;
     private final CoverageV3AuditLog audit;
+    private final CoverageV3SyncMetrics metrics;
     private final PropertiesService propertiesService;
     private final DataSource dataSource;
 
@@ -44,11 +45,13 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             @Qualifier("recentCoverageLock") CoverageV3LockWrapper recentCoverageLock,
             @Qualifier("historicalCoverageLock") CoverageV3LockWrapper historicalCoverageLock,
             CoverageV3AuditLog audit,
+            CoverageV3SyncMetrics metrics,
             PropertiesService propertiesService) {
         this.dataSource = dataSource;
         this.recentCoverageLock = recentCoverageLock;
         this.historicalCoverageLock = historicalCoverageLock;
         this.audit = audit;
+        this.metrics = metrics;
         this.propertiesService = propertiesService;
     }
 
@@ -224,6 +227,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         if (rowsInStaging == 0) {
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
             audit.log(action, result, contract, null, Map.of("rowsInStaging", 0));
+            metrics.recordImport(source, contract, result, 0, null, null);
             return result;
         } else {
             audit.log(action, null, contract, null, Map.of("rowsInStaging", rowsInStaging));
@@ -233,11 +237,12 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val locked = lock.tryLock();
         try {
             if (locked) {
-                return copyFromStagingToRecentCoverageTable(contract, rowsInStaging);
+                return copyFromStagingToRecentCoverageTable(contract, rowsInStaging, source);
             } else {
                 result = UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT;
                 log.info("[V3] Unable to acquire lock for contract {}", contract);
                 audit.log(action, result, contract, null, null);
+                metrics.recordImport(source, contract, result, rowsInStaging, null, null);
                 return result;
             }
         } finally {
@@ -247,7 +252,8 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         }
     }
 
-    private CoverageV3SyncResult copyFromStagingToRecentCoverageTable(final String contract, final int rowsInStaging) {
+    private CoverageV3SyncResult copyFromStagingToRecentCoverageTable(final String contract, final int rowsInStaging,
+            final CoverageV3SyncSource source) {
         val action = COPY_FROM_STAGING;
         CoverageV3SyncResult result = null;
 
@@ -289,6 +295,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             );
             result = SYNC_FAILED_FOR_CONTRACT;
             audit.log(action, result, contract, "rowsInStaging does not match rowsInCoverageBeforeCopy", Map.of("rowsInStaging", rowsInStaging, "rowsInCoverageBeforeCopy", rowsInCoverageBeforeCopy));
+            metrics.recordImport(source, contract, result, rowsInStaging, rowsInCoverageBeforeCopy, rowsInCoverageAfterCopy);
             return result;
         }
 
@@ -308,12 +315,14 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             result = SYNC_FAILED_FOR_CONTRACT;
             audit.log(action, result, contract, "rowsInStagingDeleted does not match rowsInCoverageAfterCopy",
                     Map.of("rowsInStagingDeleted", rowsInStagingDeleted, "rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
+            metrics.recordImport(source, contract, result, rowsInStaging, rowsInCoverageBeforeCopy, rowsInCoverageAfterCopy);
             return result;
         }
 
         log.info("[V3] Coverage data successfully copied from staging table for contract {}", contract);
         result = SYNC_SUCCESSFUL_FOR_CONTRACT;
         audit.log(action, result, contract, null, Map.of("rowsInStagingDeleted", rowsInStagingDeleted, "rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
+        metrics.recordImport(source, contract, result, rowsInStaging, rowsInCoverageBeforeCopy, rowsInCoverageAfterCopy);
         return result;
     }
 
@@ -345,6 +354,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                 log.info("[V3] Moved {} rows to historical coverage table for contract {}", rowsMoved, contract);
                 if (rowsMoved == 0) {
                     // skip audit logging to prevent noise - this operation would only copy records > 0 once a month
+                    metrics.recordHistorical(source, contract, NO_COVERAGE_FOUND_FOR_CONTRACT, 0, null);
                     return NO_COVERAGE_FOUND_FOR_CONTRACT;
                 } else {
                     audit.log(action, null, contract, null, Map.of("rowsMoved", rowsMoved));
@@ -373,16 +383,19 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                 if (rowsDeleted != rowsMoved) {
                     result = SYNC_FAILED_FOR_CONTRACT;
                     audit.log(action, result, contract, "rowsDeleted does not match rowsMoved", Map.of("rowsDeleted", rowsDeleted, "rowsMoved", rowsMoved));
+                    metrics.recordHistorical(source, contract, result, rowsMoved, rowsDeleted);
                     return result;
                 } else {
                     result = SYNC_SUCCESSFUL_FOR_CONTRACT;
                     audit.log(action, result, contract, null, Map.of("rowsDeleted", rowsDeleted, "rowsMoved", rowsMoved));
+                    metrics.recordHistorical(source, contract, result, rowsMoved, rowsDeleted);
                     return result;
                 }
             } else {
                 log.info("[V3] Unable to acquire lock for contract {}", contract);
                 result = UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT;
                 audit.log(action, result, contract, null, null);
+                metrics.recordHistorical(source, contract, result, null, null);
                 return result;
             }
         } finally {

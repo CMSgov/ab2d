@@ -71,6 +71,49 @@ module "datadog_dashboard" {
     apm    = "1h"
   }
 
-  custom_widgets = []
-  runbook_url    = "https://definerunbook.cdap.internal.cms.gov" #FIXME to provide an actual runbook
+  custom_widgets = [
+    {
+      type         = "timeseries"
+      title        = "Coverage V3 Import - Recent Table Rows (staged / before / after)"
+      query        = "sum:ab2d.coverage.v3.import.rows_staged{$env}, sum:ab2d.coverage.v3.import.rows_before{$env}, sum:ab2d.coverage.v3.import.rows_after{$env}"
+      display_type = "line"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
+      title        = "Coverage V3 Import - Recent Table Rows Delta (after - before)"
+      query        = "sum:ab2d.coverage.v3.import.rows_delta{$env}"
+      display_type = "bars"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
+      title        = "Coverage V3 Historical - Rows Moved vs Deleted"
+      query        = "sum:ab2d.coverage.v3.historical.rows_moved{$env}, sum:ab2d.coverage.v3.historical.rows_deleted{$env}"
+      display_type = "bars"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
+      title        = "Coverage V3 Sync Completions by Result"
+      query        = "sum:ab2d.coverage.v3.import.completed{$env} by {result}.as_count()"
+      display_type = "bars"
+      precision    = 0
+    },
+    {
+      type         = "query_value"
+      title        = "Coverage V3 Import - Total Rows Delta"
+      query        = "sum:ab2d.coverage.v3.import.rows_delta{$env}"
+      display_type = "line"
+      precision    = 0
+    },
+    {
+      type         = "toplist"
+      title        = "Coverage V3 Import - Rows Delta by Contract"
+      query        = "sum:ab2d.coverage.v3.import.rows_delta{$env} by {contract}"
+      display_type = "line"
+      precision    = 0
+    },
+  ]
+  runbook_url = "https://definerunbook.cdap.internal.cms.gov" #FIXME to provide an actual runbook
 }
