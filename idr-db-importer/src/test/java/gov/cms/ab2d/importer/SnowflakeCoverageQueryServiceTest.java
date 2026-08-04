@@ -130,7 +130,7 @@ class SnowflakeCoverageQueryServiceTest {
 
     private boolean isExpectedSql(String sql) {
         return sql.contains("WITH month_series AS")
-                && sql.contains("FROM TABLE(GENERATOR(ROWCOUNT => 3))")
+                && sql.contains("FROM TABLE(GENERATOR(ROWCOUNT => 6))")
                 && sql.contains("ORDER BY \"patient_id\", \"year\", \"month\"");
     }
 }

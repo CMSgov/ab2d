@@ -48,7 +48,8 @@ public class CoverageV3ImportService {
     )
     @Trace(operationName = "ab2d.idr.import")
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws SQLException {
-        String stagingFqtn = fqtn + "_staging";
+   //     String stagingFqtn = fqtn + "_staging";
+        String stagingFqtn = fqtn + "_historical";
         DatadogSpans.setTag("component", "idr");
         DatadogSpans.setTag("target_table", stagingFqtn);
         DatadogSpans.setTag("s3.bucket", bucket);
@@ -56,9 +57,12 @@ public class CoverageV3ImportService {
 
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword)) {
             connection.setAutoCommit(false);
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("SET statement_timeout TO '120min'");
+            }
 
             try {
-                truncate(connection, stagingFqtn);
+     //           truncate(connection, stagingFqtn);
                 verifyFileExists(bucket, key);
 
                 int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
@@ -106,7 +110,8 @@ public class CoverageV3ImportService {
 
     private int executeImport(Connection conn, String fqtn, String bucket, String key, String region) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(IMPORT_SQL)) {
-            ps.setQueryTimeout(1800);
+        //    ps.setQueryTimeout(1800);
+            ps.setQueryTimeout(7200);
             ps.setString(1, fqtn);
             ps.setString(2, COLUMNS);
             ps.setString(3, COPY_OPTIONS);
