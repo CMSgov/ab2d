@@ -50,13 +50,16 @@ class CoverageV3ServiceImplTest {
     @Mock
     CoverageV3AuditLog audit;
 
+    @Mock
+    CoverageV3SyncMetrics metrics;
+
     CoverageV3ServiceImpl service;
 
     CoverageV3SyncServiceImpl syncService;
 
     @BeforeEach
     void setUp() {
-        syncService = new CoverageV3SyncServiceImpl(container.getDataSource(), lockWrapper, lockWrapper, audit, propertiesService);
+        syncService = new CoverageV3SyncServiceImpl(container.getDataSource(), lockWrapper, lockWrapper, audit, metrics, propertiesService);
         service = new CoverageV3ServiceImpl(container.getDataSource(), propertiesService, syncService);
     }
 

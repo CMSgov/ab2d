@@ -293,6 +293,10 @@ resource "aws_sqs_queue_policy" "this" {
   policy    = data.aws_iam_policy_document.sqs.json
 }
 
+# FIXME Move the below such that
+## security groups get generated via their modules (eg service, lambda)
+## security group association for database ingress is with the broader ingress security group defined above
+## additional security group rules to live alongside their services in dedicated security_group_rules.tf files
 resource "aws_security_group" "api" {
   name        = "${local.service_prefix}-api"
   description = "API security group"
@@ -331,61 +335,6 @@ resource "aws_security_group" "attribution" {
   description = "Attribution security group"
   vpc_id      = local.vpc_id
   tags        = { Name = "${local.service_prefix}-attribution" }
-}
-
-resource "aws_security_group" "idr_db_importer" {
-  name        = "${local.service_prefix}-idr-db-importer"
-  description = "IDR DB importer security group"
-  vpc_id      = local.vpc_id
-  tags        = { Name = "${local.service_prefix}-idr-db-importer" }
-}
-
-resource "aws_security_group_rule" "idr_db_importer_egress" {
-  type              = "egress"
-  description       = "${local.service_prefix} idr-db-importer outbound connections"
-  from_port         = "0"
-  to_port           = "0"
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.idr_db_importer.id
-}
-
-resource "aws_security_group" "idr_endpoint" {
-
-  name        = "${local.service_prefix}-idr-endpoint"
-  description = "For the PrivateLink endpoint for IDR Snowflake"
-  vpc_id      = local.vpc_id
-  tags        = { Name = "${local.service_prefix}-idr-endpoint" }
-}
-
-resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_http" {
-
-  security_group_id = aws_security_group.idr_endpoint.id
-
-  referenced_security_group_id = aws_security_group.idr_db_importer.id
-  from_port                    = 80
-  to_port                      = 80
-  ip_protocol                  = "tcp"
-}
-
-resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
-
-  security_group_id = aws_security_group.idr_endpoint.id
-
-  referenced_security_group_id = aws_security_group.idr_db_importer.id
-  from_port                    = 443
-  to_port                      = 443
-  ip_protocol                  = "tcp"
-}
-
-module "idr_db_importer_bucket" {
-  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=7c070cd2e8c6b1407961c35976553446df8fafd3"
-
-  additional_bucket_policies = [data.aws_iam_policy_document.idr_db_importer_additional_bucket_policy.json]
-  app                        = module.platform.app
-  env                        = local.parent_env
-  name                       = "${module.platform.app}-${module.platform.env}-idr-db-importer"
-  ssm_parameter              = "/ab2d/${module.platform.env}/core/nonsensitive/idr-db-importer-bucket"
 }
 
 # Shared cluster to be initially used by the idr-db-importer task with the remaining services potentially being migrated later.
