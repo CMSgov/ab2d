@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.parser.IParser;
 import datadog.trace.api.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
@@ -20,7 +19,6 @@ import gov.cms.ab2d.worker.config.SearchConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.beans.factory.annotation.Value;
@@ -128,8 +126,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     @Trace(operationName = "ab2d.eob.write_to_file")
-    private String writeOutResource(FhirVersion version, ProgressTrackerUpdate update, List<IBaseResource> eobs, ClaimsStream stream) {
-        IParser parser = version.getJsonParser().setPrettyPrint(false);
+    private String writeOutResource(FhirVersion version, ProgressTrackerUpdate update, List<IBaseResource> eobs, ClaimsStream stream)
+            throws IOException {
         if (eobs == null) {
             log.debug("ignoring empty results because pulling eobs failed");
             return null;
@@ -138,32 +136,20 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             return null;
         }
 
-        int eobsWritten = 0;
-        int eobsError = 0;
-
         update.incPatientsWithEobsCount();
         update.addEobFetchedCount(eobs.size());
 
+        SerializedEobs serialized = EobNdjsonSerializer.serialize(version, eobs);
+
+        for (String dataLine : serialized.dataLines()) {
+            stream.write(dataLine + System.lineSeparator());
+        }
+        update.addEobProcessedCount(serialized.dataLines().size());
+
         StringBuilder errorPayload = new StringBuilder();
-        for (IBaseResource resource : eobs) {
-            try {
-                stream.write(parser.encodeResourceToString(resource) + System.lineSeparator());
-                eobsWritten++;
-            } catch (Exception ex) {
-                log.warn("Encountered exception while processing job resources: {}", ex.getClass());
-                String errMsg = ExceptionUtils.getRootCauseMessage(ex);
-                IBaseResource operationOutcome = version.getErrorOutcome(errMsg);
-                errorPayload.append(parser.encodeResourceToString(operationOutcome)).append(System.lineSeparator());
-                eobsError++;
-            }
+        for (String errorLine : serialized.errorLines()) {
+            errorPayload.append(errorLine).append(System.lineSeparator());
         }
-
-        update.addEobProcessedCount(eobsWritten);
-
-        if (eobsError != 0) {
-            return errorPayload.toString();
-        }
-
         return errorPayload.toString();
     }
 

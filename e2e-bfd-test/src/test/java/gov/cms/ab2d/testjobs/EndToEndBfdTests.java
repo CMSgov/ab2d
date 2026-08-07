@@ -192,7 +192,7 @@ public class EndToEndBfdTests {
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, path.getAbsolutePath());
-        jobPreProcessor = new JobPreProcessorImpl(contractWorkerClient, jobRepository, logManager, coverageDriver);
+        jobPreProcessor = new JobPreProcessorImpl(contractWorkerClient, jobRepository, logManager, coverageDriver, propertiesService);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
                 jobRepository, jobOutputRepository, contractProcessor, logManager, coverageV3Service);
