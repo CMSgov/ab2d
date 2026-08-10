@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Component
@@ -29,6 +30,8 @@ public class EobItemProcessor implements ItemProcessor<CoverageSummary, Serializ
     private final PatientClaimsRequest request;
     private final FhirVersion version;
     private final long itemDelayMs;
+    // remove this later
+    private final double crashProbability;
 
     public EobItemProcessor(
             PatientClaimsProcessor patientClaimsProcessor,
@@ -36,9 +39,11 @@ public class EobItemProcessor implements ItemProcessor<CoverageSummary, Serializ
             ContractWorkerClient contractWorkerClient,
             SearchConfig searchConfig,
             @Value("#{jobParameters['jobUuid']}") String jobUuid,
-            @Value("${pause-resume.prototype.item-delay-ms:0}") long itemDelayMs) {
+            @Value("${pause-resume.prototype.item-delay-ms:0}") long itemDelayMs,
+            @Value("${pause-resume.prototype.crash-probability:0}") double crashProbability) {
         this.patientClaimsProcessor = patientClaimsProcessor;
         this.itemDelayMs = itemDelayMs;
+        this.crashProbability = crashProbability;
         Job job = jobRepository.findByJobUuid(jobUuid);
         this.version = job.getFhirVersion();
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(job.getContractNumber());
@@ -60,6 +65,13 @@ public class EobItemProcessor implements ItemProcessor<CoverageSummary, Serializ
 
     @Override
     public SerializedEobs process(CoverageSummary patient) throws InterruptedException {
+        // dev test code - simulates a hard crash by just throwing the process in the trash
+        // remove this later
+        if (crashProbability > 0 && ThreadLocalRandom.current().nextDouble() < crashProbability) {
+            log.error("Simulating hard crash. Goodbye.");
+            Runtime.getRuntime().halt(137);
+        }
+
         // optional artificial slowdown so a running job stays alive long enough to interrupt in tests
         if (itemDelayMs > 0) {
             Thread.sleep(itemDelayMs);
