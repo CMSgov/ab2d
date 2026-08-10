@@ -284,6 +284,8 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             leaseRenewer.untrack(jobUuid);
         }
 
+        preserveLiveProgress(job, jobUuid);
+
         Job result = jobRepository.save(job);
         // EFS cleanup. We do not handle in_progress or submitted status here, because both of those
         // are resumable and somebody else will handle the files/directories
@@ -321,6 +323,20 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         job.setStatus(FAILED);
         job.setStatusMessage("Failed: too many patient records in the job had failures");
         coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
+    }
+
+    /**
+     * Refreshes the jobs progress before the job saves so we don't overwrite the progress count
+     * with stale info
+     */
+    private void preserveLiveProgress(Job job, String jobUuid) {
+        if (job.getStatus() == SUCCESSFUL) {
+            return;
+        }
+        Job persisted = jobRepository.findByJobUuid(jobUuid);
+        if (persisted != null) {
+            job.setProgress(persisted.getProgress());
+        }
     }
 
     /**

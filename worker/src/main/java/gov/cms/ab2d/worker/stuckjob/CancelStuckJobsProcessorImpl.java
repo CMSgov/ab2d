@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.stuckjob;
 
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_ENABLED;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_CANCELLED;
 import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
@@ -29,18 +31,21 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
     private final int cancelThreshold;
     private final CoverageV3Service coverageV3Service;
     private final PrototypeBatchMetadataRepository batchMeta;
+    private final PropertiesService propertiesService;
 
     public CancelStuckJobsProcessorImpl(
             JobRepository jobRepository,
             SQSEventClient eventLogger,
             @Value("${stuck.job.cancel.threshold}") int cancelThreshold,
             CoverageV3Service coverageV3Service,
-            PrototypeBatchMetadataRepository batchMeta) {
+            PrototypeBatchMetadataRepository batchMeta,
+            PropertiesService propertiesService) {
         this.jobRepository = jobRepository;
         this.eventLogger = eventLogger;
         this.cancelThreshold = cancelThreshold;
         this.coverageV3Service = coverageV3Service;
         this.batchMeta = batchMeta;
+        this.propertiesService = propertiesService;
     }
 
     @Override
@@ -52,13 +57,15 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
         final List<Job> stuckJobs = jobRepository.findStuckJobs(cutOffTime);
         log.info("Found {} jobs that appears to be stuck", stuckJobs.size());
 
+        final boolean prototypeEnabled = propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false);
+
         for (Job stuckJob : stuckJobs) {
             // For pause/resume jobs, the runtime of the job must not include time spent paused
-            if (stuckJob.getFhirVersion() == FhirVersion.R4V3) {
+            if (prototypeEnabled && stuckJob.getFhirVersion() == FhirVersion.R4V3) {
                 final long activeSeconds = batchMeta.activeRuntimeSeconds(stuckJob.getJobUuid());
                 final long thresholdSeconds = (long) cancelThreshold * 3600L;
                 if (activeSeconds < thresholdSeconds) {
-                    log.info("Skipping stuck-cancel for v3 job {} (likely paused)",
+                    log.info("Skipping stuck-cancel for v3 pause/resume job {} (likely paused)",
                             stuckJob.getJobUuid());
                     continue;
                 }

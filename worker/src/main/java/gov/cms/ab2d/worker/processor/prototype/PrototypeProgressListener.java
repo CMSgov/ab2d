@@ -1,25 +1,31 @@
 package gov.cms.ab2d.worker.processor.prototype;
 
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.worker.processor.JobMeasure;
 import gov.cms.ab2d.worker.processor.JobProgressService;
 import gov.cms.ab2d.worker.processor.ProgressTracker;
+import gov.cms.ab2d.worker.processor.SerializedEobs;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.batch.core.listener.ChunkListener;
-import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.core.scope.context.StepContext;
+import org.springframework.batch.core.scope.context.StepSynchronizationManager;
+import org.springframework.batch.core.step.StepExecution;
+import org.springframework.batch.infrastructure.item.Chunk;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Reports the progress of a job to {@link ProgressTracker} and checks to see if we've passed the
- * failure threshold.
+ * Reports per-chunk progress to {@link ProgressTracker} and aborts the step when the failure
+ * threshold is exceeded. A single instance is shared by all partition worker threads.
  *
- * A single instance is shared by all partition worker threads.
+ * The read/write counts come from the {@link StepExecution}, which this callback is not passed,
+ * so it is read from the step context.
  */
 @Slf4j
-public class PrototypeProgressListener implements ChunkListener {
+public class PrototypeProgressListener implements ChunkListener<CoverageSummary, SerializedEobs> {
 
     private final JobChannelService channel;
     private final JobProgressService progress;
@@ -34,8 +40,13 @@ public class PrototypeProgressListener implements ChunkListener {
     }
 
     @Override
-    public synchronized void afterChunk(@NonNull ChunkContext context) {
-        var stepExecution = context.getStepContext().getStepExecution();
+    public synchronized void afterChunk(@NonNull Chunk<SerializedEobs> chunk) {
+        StepExecution stepExecution = currentStepExecution();
+        if (stepExecution == null) {
+            log.warn("job {} afterChunk with no bound step context; skipping progress update", jobUuid);
+            return;
+        }
+
         long read = stepExecution.getReadCount();
         long write = stepExecution.getWriteCount();
 
@@ -62,5 +73,10 @@ public class PrototypeProgressListener implements ChunkListener {
             throw new ThresholdExceededException(jobUuid, tracker.getPatientFailureCount(),
                     tracker.getTotalCount(), tracker.getFailureThreshold());
         }
+    }
+
+    private static StepExecution currentStepExecution() {
+        StepContext context = StepSynchronizationManager.getContext();
+        return context == null ? null : context.getStepExecution();
     }
 }
