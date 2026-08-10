@@ -19,7 +19,7 @@ provider "datadog" {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=f6fe4544d0d6ed72c50605261f0c3091487753e1"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=941672f97adfd8a19ce6533313302c4c74bac7a8"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -45,7 +45,7 @@ locals {
 }
 
 module "datadog_dashboard" {
-  source = "github.com/CMSgov/cdap//terraform/modules/datadog_dashboard?ref=f6fe4544d0d6ed72c50605261f0c3091487753e1"
+  source = "github.com/CMSgov/cdap//terraform/modules/datadog_dashboard?ref=945fbd644cc8d239bdf3f3a3a7241fb6066a0f55"
 
   app = local.app
 
