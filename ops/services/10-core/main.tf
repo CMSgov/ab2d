@@ -233,7 +233,7 @@ data "aws_sqs_queue" "alarm_to_slack" {
 resource "aws_sns_topic_subscription" "slack" {
   topic_arn = aws_sns_topic.alarms.arn
   protocol  = "sqs"
-  endpoint  = data.aws_sqs_queue.alarm_to_slack[0].arn
+  endpoint  = data.aws_sqs_queue.alarm_to_slack.arn
 }
 
 resource "aws_sns_topic" "alarms" {
