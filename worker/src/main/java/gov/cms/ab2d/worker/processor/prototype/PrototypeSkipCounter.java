@@ -9,7 +9,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.batch.core.listener.SkipListener;
 
 /**
- * Counts beneficiares skipped for any reason as an error in the progress tracker.
+ * Counts beneficiaries skipped for any reason as an error in the progress tracker.
  */
 @Slf4j
 public class PrototypeSkipCounter implements SkipListener<CoverageSummary, SerializedEobs> {
