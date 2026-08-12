@@ -61,6 +61,8 @@ class JobPreProcessorUnitTest {
     private SQSEventClient eventLogger;
     @Mock
     private CoverageDriver coverageDriver;
+    @Mock
+    private gov.cms.ab2d.common.properties.PropertiesService propertiesService;
 
     private Job job;
     private ContractDTO contract;
@@ -68,7 +70,7 @@ class JobPreProcessorUnitTest {
     @BeforeEach
     void setUp() {
         contract = new ContractDTO(null, "JPP5678", "JPP5678", OffsetDateTime.now(), Contract.ContractType.NORMAL, 0, 0);
-        cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, eventLogger, coverageDriver);
+        cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, eventLogger, coverageDriver, propertiesService);
         job = createJob();
     }
 

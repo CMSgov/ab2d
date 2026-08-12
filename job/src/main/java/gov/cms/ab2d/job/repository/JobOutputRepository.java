@@ -14,6 +14,8 @@ public interface JobOutputRepository extends JpaRepository<JobOutput, Long> {
 
     Optional<JobOutput> findByFilePathAndJob(String filePath, Job job);
 
+    long countByJob(Job job);
+
     //HQL doesn't seem to have a way to modify dates. It was with a native query or adding a special  query to find the DB time
     @Query(nativeQuery = true, value = "select jobOutput.id as id, jobOutput.checksum as checksum, jobOutput.downloaded as downloaded, " +
             "                   jobOutput.error as error, jobOutput.fhir_resource_type as fhir_resource_type, " +

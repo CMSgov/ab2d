@@ -43,17 +43,19 @@ public class WorkerServiceImpl implements WorkerService {
 
         activeJobs.add(jobUuid);
         try {
-            // when prototype pause/resume feature is enabled, reroute the entire job to the prototype
-            if (propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false)) {
-                log.info("{} routed to pause/resume prototype processor", jobUuid);
-                return prototypeJobProcessor.process(jobUuid);
-            }
-
             Job job = jobPreprocessor.preprocess(jobUuid);
 
             if (job.getStatus() == JobStatus.IN_PROGRESS) {
                 log.info("{} has been started", jobUuid);
-                job = jobProcessor.process(jobUuid);
+
+                // The pause/resume prototype handles v3 jobs when the feature flag is on
+                if (propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false)
+                        && job.getFhirVersion() == FhirVersion.R4V3) {
+                    log.info("{} routed to pause/resume prototype processor", jobUuid);
+                    job = prototypeJobProcessor.process(jobUuid);
+                } else {
+                    job = jobProcessor.process(jobUuid);
+                }
                 log.info("Job was processed");
             } else if (job.getStatus() == JobStatus.SUBMITTED) {
                 log.info("{} job is waiting for enrollment information", jobUuid);

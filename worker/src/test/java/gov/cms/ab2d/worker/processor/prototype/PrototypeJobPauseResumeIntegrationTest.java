@@ -89,8 +89,12 @@ class PrototypeJobPauseResumeIntegrationTest extends AbstractPrototypeRecoveryIn
                 "resume reprocessed too much work (" + processedLog.size() + " calls for " + TOTAL_BENES
                         + " benes) - it looks like it restarted instead of resuming");
 
-        // Step 5e output files were produced for each partition
-        List<Path> outputs = finishedFiles(uuid);
-        assertFalse(outputs.isEmpty(), "expected ndjson output files under the finished dir for job " + uuid);
+        // Step 5e output files are available, and has JobOutput rows
+        List<Path> outputs = deliveredOutputFiles(uuid);
+        assertFalse(outputs.isEmpty(), "expected .ndjson.gz output files in the job root for job " + uuid);
+        assertTrue(jobOutputFilePaths(uuid).stream().allMatch(p -> p.endsWith(".ndjson.gz")),
+                "every JobOutput should reference a compressed .ndjson.gz file: " + jobOutputFilePaths(uuid));
+        assertTrue(finishedFiles(uuid).isEmpty() && streamingFiles(uuid).isEmpty(),
+                "streaming/ and finished/ working directories should be cleaned up after success");
     }
 }
