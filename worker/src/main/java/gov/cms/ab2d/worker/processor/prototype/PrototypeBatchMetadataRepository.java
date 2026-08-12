@@ -15,6 +15,7 @@ import java.util.Map;
  * failedExecutionCount - how many times the job's execution has failed
  * healIndeterminateExecutions - force a job's indeterminate executions/steps to a restartable FAILED state
  *      This is mainly to handle UNKNOWN statuses resulting from zombie workers.
+ * completedProcessedCount - how many benes have we processed already? Used to track progress
  */
 @Slf4j
 @Component
@@ -59,6 +60,25 @@ public class PrototypeBatchMetadataRepository {
                  ORDER BY se.step_name, ft.parameter_value::bigint DESC
             ) winners
             ORDER BY partition_index
+            """;
+
+    // Gathers the winners from the set of completed partitions to estimate the progress of a job. Used on
+    // restart/recovery to seed the value so a restarting job reports approximately accurate progress.
+    private static final String COMPLETED_PROCESSED_COUNT_SQL = """
+            SELECT COALESCE(SUM(read_count), 0) FROM (
+                SELECT DISTINCT ON (se.step_name)
+                       se.read_count AS read_count
+                  FROM batch_step_execution se
+                  JOIN batch_job_execution je ON je.job_execution_id = se.job_execution_id
+                  JOIN batch_job_execution_params pj ON pj.job_execution_id = je.job_execution_id
+                       AND pj.parameter_name = 'jobUuid'
+                  JOIN batch_job_execution_params ft ON ft.job_execution_id = je.job_execution_id
+                       AND ft.parameter_name = 'fenceToken'
+                 WHERE pj.parameter_value = :uuid
+                   AND se.step_name LIKE :stepPrefix
+                   AND se.status = 'COMPLETED'
+                 ORDER BY se.step_name, ft.parameter_value::bigint DESC
+            ) winners
             """;
 
     // When hard-recovering a job, we set its old job execution to FAILED since we're
@@ -108,6 +128,15 @@ public class PrototypeBatchMetadataRepository {
                 """;
         Integer count = jdbc.queryForObject(sql, Map.of("uuid", jobUuid), Integer.class);
         return count == null ? 0 : count;
+    }
+
+    /**
+     * Total beneficiaries already processed by partitions completed in prior runs
+     */
+    public long completedProcessedCount(String jobUuid, String workerStepName) {
+        Long count = jdbc.queryForObject(COMPLETED_PROCESSED_COUNT_SQL,
+                Map.of("uuid", jobUuid, "stepPrefix", workerStepName + ":partition%"), Long.class);
+        return count == null ? 0L : count;
     }
 
     /**

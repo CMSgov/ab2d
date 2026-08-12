@@ -83,6 +83,9 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @Mock
     private CoverageDriver coverageDriver;
 
+    @Mock
+    private gov.cms.ab2d.common.properties.PropertiesService propertiesService;
+
     @Captor
     private ArgumentCaptor<LoggableEvent> captor;
 
@@ -105,7 +108,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, sqsEventClient, coverageDriver);
+        cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, sqsEventClient, coverageDriver, propertiesService);
 
         contract = new Contract();
         contract.setContractNumber(UUID.randomUUID().toString());
