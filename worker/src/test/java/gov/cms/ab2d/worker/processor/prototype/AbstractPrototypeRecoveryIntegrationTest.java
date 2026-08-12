@@ -148,6 +148,9 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
     @MockitoBean
     protected PatientClaimsProcessor patientClaimsProcessor;
 
+    @MockitoBean
+    protected gov.cms.ab2d.eventclient.clients.SQSEventClient eventLogger;
+
     // every getEobBundleResources call appends the patient id here
     // duplicates are kept on purpose so a test can prove a resume did not redo already-committed work
     protected final List<Long> processedLog = Collections.synchronizedList(new ArrayList<>());
@@ -396,9 +399,26 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
         return ndjsonFilesIn(searchConfig.getStreamingDir(uuid));
     }
 
-    /** The assembled, downloadable finished files in the job root */
-    protected List<Path> rootOutputFiles(String uuid) {
-        return ndjsonFilesIn(searchConfig.getFinishedDir(uuid).getParentFile());
+    /**
+     * The assembled, downloadable data files.
+     */
+    protected List<Path> deliveredOutputFiles(String uuid) {
+        return jobRootFiles(uuid, name -> name.endsWith(".ndjson.gz") && !name.endsWith("_error.ndjson.gz"));
+    }
+
+    /** The assembled, downloadable error files */
+    protected List<Path> deliveredErrorFiles(String uuid) {
+        return jobRootFiles(uuid, name -> name.endsWith("_error.ndjson.gz"));
+    }
+
+    /** Grabs all the output files */
+    private List<Path> jobRootFiles(String uuid, java.util.function.Predicate<String> nameMatch) {
+        File[] files = searchConfig.getFinishedDir(uuid).getParentFile()
+                .listFiles((d, name) -> nameMatch.test(name));
+        if (files == null) {
+            return List.of();
+        }
+        return List.of(files).stream().map(File::toPath).sorted().collect(Collectors.toList());
     }
 
     private List<Path> ndjsonFilesIn(File dir) {
@@ -409,11 +429,23 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
         return List.of(files).stream().map(File::toPath).sorted().collect(Collectors.toList());
     }
 
-    /** Every beneficiary id referenced across the given ndjson files. */
+    /** Read the lines of an ndjson file, unzipping it if it's compressed */
+    protected List<String> linesOf(Path file) throws IOException {
+        if (file.getFileName().toString().endsWith(".gz")) {
+            try (var in = new java.util.zip.GZIPInputStream(Files.newInputStream(file));
+                 var reader = new java.io.BufferedReader(
+                         new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8))) {
+                return reader.lines().collect(Collectors.toList());
+            }
+        }
+        return Files.readAllLines(file);
+    }
+
+    /** Every beneficiary id referenced across the given ndjson files (compressed or not). */
     protected List<Long> benesIn(List<Path> files) throws IOException {
         List<Long> ids = new ArrayList<>();
         for (Path file : files) {
-            for (String line : Files.readAllLines(file)) {
+            for (String line : linesOf(file)) {
                 Matcher m = PATIENT_REF.matcher(line);
                 if (m.find()) {
                     ids.add(Long.parseLong(m.group(1)));
@@ -446,7 +478,7 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
      * Assert that the output contains every bene exactly once, no duplicates, nobody missing.
      */
     protected void assertEveryBeneExactlyOnceInOutput(String uuid) throws IOException {
-        List<Long> delivered = benesIn(finishedFiles(uuid));
+        List<Long> delivered = benesIn(deliveredOutputFiles(uuid));
         assertEquals(ALL_BENES.size(), delivered.size(),
                 "expected exactly " + ALL_BENES.size() + " beneficiaries in the output, saw " + delivered.size()
                         + " (duplicate=" + duplicates(delivered) + ")");

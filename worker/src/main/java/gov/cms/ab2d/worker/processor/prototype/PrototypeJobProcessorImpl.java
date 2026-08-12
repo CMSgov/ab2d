@@ -2,14 +2,20 @@ package gov.cms.ab2d.worker.processor.prototype;
 
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
+import gov.cms.ab2d.worker.processor.JobMeasure;
+import gov.cms.ab2d.worker.processor.JobProgressService;
+import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
+import gov.cms.ab2d.worker.processor.ProgressTracker;
+import gov.cms.ab2d.worker.processor.SerializedEobs;
 import gov.cms.ab2d.worker.processor.prototype.lease.JobLeaseRepository;
 import gov.cms.ab2d.worker.processor.prototype.lease.PrototypeFenceGuard;
 import gov.cms.ab2d.worker.processor.prototype.lease.PrototypeJobLeaseRenewer;
+import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -30,9 +36,12 @@ import org.springframework.web.client.ResourceAccessException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PROD_LIST;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COMPLETED;
 import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
@@ -71,19 +80,21 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private final PrototypeOutputAssembler outputAssembler;
     private final PrototypeJobLeaseRenewer leaseRenewer;
     private final JobLeaseRepository jobLease;
+    // progress and failure reporting, reused from the main processor
+    private final JobChannelService jobChannelService;
+    private final JobProgressService jobProgressService;
+    private final JobProgressUpdateService jobProgressUpdateService;
+    private final SQSEventClient eventLogger;
     // per-JVM diagnostic identity recorded on the lease so logs/monitoring can attribute ownership
     private final String owner = "worker-" + java.util.UUID.randomUUID();
-    private final int partitionSize;
-    private final int chunkSize;
-    private final int concurrency;
-    private final int maxFailureAttempts;
-    private final int maxStartAttempts;
-    private final int itemRetryLimit;
-    private final long shutdownAwaitMs;
+    private final PrototypeProperties props;
+
+    private final int failureThreshold;
+    private final int auditFilesTtlHours;
 
     private final BeneficiaryItemReader beneficiaryItemReader;
     private final EobItemProcessor eobItemProcessor;
-    private final ItemStreamWriter<List<IBaseResource>> ndjsonItemWriter;
+    private final ItemStreamWriter<SerializedEobs> ndjsonItemWriter;
 
     public PrototypeJobProcessorImpl(
             JobRepository jobRepository,
@@ -95,16 +106,16 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             PrototypeOutputAssembler outputAssembler,
             PrototypeJobLeaseRenewer leaseRenewer,
             JobLeaseRepository jobLease,
+            JobChannelService jobChannelService,
+            JobProgressService jobProgressService,
+            JobProgressUpdateService jobProgressUpdateService,
+            SQSEventClient eventLogger,
             BeneficiaryItemReader beneficiaryItemReader,
             EobItemProcessor eobItemProcessor,
-            ItemStreamWriter<List<IBaseResource>> ndjsonItemWriter,
-            @Value("${pause-resume.prototype.partition-size:1000}") int partitionSize,
-            @Value("${pause-resume.prototype.chunk-size:100}") int chunkSize,
-            @Value("${pause-resume.prototype.concurrency:4}") int concurrency,
-            @Value("${pause-resume.prototype.max-failure-attempts:3}") int maxFailureAttempts,
-            @Value("${pause-resume.prototype.max-start-attempts:50}") int maxStartAttempts,
-            @Value("${pause-resume.prototype.item-retry-limit:3}") int itemRetryLimit,
-            @Value("${pause-resume.prototype.shutdown-await-ms:30000}") long shutdownAwaitMs) {
+            ItemStreamWriter<SerializedEobs> ndjsonItemWriter,
+            PrototypeProperties props,
+            @Value("${failure.threshold}") int failureThreshold,
+            @Value("${audit.files.ttl.hours}") int auditFilesTtlHours) {
         this.jobRepository = jobRepository;
         this.jobOperator = jobOperator;
         this.batchJobRepository = batchJobRepository;
@@ -114,16 +125,16 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         this.outputAssembler = outputAssembler;
         this.leaseRenewer = leaseRenewer;
         this.jobLease = jobLease;
-        this.partitionSize = partitionSize;
+        this.jobChannelService = jobChannelService;
+        this.jobProgressService = jobProgressService;
+        this.jobProgressUpdateService = jobProgressUpdateService;
+        this.eventLogger = eventLogger;
         this.beneficiaryItemReader = beneficiaryItemReader;
         this.eobItemProcessor = eobItemProcessor;
         this.ndjsonItemWriter = ndjsonItemWriter;
-        this.chunkSize = chunkSize;
-        this.concurrency = concurrency;
-        this.maxFailureAttempts = maxFailureAttempts;
-        this.maxStartAttempts = maxStartAttempts;
-        this.itemRetryLimit = itemRetryLimit;
-        this.shutdownAwaitMs = shutdownAwaitMs;
+        this.props = props;
+        this.failureThreshold = failureThreshold;
+        this.auditFilesTtlHours = auditFilesTtlHours;
     }
 
     @Override
@@ -192,6 +203,17 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                         last.getId(), jobUuid, softResume ? "soft resume" : "hard recovery", fenceToken);
             }
 
+            // job progress is initialized on startup since we could be restarting
+            // a job that was already in progress
+            jobProgressUpdateService.initJob(jobUuid);
+            jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, failureThreshold);
+            jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED,
+                    coverageV3Service.getMaxRowNumber(contractNumber));
+            long alreadyProcessed = batchMeta.completedProcessedCount(jobUuid, WORKER_STEP_NAME);
+            if (alreadyProcessed > 0) {
+                jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUESTS_PROCESSED, alreadyProcessed);
+            }
+
             org.springframework.batch.core.job.Job batchJob = buildPartitionedJob(contractNumber, jobUuid, fenceToken);
 
             JobExecution execution = launchOrResume(batchJob, parameters, last);
@@ -212,16 +234,21 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             if (current != null && current.getStatus() == CANCELLED) {
                 log.warn("prototype job {} was cancelled during processing; leaving CANCELLED and cleaning up", jobUuid);
                 coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
+                outputAssembler.deleteJobDirectory(jobUuid);
                 return current;
             }
 
             if (execution.getStatus() == BatchStatus.COMPLETED) {
-                // Failure during assembly is terminal and fails the job. We can recover from a crash during
-                // assembly, but we can't recover from an exception e.g. missing files in a "completed" job.
-                outputAssembler.assemble(job, jobUuid, contractNumber);
-                job.setStatus(SUCCESSFUL);
-                job.setStatusMessage("Completed via prototype");
-                coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
+                if (thresholdExceeded(jobUuid)) {
+                    // The batch finished but too many beneficiaries errored, this is a terminal failure
+                    applyThresholdFailure(job, contractNumber, jobUuid);
+                } else {
+                    // Failure during assembly is terminal and fails the job. We can recover from a crash
+                    // during assembly, but not from an exception e.g. missing files in a "completed" job.
+                    outputAssembler.assemble(job, jobUuid, contractNumber);
+                    completeJobSuccessfully(job, jobUuid);
+                    coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
+                }
             } else if (execution.getStatus() == BatchStatus.STOPPED || wasInterrupted(execution)) {
                 // Graceful shutdown ensures that the batch job is fully stopped and every file has been closed
                 // and fsynced its file to the saved offset.
@@ -230,8 +257,11 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 jobLease.markCleanSuspend(jobUuid, fenceToken);
                 job.setStatus(SUBMITTED);
                 job.setStatusMessage("Paused via prototype");
+            } else if (hasThresholdException(execution) || thresholdExceeded(jobUuid)) {
+                // Too many beneficiaries errored, terminal failure
+                applyThresholdFailure(job, contractNumber, jobUuid);
             } else {
-                // A run that failed is resumable, up to some tolerance for retrying
+                // A run that failed for other reasons is resumable, up to some tolerance for retrying
                 applyFailureOutcome(job, contractNumber, jobUuid,
                         "Prototype failed with status " + execution.getStatus());
             }
@@ -254,7 +284,17 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             leaseRenewer.untrack(jobUuid);
         }
 
-        return jobRepository.save(job);
+        preserveLiveProgress(job, jobUuid);
+
+        Job result = jobRepository.save(job);
+        // EFS cleanup. We do not handle in_progress or submitted status here, because both of those
+        // are resumable and somebody else will handle the files/directories
+        if (result.getStatus() == SUCCESSFUL) {
+            outputAssembler.deleteIntermediateDirectories(jobUuid);
+        } else if (result.getStatus() == FAILED) {
+            outputAssembler.deleteJobDirectory(jobUuid);
+        }
+        return result;
     }
 
     /**
@@ -262,6 +302,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      */
     private void applyFailureOutcome(Job job, String contractNumber, String jobUuid, String message) {
         int failures = batchMeta.failedExecutionCount(jobUuid);
+        int maxFailureAttempts = props.getMaxFailureAttempts();
         if (failures < maxFailureAttempts) {
             job.setStatus(SUBMITTED);
             job.setStatusMessage(message + " (attempt " + failures + " of " + maxFailureAttempts + "; will resume)");
@@ -272,6 +313,59 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             log.error("prototype job {} exhausted {} failure attempts - marking FAILED", jobUuid, maxFailureAttempts);
             coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
         }
+    }
+
+    /**
+     * Terminal failure because too many beneficiaries errored
+     */
+    private void applyThresholdFailure(Job job, String contractNumber, String jobUuid) {
+        log.error("prototype job {} failed: too many patient records in the job had failures", jobUuid);
+        job.setStatus(FAILED);
+        job.setStatusMessage("Failed: too many patient records in the job had failures");
+        coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
+    }
+
+    /**
+     * Refreshes the jobs progress before the job saves so we don't overwrite the progress count
+     * with stale info
+     */
+    private void preserveLiveProgress(Job job, String jobUuid) {
+        if (job.getStatus() == SUCCESSFUL) {
+            return;
+        }
+        Job persisted = jobRepository.findByJobUuid(jobUuid);
+        if (persisted != null) {
+            job.setProgress(persisted.getProgress());
+        }
+    }
+
+    /**
+     * Record terminal success state, great job.
+     */
+    private void completeJobSuccessfully(Job job, String jobUuid) {
+        ProgressTracker tracker = jobProgressService.getStatus(jobUuid);
+        int processed = tracker == null ? 0 : tracker.getPatientRequestProcessedCount();
+        String message = String.format("%s via prototype: processed %d patients into %d file(s)",
+                EOB_JOB_COMPLETED, processed, job.getJobOutputs().size());
+        eventLogger.logAndAlert(job.buildJobStatusChangeEvent(SUCCESSFUL, message), PROD_LIST);
+
+        job.setStatus(SUCCESSFUL);
+        job.setStatusMessage("100%");
+        job.setProgress(100);
+        job.setExpiresAt(OffsetDateTime.now().plusHours(auditFilesTtlHours));
+        job.setCompletedAt(OffsetDateTime.now());
+    }
+
+    /** True if the progress tracker shows the failed-bene ratio at or above the threshold. */
+    private boolean thresholdExceeded(String jobUuid) {
+        ProgressTracker tracker = jobProgressService.getStatus(jobUuid);
+        return tracker != null && tracker.getTotalCount() > 0 && tracker.isErrorThresholdExceeded();
+    }
+
+    /** True if the batch failed because a chunk tripped the failure threshold mid-run. */
+    private boolean hasThresholdException(JobExecution execution) {
+        return execution.getAllFailureExceptions().stream()
+                .anyMatch(ThresholdExceededException.class::isInstance);
     }
 
     /**
@@ -297,6 +391,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
         // Wait for the partition threads to actually finish before changing status
         // might need a TODO for a more robust system than a sleep
+        long shutdownAwaitMs = props.getShutdownAwaitMs();
         long deadline = System.currentTimeMillis() + shutdownAwaitMs;
         while (System.currentTimeMillis() < deadline) {
             if (batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME).isEmpty()) {
@@ -374,16 +469,21 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private org.springframework.batch.core.job.Job buildPartitionedJob(String contractNumber, String jobUuid,
             long fenceToken) {
         var workerStepBuilder = new StepBuilder(WORKER_STEP_NAME, batchJobRepository)
-                .<CoverageSummary, List<IBaseResource>>chunk(chunkSize)
+                .<CoverageSummary, SerializedEobs>chunk(props.getChunkSize())
                 .reader(beneficiaryItemReader)
                 .processor(eobItemProcessor)
                 .writer(ndjsonItemWriter)
                 // each chunk commit comes with a fence token which prevents
                 // us from committing work if we've lost the job
                 .listener(new PrototypeFenceGuard(jobLease, jobUuid, fenceToken))
-                // retry transient item level failures before failing the chunk
+                // per-chunk progress and failure reporting
+                .listener(new PrototypeProgressListener(jobChannelService, jobProgressService, jobUuid))
                 .faultTolerant()
-                .retryLimit(itemRetryLimit);
+                // retry items that fail, skip benes that fail too much
+                .retryLimit(props.getItemRetryLimit())
+                .skipPolicy(new PrototypeSkipPolicy())
+                // count each skipped beneficiary as one error against the error threshold
+                .skipListener(new PrototypeSkipCounter(jobChannelService, jobUuid));
         TRANSIENT_EXCEPTIONS.forEach(workerStepBuilder::retry);
 
         Step workerStep = workerStepBuilder
@@ -391,11 +491,12 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .listener(new JobCancellationChunkListener(jobRepository, jobUuid))
                 .allowStartIfComplete(false)
                 // should basically never trip
-                .startLimit(maxStartAttempts)
+                .startLimit(props.getMaxStartAttempts())
                 .transactionManager(transactionManager)
                 .build();
 
-        BeneficiaryPartitioner partitioner = new BeneficiaryPartitioner(coverageV3Service, contractNumber, partitionSize);
+        BeneficiaryPartitioner partitioner =
+                new BeneficiaryPartitioner(coverageV3Service, contractNumber, props.getPartitionSize());
 
         // the manager partitions the work, and each partition gets its own
         // workerStep, which brings along its own reader/processor/writer
@@ -404,7 +505,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .partitioner(WORKER_STEP_NAME, partitioner)
                 .step(workerStep)
                 .taskExecutor(partitionTaskExecutor())
-                .gridSize(concurrency)
+                .gridSize(props.getConcurrency())
                 .build();
 
         return new JobBuilder(PROTOTYPE_JOB_NAME, batchJobRepository)
@@ -418,7 +519,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      */
     private TaskExecutor partitionTaskExecutor() {
         SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("proto-partition-");
-        executor.setConcurrencyLimit(Math.max(1, concurrency));
+        executor.setConcurrencyLimit(Math.max(1, props.getConcurrency()));
         return executor;
     }
 
