@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.model.SinceSource;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_ENABLED;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_STARTED;
@@ -43,13 +45,15 @@ public class JobPreProcessorImpl implements JobPreProcessor {
     private final JobRepository jobRepository;
     private final SQSEventClient eventLogger;
     private final CoverageDriver coverageDriver;
+    private final PropertiesService propertiesService;
 
     public JobPreProcessorImpl(ContractWorkerClient contractWorkerClient, JobRepository jobRepository, SQSEventClient logManager,
-                               CoverageDriver coverageDriver) {
+                               CoverageDriver coverageDriver, PropertiesService propertiesService) {
         this.contractWorkerClient = contractWorkerClient;
         this.jobRepository = jobRepository;
         this.eventLogger = logManager;
         this.coverageDriver = coverageDriver;
+        this.propertiesService = propertiesService;
     }
 
     @Override
@@ -60,6 +64,15 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         if (job == null) {
             log.error("Job was not found");
             throw new IllegalArgumentException("Job " + jobUuid + " was not found");
+        }
+
+        // If we're being asked to preprocess a job that is in_progress, the preprocessor will
+        // reject it on the normal pathway, and send it for hard recovery on the prototype pathway.
+        if (IN_PROGRESS.equals(job.getStatus())
+                && propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false)) {
+            log.info("Job {} re-entered preprocess while IN_PROGRESS - prototype hard-recovery resume, "
+                    + "passing through", jobUuid);
+            return job;
         }
 
         // validate status is SUBMITTED
@@ -170,7 +183,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
 
     /**
      * Update the 'since' logic if the user has not supplied one. We pick the date the last job was successfully
-     * run by the PDP (ignoring AB2D run jobs). If no job has every been successfully run, we default to a null
+     * run by the PDP (ignoring AB2D run jobs). If no job has ever been successfully run, we default to a null
      * since date.
      *
      * @param job - The job object to update (although not save)

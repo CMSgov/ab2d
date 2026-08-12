@@ -65,7 +65,7 @@ class PrototypeCrashPointIntegrationTest extends AbstractPrototypeRecoveryIntegr
     }
 
     @Test
-    @DisplayName("Crash during processing: fail while processing a beneficiary")
+    @DisplayName("Item steps should be retried after failing and every bene is still delivered once")
     void crashDuringProcessingRecovers() throws Exception {
         Job job = createSubmittedV3Job("crash-processing");
         String uuid = job.getJobUuid();
@@ -77,15 +77,16 @@ class PrototypeCrashPointIntegrationTest extends AbstractPrototypeRecoveryIntegr
         doAnswer(inv -> {
             CoverageSummary patient = inv.getArgument(1);
             if (patientId(patient) == failBene && thrown.compareAndSet(false, true)) {
-                log.info("=== injecting processing failure for bene {} on job {} ===", failBene, uuid);
-                throw new IllegalStateException("injected failure for bene " + failBene);
+                log.info("=== injecting transient processing failure for bene {} on job {} ===", failBene, uuid);
+                throw new org.springframework.web.client.ResourceAccessException(
+                        "injected transient failure for bene " + failBene);
             }
             return oneEobFor(patient);
         }).when(patientClaimsProcessor).getEobBundleResources(any(), any());
 
         Job result = processUntilSuccessful(uuid, 3);
 
-        assertEquals(JobStatus.SUCCESSFUL, result.getStatus(), "a processing crash should recover on resume");
+        assertEquals(JobStatus.SUCCESSFUL, result.getStatus(), "a transient processing blip should recover");
         assertTrue(thrown.get(), "the processing failure should actually have been injected");
         // The rolled-back chunk must not have committed output, so despite the failed attempt the delivered
         // output is still exactly-once.
@@ -109,9 +110,9 @@ class PrototypeCrashPointIntegrationTest extends AbstractPrototypeRecoveryIntegr
         Job recovered = prototypeJobProcessor.process(uuid);
 
         assertEquals(JobStatus.SUCCESSFUL, recovered.getStatus(), "a mid-write crash should hard-recover to SUCCESSFUL");
-        for (Path file : finishedFiles(uuid)) {
+        for (Path file : deliveredOutputFiles(uuid)) {
             List<Long> inFile = new ArrayList<>();
-            for (String line : Files.readAllLines(file)) {
+            for (String line : linesOf(file)) {
                 Matcher m = PATIENT_REF.matcher(line);
                 assertTrue(m.find(), "output file " + file.getFileName() + " has a line with no Patient reference "
                         + "(torn write?): " + line);
