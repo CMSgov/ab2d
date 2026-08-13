@@ -22,6 +22,6 @@ public interface CoverageV3SyncService {
 	Supplier<LocalDate> CUT_OFF_DATE_FOR_INACTIVE_CONTRACT = () -> LocalDate.now().minusYears(2);
 
 	// return true if the BFD coverage sync is in progress (based on activity in the ab2d.bene_coverage_period table)
-	//
+	// if true, avoid v3-related cron jobs to reduce unnecessary load on the database
 	boolean isBfdCoverageSyncInProgress();
 }
