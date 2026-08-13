@@ -27,7 +27,7 @@ public class CoverageV3ScheduledTasks {
 	@Scheduled(cron= "0 0 * * * ?") // every hour
 	public void copyFromStagingTablesToRecentForAllContracts() {
 		if (syncService.isBfdCoverageSyncInProgress()) {
-			log.info("[V3] BFD import is in progress; Skipping copyFromStagingTablesToRecentForAllContracts()");
+			log.info("[V3] BFD coverage sync is in progress; Skipping copyFromStagingTablesToRecentForAllContracts()");
 			return;
 		}
 		log.info("Calling copyFromStagingTablesToRecentForAllContracts()");
@@ -65,7 +65,7 @@ public class CoverageV3ScheduledTasks {
 	@Scheduled(cron= "0 30 6,18 * * *")
 	public void moveToHistoricalForAllContracts() {
 		if (syncService.isBfdCoverageSyncInProgress()) {
-			log.info("[V3] BFD import is in progress; Skipping moveToHistoricalForAllContracts()");
+			log.info("[V3] BFD coverage sync is in progress; Skipping moveToHistoricalForAllContracts()");
 			return;
 		}
 		log.info("[V3] Calling moveToHistoricalForAllContracts()");
@@ -104,7 +104,7 @@ public class CoverageV3ScheduledTasks {
 	@Scheduled(cron = "0 0 3 * * *") // daily at 3am
 	public void purgeInactiveContractsFromHistorySummary() {
 		if (syncService.isBfdCoverageSyncInProgress()) {
-			log.info("[V3] BFD import is in progress; Skipping purgeInactiveContractsFromHistorySummary()");
+			log.info("[V3] BFD coverage sync is in progress; Skipping purgeInactiveContractsFromHistorySummary()");
 			return;
 		}
 		log.info("[V3] Purging history summary rows for contracts inactive > 2 years");

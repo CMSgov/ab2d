@@ -218,6 +218,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             audit.log(action, result, contract, "Contract is not attested", null);
             return result;
         } else if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            log.info("[V3] BFD coverage sync is in progress; Skipping copyFromStagingTablesToRecent() for contract {}", contract);
             result = BFD_COVERAGE_SYNC_IN_PROGRESS;
             audit.log(action, result, contract, null, null);
             return result;
@@ -355,6 +356,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
             return result;
         } else if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            log.info("[V3] BFD coverage sync is in progress; Skipping moveToHistorical() for contract {}", contract);
             result = BFD_COVERAGE_SYNC_IN_PROGRESS;
             audit.log(action, result, contract, null, null);
             return result;
