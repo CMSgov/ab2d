@@ -210,16 +210,19 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val action = COPY_FROM_STAGING;
         CoverageV3SyncResult result = null;
 
-        if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
-            return BFD_COVERAGE_SYNC_IN_PROGRESS;
-        } else if (isTestContract(contract)) {
+        if (isTestContract(contract)) {
             return NO_COVERAGE_FOUND_FOR_CONTRACT;
         } else if (!isContractAttested(contract)) {
             log.info("[V3] Contract {} is not attested; skipping staging copy", contract);
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
             audit.log(action, result, contract, "Contract is not attested", null);
             return result;
-        } else if (idrImporterInProgress()) {
+        } else if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            result = BFD_COVERAGE_SYNC_IN_PROGRESS;
+            audit.log(action, result, contract, null, null);
+            return result;
+        }
+        else if (idrImporterInProgress()) {
             result = IDR_IMPORTER_IN_PROGRESS;
             audit.log(action, result, contract, null, null);
             return result;
@@ -348,13 +351,15 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val action = COPY_TO_HISTORICAL;
         CoverageV3SyncResult result = null;
 
-        if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
-            result = BFD_COVERAGE_SYNC_IN_PROGRESS;
-            return result;
-        } else if (isTestContract(contract)) {
+        if (isTestContract(contract)) {
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
             return result;
-        } else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
+        } else if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            result = BFD_COVERAGE_SYNC_IN_PROGRESS;
+            audit.log(action, result, contract, null, null);
+            return result;
+        }
+        else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
             result = JOB_IN_PROGRESS_FOR_CONTRACT;
             audit.log(action, result, contract, null, null);
             return result;
