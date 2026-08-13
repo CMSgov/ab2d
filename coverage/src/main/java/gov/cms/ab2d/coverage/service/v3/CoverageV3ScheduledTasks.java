@@ -26,6 +26,10 @@ public class CoverageV3ScheduledTasks {
 
 	@Scheduled(cron= "0 0 * * * ?") // every hour
 	public void copyFromStagingTablesToRecentForAllContracts() {
+		if (syncService.isBfdCoverageSyncInProgress()) {
+			log.info("[V3] BFD import is in progress; Skipping copyFromStagingTablesToRecentForAllContracts()");
+			return;
+		}
 		log.info("Calling copyFromStagingTablesToRecentForAllContracts()");
 		val contracts = syncService.getContractsInCoverageStagingTable();
 		for (String contract : contracts) {
@@ -46,6 +50,9 @@ public class CoverageV3ScheduledTasks {
 					log.error("[V3] Staging table sync failed for {}", contract);
 				} else if (result == UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT) {
 					log.error("[V3] Unable to acquire coverage lock for contract {}", contract);
+				} else if (result == BFD_COVERAGE_SYNC_IN_PROGRESS) {
+					log.info("[V3] Detected BFD coverage sync is in progress; Aborting copyFromStagingTablesToRecentForAllContracts()");
+					return;
 				}
 
 			} catch (Exception e) {
@@ -57,6 +64,10 @@ public class CoverageV3ScheduledTasks {
 	// every day at 6:30am and 6:30pm -- staggered to not run during copyFromStagingTablesToRecentForAllContracts()
 	@Scheduled(cron= "0 30 6,18 * * *")
 	public void moveToHistoricalForAllContracts() {
+		if (syncService.isBfdCoverageSyncInProgress()) {
+			log.info("[V3] BFD import is in progress; Skipping moveToHistoricalForAllContracts()");
+			return;
+		}
 		log.info("[V3] Calling moveToHistoricalForAllContracts()");
 		val contracts = syncService.getContractsInRecentCoverageTable();
 		for (String contract : contracts) {
@@ -75,6 +86,9 @@ public class CoverageV3ScheduledTasks {
 					log.error("[V3] Historical sync failed for {}", contract);
 				} else if (result == UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT) {
 					log.error("[V3] Unable to acquire coverage lock for contract {}", contract);
+				} else if (result == BFD_COVERAGE_SYNC_IN_PROGRESS) {
+					log.info("[V3] Detected BFD coverage sync is in progress; Aborting moveToHistoricalForAllContracts()");
+					return;
 				}
 			} catch (Exception e) {
 				log.error("[V3] Error calling moveToHistorical for contract {}", contract);
@@ -89,6 +103,10 @@ public class CoverageV3ScheduledTasks {
 
 	@Scheduled(cron = "0 0 3 * * *") // daily at 3am
 	public void purgeInactiveContractsFromHistorySummary() {
+		if (syncService.isBfdCoverageSyncInProgress()) {
+			log.info("[V3] BFD import is in progress; Skipping purgeInactiveContractsFromHistorySummary()");
+			return;
+		}
 		log.info("[V3] Purging history summary rows for contracts inactive > 2 years");
 		int deleted = syncService.deleteInactiveContractsFromHistorySummary();
 		log.info("[V3] Purged {} history summary rows for inactive contracts", deleted);

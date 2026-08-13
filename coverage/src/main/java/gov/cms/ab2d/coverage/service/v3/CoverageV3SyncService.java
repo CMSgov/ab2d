@@ -20,4 +20,6 @@ public interface CoverageV3SyncService {
 	int deleteInactiveContractsFromHistorySummary();
 
 	Supplier<LocalDate> CUT_OFF_DATE_FOR_INACTIVE_CONTRACT = () -> LocalDate.now().minusYears(2);
+
+	boolean isBfdCoverageSyncInProgress();
 }

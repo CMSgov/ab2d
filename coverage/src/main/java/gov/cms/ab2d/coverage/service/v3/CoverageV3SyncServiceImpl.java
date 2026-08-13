@@ -3,13 +3,16 @@ package gov.cms.ab2d.coverage.service.v3;
 import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.DatadogSpans;
+import gov.cms.ab2d.coverage.query.GetAggregatedCoverageMembership;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditAction;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -17,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -191,6 +196,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     DO NOTHING
     """;
 
+    private static final String QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS =
+    """
+    select month, year, contract_number from ab2d.bene_coverage_period where status='IN_PROGRESS'
+    """;
+
     @Transactional
     @Trace(operationName = "ab2d.coverage.sync_from_staging_v3")
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
@@ -200,7 +210,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val action = COPY_FROM_STAGING;
         CoverageV3SyncResult result = null;
 
-        if (isTestContract(contract)) {
+        if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            return BFD_COVERAGE_SYNC_IN_PROGRESS;
+        } else if (isTestContract(contract)) {
             return NO_COVERAGE_FOUND_FOR_CONTRACT;
         } else if (!isContractAttested(contract)) {
             log.info("[V3] Contract {} is not attested; skipping staging copy", contract);
@@ -336,7 +348,10 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val action = COPY_TO_HISTORICAL;
         CoverageV3SyncResult result = null;
 
-        if (isTestContract(contract)) {
+        if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            result = BFD_COVERAGE_SYNC_IN_PROGRESS;
+            return result;
+        } else if (isTestContract(contract)) {
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
             return result;
         } else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
@@ -509,6 +524,25 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         DatadogSpans.setMetric("coverage.v3.inactive_contracts_deleted", deletedContracts.size());
         audit.log(CoverageV3AuditAction.DELETE_INACTIVE_CONTACTS, null, null, null, Map.of("deletedContracts", deletedContracts));
         return deletedContracts.size();
+    }
+
+    @Override
+    public boolean isBfdCoverageSyncInProgress() {
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+
+        val coveragePeriodsInProgress = template.query(QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS, (rs, rowNum) -> {
+            val month = rs.getInt(1);
+            val year = rs.getInt(2);
+            val contract = rs.getString(3);
+            return "%s-%s-%s".formatted(contract, year, month);
+        });
+
+        if (coveragePeriodsInProgress.isEmpty()) {
+            return false;
+        } else {
+            coveragePeriodsInProgress.forEach(period -> log.info("[V3] Detected BFD coverage sync is in progress for {}", period));
+            return true;
+        }
     }
 
     void populateHistorySummaryCoveragePeriodsForContract(String contract) {
