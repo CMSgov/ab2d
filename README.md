@@ -32,7 +32,7 @@
 Build the worker/api jar:
 
 ```sh
-mvn -DskipTests package
+mvn -DskipTests package -Dcheckstyle.skip
 ```
 
 Build the contracts jar:
@@ -55,6 +55,27 @@ Use the `down` script to wipe the database if needed:
 ```sh
 local-dev/down.sh --volumes
 ```
+
+#### Troubleshooting Docker Desktop on macOS
+
+Possible errors include:
+
+```text
+Error response from daemon: error while mounting volume '/var/lib/docker/volumes/ab2d_tmp-volume/_data': 
+failed to mount local volume: mount /opt/ab2d:/var/lib/docker/volumes/ab2d_tmp-volume/_data, flags: 0x1000: no such file or directory
+```
+
+```text
+Error response from daemon: mounts denied: 
+The path /opt/ab2d is not shared from the host and is not known to Docker.
+```
+
+Solution:
+1. Add a file share for `/opt/ab2d` under Docker → Preferences → Resources → File Sharing. 
+2. Go to macOS System Settings → Privacy & Security
+   - Select Full Disk Access
+   - Grant permission to Docker Desktop
+   - Restart Docker Desktop
 
 ### Attaching a Debugger in IntelliJ
 
