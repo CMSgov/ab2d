@@ -206,6 +206,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2026/create_job_lease_table.sql
   - include:
-      file: org/springframework/batch/core/schema-postgresql.sql
-      relativeToChangelogFile: false
-      onFail: MARK_RAN
+      file: db/changelog/v2026/spring-batch-schema-postgresl.sql
