@@ -3,16 +3,13 @@ package gov.cms.ab2d.coverage.service.v3;
 import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.DatadogSpans;
-import gov.cms.ab2d.coverage.query.GetAggregatedCoverageMembership;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditAction;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -20,8 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
