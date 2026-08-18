@@ -244,3 +244,17 @@ CREATE TABLE IF NOT EXISTS v3.coverage_v3_audit (
     log TEXT NOT NULL,
     data JSONB
 );
+
+CREATE SCHEMA ab2d;
+
+CREATE TABLE IF NOT EXISTS ab2d.bene_coverage_period
+(
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    month integer NOT NULL,
+    year integer NOT NULL,
+    status character varying(255),
+    created timestamp with time zone,
+    modified timestamp with time zone,
+    last_successful_job timestamp with time zone,
+    contract_number character varying(255) NOT NULL
+);
