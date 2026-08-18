@@ -191,6 +191,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     DO NOTHING
     """;
 
+    private static final String QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS =
+    """
+    select month, year, contract_number from ab2d.bene_coverage_period where status='IN_PROGRESS'
+    """;
+
     @Transactional
     @Trace(operationName = "ab2d.coverage.sync_from_staging_v3")
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
@@ -207,7 +212,13 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
             audit.log(action, result, contract, "Contract is not attested", null);
             return result;
-        } else if (idrImporterInProgress()) {
+        } else if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            log.info("[V3] BFD coverage sync is in progress; Skipping copyFromStagingTablesToRecent() for contract {}", contract);
+            result = BFD_COVERAGE_SYNC_IN_PROGRESS;
+            audit.log(action, result, contract, null, null);
+            return result;
+        }
+        else if (idrImporterInProgress()) {
             result = IDR_IMPORTER_IN_PROGRESS;
             audit.log(action, result, contract, null, null);
             return result;
@@ -339,7 +350,13 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         if (isTestContract(contract)) {
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
             return result;
-        } else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
+        } else if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            log.info("[V3] BFD coverage sync is in progress; Skipping moveToHistorical() for contract {}", contract);
+            result = BFD_COVERAGE_SYNC_IN_PROGRESS;
+            audit.log(action, result, contract, null, null);
+            return result;
+        }
+        else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
             result = JOB_IN_PROGRESS_FOR_CONTRACT;
             audit.log(action, result, contract, null, null);
             return result;
@@ -509,6 +526,25 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         DatadogSpans.setMetric("coverage.v3.inactive_contracts_deleted", deletedContracts.size());
         audit.log(CoverageV3AuditAction.DELETE_INACTIVE_CONTACTS, null, null, null, Map.of("deletedContracts", deletedContracts));
         return deletedContracts.size();
+    }
+
+    @Override
+    public boolean isBfdCoverageSyncInProgress() {
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+
+        val coveragePeriodsInProgress = template.query(QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS, (rs, rowNum) -> {
+            val month = rs.getInt(1);
+            val year = rs.getInt(2);
+            val contract = rs.getString(3);
+            return "%s-%s-%s".formatted(contract, year, month);
+        });
+
+        if (coveragePeriodsInProgress.isEmpty()) {
+            return false;
+        } else {
+            coveragePeriodsInProgress.forEach(period -> log.info("[V3] Detected BFD coverage sync is in progress for {}", period));
+            return true;
+        }
     }
 
     void populateHistorySummaryCoveragePeriodsForContract(String contract) {

@@ -75,8 +75,9 @@ class CoverageV3SyncServiceImplTest {
 			}
 		};
 
-
-		new JdbcTemplate(container.getDataSource()).execute("truncate v3.coverage_v3_audit");
+		val template = new JdbcTemplate(container.getDataSource());
+		template.execute("truncate v3.coverage_v3_audit");
+		template.execute("truncate ab2d.bene_coverage_period");
 	}
 
 	@Test
@@ -90,6 +91,22 @@ class CoverageV3SyncServiceImplTest {
 		"""
 		{action=COPY_TO_HISTORICAL, result=JOB_IN_PROGRESS_FOR_CONTRACT, contract=Z0001, log=, data={}}
 		""");
+	}
+
+	@Test
+	void moveToHistorical_Z0001_bfdSyncInProgress(CapturedOutput out) {
+		assertNotEquals(BFD_COVERAGE_SYNC_IN_PROGRESS, service.moveToHistorical("Z0001", CoverageV3SyncSource.CRON_JOB));
+
+		new JdbcTemplate(container.getDataSource()).execute(
+		"""
+		INSERT INTO ab2d.bene_coverage_period(month, year, status, contract_number)
+		VALUES
+			(8, 2026, 'IN_PROGRESS', 'Z0001');
+		""");
+
+		assertEquals(BFD_COVERAGE_SYNC_IN_PROGRESS, service.moveToHistorical("Z0001", CoverageV3SyncSource.CRON_JOB));
+
+		assertTrue(out.getOut().contains("[V3] Detected BFD coverage sync is in progress for Z0001-2026-8"));
 	}
 
 	@Test
@@ -131,6 +148,21 @@ class CoverageV3SyncServiceImplTest {
 		"""
 		{action=COPY_FROM_STAGING, result=SYNC_SUCCESSFUL_FOR_CONTRACT, contract=Z9999, log=, data={"rowsInStagingDeleted": 4, "rowsInCoverageAfterCopy": 4}}
 		""");
+	}
+
+	@Test
+	void copyFromStagingTablesToRecent_Z9999_bfdSyncInProgress(CapturedOutput out) {
+		assertNotEquals(BFD_COVERAGE_SYNC_IN_PROGRESS, service.copyFromStagingTablesToRecent("Z9999", CoverageV3SyncSource.CRON_JOB));
+
+		new JdbcTemplate(container.getDataSource()).execute(
+		"""
+		INSERT INTO ab2d.bene_coverage_period(month, year, status, contract_number)
+		VALUES
+			(8, 2026, 'IN_PROGRESS', 'Z9999');
+		""");
+
+		assertEquals(BFD_COVERAGE_SYNC_IN_PROGRESS, service.copyFromStagingTablesToRecent("Z9999", CoverageV3SyncSource.CRON_JOB));
+		assertTrue(out.getOut().contains("[V3] Detected BFD coverage sync is in progress for Z9999-2026-8"));
 	}
 
 	@Test
