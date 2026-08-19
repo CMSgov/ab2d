@@ -47,7 +47,7 @@ public class PrototypeBatchMetadataRepository {
     private static final String COMPLETED_PARTITION_FILES_SQL = """
             SELECT partition_index, fence_token FROM (
                 SELECT DISTINCT ON (se.step_name)
-                       split_part(se.step_name, 'partition', 2)::int AS partition_index,
+                       split_part(se.step_name, '%s', 2)::int AS partition_index,
                        ft.parameter_value::bigint AS fence_token
                   FROM batch_step_execution se
                   JOIN batch_job_execution je ON je.job_execution_id = se.job_execution_id
@@ -61,7 +61,7 @@ public class PrototypeBatchMetadataRepository {
                  ORDER BY se.step_name, ft.parameter_value::bigint DESC
             ) winners
             ORDER BY partition_index
-            """;
+            """.formatted(PrototypePartitionNaming.PARTITION_TOKEN);
 
     // Gathers the winners from the set of completed partitions to estimate the progress of a job. Used on
     // restart/recovery to seed the value so a restarting job reports approximately accurate progress.
@@ -149,7 +149,8 @@ public class PrototypeBatchMetadataRepository {
      */
     public long completedProcessedCount(String jobUuid, String workerStepName) {
         Long count = jdbc.queryForObject(COMPLETED_PROCESSED_COUNT_SQL,
-                Map.of("uuid", jobUuid, "stepPrefix", workerStepName + ":partition%"), Long.class);
+                Map.of("uuid", jobUuid, "stepPrefix",
+                        PrototypePartitionNaming.partitionStepNamePattern(workerStepName)), Long.class);
         return count == null ? 0L : count;
     }
 
@@ -158,7 +159,8 @@ public class PrototypeBatchMetadataRepository {
      */
     public List<CompletedPartition> completedPartitionFiles(String jobUuid, String workerStepName) {
         return jdbc.query(COMPLETED_PARTITION_FILES_SQL,
-                Map.of("uuid", jobUuid, "stepPrefix", workerStepName + ":partition%"),
+                Map.of("uuid", jobUuid, "stepPrefix",
+                        PrototypePartitionNaming.partitionStepNamePattern(workerStepName)),
                 (rs, rowNum) -> new CompletedPartition(rs.getInt("partition_index"), rs.getLong("fence_token")));
     }
 
@@ -171,7 +173,8 @@ public class PrototypeBatchMetadataRepository {
      */
     public List<String> partitionStepNames(String jobUuid, String workerStepName) {
         return jdbc.queryForList(PARTITION_STEP_NAMES_SQL,
-                Map.of("uuid", jobUuid, "stepPrefix", workerStepName + ":partition%"), String.class);
+                Map.of("uuid", jobUuid, "stepPrefix",
+                        PrototypePartitionNaming.partitionStepNamePattern(workerStepName)), String.class);
     }
 
     /**

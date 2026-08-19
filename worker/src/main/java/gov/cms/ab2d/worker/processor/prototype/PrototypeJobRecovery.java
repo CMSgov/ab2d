@@ -83,7 +83,7 @@ public class PrototypeJobRecovery {
 
     /**
      * If the partition is not in status UNKNOWN, and hasn't been completed, copy its work
-     * over to the new file
+     * over to the new file.
      */
     private int copyForward(String jobUuid, long newToken) {
         if (!props.isCopyForwardEnabled()) {
@@ -91,17 +91,26 @@ public class PrototypeJobRecovery {
             return 0;
         }
 
-        JobInstance instance = batchJobRepository.getJobInstance(PROTOTYPE_JOB_NAME,
-                new JobParametersBuilder().addString(JOB_UUID_PARAM, jobUuid).toJobParameters());
-        if (instance == null) {
-            return 0;
-        }
-
         int copied = 0;
-        for (String stepName : batchMeta.partitionStepNames(jobUuid, WORKER_STEP_NAME)) {
-            if (copyForwardPartition(jobUuid, instance, stepName, newToken)) {
-                copied++;
+        try {
+            JobInstance instance = batchJobRepository.getJobInstance(PROTOTYPE_JOB_NAME,
+                    new JobParametersBuilder().addString(JOB_UUID_PARAM, jobUuid).toJobParameters());
+            if (instance == null) {
+                return 0;
             }
+
+            for (String stepName : batchMeta.partitionStepNames(jobUuid, WORKER_STEP_NAME)) {
+                try {
+                    if (copyForwardPartition(jobUuid, instance, stepName, newToken)) {
+                        copied++;
+                    }
+                } catch (RuntimeException e) {
+                    log.warn("copy-forward for job {}: {} failed to copy, so the partition " +
+                            "will be restarted", jobUuid, stepName, e);
+                }
+            }
+        } catch (RuntimeException e) {
+            log.warn("copy-forward for job {} failed, so every incomplete partition will be restarted", jobUuid, e);
         }
         if (copied > 0) {
             log.info("copy-forward for job {}: seeded {} partition(s) into token {}", jobUuid, copied, newToken);
@@ -153,15 +162,15 @@ public class PrototypeJobRecovery {
                     checkpoint.dataBytes()));
             seeded.add(seedFile(streamingDir, contractNumber, checkpoint, newToken, ERROR_STREAM,
                     checkpoint.errorBytes()));
-        } catch (IOException e) {
+            retarget(context, checkpoint, newToken);
+            batchJobRepository.updateExecutionContext(last);
+        } catch (IOException | RuntimeException e) {
             deleteQuietly(seeded);
             log.warn("copy-forward for job {}: could not seed {} from token {}, so the partition must restart",
                     jobUuid, stepName, checkpoint.token(), e);
             return false;
         }
 
-        retarget(context, checkpoint, newToken);
-        batchJobRepository.updateExecutionContext(last);
         log.info("copy-forward for job {}: {} resumes at patient {} with {} data byte(s) and {} error byte(s) "
                         + "carried from token {} into token {}",
                 jobUuid, stepName, checkpoint.readerCursor(), checkpoint.dataBytes(), checkpoint.errorBytes(),
@@ -230,6 +239,9 @@ public class PrototypeJobRecovery {
                 StandardOpenOption.TRUNCATE_EXISTING)) {
             copyPrefix(source, out, bytes);
             out.force(true);
+        } catch (IOException | RuntimeException e) {
+            deleteQuietly(destination);
+            throw e;
         }
         return destination;
     }
@@ -275,12 +287,14 @@ public class PrototypeJobRecovery {
     }
 
     private void deleteQuietly(List<Path> files) {
-        for (Path file : files) {
-            try {
-                Files.deleteIfExists(file);
-            } catch (IOException e) {
-                log.warn("copy-forward could not remove the partially seeded file {}", file, e);
-            }
+        files.forEach(this::deleteQuietly);
+    }
+
+    private void deleteQuietly(Path file) {
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            log.warn("copy-forward could not remove the partially seeded file {}", file, e);
         }
     }
 

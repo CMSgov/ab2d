@@ -19,11 +19,18 @@ final class PrototypePartitionNaming {
     /** Spring Batch's lines-writer suffix for the writer */
     static final String WRITTEN_SUFFIX = ".written";
 
+    /** The word that marks a partition in both the step name and output file name */
+    static final String PARTITION_TOKEN = "partition";
+
     private static final String READER_CURSOR_PREFIX = "beneficiary.reader.cursor.t";
     private static final String DATA_WRITER_PREFIX = "ndjsonDataWriter.p";
     private static final String ERROR_WRITER_PREFIX = "ndjsonErrorWriter.p";
     private static final String TOKEN_INFIX = ".t";
+    private static final String NAME_DELIMITER = "_";
+    private static final String FILE_TOKEN_INFIX = NAME_DELIMITER + "t";
     private static final String NDJSON_SUFFIX = ".ndjson";
+
+    private static final String STEP_NAME_SEPARATOR = ":";
 
     /**
      * Look at a given execution context and figure out what token its last committed chunk belongs to.
@@ -40,7 +47,18 @@ final class PrototypePartitionNaming {
      * @param streamSuffix {@link #DATA_STREAM} or {@link #ERROR_STREAM}
      */
     static String fileName(String contractNumber, int partitionIndex, long fenceToken, String streamSuffix) {
-        return contractNumber + "_partition" + partitionIndex + "_t" + fenceToken + streamSuffix + NDJSON_SUFFIX;
+        return contractNumber + NAME_DELIMITER + PARTITION_TOKEN + partitionIndex
+                + FILE_TOKEN_INFIX + fenceToken + streamSuffix + NDJSON_SUFFIX;
+    }
+
+    /** The partitioner's key for a partition, which Spring Batch turns into the partition's step name. */
+    static String partitionName(int partitionIndex) {
+        return PARTITION_TOKEN + partitionIndex;
+    }
+
+    /** SQL pattern matching the step name of every partition of the given worker step. */
+    static String partitionStepNamePattern(String workerStepName) {
+        return workerStepName + STEP_NAME_SEPARATOR + PARTITION_TOKEN + "%";
     }
 
     static String dataWriterName(int partitionIndex, long fenceToken) {
