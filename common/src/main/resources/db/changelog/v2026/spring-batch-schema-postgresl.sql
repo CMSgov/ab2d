@@ -4,7 +4,7 @@
 --preconditions onFail:MARK_RAN onError:HALT
 --precondition-sql-check expectedResult:0 SELECT count(*) FROM information_schema.tables WHERE table_name='batch_job_instance' AND table_schema=current_schema()
 /*
-    This script will be executed only if the precondition is met (the table ab2d.batch_job_instance does not exist)
+    This script will be executed only if the precondition is met (the table batch_job_instance does not exist)
     The contents below are copied verbatim from spring-batch-core-6.0.3.jar!/org/springframework/batch/core/schema-postgresql.sql
 */
 
