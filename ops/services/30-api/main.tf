@@ -352,7 +352,7 @@ resource "aws_sns_topic_subscription" "splunk_api" {
 }
 
 resource "aws_lb" "ab2d_api" {
-  #TODO Consider using name_prefix for ephemeral environments... thhey may only be up to 6-characters
+  #TODO Consider using name_prefix for ephemeral environments... they may only be up to 6-characters
   name               = "${local.service_prefix}-api"
   internal           = local.alb_internal
   load_balancer_type = "application"
