@@ -33,6 +33,7 @@ locals {
     cidrs         = "/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv"
     accounts      = "/ab2d/mgmt/aws-account-numbers"
     mgmt_ipv4     = "/cdap/sensitive/mgmt/public_nat_ipv4"
+    splunk        = "/ab2d/mgmt/splunk"
   }
 
   #TODO in honor of Ben "Been Jammin'" Hesford
@@ -66,6 +67,7 @@ locals {
   hpms_auth_key_id_arn         = nonsensitive(module.platform.ssm.core.hpms_auth_key_id.arn)
   hpms_auth_key_secret_arn     = nonsensitive(module.platform.ssm.core.hpms_auth_key_secret.arn)
   hpms_url_arn                 = nonsensitive(module.platform.ssm.core.hpms_url.arn)
+  kms_master_key_id            = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   microservices_url            = lookup(module.platform.ssm.microservices, "url", { value : "none" }).value
   network_access_logs_bucket   = module.platform.splunk_logging_bucket.bucket
   private_subnet_ids           = keys(module.platform.private_subnets)
@@ -74,6 +76,7 @@ locals {
   slack_trace_webhooks_arn     = nonsensitive(module.platform.ssm.common.slack_trace_webhooks.arn)
   vpc_id                       = module.platform.vpc_id
   cloudwatch_sns_topic         = data.aws_sns_topic.cloudwatch_alarms.arn
+  splunk_alert_email           = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
 
   pdp_map = { for k in keys(module.platform.ssm.cidrs) : k => { "cidrs" = nonsensitive(module.platform.ssm.cidrs[k].value), "contracts" = nonsensitive(module.platform.ssm.contracts[k].value) } }
 
@@ -317,6 +320,11 @@ module "service" {
   ]
 }
 
+resource "aws_sns_topic" "api" {
+  name              = "${local.service_prefix}-api-healthy-host"
+  kms_master_key_id = local.kms_master_key_id
+}
+
 resource "aws_cloudwatch_metric_alarm" "health" {
   alarm_name          = "${local.service_prefix}-api-healthy-host"
   comparison_operator = "LessThanThreshold"
@@ -334,6 +342,13 @@ resource "aws_cloudwatch_metric_alarm" "health" {
     LoadBalancer = aws_lb.ab2d_api.arn_suffix
     TargetGroup  = regex("targetgroup/.+", module.service.target_group_arn)
   }
+}
+
+resource "aws_sns_topic_subscription" "splunk_api" {
+  count     = local.splunk_alert_email != null ? 1 : 0
+  topic_arn = aws_sns_topic.api.arn
+  protocol  = "email"
+  endpoint  = local.splunk_alert_email
 }
 
 resource "aws_lb" "ab2d_api" {

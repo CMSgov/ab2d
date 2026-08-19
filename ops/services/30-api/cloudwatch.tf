@@ -60,3 +60,9 @@ resource "aws_cloudwatch_metric_alarm" "http_code_elb_5xx_count" {
   }
 }
 
+resource "aws_sns_topic_subscription" "splunk_elb" {
+  count     = local.splunk_alert_email != null ? 1 : 0
+  topic_arn = local.cloudwatch_sns_topic
+  protocol  = "email"
+  endpoint  = local.splunk_alert_email
+}
