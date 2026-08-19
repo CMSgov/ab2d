@@ -16,6 +16,7 @@ import java.util.Map;
  * healIndeterminateExecutions - force a job's indeterminate executions/steps to a restartable FAILED state
  *      This is mainly to handle UNKNOWN statuses resulting from zombie workers.
  * completedProcessedCount - how many benes have we processed already? Used to track progress
+ * partitionStepNames - every partition the job has run, so recovery can inspect each one
  */
 @Slf4j
 @Component
@@ -79,6 +80,19 @@ public class PrototypeBatchMetadataRepository {
                    AND se.status = 'COMPLETED'
                  ORDER BY se.step_name, ft.parameter_value::bigint DESC
             ) winners
+            """;
+
+    // Every partition this job has ever run, whatever generation or status it ended in.
+    // Hard recovery uses this to determine which steps to carry forward.
+    private static final String PARTITION_STEP_NAMES_SQL = """
+            SELECT DISTINCT se.step_name
+              FROM batch_step_execution se
+              JOIN batch_job_execution je ON je.job_execution_id = se.job_execution_id
+              JOIN batch_job_execution_params pj ON pj.job_execution_id = je.job_execution_id
+                   AND pj.parameter_name = 'jobUuid'
+             WHERE pj.parameter_value = :uuid
+               AND se.step_name LIKE :stepPrefix
+             ORDER BY se.step_name
             """;
 
     // When hard-recovering a job, we set its old job execution to FAILED since we're
@@ -153,9 +167,17 @@ public class PrototypeBatchMetadataRepository {
     }
 
     /**
-     * On hard recovery, force indeterminate batch execution/step to FAILED so a resume can happen
-     * We redo failed partitions on hard recovery, so we don't care about the current partition's status.
-     * Potential for copy-forward on steps that are not UNKNOWN status, so we don't have to redo the entire partition
+     * The step name of every partition this job has run
+     */
+    public List<String> partitionStepNames(String jobUuid, String workerStepName) {
+        return jdbc.queryForList(PARTITION_STEP_NAMES_SQL,
+                Map.of("uuid", jobUuid, "stepPrefix", workerStepName + ":partition%"), String.class);
+    }
+
+    /**
+     * On hard recovery, force indeterminate (STARTING, STARTED, STOPPING or UNKNOWN) batch execution/step
+     * to FAILED so a resume can happen.
+     * Runs after the copy-forward, which allows chunk-level resume so long as there isn't any UNKNOWNs.
      */
     public int healIndeterminateExecutions(String jobUuid) {
         int steps = jdbc.update(HEAL_STEPS_SQL, Map.of("uuid", jobUuid));
