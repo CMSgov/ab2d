@@ -210,8 +210,8 @@ resource "aws_cloudwatch_metric_alarm" "efs_health" {
   threshold           = "1"
   alarm_description   = "EFS connection count"
   treat_missing_data  = "ignore"
-  alarm_actions       = [aws_sns_topic.efs[0].arn]
-  ok_actions          = [aws_sns_topic.efs[0].arn]
+  alarm_actions       = [aws_sns_topic.alarms.arn]
+  ok_actions          = [aws_sns_topic.alarms.arn]
 
   dimensions = {
     FileSystemId = aws_efs_file_system.efs[0].id
