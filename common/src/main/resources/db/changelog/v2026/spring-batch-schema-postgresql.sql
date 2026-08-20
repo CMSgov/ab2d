@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset system:spring-batch-schema-postgresl
+--changeset system:spring-batch-schema-postgresql
 --preconditions onFail:MARK_RAN onError:HALT
 --precondition-sql-check expectedResult:0 SELECT count(*) FROM information_schema.tables WHERE table_name='batch_job_instance' AND table_schema=current_schema()
 /*
