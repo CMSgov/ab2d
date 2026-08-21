@@ -32,6 +32,9 @@ on:
         description: Lambda version - optional, but must be provided to run tofu plan/apply
         default: ""
         type: string
+      skip_idr_importer:
+        type: boolean
+        description: Skip IDR importer module for debugging purposes
   workflow_dispatch:
     inputs:
       environment:
@@ -67,6 +70,9 @@ on:
         description: Lambda version - optional, but must be provided to run tofu plan/apply
         default: ""
         type: string
+      skip_idr_importer:
+        type: boolean
+        description: Skip IDR importer module for debugging purposes
 
 concurrency:
   group: tofu-plan-or-apply
@@ -143,7 +149,7 @@ jobs:
           tofu plan ${{ inputs.api_image_tag != '' && format('{0}{1}', '-var=api_service_image_tag=', inputs.api_image_tag) || '-var=api_service_image_tag="$ACTIVE_IMAGE_TAG"' }} -out=tfplan
           tofu apply -input=false tfplan
       - name: tofu plan - idr-db-importer
-        if: ${{ inputs.environment != 'prod' }}
+        if: ${{ inputs.skip_idr_importer == false }}
         working-directory: ops/services/30-idr-db-importer/
         run: |
           tofu init -var=parent_env=$ENV -reconfigure
