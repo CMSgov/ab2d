@@ -38,11 +38,14 @@ public class NdjsonWriterConfig {
 
         // files are named with the fenceToken so that each time it bumps there must be a new file. This keeps
         // restart safe. Stale/zombie workers cannot interact with the new file.
-        String base = contract + "_partition" + partitionIndex + "_t" + fenceToken;
         FlatFileItemWriter<String> dataWriter = lineWriter(
-                streamingDir.resolve(base + ".ndjson"), "ndjsonDataWriter.p" + partitionIndex + ".t" + fenceToken);
+                streamingDir.resolve(PrototypePartitionNaming.fileName(contract, partitionIndex, fenceToken,
+                        PrototypePartitionNaming.DATA_STREAM)),
+                PrototypePartitionNaming.dataWriterName(partitionIndex, fenceToken));
         FlatFileItemWriter<String> errorWriter = lineWriter(
-                streamingDir.resolve(base + "_error.ndjson"), "ndjsonErrorWriter.p" + partitionIndex + ".t" + fenceToken);
+                streamingDir.resolve(PrototypePartitionNaming.fileName(contract, partitionIndex, fenceToken,
+                        PrototypePartitionNaming.ERROR_STREAM)),
+                PrototypePartitionNaming.errorWriterName(partitionIndex, fenceToken));
         return new NdjsonCompositeWriter(dataWriter, errorWriter);
     }
 

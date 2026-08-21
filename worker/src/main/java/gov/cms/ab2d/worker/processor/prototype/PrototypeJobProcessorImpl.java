@@ -78,6 +78,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private final CoverageV3Service coverageV3Service;
     private final PrototypeBatchMetadataRepository batchMeta;
     private final PrototypeOutputAssembler outputAssembler;
+    private final PrototypeJobRecovery recovery;
     private final PrototypeJobLeaseRenewer leaseRenewer;
     private final JobLeaseRepository jobLease;
     // progress and failure reporting, reused from the main processor
@@ -104,6 +105,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             CoverageV3Service coverageV3Service,
             PrototypeBatchMetadataRepository batchMeta,
             PrototypeOutputAssembler outputAssembler,
+            PrototypeJobRecovery recovery,
             PrototypeJobLeaseRenewer leaseRenewer,
             JobLeaseRepository jobLease,
             JobChannelService jobChannelService,
@@ -123,6 +125,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         this.coverageV3Service = coverageV3Service;
         this.batchMeta = batchMeta;
         this.outputAssembler = outputAssembler;
+        this.recovery = recovery;
         this.leaseRenewer = leaseRenewer;
         this.jobLease = jobLease;
         this.jobChannelService = jobChannelService;
@@ -159,23 +162,11 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
         String contractNumber = job.getContractNumber();
 
-        // we either adopt the current token (restarting from a graceful pause) or we get a new one
-        // Getting a new token "fences" out potentially still-living workers that think they still own this job
-        Optional<Long> adopted = jobLease.tryAdoptCleanSuspend(jobUuid, owner);
-        long fenceToken = adopted.orElseGet(() -> jobLease.bump(jobUuid, owner));
-        boolean softResume = adopted.isPresent();
-
-        // after we bump the token, we heal the state of the job by failing the in-progress steps
-        // note that this includes UNKNOWN status, which Spring Batch refuses to restart generally.
-        // TODO: Special-case the UNKNOWN steps so we can recover from hard-crash with copy-forward
-        //      this means separating the recover cases from hard-crash and hung/frozen worker
-        //      This also might be moot when doing remote partitioning
-        // Since the reader/writer are scoped to the current fence token, after we bump the token, we will
-        // be redoing the partition anyway, so we don't care if the status of the old step is UNKNOWN.
-        // Just fail the step, the zombie is fenced out now anyway.
-        if (!softResume) {
-            batchMeta.healIndeterminateExecutions(jobUuid);
-        }
+        // Either resume gracefully, by taking over the current execution, or hard restart, by
+        // bumping the fence token and healing the execution.
+        PrototypeJobRecovery.Ownership ownership = recovery.acquire(jobUuid, owner);
+        long fenceToken = ownership.fenceToken();
+        boolean softResume = ownership.softResume();
 
         // Start renewing the heartbeat
         leaseRenewer.track(jobUuid, fenceToken);
