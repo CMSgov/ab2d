@@ -17,9 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Hard-recovery tests for scenarios where the old owner of the job is truly dead/crashed.
  * The job should be healed and restarted.
- * Hard-recovery currently restarts partitions from scratch for safety, but there is opportunity
- * to recover old partitions so long as they can be knowably healed (i.e. they are not UNKNOWN status)
- * Completed partitions get skipped either way, so they are not redone.
  */
 class PrototypeHardRecoveryIntegrationTest extends AbstractPrototypeRecoveryIntegrationTest {
 

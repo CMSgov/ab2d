@@ -36,4 +36,9 @@ public class PrototypeProperties {
 
     /** How long shutdown waits for the batch execution to finish cleaning up before shutting down. */
     private long shutdownAwaitMs = 32000;
+
+    /**
+     * Whether hard recovery restarts partitions from scratch or from the last good chunk
+     */
+    private boolean copyForwardEnabled = true;
 }
