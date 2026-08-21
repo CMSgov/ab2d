@@ -44,18 +44,4 @@ public class PrototypeBatchConfiguration extends DefaultBatchConfiguration {
         return transactionManager;
     }
 
-    /**
-     * create the BATCH_* metadata tables
-     */
-    @Bean
-    public DataSourceInitializer batchSchemaInitializer() {
-        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        populator.addScript(new ClassPathResource("org/springframework/batch/core/schema-postgresql.sql"));
-        populator.setContinueOnError(true);
-
-        DataSourceInitializer initializer = new DataSourceInitializer();
-        initializer.setDataSource(dataSource);
-        initializer.setDatabasePopulator(populator);
-        return initializer;
-    }
 }
