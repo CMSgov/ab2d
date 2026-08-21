@@ -31,8 +31,6 @@ import java.util.List;
 public class PrototypeOutputAssembler {
 
     private static final int BYTES_PER_MB = 1024 * 1024;
-    private static final String DATA_SUFFIX = "";
-    private static final String ERROR_SUFFIX = "_error";
 
     private final SearchConfig searchConfig;
     private final JobOutputRepository jobOutputRepository;
@@ -77,14 +75,16 @@ public class PrototypeOutputAssembler {
         Files.createDirectories(jobRoot);
 
         // Data stream is required: a missing data winner means the delivered output would be incomplete.
-        List<Path> dataWinners = promoteWinners(partitions, contractNumber, DATA_SUFFIX, streamingDir, finishedDir,
-                jobUuid, true);
-        List<Path> dataRollover = concatenate(dataWinners, contractNumber, jobRoot, rolloverBytes, DATA_SUFFIX);
+        List<Path> dataWinners = promoteWinners(partitions, contractNumber, PrototypePartitionNaming.DATA_STREAM,
+                streamingDir, finishedDir, jobUuid, true);
+        List<Path> dataRollover = concatenate(dataWinners, contractNumber, jobRoot, rolloverBytes,
+                PrototypePartitionNaming.DATA_STREAM);
 
         // Error stream is optional: a partition with no serialization failures has an empty error file.
-        List<Path> errorWinners = promoteWinners(partitions, contractNumber, ERROR_SUFFIX, streamingDir, finishedDir,
-                jobUuid, false);
-        List<Path> errorRollover = concatenate(errorWinners, contractNumber, jobRoot, rolloverBytes, ERROR_SUFFIX);
+        List<Path> errorWinners = promoteWinners(partitions, contractNumber, PrototypePartitionNaming.ERROR_STREAM,
+                streamingDir, finishedDir, jobUuid, false);
+        List<Path> errorRollover = concatenate(errorWinners, contractNumber, jobRoot, rolloverBytes,
+                PrototypePartitionNaming.ERROR_STREAM);
 
         List<JobOutput> outputs = new ArrayList<>(dataRollover.size() + errorRollover.size());
         registerOutputs(dataRollover, job, outputs);
@@ -148,8 +148,8 @@ public class PrototypeOutputAssembler {
                                       String jobUuid, boolean required) throws IOException {
         List<Path> promoted = new ArrayList<>(partitions.size());
         for (PrototypeBatchMetadataRepository.CompletedPartition partition : partitions) {
-            String name = contractNumber + "_partition" + partition.partitionIndex()
-                    + "_t" + partition.token() + suffix + ".ndjson";
+            String name = PrototypePartitionNaming.fileName(contractNumber, partition.partitionIndex(),
+                    partition.token(), suffix);
             Path source = streamingDir.resolve(name);
             Path dest = finishedDir.resolve(name);
             if (Files.isRegularFile(source)) {

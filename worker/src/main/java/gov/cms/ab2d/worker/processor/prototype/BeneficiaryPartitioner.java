@@ -59,7 +59,7 @@ public class BeneficiaryPartitioner implements Partitioner {
             ec.putLong(KEY_START_PATIENT, lower);
             ec.putLong(KEY_END_PATIENT, upper);
 
-            partitions.put(partitionName(i), ec);
+            partitions.put(PrototypePartitionNaming.partitionName(i), ec);
             lower = upper;
         }
 
@@ -79,9 +79,5 @@ public class BeneficiaryPartitioner implements Partitioner {
         }
         int size = partitionSize <= 0 ? (int) Math.min(maxRow, Integer.MAX_VALUE) : partitionSize;
         return coverageV3Service.getPartitionBoundaryPatientIds(contractNumber, size);
-    }
-
-    private static String partitionName(int index) {
-        return "partition" + index;
     }
 }

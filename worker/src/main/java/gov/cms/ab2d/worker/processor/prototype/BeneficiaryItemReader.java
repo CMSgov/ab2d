@@ -23,8 +23,6 @@ import java.util.Optional;
 @Component
 @StepScope
 public class BeneficiaryItemReader implements ItemStreamReader<CoverageSummary> {
-    // the checkpoint key is named with the token so the reader/writer both reset together
-    static final String CURSOR_KEY_PREFIX = "beneficiary.reader.cursor.t";
 
     private final CoverageV3Service coverageV3Service;
     private final String contract;
@@ -50,7 +48,7 @@ public class BeneficiaryItemReader implements ItemStreamReader<CoverageSummary> 
         this.startPatientId = startPatientId;
         this.endPatientId = endPatientId;
         this.pageSize = pageSize;
-        this.cursorKey = CURSOR_KEY_PREFIX + fenceToken;
+        this.cursorKey = PrototypePartitionNaming.readerCursorKey(fenceToken);
     }
 
     @Override
