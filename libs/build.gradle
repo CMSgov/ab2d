@@ -22,10 +22,10 @@ ext {
             : System.getenv()['ARTIFACTORY_PASSWORD']
 
     // AB2D libraries
-    fhirVersion='2.5.9'
-    bfdVersion='4.8.3'
+    fhirVersion='2.5.10'
+    bfdVersion='4.8.4'
     aggregatorVersion='2.1.7'
-    filtersVersion='3.2.2' // AB2D-7222 Refactor EOB Processing to Eliminate Excess Allocations and Improve Reusability
+    filtersVersion='3.2.3'
     eventClientVersion='3.3.17'
     propertiesClientVersion='2.1.1'
     contractClientVersion='2.2.3'
@@ -188,8 +188,8 @@ subprojects {
             implementation('io.opentelemetry:opentelemetry-api:1.62.0')
             implementation('commons-beanutils:commons-beanutils:1.11.0')
             implementation('org.springframework.retry:spring-retry:2.0.13')
-            implementation('org.bouncycastle:bcprov-jdk18on:1.84')
-            implementation('org.bouncycastle:bcpkix-jdk18on:1.84')
+            implementation('org.bouncycastle:bcprov-jdk18on:1.85')
+            implementation('org.bouncycastle:bcpkix-jdk18on:1.85')
             implementation('com.nimbusds:nimbus-jose-jwt:9.37.4')
             implementation('org.mozilla:rhino:1.8.1')
             implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
@@ -203,7 +203,7 @@ subprojects {
             implementation('org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23')
             implementation('ch.qos.logback:logback-core:1.5.36')
             implementation('ch.qos.logback:logback-classic:1.5.36')
-            implementation('org.apache.thrift:libthrift:0.23.0')
+            implementation('org.apache.thrift:libthrift:0.24.0')
         }
     }
 
