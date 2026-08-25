@@ -41,4 +41,17 @@ public class PrototypeProperties {
      * Whether hard recovery restarts partitions from scratch or from the last good chunk
      */
     private boolean copyForwardEnabled = true;
+
+    /**
+     * How many attempts can be left before a failing job is reported as approaching its cap. Failing a job
+     * is expected and recoverable, but grinding toward the terminal failure is worth knowing about early.
+     */
+    private int failureAttemptsWarnRemaining = 2;
+
+    /**
+     * Multiple of the lease TTL after which an unrecovered IN_PROGRESS job means recovery is not working.
+     * A job past the TTL is normally taken over on the next poll, so anything still there several TTLs
+     * later is stranded.
+     */
+    private int leaseGraceMultiplier = 3;
 }

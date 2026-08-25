@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.prototype.lease;
 
+import gov.cms.ab2d.worker.processor.prototype.PrototypeMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.batch.core.listener.ItemWriteListener;
@@ -13,17 +14,26 @@ import org.springframework.batch.infrastructure.item.Chunk;
 public class PrototypeFenceGuard implements ItemWriteListener<Object> {
 
     private final JobLeaseRepository jobLease;
+    private final PrototypeMetrics metrics;
     private final String jobUuid;
     private final long token;
 
-    public PrototypeFenceGuard(JobLeaseRepository jobLease, String jobUuid, long token) {
+    public PrototypeFenceGuard(JobLeaseRepository jobLease, PrototypeMetrics metrics, String jobUuid, long token) {
         this.jobLease = jobLease;
+        this.metrics = metrics;
         this.jobUuid = jobUuid;
         this.token = token;
     }
 
     @Override
     public void afterWrite(@NonNull Chunk<?> items) {
-        jobLease.assertHoldsAndBeat(jobUuid, token);
+        try {
+            jobLease.assertHoldsAndBeat(jobUuid, token);
+        } catch (FenceLostException e) {
+            // Record before rethrowing: the exception rolls the chunk back and unwinds the step, so this is
+            // the only place that knows a commit was refused because ownership moved.
+            metrics.chunkFenceLost(jobUuid, token);
+            throw e;
+        }
     }
 }

@@ -47,19 +47,32 @@ public class PrototypeJobRecovery {
     private final PrototypeBatchMetadataRepository batchMeta;
     private final SearchConfig searchConfig;
     private final PrototypeProperties props;
+    private final PrototypeMetrics metrics;
 
     public PrototypeJobRecovery(JobLeaseRepository jobLease, JobRepository batchJobRepository,
                                 PrototypeBatchMetadataRepository batchMeta, SearchConfig searchConfig,
-                                PrototypeProperties props) {
+                                PrototypeProperties props, PrototypeMetrics metrics) {
         this.jobLease = jobLease;
         this.batchJobRepository = batchJobRepository;
         this.batchMeta = batchMeta;
         this.searchConfig = searchConfig;
         this.props = props;
+        this.metrics = metrics;
     }
 
     /** Record of whether this worker soft or hard restarted this job, and its token  */
     public record Ownership(long fenceToken, boolean softResume) {
+
+        /**
+         * How this worker came to own the job. A bump that produced the very first token means nobody held
+         * the job before, so there is nothing to recover; any higher token means a prior owner was displaced.
+         */
+        public ResumeMode mode() {
+            if (softResume) {
+                return ResumeMode.SOFT;
+            }
+            return fenceToken <= 1 ? ResumeMode.FRESH : ResumeMode.HARD;
+        }
     }
 
     /**
@@ -76,7 +89,12 @@ public class PrototypeJobRecovery {
         // Copy-forward runs first, to see if there are any UNKNOWN statuses
         // If no, it copies the old partition work to the new file
         // If yes, it doesn't copy anything forward, the partition will be restarted
-        copyForward(jobUuid, fenceToken);
+        CopyForwardResult copied = copyForward(jobUuid, fenceToken);
+        // Only a genuine takeover has partitions to carry forward. A first claim has none, and reporting
+        // zeroes for it would drown the signal we actually want out of this metric.
+        if (fenceToken > 1) {
+            metrics.copyForward(jobUuid, fenceToken, copied.seeded(), copied.restarted());
+        }
         batchMeta.healIndeterminateExecutions(jobUuid);
         return new Ownership(fenceToken, false);
     }
@@ -85,26 +103,30 @@ public class PrototypeJobRecovery {
      * If the partition is not in status UNKNOWN, and hasn't been completed, copy its work
      * over to the new file.
      */
-    private int copyForward(String jobUuid, long newToken) {
+    private CopyForwardResult copyForward(String jobUuid, long newToken) {
         if (!props.isCopyForwardEnabled()) {
             log.info("copy-forward is disabled for job {}", jobUuid);
-            return 0;
+            return CopyForwardResult.NONE;
         }
 
         int copied = 0;
+        int restarted = 0;
         try {
             JobInstance instance = batchJobRepository.getJobInstance(PROTOTYPE_JOB_NAME,
                     new JobParametersBuilder().addString(JOB_UUID_PARAM, jobUuid).toJobParameters());
             if (instance == null) {
-                return 0;
+                return CopyForwardResult.NONE;
             }
 
             for (String stepName : batchMeta.partitionStepNames(jobUuid, WORKER_STEP_NAME)) {
                 try {
-                    if (copyForwardPartition(jobUuid, instance, stepName, newToken)) {
-                        copied++;
+                    switch (copyForwardPartition(jobUuid, instance, stepName, newToken)) {
+                        case SEEDED -> copied++;
+                        case RESTARTED -> restarted++;
+                        default -> { /* the partition was already finished, there is nothing to carry */ }
                     }
                 } catch (RuntimeException e) {
+                    restarted++;
                     log.warn("copy-forward for job {}: {} failed to copy, so the partition " +
                             "will be restarted", jobUuid, stepName, e);
                 }
@@ -115,7 +137,26 @@ public class PrototypeJobRecovery {
         if (copied > 0) {
             log.info("copy-forward for job {}: seeded {} partition(s) into token {}", jobUuid, copied, newToken);
         }
-        return copied;
+        return new CopyForwardResult(copied, restarted);
+    }
+
+    /** How many in-flight partitions kept their committed chunks, and how many have to be redone. */
+    private record CopyForwardResult(int seeded, int restarted) {
+
+        private static final CopyForwardResult NONE = new CopyForwardResult(0, 0);
+    }
+
+    /** What happened to one partition during the copy-forward pass. */
+    private enum PartitionCopyOutcome {
+
+        /** Committed chunks were carried into the new token's file, the partition resumes mid-way. */
+        SEEDED,
+
+        /** Nothing could be carried, so the partition will be processed again from the beginning. */
+        RESTARTED,
+
+        /** The partition was already COMPLETED or never ran, so there is no in-flight work to carry. */
+        SKIPPED
     }
 
     /**
@@ -124,17 +165,17 @@ public class PrototypeJobRecovery {
      * completed, the executionContext is left untouched and the partition will
      * behave "normally". Normal in this case means restarting the partition from scratch.
      *
-     * @return true if the partition's checkpoint was updated
+     * @return what happened to the partition, so recovery can report how much work survived the crash
      */
-    private boolean copyForwardPartition(String jobUuid, JobInstance instance, String stepName, long newToken) {
+    private PartitionCopyOutcome copyForwardPartition(String jobUuid, JobInstance instance, String stepName, long newToken) {
         StepExecution last = batchJobRepository.getLastStepExecution(instance, stepName);
         if (last == null || last.getStatus() == BatchStatus.COMPLETED) {
-            return false;
+            return PartitionCopyOutcome.SKIPPED;
         }
         if (last.getStatus() == BatchStatus.UNKNOWN) {
             log.info("copy-forward for job {}: {} ended UNKNOWN, so its partition " +
                     "will be restarted", jobUuid, stepName);
-            return false;
+            return PartitionCopyOutcome.RESTARTED;
         }
 
         ExecutionContext context = last.getExecutionContext();
@@ -144,14 +185,14 @@ public class PrototypeJobRecovery {
             log.warn("copy-forward for job {}: {} is missing the contract number or partition index the " +
                             "partitioner writes, so the partition must be restarted",
                     jobUuid, stepName);
-            return false;
+            return PartitionCopyOutcome.RESTARTED;
         }
 
         Checkpoint checkpoint = readCheckpoint(context, partitionIndex);
         if (checkpoint == null) {
             log.info("copy-forward for job {}: {} has no committed chunks, so it " +
                     "will be restarted", jobUuid, stepName);
-            return false;
+            return PartitionCopyOutcome.RESTARTED;
         }
 
         Path streamingDir = searchConfig.getStreamingDir(jobUuid).toPath();
@@ -168,14 +209,14 @@ public class PrototypeJobRecovery {
             deleteQuietly(seeded);
             log.warn("copy-forward for job {}: could not seed {} from token {}, so the partition must restart",
                     jobUuid, stepName, checkpoint.token(), e);
-            return false;
+            return PartitionCopyOutcome.RESTARTED;
         }
 
         log.info("copy-forward for job {}: {} resumes at patient {} with {} data byte(s) and {} error byte(s) "
                         + "carried from token {} into token {}",
                 jobUuid, stepName, checkpoint.readerCursor(), checkpoint.dataBytes(), checkpoint.errorBytes(),
                 checkpoint.token(), newToken);
-        return true;
+        return PartitionCopyOutcome.SEEDED;
     }
 
     /**
