@@ -142,13 +142,13 @@ jobs:
           echo "image_tag=$TAG" >> "$GITHUB_OUTPUT"
 
   dev:
-    needs: [setup, build, validate-tag, latest_tag]
+    needs: [setup, build, validate-tag, latest-tag]
     if: |
       always() &&
       needs.setup.result == 'success' &&
       (needs.build.result == 'success' || needs.build.result == 'skipped') &&
       (needs['validate-tag'].result == 'success' || needs['validate-tag'].result == 'skipped') &&
-      (needs.latest_tag.result == 'success' || needs.latest_tag.result == 'skipped') &&
+      (needs.latest-tag.result == 'success' || needs.latest-tag.result == 'skipped') &&
       (github.event_name != 'workflow_dispatch' || needs.setup.outputs.environment == 'dev')
     uses: ./.github/workflows/tofu-run.yml
     with:
@@ -156,17 +156,17 @@ jobs:
       environment: "dev"
       apply: ${{ needs.setup.outputs.apply }}
       branch: ${{ needs.setup.outputs.branch }}
-      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest_tag.outputs.image_tag }}"}'
+      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest-tag.outputs.image_tag }}"}'
     secrets: inherit
 
   test:
-    needs: [setup, build, validate-tag, latest_tag, dev]
+    needs: [setup, build, validate-tag, latest-tag, dev]
     if: |
       always() &&
       needs.setup.result == 'success' &&
       (needs.build.result == 'success' || needs.build.result == 'skipped') &&
       (needs['validate-tag'].result == 'success' || needs['validate-tag'].result == 'skipped') &&
-      (needs.latest_tag.result == 'success' || needs.latest_tag.result == 'skipped') &&
+      (needs.latest-tag.result == 'success' || needs.latest-tag.result == 'skipped') &&
       (needs.dev.result == 'success' || needs.dev.result == 'skipped') &&
       (github.event_name != 'workflow_dispatch' || needs.setup.outputs.environment == 'test')
     uses: ./.github/workflows/tofu-run.yml
@@ -175,17 +175,17 @@ jobs:
       environment: "test"
       apply: ${{ needs.setup.outputs.apply }}
       branch: ${{ needs.setup.outputs.branch }}
-      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest_tag.outputs.image_tag }}"}'
+      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest-tag.outputs.image_tag }}"}'
     secrets: inherit
 
   sandbox:
-    needs: [setup, build, validate-tag, latest_tag]
+    needs: [setup, build, validate-tag, latest-tag]
     if: |
       always() &&
       needs.setup.result == 'success' &&
       (needs.build.result == 'success' || needs.build.result == 'skipped') &&
       (needs['validate-tag'].result == 'success' || needs['validate-tag'].result == 'skipped') &&
-      (needs.latest_tag.result == 'success' || needs.latest_tag.result == 'skipped') &&
+      (needs.latest-tag.result == 'success' || needs.latest-tag.result == 'skipped') &&
       github.event_name == 'workflow_dispatch' &&
       needs.setup.outputs.environment == 'sandbox'
     uses: ./.github/workflows/tofu-run.yml
@@ -194,17 +194,17 @@ jobs:
       environment: "sandbox"
       apply: ${{ needs.setup.outputs.apply }}
       branch: ${{ needs.setup.outputs.branch }}
-      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest_tag.outputs.image_tag }}"}'
+      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest-tag.outputs.image_tag }}"}'
     secrets: inherit
 
   prod:
-    needs: [setup, build, validate-tag, latest_tag]
+    needs: [setup, build, validate-tag, latest-tag]
     if: |
       always() &&
       needs.setup.result == 'success' &&
       (needs.build.result == 'success' || needs.build.result == 'skipped') &&
       (needs['validate-tag'].result == 'success' || needs['validate-tag'].result == 'skipped') &&
-      (needs.latest_tag.result == 'success' || needs.latest_tag.result == 'skipped') &&
+      (needs.latest-tag.result == 'success' || needs.latest-tag.result == 'skipped') &&
       github.event_name == 'workflow_dispatch' &&
       needs.setup.outputs.environment == 'prod'
     uses: ./.github/workflows/tofu-run.yml
@@ -213,5 +213,5 @@ jobs:
       environment: "prod"
       apply: ${{ needs.setup.outputs.apply }}
       branch: ${{ needs.setup.outputs.branch }}
-      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest_tag.outputs.image_tag }}"}'
+      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest-tag.outputs.image_tag }}"}'
     secrets: inherit
