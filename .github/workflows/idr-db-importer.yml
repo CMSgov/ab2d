@@ -152,7 +152,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || needs.setup.outputs.environment == 'dev')
     uses: ./.github/workflows/tofu-run.yml
     with:
-      service: "idr-db-importer"
+      service: "30-idr-db-importer"
       environment: "dev"
       apply: ${{ needs.setup.outputs.apply }}
       branch: ${{ needs.setup.outputs.branch }}
@@ -171,7 +171,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || needs.setup.outputs.environment == 'test')
     uses: ./.github/workflows/tofu-run.yml
     with:
-      service: "idr-db-importer"
+      service: "30-idr-db-importer"
       environment: "test"
       apply: ${{ needs.setup.outputs.apply }}
       branch: ${{ needs.setup.outputs.branch }}
@@ -190,7 +190,7 @@ jobs:
       needs.setup.outputs.environment == 'sandbox'
     uses: ./.github/workflows/tofu-run.yml
     with:
-      service: "idr-db-importer"
+      service: "30-idr-db-importer"
       environment: "sandbox"
       apply: ${{ needs.setup.outputs.apply }}
       branch: ${{ needs.setup.outputs.branch }}
@@ -209,7 +209,7 @@ jobs:
       needs.setup.outputs.environment == 'prod'
     uses: ./.github/workflows/tofu-run.yml
     with:
-      service: "idr-db-importer"
+      service: "30-idr-db-importer"
       environment: "prod"
       apply: ${{ needs.setup.outputs.apply }}
       branch: ${{ needs.setup.outputs.branch }}
