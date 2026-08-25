@@ -101,7 +101,7 @@ jobs:
             > /dev/null
           echo "Tag found."
 
-  latest_tag:
+  latest-tag:
     needs: [setup, build]
     if: |
       always() &&
