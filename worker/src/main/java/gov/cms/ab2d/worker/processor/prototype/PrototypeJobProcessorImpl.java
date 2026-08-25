@@ -16,6 +16,7 @@ import gov.cms.ab2d.worker.processor.prototype.lease.PrototypeFenceGuard;
 import gov.cms.ab2d.worker.processor.prototype.lease.PrototypeJobLeaseRenewer;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -26,6 +27,7 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemStreamWriter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
@@ -96,6 +98,8 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private final BeneficiaryItemReader beneficiaryItemReader;
     private final EobItemProcessor eobItemProcessor;
     private final ItemStreamWriter<SerializedEobs> ndjsonItemWriter;
+    // shared by every job on this worker
+    private final AsyncTaskExecutor itemTaskExecutor;
 
     public PrototypeJobProcessorImpl(
             JobRepository jobRepository,
@@ -135,6 +139,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         this.beneficiaryItemReader = beneficiaryItemReader;
         this.eobItemProcessor = eobItemProcessor;
         this.ndjsonItemWriter = ndjsonItemWriter;
+        this.itemTaskExecutor = itemTaskExecutor(props.getItemConcurrency());
         this.props = props;
         this.failureThreshold = failureThreshold;
         this.auditFilesTtlHours = auditFilesTtlHours;
@@ -355,8 +360,16 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
     /** True if the batch failed because a chunk tripped the failure threshold mid-run. */
     private boolean hasThresholdException(JobExecution execution) {
+        return failedWith(execution, ThresholdExceededException.class);
+    }
+
+    /**
+     * True if any of the execution's failures is, or wraps, the given type.
+     */
+    private static boolean failedWith(JobExecution execution, Class<? extends Throwable> type) {
         return execution.getAllFailureExceptions().stream()
-                .anyMatch(ThresholdExceededException.class::isInstance);
+                .flatMap(failure -> ExceptionUtils.getThrowableList(failure).stream())
+                .anyMatch(type::isInstance);
     }
 
     /**
@@ -433,8 +446,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      * True if the execution failed because it was interrupted
      */
     private boolean wasInterrupted(JobExecution execution) {
-        return execution.getAllFailureExceptions().stream()
-                .anyMatch(InterruptedException.class::isInstance);
+        return failedWith(execution, InterruptedException.class);
     }
 
     /**
@@ -477,9 +489,13 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .skipListener(new PrototypeSkipCounter(jobChannelService, jobUuid));
         TRANSIENT_EXCEPTIONS.forEach(workerStepBuilder::retry);
 
+        if (props.isItemConcurrencyEnabled()) {
+            workerStepBuilder.taskExecutor(itemTaskExecutor);
+        }
+
         Step workerStep = workerStepBuilder
                 // abort the step at the next chunk boundary if the job is cancelled mid-run
-                .listener(new JobCancellationChunkListener(jobRepository, jobUuid))
+                .listener(new JobCancellationWriteListener(jobRepository, jobUuid))
                 .allowStartIfComplete(false)
                 // should basically never trip
                 .startLimit(props.getMaxStartAttempts())
@@ -502,6 +518,18 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         return new JobBuilder(PROTOTYPE_JOB_NAME, batchJobRepository)
                 .start(managerStep)
                 .build();
+    }
+
+    /**
+     * Async executor for concurrent chunk work. Uses virtual threads since most threads
+     * are idle waiting for BFD. The concurrency limit prevents a small group of virtual
+     * threads from absolutely hammering BFD with a million requests.
+     */
+    private static AsyncTaskExecutor itemTaskExecutor(int concurrencyLimit) {
+        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("proto-item-");
+        executor.setVirtualThreads(true);
+        executor.setConcurrencyLimit(Math.max(1, concurrencyLimit));
+        return executor;
     }
 
     /**
