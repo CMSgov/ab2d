@@ -4,6 +4,9 @@ run-name: idr-db-importer-build
 on:
   workflow_call:
     inputs:
+      is_prod:
+        type: boolean
+        default: true
       push_image:
         type: boolean
         default: true

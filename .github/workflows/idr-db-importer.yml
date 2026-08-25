@@ -1,0 +1,217 @@
+name: idr-db-importer
+run-name: "[${{ github.event_name == 'push' && 'APPLY' || 'PLAN' }}] idr-db-importer → ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev+test' }}"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "idr-db-importer/**"
+      - "ops/services/30-idr-db-importer/**"
+      - ".github/workflows/idr-db-importer-build.yml"
+      - ".github/workflows/tofu-run.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "idr-db-importer/**"
+      - "ops/services/30-idr-db-importer/**"
+      - ".github/workflows/idr-db-importer-build.yml"
+      - ".github/workflows/tofu-run.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy (manual runs only — merges always target dev+test)"
+        type: choice
+        required: true
+        default: sandbox
+        options:
+          - dev
+          - test
+          - sandbox
+          - prod
+      apply:
+        description: "Run tofu apply (unchecked = plan only)"
+        type: boolean
+        required: false
+        default: false
+      image_tag:
+        description: "Optional: deploy this existing image tag instead of building a new one"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: tofu-idr-db-importer-plan-or-apply
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  setup:
+    runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    outputs:
+      apply: ${{ steps.check.outputs.apply }}
+      branch: ${{ steps.check.outputs.branch }}
+      environment: ${{ steps.check.outputs.environment }}
+      image_tag: ${{ steps.check.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+      - id: check
+        run: |
+          echo "apply=${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.apply == true) }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.head_ref || github.ref }}" >> $GITHUB_OUTPUT
+          echo "environment=${{ (github.event_name == 'workflow_dispatch' && inputs.environment) || 'dev' }}" >> $GITHUB_OUTPUT
+          echo "image_tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+
+  build:
+    needs: setup
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && needs.setup.outputs.image_tag == '')
+    uses: ./.github/workflows/idr-db-importer-build.yml
+    with:
+      is_prod: ${{ needs.setup.outputs.environment == 'prod' || needs.setup.outputs.environment == 'sandbox' }}
+      push_image: true
+      run_tests: false
+    secrets: inherit
+
+  validate-tag:
+    needs: [setup, build]
+    if: |
+      always() &&
+      needs.setup.result == 'success' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      needs.setup.outputs.image_tag != ''
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), needs.setup.outputs.environment) && 'non-prod' || 'prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), needs.setup.outputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ needs.setup.outputs.environment }}-github-actions
+
+      - name: Verify image tag exists in ECR
+        run: |
+          echo "Checking for tag '${{ needs.setup.outputs.image_tag }}' in ab2d-idr-db-importer (${{ needs.setup.outputs.environment }} account)..."
+          aws ecr describe-images \
+            --repository-name ab2d-idr-db-importer \
+            --image-ids imageTag=${{ needs.setup.outputs.image_tag }} \
+            > /dev/null
+          echo "Tag found."
+
+  latest_tag:
+    needs: [setup, build]
+    if: |
+      always() &&
+      needs.setup.result == 'success' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      github.event_name == 'pull_request'
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), needs.setup.outputs.environment) && 'non-prod' || 'prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image_tag: ${{ steps.latest.outputs.image_tag }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), needs.setup.outputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ needs.setup.outputs.environment }}-github-actions
+
+      - name: Get latest merged image tag
+        id: latest
+        run: |
+          TAG=$(aws ecr describe-images \
+            --repository-name ab2d-idr-db-importer \
+            --output json \
+            | jq -r '
+                .imageDetails
+                | map(select(.imageTags != null and any(.imageTags[]; startswith("idr-db-importer-main-"))))
+                | sort_by(.imagePushedAt)
+                | last
+                | .imageTags[]
+                | select(startswith("idr-db-importer-main-"))
+              ')
+          if [ -z "$TAG" ] || [ "$TAG" == "null" ]; then
+            echo "::error::No previously merged image found for idr-db-importer-main-* in this account's ECR repo."
+            exit 1
+          fi
+          echo "Using latest merged image: $TAG"
+          echo "image_tag=$TAG" >> "$GITHUB_OUTPUT"
+
+  dev:
+    needs: [setup, build, validate-tag, latest_tag]
+    if: |
+      always() &&
+      needs.setup.result == 'success' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      (needs['validate-tag'].result == 'success' || needs['validate-tag'].result == 'skipped') &&
+      (needs.latest_tag.result == 'success' || needs.latest_tag.result == 'skipped') &&
+      (github.event_name != 'workflow_dispatch' || needs.setup.outputs.environment == 'dev')
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "idr-db-importer"
+      environment: "dev"
+      apply: ${{ needs.setup.outputs.apply }}
+      branch: ${{ needs.setup.outputs.branch }}
+      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest_tag.outputs.image_tag }}"}'
+    secrets: inherit
+
+  test:
+    needs: [setup, build, validate-tag, latest_tag, dev]
+    if: |
+      always() &&
+      needs.setup.result == 'success' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      (needs['validate-tag'].result == 'success' || needs['validate-tag'].result == 'skipped') &&
+      (needs.latest_tag.result == 'success' || needs.latest_tag.result == 'skipped') &&
+      (needs.dev.result == 'success' || needs.dev.result == 'skipped') &&
+      (github.event_name != 'workflow_dispatch' || needs.setup.outputs.environment == 'test')
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "idr-db-importer"
+      environment: "test"
+      apply: ${{ needs.setup.outputs.apply }}
+      branch: ${{ needs.setup.outputs.branch }}
+      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest_tag.outputs.image_tag }}"}'
+    secrets: inherit
+
+  sandbox:
+    needs: [setup, build, validate-tag, latest_tag]
+    if: |
+      always() &&
+      needs.setup.result == 'success' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      (needs['validate-tag'].result == 'success' || needs['validate-tag'].result == 'skipped') &&
+      (needs.latest_tag.result == 'success' || needs.latest_tag.result == 'skipped') &&
+      github.event_name == 'workflow_dispatch' &&
+      needs.setup.outputs.environment == 'sandbox'
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "idr-db-importer"
+      environment: "sandbox"
+      apply: ${{ needs.setup.outputs.apply }}
+      branch: ${{ needs.setup.outputs.branch }}
+      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest_tag.outputs.image_tag }}"}'
+    secrets: inherit
+
+  prod:
+    needs: [setup, build, validate-tag, latest_tag]
+    if: |
+      always() &&
+      needs.setup.result == 'success' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      (needs['validate-tag'].result == 'success' || needs['validate-tag'].result == 'skipped') &&
+      (needs.latest_tag.result == 'success' || needs.latest_tag.result == 'skipped') &&
+      github.event_name == 'workflow_dispatch' &&
+      needs.setup.outputs.environment == 'prod'
+    uses: ./.github/workflows/tofu-run.yml
+    with:
+      service: "idr-db-importer"
+      environment: "prod"
+      apply: ${{ needs.setup.outputs.apply }}
+      branch: ${{ needs.setup.outputs.branch }}
+      tf_vars: '{"image_tag": "${{ needs.setup.outputs.image_tag || needs.build.outputs.image_tag || needs.latest_tag.outputs.image_tag }}"}'
+    secrets: inherit
