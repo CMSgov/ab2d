@@ -143,7 +143,7 @@ resource "aws_sns_topic_subscription" "splunk" {
 
 # CDAP-managed alarm-to-slack service queue
 data "aws_sqs_queue" "alarm_to_slack" {
-  name = "bcda-${local.slack_queue_env}-alarm-to-slack"
+  name = "cdap-${local.slack_queue_env}-alarm-to-slack"
 }
 
 resource "aws_sns_topic_subscription" "slack" {
