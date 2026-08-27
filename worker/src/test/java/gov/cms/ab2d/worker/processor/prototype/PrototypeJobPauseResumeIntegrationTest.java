@@ -97,4 +97,37 @@ class PrototypeJobPauseResumeIntegrationTest extends AbstractPrototypeRecoveryIn
         assertTrue(finishedFiles(uuid).isEmpty() && streamingFiles(uuid).isEmpty(),
                 "streaming/ and finished/ working directories should be cleaned up after success");
     }
+
+    @Test
+    @DisplayName("A cancelled job stops at the next chunk instead of finishing")
+    void jobStopsShortWhenCancelledMidRun() throws Exception {
+        Job job = createSubmittedV3Job("cancel-it");
+        String uuid = job.getJobUuid();
+
+        // start the worker and let it do one partition
+        RunningWorker worker = startWorkerUntilOnePartitionDone(uuid, "test-cancel-worker");
+        int processedBeforeCancel = new HashSet<>(processedLog).size();
+        log.info("=== {} of {} benes processed, cancelling job {} mid-run ===",
+                processedBeforeCancel, TOTAL_BENES, uuid);
+
+        // directly change the job status to canceled
+        assertEquals(1, jdbc.update("UPDATE job SET status = 'CANCELLED' WHERE job_uuid = ?", uuid),
+                "expected exactly one job row to cancel for " + uuid);
+
+        // wait until the worker notices the job's been canceled
+        worker.awaitReturn(90);
+
+        Set<Long> distinctProcessed = new HashSet<>(processedLog);
+        assertEquals(JobStatus.CANCELLED, jobRepository.findByJobUuid(uuid).getStatus(),
+                "a cancelled job should be left CANCELLED");
+
+        // check to make sure the batch did didn't finish
+        assertTrue(distinctProcessed.size() < TOTAL_BENES,
+                "all " + TOTAL_BENES + " benes were processed, so the cancellation was never noticed mid-run");
+
+        // check to make sure the job got cleaned up
+        assertTrue(deliveredOutputFiles(uuid).isEmpty() && finishedFiles(uuid).isEmpty()
+                        && streamingFiles(uuid).isEmpty(),
+                "a cancelled job should leave no output or working files behind");
+    }
 }
