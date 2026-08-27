@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+
 /**
  * Props of the prototype job processor, provided here as a component so that the
  * job processor's already behemoth constructor doesn't need an individual line for
@@ -52,4 +54,9 @@ public class PrototypeProperties {
      * Whether hard recovery restarts partitions from scratch or from the last good chunk
      */
     private boolean copyForwardEnabled = true;
+
+    private long maxDurationSecondsAfterCreateLease = Duration.ofMinutes(1).toSeconds();
+    private long maxDurationSecondsCreateAggregatedTable = Duration.ofMinutes(10).toSeconds();
+    private long maxDurationSecondsAfterWriteCallback = Duration.ofMinutes(2).toSeconds();
+    private long maxDurationSecondsAssembleFiles = Duration.ofMinutes(5).toSeconds();
 }
