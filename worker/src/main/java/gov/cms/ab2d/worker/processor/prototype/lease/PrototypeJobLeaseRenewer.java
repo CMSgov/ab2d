@@ -51,7 +51,7 @@ public class PrototypeJobLeaseRenewer {
                 } else {
                     // we lost the lease, remove it from our active jobs
                     log.warn("lease for {} no longer held at token {}", jobUuid, token);
-                    metrics.leaseRenewFailed(jobUuid, token);
+                    metrics.leaseRenewFailed();
                     activeTokens.remove(jobUuid, token);
                 }
             } catch (Exception e) {

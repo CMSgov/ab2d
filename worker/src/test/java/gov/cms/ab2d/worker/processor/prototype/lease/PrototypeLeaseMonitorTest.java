@@ -35,6 +35,8 @@ class PrototypeLeaseMonitorTest {
     private static final int TTL_SECONDS = 40;
     private static final int GRACE_MULTIPLIER = 3;
     private static final int GRACE_SECONDS = TTL_SECONDS * GRACE_MULTIPLIER;
+    private static final int COOLDOWN_MINUTES = 60;
+    private static final int COOLDOWN_SECONDS = COOLDOWN_MINUTES * 60;
 
     private JobLeaseRepository jobLease;
     private PrototypeMetrics metrics;
@@ -51,6 +53,7 @@ class PrototypeLeaseMonitorTest {
 
         PrototypeProperties props = new PrototypeProperties();
         props.setLeaseGraceMultiplier(GRACE_MULTIPLIER);
+        props.setLeaseAlertCooldownMinutes(COOLDOWN_MINUTES);
         monitor = new PrototypeLeaseMonitor(jobLease, metrics, propertiesService, eventLogger, props, TTL_SECONDS);
     }
 
@@ -75,7 +78,7 @@ class PrototypeLeaseMonitorTest {
 
         verify(metrics).leaseHeartbeats(2, 1, 0);
         verify(eventLogger, never()).trace(anyString(), any());
-        verify(jobLease, never()).unrecoveredJobUuids(anyInt());
+        verify(jobLease, never()).claimUnrecoveredForAlert(anyInt(), anyInt());
     }
 
     @Test
@@ -84,7 +87,8 @@ class PrototypeLeaseMonitorTest {
         enabled();
         when(jobLease.heartbeatHealth(TTL_SECONDS, GRACE_SECONDS))
                 .thenReturn(new JobLeaseRepository.HeartbeatHealth(0, 2, 2));
-        when(jobLease.unrecoveredJobUuids(GRACE_SECONDS)).thenReturn(List.of("job-a", "job-b"));
+        when(jobLease.claimUnrecoveredForAlert(GRACE_SECONDS, COOLDOWN_SECONDS))
+                .thenReturn(List.of("job-a", "job-b"));
 
         monitor.reportLeaseHealth();
 
@@ -95,6 +99,34 @@ class PrototypeLeaseMonitorTest {
                 "the alert should name the stranded jobs so they can be chased: " + message.getValue());
         assertTrue(message.getValue().contains(String.valueOf(GRACE_SECONDS)),
                 "the alert should say how long the jobs have been dead: " + message.getValue());
+    }
+
+    @Test
+    @DisplayName("Losing the alert claim keeps the worker quiet, so N workers do not send N messages")
+    void losingTheClaimSendsNothing() {
+        enabled();
+        when(jobLease.heartbeatHealth(TTL_SECONDS, GRACE_SECONDS))
+                .thenReturn(new JobLeaseRepository.HeartbeatHealth(0, 0, 2));
+        // Another worker already claimed these, or they are still inside their cooldown.
+        when(jobLease.claimUnrecoveredForAlert(GRACE_SECONDS, COOLDOWN_SECONDS)).thenReturn(List.of());
+
+        monitor.reportLeaseHealth();
+
+        verify(metrics).leaseHeartbeats(0, 0, 2);
+        verify(eventLogger, never()).trace(anyString(), any());
+    }
+
+    @Test
+    @DisplayName("The cooldown is passed to the claim, so a stranded job is reported once per cooldown")
+    void cooldownIsAppliedToTheClaim() {
+        enabled();
+        when(jobLease.heartbeatHealth(TTL_SECONDS, GRACE_SECONDS))
+                .thenReturn(new JobLeaseRepository.HeartbeatHealth(0, 0, 1));
+        when(jobLease.claimUnrecoveredForAlert(anyInt(), anyInt())).thenReturn(List.of("job-a"));
+
+        monitor.reportLeaseHealth();
+
+        verify(jobLease).claimUnrecoveredForAlert(GRACE_SECONDS, COOLDOWN_SECONDS);
     }
 
     @Test

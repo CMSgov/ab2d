@@ -174,7 +174,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         boolean softResume = ownership.softResume();
         // Recorded before the run so a job that never gets any further is still visible as an attempt, and
         // so soft resumes (a clean pause picked back up) are countable apart from hard recoveries (a crash).
-        metrics.jobStarted(jobUuid, contractNumber, ownership.mode(), fenceToken);
+        log.info("prototype job {} starting for contract {} as a {} claim at token {}",
+                jobUuid, contractNumber, ownership.mode().tagValue(), fenceToken);
+        metrics.jobStarted(contractNumber, ownership.mode());
 
         // Start renewing the heartbeat
         leaseRenewer.track(jobUuid, fenceToken);
@@ -212,7 +214,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             if (wasFencedOut(jobUuid, fenceToken)) {
                 log.info("prototype job {} was superseded (ran under token {}, newer token now holds the lease) - "
                         + "exiting quietly with no resubmit", jobUuid, fenceToken);
-                metrics.fencedOut(jobUuid, contractNumber, fenceToken, "after_run");
+                metrics.fencedOut(contractNumber, "after_run");
                 return jobRepository.findByJobUuid(jobUuid);
             }
 
@@ -220,7 +222,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             Job current = jobRepository.findByJobUuid(jobUuid);
             if (current != null && current.getStatus() == CANCELLED) {
                 log.warn("prototype job {} was cancelled during processing; leaving CANCELLED and cleaning up", jobUuid);
-                metrics.jobCancelled(jobUuid, contractNumber);
+                metrics.jobCancelled(contractNumber);
                 coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
                 outputAssembler.deleteJobDirectory(jobUuid);
                 return current;
@@ -243,7 +245,11 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 // The last thing we do is mark the job as suspended. If we crash here, we'll just hard-recover
                 // anyway, which is unfortunate, but will avoid corruption/mistakes.
                 boolean cleanSuspend = jobLease.markCleanSuspend(jobUuid, fenceToken);
-                metrics.jobSuspended(jobUuid, contractNumber, fenceToken, cleanSuspend);
+                if (!cleanSuspend) {
+                    log.warn("prototype job {} suspended WITHOUT a clean-suspend marker at token {} - the next "
+                            + "pickup will have to hard-recover", jobUuid, fenceToken);
+                }
+                metrics.jobSuspended(contractNumber, cleanSuspend);
                 job.setStatus(SUBMITTED);
                 job.setStatusMessage("Paused via prototype");
             } else if (hasThresholdException(execution) || thresholdExceeded(jobUuid)) {
@@ -262,7 +268,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             if (wasFencedOut(jobUuid, fenceToken)) {
                 log.info("prototype job {} threw while superseded (ran under token {}, newer token now holds the "
                         + "lease) - exiting quietly, the current owner is responsible for this job", jobUuid, fenceToken);
-                metrics.fencedOut(jobUuid, contractNumber, fenceToken, "exception");
+                metrics.fencedOut(contractNumber, "exception");
                 return jobRepository.findByJobUuid(jobUuid);
             }
             // issues with launching are terminal and fail the job without retry
@@ -323,7 +329,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             // and once the remaining attempts run low it is traced to the AB2D channel as an early warning.
             boolean approachingMax =
                     maxFailureAttempts - failures <= props.getFailureAttemptsWarnRemaining();
-            metrics.jobFailureAttempt(jobUuid, contractNumber, failures, maxFailureAttempts, approachingMax);
+            metrics.jobFailureAttempt(contractNumber, failures, maxFailureAttempts, approachingMax);
             if (approachingMax) {
                 eventLogger.trace(String.format(
                         "AB2D pause/resume: job %s for contract %s has failed %d of %d allowed attempts and "
@@ -348,12 +354,10 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      * Terminal failure because too many beneficiaries errored
      */
     private void applyThresholdFailure(Job job, String contractNumber, String jobUuid) {
-        log.error("prototype job {} failed: too many patient records in the job had failures", jobUuid);
         ProgressTracker tracker = jobProgressService.getStatus(jobUuid);
-        if (tracker != null) {
-            metrics.thresholdExceeded(jobUuid, contractNumber, tracker.getPatientFailureCount(),
-                    tracker.getTotalCount());
-        }
+        log.error("prototype job {} failed: too many patient records in the job had failures ({} of {})",
+                jobUuid, tracker == null ? -1 : tracker.getPatientFailureCount(),
+                tracker == null ? -1 : tracker.getTotalCount());
         String message = "Failed: too many patient records in the job had failures";
         alertJobFailed(job, jobUuid, contractNumber, PrototypeMetrics.FailureReason.THRESHOLD_EXCEEDED, message);
         job.setStatus(FAILED);
@@ -368,7 +372,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      */
     private void alertJobFailed(Job job, String jobUuid, String contractNumber,
                                 PrototypeMetrics.FailureReason reason, String message) {
-        metrics.jobFailed(jobUuid, contractNumber, reason, message);
+        log.error("prototype job {} for contract {} FAILED ({}): {}", jobUuid, contractNumber,
+                reason.tagValue(), message);
+        metrics.jobFailed(contractNumber, reason);
         eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED,
                 EOB_JOB_FAILURE + " Prototype job " + jobUuid + " for contract " + contractNumber
                         + " failed (" + reason.tagValue() + "): " + message), PUBLIC_LIST);
@@ -397,7 +403,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         String message = String.format("%s via prototype: processed %d patients into %d file(s)",
                 EOB_JOB_COMPLETED, processed, job.getJobOutputs().size());
         eventLogger.logAndAlert(job.buildJobStatusChangeEvent(SUCCESSFUL, message), PROD_LIST);
-        metrics.jobCompleted(jobUuid, job.getContractNumber(), processed, job.getJobOutputs().size());
+        metrics.jobCompleted(job.getContractNumber(), processed);
 
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
@@ -431,7 +437,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             return;
         }
         log.info("shutdown: stopping {} running prototype batch execution(s) before releasing jobs", running.size());
-        metrics.drainStarted(running.size());
+        metrics.drainStarted();
         long startedAt = System.currentTimeMillis();
         for (JobExecution je : running) {
             try {
@@ -448,7 +454,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         while (System.currentTimeMillis() < deadline) {
             if (batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME).isEmpty()) {
                 log.info("shutdown: all prototype batch executions stopped");
-                metrics.drainFinished(true, System.currentTimeMillis() - startedAt, 0);
+                metrics.drainFinished(true, System.currentTimeMillis() - startedAt);
                 return;
             }
             try {
@@ -456,15 +462,14 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
                 // Interrupted before the drain finished, so the jobs still running will be hard-recovered.
-                metrics.drainFinished(false, System.currentTimeMillis() - startedAt,
-                        batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME).size());
+                log.warn("shutdown: interrupted before the drain finished; remaining jobs will be hard-recovered");
+                metrics.drainFinished(false, System.currentTimeMillis() - startedAt);
                 return;
             }
         }
         log.warn("shutdown: prototype batch executions still running after {}ms; proceeding with status reset anyway",
                 shutdownAwaitMs);
-        metrics.drainFinished(false, System.currentTimeMillis() - startedAt,
-                batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME).size());
+        metrics.drainFinished(false, System.currentTimeMillis() - startedAt);
     }
 
     /**

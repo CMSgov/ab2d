@@ -32,7 +32,8 @@ public class PrototypeFenceGuard implements ItemWriteListener<Object> {
         } catch (FenceLostException e) {
             // Record before rethrowing: the exception rolls the chunk back and unwinds the step, so this is
             // the only place that knows a commit was refused because ownership moved.
-            metrics.chunkFenceLost(jobUuid, token);
+            log.warn("job {} lost the fence at token {} while committing a chunk", jobUuid, token);
+            metrics.chunkFenceLost();
             throw e;
         }
     }

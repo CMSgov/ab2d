@@ -42,7 +42,7 @@ public class PrototypeSkipCounter implements SkipListener<CoverageSummary, Seria
 
     private void recordSkip(String phase, Throwable t) {
         log.warn("job {}: skipping a beneficiary after a persistent failure in {}: {}", jobUuid, phase, t.toString());
-        metrics.beneSkipped(jobUuid, phase, t);
+        metrics.beneSkipped(phase, t);
         channel.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUESTS_ERRORED, 1);
     }
 }

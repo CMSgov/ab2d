@@ -10,12 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Datadog metrics and structured logging for the pause/resume prototype.
- *
- * Every lifecycle event the prototype can go through emits a counter so the whole pause/resume story is
- * visible without reading logs: how a job was claimed (fresh/soft/hard), whether a shutdown drained, whether
- * a worker was fenced out, how close a job is to exhausting its failure attempts, and how many leases are
- * sitting stale. Each emit also logs, so a metric spike always has a matching log line to dig into.
+ * Datadog metrics for the pause/resume prototype.
  *
  * The {@link StatsDClient} bean prefixes everything with {@code ab2d}, so the metrics land in Datadog as
  * {@code ab2d.worker.prototype.*}. The client is looked up through an {@link ObjectProvider} so that tests
@@ -25,9 +20,8 @@ import java.util.List;
 @Component
 public class PrototypeMetrics {
 
-    // Job lifecycle
+    // Job lifecycle. The resume mode is a tag on the start, so fresh/soft/hard are all one metric.
     static final String JOB_STARTED = "worker.prototype.job.started";
-    static final String JOB_RECOVERED = "worker.prototype.job.recovered";
     static final String JOB_COMPLETED = "worker.prototype.job.completed";
     static final String JOB_CANCELLED = "worker.prototype.job.cancelled";
     static final String JOB_PATIENTS_PROCESSED = "worker.prototype.job.patients_processed";
@@ -50,12 +44,11 @@ public class PrototypeMetrics {
     static final String LEASE_STALE = "worker.prototype.lease.stale";
     static final String LEASE_UNRECOVERED = "worker.prototype.lease.unrecovered";
 
-    // Failures
+    // Failures. The reason tag distinguishes the three terminal paths, including the failure threshold.
     static final String JOB_FAILED = "worker.prototype.job.failed";
     static final String JOB_FAILURE_ATTEMPT = "worker.prototype.job.failure_attempt";
     static final String JOB_ATTEMPTS_REMAINING = "worker.prototype.job.attempts_remaining";
     static final String JOB_APPROACHING_MAX_FAILURES = "worker.prototype.job.approaching_max_failures";
-    static final String JOB_THRESHOLD_EXCEEDED = "worker.prototype.job.threshold_exceeded";
     static final String BENE_SKIPPED = "worker.prototype.bene.skipped";
 
     private final String executionEnv;
@@ -72,31 +65,21 @@ public class PrototypeMetrics {
     }
 
     /**
-     * A worker has claimed a job and is about to run it. {@code mode} separates a fresh start from the two
-     * kinds of resume, which is the top-level signal for "is recovery happening, and which kind".
+     * A worker has claimed a job and is about to run it. The {@code mode} tag separates a fresh start from
+     * the two kinds of resume, so recoveries are counted by filtering rather than by a second metric.
      */
-    public void jobStarted(String jobUuid, String contract, ResumeMode mode, long fenceToken) {
-        log.info("prototype metrics: job {} started contract={} mode={} token={}",
-                jobUuid, contract, mode.tagValue(), fenceToken);
+    public void jobStarted(String contract, ResumeMode mode) {
         increment(JOB_STARTED, tags(contract, "mode:" + mode.tagValue()));
-        if (mode.isRecovery()) {
-            // A second, recovery-only counter so a Datadog monitor can watch resumes without filtering
-            // every job start. Soft and hard stay separate on the mode tag.
-            increment(JOB_RECOVERED, tags(contract, "mode:" + mode.tagValue()));
-        }
     }
 
     /** The batch execution completed, the output assembled, and the job was marked SUCCESSFUL. */
-    public void jobCompleted(String jobUuid, String contract, int patientsProcessed, int outputFiles) {
-        log.info("prototype metrics: job {} completed contract={} patients={} files={}",
-                jobUuid, contract, patientsProcessed, outputFiles);
+    public void jobCompleted(String contract, int patientsProcessed) {
         increment(JOB_COMPLETED, tags(contract));
         count(JOB_PATIENTS_PROCESSED, patientsProcessed, tags(contract));
     }
 
     /** The job was cancelled out from under the worker while it was running. */
-    public void jobCancelled(String jobUuid, String contract) {
-        log.warn("prototype metrics: job {} cancelled mid-run contract={}", jobUuid, contract);
+    public void jobCancelled(String contract) {
         increment(JOB_CANCELLED, tags(contract));
     }
 
@@ -106,14 +89,7 @@ public class PrototypeMetrics {
      * @param cleanSuspend whether the clean-suspend marker was recorded. False means the next pickup has to
      *                     hard-recover instead of resuming in place, which is the expensive path.
      */
-    public void jobSuspended(String jobUuid, String contract, long fenceToken, boolean cleanSuspend) {
-        if (cleanSuspend) {
-            log.info("prototype metrics: job {} suspended cleanly contract={} token={}",
-                    jobUuid, contract, fenceToken);
-        } else {
-            log.warn("prototype metrics: job {} suspended WITHOUT a clean-suspend marker contract={} token={} - "
-                    + "the next pickup will have to hard-recover", jobUuid, contract, fenceToken);
-        }
+    public void jobSuspended(String contract, boolean cleanSuspend) {
         increment(JOB_SUSPENDED, tags(contract, "clean:" + cleanSuspend));
     }
 
@@ -121,9 +97,7 @@ public class PrototypeMetrics {
      * Result of the hard-recovery copy-forward pass: how many partitions kept their committed chunks and how
      * many had to be thrown away and redone.
      */
-    public void copyForward(String jobUuid, long fenceToken, int seeded, int restarted) {
-        log.info("prototype metrics: job {} copy-forward token={} seeded={} restarted={}",
-                jobUuid, fenceToken, seeded, restarted);
+    public void copyForward(int seeded, int restarted) {
         if (seeded > 0) {
             count(COPY_FORWARD_SEEDED, seeded, tags(null));
         }
@@ -133,8 +107,7 @@ public class PrototypeMetrics {
     }
 
     /** A shutdown started signalling running batch executions to stop at their next chunk boundary. */
-    public void drainStarted(int runningExecutions) {
-        log.info("prototype metrics: shutdown drain started executions={}", runningExecutions);
+    public void drainStarted() {
         increment(DRAIN_STARTED, tags(null));
     }
 
@@ -142,13 +115,7 @@ public class PrototypeMetrics {
      * The shutdown drain finished. {@code drained=false} means the wait timed out with executions still
      * running, so the affected jobs will be hard-recovered rather than resumed in place.
      */
-    public void drainFinished(boolean drained, long elapsedMs, int stillRunning) {
-        if (drained) {
-            log.info("prototype metrics: shutdown drain finished in {}ms", elapsedMs);
-        } else {
-            log.warn("prototype metrics: shutdown drain timed out after {}ms with {} execution(s) still running",
-                    elapsedMs, stillRunning);
-        }
+    public void drainFinished(boolean drained, long elapsedMs) {
         increment(DRAIN_FINISHED, tags(null, "drained:" + drained));
         time(DRAIN_DURATION_MS, elapsedMs, tags(null, "drained:" + drained));
     }
@@ -157,51 +124,39 @@ public class PrototypeMetrics {
      * This worker ran under a token that is no longer current, so a peer owns the job now. Expected when a
      * worker stalls past the lease TTL; a steady stream of these means heartbeats are not keeping up.
      */
-    public void fencedOut(String jobUuid, String contract, long ranUnderToken, String phase) {
-        log.warn("prototype metrics: job {} fenced out contract={} ranUnderToken={} phase={}",
-                jobUuid, contract, ranUnderToken, phase);
+    public void fencedOut(String contract, String phase) {
         increment(JOB_FENCED_OUT, tags(contract, "phase:" + phase));
     }
 
     /** A chunk commit was rejected because this worker no longer holds the lease. */
-    public void chunkFenceLost(String jobUuid, long token) {
-        log.warn("prototype metrics: job {} lost the fence at token {} while committing a chunk", jobUuid, token);
+    public void chunkFenceLost() {
         increment(CHUNK_FENCE_LOST, tags(null));
     }
 
     /** The scheduled heartbeat renewal found the lease no longer held at this worker's token. */
-    public void leaseRenewFailed(String jobUuid, long token) {
-        log.warn("prototype metrics: job {} lease renewal failed at token {}", jobUuid, token);
+    public void leaseRenewFailed() {
         increment(LEASE_RENEW_FAILED, tags(null));
     }
 
     /**
-     * Fleet-wide view of IN_PROGRESS jobs and their leases.
+     * Fleet-wide view of IN_PROGRESS jobs and their leases. The three buckets are mutually exclusive.
      *
      * @param active      leases whose heartbeat is inside the TTL
-     * @param stale       leases past the TTL and therefore eligible for takeover
-     * @param unrecovered leases past the longer grace window, which means a takeover should already have
-     *                    happened and did not - recovery is broken
+     * @param stale       leases past the TTL but still inside the grace window, so a takeover is expected
+     * @param unrecovered leases past the grace window, which means a takeover should already have happened
+     *                    and did not - recovery is broken
      */
     public void leaseHeartbeats(long active, long stale, long unrecovered) {
         gauge(LEASE_ACTIVE, active, tags(null));
         gauge(LEASE_STALE, stale, tags(null));
         gauge(LEASE_UNRECOVERED, unrecovered, tags(null));
-        if (unrecovered > 0) {
-            log.error("prototype metrics: {} IN_PROGRESS job(s) past the recovery grace window "
-                    + "(active={}, stale={}) - recovery is not picking them up", unrecovered, active, stale);
-        } else if (stale > 0) {
-            log.info("prototype metrics: {} IN_PROGRESS job(s) with a stale lease awaiting takeover (active={})",
-                    stale, active);
-        }
     }
 
     /**
-     * A job reached a terminal FAILED state. One of the three failure paths in the processor.
+     * A job reached a terminal FAILED state. The reason tag covers all three failure paths, including the
+     * failure threshold, so no separate threshold metric is needed.
      */
-    public void jobFailed(String jobUuid, String contract, FailureReason reason, String message) {
-        log.error("prototype metrics: job {} FAILED contract={} reason={} message={}",
-                jobUuid, contract, reason.tagValue(), message);
+    public void jobFailed(String contract, FailureReason reason) {
         increment(JOB_FAILED, tags(contract, "reason:" + reason.tagValue()));
     }
 
@@ -209,34 +164,16 @@ public class PrototypeMetrics {
      * A recoverable failure sent the job back to SUBMITTED for another attempt. Emits which attempt this is
      * and how many are left, so a job grinding toward its cap is visible before it dies.
      */
-    public void jobFailureAttempt(String jobUuid, String contract, int attempt, int maxAttempts,
-                                  boolean approachingMax) {
-        int remaining = Math.max(0, maxAttempts - attempt);
-        if (approachingMax) {
-            log.warn("prototype metrics: job {} failed attempt {} of {} contract={} - only {} attempt(s) left "
-                    + "before it fails terminally", jobUuid, attempt, maxAttempts, contract, remaining);
-        } else {
-            log.info("prototype metrics: job {} failed attempt {} of {} contract={} - will resume",
-                    jobUuid, attempt, maxAttempts, contract);
-        }
+    public void jobFailureAttempt(String contract, int attempt, int maxAttempts, boolean approachingMax) {
         gauge(JOB_FAILURE_ATTEMPT, attempt, tags(contract));
-        gauge(JOB_ATTEMPTS_REMAINING, remaining, tags(contract));
+        gauge(JOB_ATTEMPTS_REMAINING, Math.max(0, maxAttempts - attempt), tags(contract));
         if (approachingMax) {
             increment(JOB_APPROACHING_MAX_FAILURES, tags(contract));
         }
     }
 
-    /** Too many beneficiaries errored, so the job is failed terminally rather than delivering a partial file. */
-    public void thresholdExceeded(String jobUuid, String contract, int failures, int total) {
-        log.error("prototype metrics: job {} exceeded the failure threshold contract={} failed={} of {}",
-                jobUuid, contract, failures, total);
-        increment(JOB_THRESHOLD_EXCEEDED, tags(contract));
-    }
-
     /** One beneficiary was skipped after failing persistently. Counted against the failure threshold. */
-    public void beneSkipped(String jobUuid, String phase, Throwable cause) {
-        log.warn("prototype metrics: job {} skipped a beneficiary phase={} cause={}",
-                jobUuid, phase, cause == null ? "unknown" : cause.getClass().getSimpleName());
+    public void beneSkipped(String phase, Throwable cause) {
         increment(BENE_SKIPPED, tags(null, "phase:" + phase,
                 "cause:" + (cause == null ? "unknown" : cause.getClass().getSimpleName())));
     }

@@ -54,4 +54,11 @@ public class PrototypeProperties {
      * later is stranded.
      */
     private int leaseGraceMultiplier = 3;
+
+    /**
+     * How long a stranded job stays quiet after it has been reported. A stranded job stays stranded, so
+     * without a cooldown every worker would report it on every poll; the claim is stamped in the database so
+     * this rate limit holds across the whole fleet, not just per worker.
+     */
+    private int leaseAlertCooldownMinutes = 60;
 }

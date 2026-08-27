@@ -26,7 +26,6 @@ class PrototypeMetricsTest {
 
     private static final String ENV = "ab2d-dev";
     private static final String CONTRACT = "Z0001";
-    private static final String JOB = "job-uuid";
 
     private StatsDClient statsDClient;
     private PrototypeMetrics metrics;
@@ -38,41 +37,32 @@ class PrototypeMetricsTest {
     }
 
     @Test
-    @DisplayName("A fresh start counts as a start but not as a recovery")
-    void freshStartIsNotARecovery() {
-        metrics.jobStarted(JOB, CONTRACT, ResumeMode.FRESH, 1L);
+    @DisplayName("Every claim is one metric, with fresh/soft/hard separated by tag")
+    void everyClaimIsTaggedByMode() {
+        metrics.jobStarted(CONTRACT, ResumeMode.FRESH);
+        metrics.jobStarted(CONTRACT, ResumeMode.SOFT);
+        metrics.jobStarted(CONTRACT, ResumeMode.HARD);
 
         List<String[]> started = incrementTags(PrototypeMetrics.JOB_STARTED);
-        assertEquals(1, started.size(), "a start should be counted once");
+        assertEquals(3, started.size(), "one metric covers all three ways a job can be claimed");
         assertTrue(Arrays.asList(started.get(0)).contains("mode:fresh"));
+        assertTrue(Arrays.asList(started.get(1)).contains("mode:soft"));
+        assertTrue(Arrays.asList(started.get(2)).contains("mode:hard"));
         assertTrue(Arrays.asList(started.get(0)).contains("environment:" + ENV));
         assertTrue(Arrays.asList(started.get(0)).contains("contract:" + CONTRACT));
-        assertTrue(incrementTags(PrototypeMetrics.JOB_RECOVERED).isEmpty(),
-                "a first claim has no prior work, so it is not a recovery");
-    }
-
-    @Test
-    @DisplayName("Soft and hard resumes are both recoveries but stay distinguishable by tag")
-    void softAndHardRecoveriesAreTaggedSeparately() {
-        metrics.jobStarted(JOB, CONTRACT, ResumeMode.SOFT, 4L);
-        metrics.jobStarted("other-job", CONTRACT, ResumeMode.HARD, 9L);
-
-        List<String[]> recovered = incrementTags(PrototypeMetrics.JOB_RECOVERED);
-        assertEquals(2, recovered.size(), "both resumes should count as recoveries");
-        assertTrue(Arrays.asList(recovered.get(0)).contains("mode:soft"));
-        assertTrue(Arrays.asList(recovered.get(1)).contains("mode:hard"));
     }
 
     @Test
     @DisplayName("Each failure reason is tagged so the three failure paths can be told apart")
     void failureReasonsAreTagged() {
-        metrics.jobFailed(JOB, CONTRACT, PrototypeMetrics.FailureReason.THRESHOLD_EXCEEDED, "too many errors");
-        metrics.jobFailed(JOB, CONTRACT, PrototypeMetrics.FailureReason.ATTEMPTS_EXHAUSTED, "out of attempts");
-        metrics.jobFailed(JOB, CONTRACT, PrototypeMetrics.FailureReason.LAUNCH_FAILED, "could not launch");
+        metrics.jobFailed(CONTRACT, PrototypeMetrics.FailureReason.THRESHOLD_EXCEEDED);
+        metrics.jobFailed(CONTRACT, PrototypeMetrics.FailureReason.ATTEMPTS_EXHAUSTED);
+        metrics.jobFailed(CONTRACT, PrototypeMetrics.FailureReason.LAUNCH_FAILED);
 
         List<String[]> failed = incrementTags(PrototypeMetrics.JOB_FAILED);
         assertEquals(3, failed.size(), "every failure path should be counted");
-        assertTrue(Arrays.asList(failed.get(0)).contains("reason:threshold_exceeded"));
+        assertTrue(Arrays.asList(failed.get(0)).contains("reason:threshold_exceeded"),
+                "the failure threshold is a reason tag, so no separate threshold metric is needed");
         assertTrue(Arrays.asList(failed.get(1)).contains("reason:attempts_exhausted"));
         assertTrue(Arrays.asList(failed.get(2)).contains("reason:launch_failed"));
     }
@@ -80,11 +70,11 @@ class PrototypeMetricsTest {
     @Test
     @DisplayName("A job running low on resume attempts is flagged, one with attempts to spare is not")
     void approachingMaxFailuresOnlyCountsWhenAttemptsRunLow() {
-        metrics.jobFailureAttempt(JOB, CONTRACT, 2, 8, false);
+        metrics.jobFailureAttempt(CONTRACT, 2, 8, false);
         assertTrue(incrementTags(PrototypeMetrics.JOB_APPROACHING_MAX_FAILURES).isEmpty(),
                 "an early failure is routine and should not raise the approaching-max signal");
 
-        metrics.jobFailureAttempt(JOB, CONTRACT, 7, 8, true);
+        metrics.jobFailureAttempt(CONTRACT, 7, 8, true);
         assertEquals(1, incrementTags(PrototypeMetrics.JOB_APPROACHING_MAX_FAILURES).size());
         assertEquals(1, gaugeValues(PrototypeMetrics.JOB_ATTEMPTS_REMAINING).stream()
                 .filter(value -> value == 1L).count(), "one attempt should be reported as remaining");
@@ -93,8 +83,8 @@ class PrototypeMetricsTest {
     @Test
     @DisplayName("A suspend records whether the clean-suspend marker was written")
     void suspendRecordsWhetherItWasClean() {
-        metrics.jobSuspended(JOB, CONTRACT, 3L, true);
-        metrics.jobSuspended(JOB, CONTRACT, 3L, false);
+        metrics.jobSuspended(CONTRACT, true);
+        metrics.jobSuspended(CONTRACT, false);
 
         List<String[]> suspended = incrementTags(PrototypeMetrics.JOB_SUSPENDED);
         assertEquals(2, suspended.size());
@@ -106,8 +96,8 @@ class PrototypeMetricsTest {
     @Test
     @DisplayName("A drain that times out is recorded as not drained, with its duration")
     void drainRecordsOutcomeAndDuration() {
-        metrics.drainStarted(2);
-        metrics.drainFinished(false, 32000L, 2);
+        metrics.drainStarted();
+        metrics.drainFinished(false, 32000L);
 
         assertEquals(1, incrementTags(PrototypeMetrics.DRAIN_STARTED).size());
         List<String[]> finished = incrementTags(PrototypeMetrics.DRAIN_FINISHED);
@@ -119,7 +109,7 @@ class PrototypeMetricsTest {
     @Test
     @DisplayName("Skipped beneficiaries are tagged with the phase that dropped them")
     void skippedBenesCarryPhase() {
-        metrics.beneSkipped(JOB, "process", new IllegalStateException("boom"));
+        metrics.beneSkipped("process", new IllegalStateException("boom"));
 
         List<String[]> skipped = incrementTags(PrototypeMetrics.BENE_SKIPPED);
         assertEquals(1, skipped.size());
@@ -140,12 +130,12 @@ class PrototypeMetricsTest {
     @Test
     @DisplayName("Copy-forward reports carried and restarted partitions, and stays quiet when there are none")
     void copyForwardReportsBothOutcomes() {
-        metrics.copyForward(JOB, 2L, 0, 0);
+        metrics.copyForward(0, 0);
         assertTrue(counts(PrototypeMetrics.COPY_FORWARD_SEEDED).isEmpty()
                         && counts(PrototypeMetrics.COPY_FORWARD_RESTARTED).isEmpty(),
                 "a recovery that carried nothing and restarted nothing has nothing to report");
 
-        metrics.copyForward(JOB, 3L, 2, 1);
+        metrics.copyForward(2, 1);
         assertEquals(List.of(2L), counts(PrototypeMetrics.COPY_FORWARD_SEEDED));
         assertEquals(List.of(1L), counts(PrototypeMetrics.COPY_FORWARD_RESTARTED));
     }
@@ -156,19 +146,19 @@ class PrototypeMetricsTest {
         PrototypeMetrics noClient = new PrototypeMetrics(ENV, providerOf(null));
 
         assertDoesNotThrow(() -> {
-            noClient.jobStarted(JOB, CONTRACT, ResumeMode.HARD, 2L);
-            noClient.jobFailed(JOB, CONTRACT, PrototypeMetrics.FailureReason.LAUNCH_FAILED, "boom");
-            noClient.jobFailureAttempt(JOB, CONTRACT, 7, 8, true);
+            noClient.jobStarted(CONTRACT, ResumeMode.HARD);
+            noClient.jobFailed(CONTRACT, PrototypeMetrics.FailureReason.LAUNCH_FAILED);
+            noClient.jobFailureAttempt(CONTRACT, 7, 8, true);
             noClient.leaseHeartbeats(1, 1, 1);
-            noClient.chunkFenceLost(JOB, 2L);
-            noClient.drainFinished(true, 10L, 0);
+            noClient.chunkFenceLost();
+            noClient.drainFinished(true, 10L);
         });
     }
 
     @Test
     @DisplayName("Metrics without a contract still carry the environment tag")
     void environmentIsAlwaysTagged() {
-        metrics.chunkFenceLost(JOB, 5L);
+        metrics.chunkFenceLost();
 
         List<String[]> fenceLost = incrementTags(PrototypeMetrics.CHUNK_FENCE_LOST);
         assertEquals(1, fenceLost.size());

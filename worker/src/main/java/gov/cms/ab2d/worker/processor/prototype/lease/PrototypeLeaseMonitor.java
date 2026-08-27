@@ -24,6 +24,11 @@ import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
  *
  * Runs on every worker. The gauges are per-instance snapshots of the same shared table, so read them in
  * Datadog with max/avg by host rather than as a sum.
+ *
+ * Alerting is deliberately not per-poll. A stranded job stays stranded, so N workers polling every minute
+ * would otherwise emit N alerts a minute for hours. Instead each alert is claimed atomically in the database
+ * and stamped with a cooldown, which both dedupes across workers and rate-limits over time: one message per
+ * stranded job per cooldown, no matter how many workers are running.
  */
 @Slf4j
 @Component
@@ -60,7 +65,7 @@ public class PrototypeLeaseMonitor {
             metrics.leaseHeartbeats(health.active(), health.stale(), health.unrecovered());
 
             if (health.unrecovered() > 0) {
-                alertUnrecovered(health.unrecovered(), graceSeconds);
+                alertUnrecovered(graceSeconds);
             }
         } catch (Exception e) {
             // Monitoring must never take the worker down with it.
@@ -71,15 +76,27 @@ public class PrototypeLeaseMonitor {
     /**
      * Name the stranded jobs so an on-call engineer can go straight to them. Sent as a trace rather than a
      * full alert: it is an AB2D-team operational signal, not a customer-visible job outcome.
+     *
+     * Only the jobs this worker wins the claim for are reported. Losing the claim is the normal case when
+     * several workers poll at once, and means another worker has already said it.
      */
-    private void alertUnrecovered(long unrecovered, int graceSeconds) {
-        List<String> uuids = jobLease.unrecoveredJobUuids(graceSeconds);
+    private void alertUnrecovered(int graceSeconds) {
+        List<String> uuids = jobLease.claimUnrecoveredForAlert(graceSeconds, cooldownSeconds());
+        if (uuids.isEmpty()) {
+            log.debug("stranded jobs present but already alerted within the cooldown; staying quiet");
+            return;
+        }
         String message = String.format(
                 "AB2D pause/resume: %d IN_PROGRESS job(s) have had a dead lease for more than %ds "
                         + "(lease TTL %ds) and have not been recovered by any worker: %s",
-                unrecovered, graceSeconds, leaseTtlSeconds, uuids);
+                uuids.size(), graceSeconds, leaseTtlSeconds, uuids);
         log.error(message);
         eventLogger.trace(message, PUBLIC_LIST);
+    }
+
+    /** How long a stranded job stays quiet after being reported, so an incident does not flood Slack. */
+    private int cooldownSeconds() {
+        return props.getLeaseAlertCooldownMinutes() * 60;
     }
 
     /**

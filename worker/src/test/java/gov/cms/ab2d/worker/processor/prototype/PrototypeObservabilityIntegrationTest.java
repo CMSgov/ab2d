@@ -70,8 +70,6 @@ class PrototypeObservabilityIntegrationTest extends AbstractPrototypeRecoveryInt
         assertTrue(tagsOf("increment", PrototypeMetrics.JOB_FAILED).stream()
                         .anyMatch(tags -> tags.contains("reason:threshold_exceeded")),
                 "the terminal failure should count under its own reason tag");
-        assertFalse(tagsOf("increment", PrototypeMetrics.JOB_THRESHOLD_EXCEEDED).isEmpty(),
-                "the threshold trip itself should be countable separately from the failure");
         // The skipped beneficiaries are what tripped the threshold, so they must be visible too.
         assertTrue(tagsOf("increment", PrototypeMetrics.BENE_SKIPPED).size() >= failBenes.size(),
                 "every skipped beneficiary should be counted, saw "
@@ -147,10 +145,10 @@ class PrototypeObservabilityIntegrationTest extends AbstractPrototypeRecoveryInt
         Job resumed = prototypeJobProcessor.process(uuid);
 
         assertEquals(JobStatus.SUCCESSFUL, resumed.getStatus());
-        assertTrue(tagsOf("increment", PrototypeMetrics.JOB_RECOVERED).stream()
+        assertTrue(tagsOf("increment", PrototypeMetrics.JOB_STARTED).stream()
                         .anyMatch(tags -> tags.contains("mode:soft")),
                 "picking a cleanly paused job back up is a soft recovery");
-        assertFalse(tagsOf("increment", PrototypeMetrics.JOB_RECOVERED).stream()
+        assertFalse(tagsOf("increment", PrototypeMetrics.JOB_STARTED).stream()
                         .anyMatch(tags -> tags.contains("mode:hard")),
                 "a clean pause must not be reported as a crash recovery");
     }
@@ -171,10 +169,10 @@ class PrototypeObservabilityIntegrationTest extends AbstractPrototypeRecoveryInt
         assertTrue(tagsOf("increment", PrototypeMetrics.JOB_STARTED).stream()
                         .anyMatch(tags -> tags.contains("mode:fresh")),
                 "the original run should have been recorded as a fresh start");
-        assertTrue(tagsOf("increment", PrototypeMetrics.JOB_RECOVERED).stream()
+        assertTrue(tagsOf("increment", PrototypeMetrics.JOB_STARTED).stream()
                         .anyMatch(tags -> tags.contains("mode:hard")),
                 "taking over a crashed job is a hard recovery");
-        assertFalse(tagsOf("increment", PrototypeMetrics.JOB_RECOVERED).stream()
+        assertFalse(tagsOf("increment", PrototypeMetrics.JOB_STARTED).stream()
                         .anyMatch(tags -> tags.contains("mode:soft")),
                 "a crash must not be reported as a clean pause");
         // Copy-forward is what decides how much of the crashed partition survived, so it is reported either
@@ -230,8 +228,12 @@ class PrototypeObservabilityIntegrationTest extends AbstractPrototypeRecoveryInt
         JobLeaseRepository.HeartbeatHealth stranded = jobLease.heartbeatHealth(ttl, grace);
         assertEquals(before.unrecovered() + 1, stranded.unrecovered(),
                 "a job nobody recovered past the grace window is stranded and must be visible");
-        assertTrue(jobLease.unrecoveredJobUuids(grace).contains(uuid),
+        assertEquals(before.stale(), stranded.stale(),
+                "the buckets are mutually exclusive - a stranded job must not also be counted as stale");
+        assertTrue(jobLease.claimUnrecoveredForAlert(grace, 3600).contains(uuid),
                 "the stranded job should be nameable, not just countable");
+        assertFalse(jobLease.claimUnrecoveredForAlert(grace, 3600).contains(uuid),
+                "a second claim inside the cooldown must return nothing, so workers cannot flood Slack");
     }
 
     /**

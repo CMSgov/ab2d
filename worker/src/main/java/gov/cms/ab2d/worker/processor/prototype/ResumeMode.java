@@ -19,9 +19,4 @@ public enum ResumeMode {
     public String tagValue() {
         return name().toLowerCase();
     }
-
-    /** True for the two modes that pick up work a previous worker left behind. */
-    public boolean isRecovery() {
-        return this != FRESH;
-    }
 }

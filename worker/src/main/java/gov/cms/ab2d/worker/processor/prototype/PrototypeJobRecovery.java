@@ -93,7 +93,9 @@ public class PrototypeJobRecovery {
         // Only a genuine takeover has partitions to carry forward. A first claim has none, and reporting
         // zeroes for it would drown the signal we actually want out of this metric.
         if (fenceToken > 1) {
-            metrics.copyForward(jobUuid, fenceToken, copied.seeded(), copied.restarted());
+            log.info("copy-forward for job {} at token {}: {} partition(s) carried forward, {} restarted",
+                    jobUuid, fenceToken, copied.seeded(), copied.restarted());
+            metrics.copyForward(copied.seeded(), copied.restarted());
         }
         batchMeta.healIndeterminateExecutions(jobUuid);
         return new Ownership(fenceToken, false);
