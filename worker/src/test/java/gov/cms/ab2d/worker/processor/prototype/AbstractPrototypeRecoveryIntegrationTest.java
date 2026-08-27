@@ -87,7 +87,7 @@ import static org.mockito.Mockito.when;
         "pause-resume.prototype.concurrency=1",
         "pause-resume.prototype.chunk-size=2",
         // high slowdown to avoid flakiness
-        "pause-resume.prototype.item-delay-ms=150",
+        "pause-resume.prototype.item-delay-ms=300",
         "pause-resume.prototype.shutdown-await-ms=20000",
         "job.lock.ttl=60",
         "logging.level.gov.cms.ab2d.worker.processor.prototype=INFO",
