@@ -15,6 +15,11 @@ on:
       branch:
         required: true
         type: string
+      tf_vars:
+        description: 'JSON object of extra variables, e.g. {"image_tag": "abc123"}'
+        required: false
+        type: string
+        default: "{}"
 
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,6 +48,9 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Write extra variables
+        run: echo '${{ inputs.tf_vars }}' | jq . > extra.auto.tfvars.json
 
       - name: tofu plan
         run: |
