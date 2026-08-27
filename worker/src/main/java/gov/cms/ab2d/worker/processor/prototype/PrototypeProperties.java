@@ -25,6 +25,17 @@ public class PrototypeProperties {
     /** Number of partitions processed concurrently. */
     private int concurrency = 4;
 
+    /**
+     * Whether a partition processes its chunk's beneficiaries concurrently.
+     */
+    private boolean itemConcurrencyEnabled = true;
+
+    /**
+     * Ceiling on beneficiaries being fetched at once, across every prototype job on this worker.
+     * The processor uses virtual threads, so it is not bounded by number of threads.
+     */
+    private int itemConcurrency = 128;
+
     /** How many times a job's batch execution can fail before it is marked terminally failed. */
     private int maxFailureAttempts = 8;
 

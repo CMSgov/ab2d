@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor.prototype;
 
-import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.worker.processor.JobMeasure;
 import gov.cms.ab2d.worker.processor.JobProgressService;
 import gov.cms.ab2d.worker.processor.ProgressTracker;
@@ -8,7 +7,7 @@ import gov.cms.ab2d.worker.processor.SerializedEobs;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.springframework.batch.core.listener.ChunkListener;
+import org.springframework.batch.core.listener.ItemWriteListener;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.core.scope.context.StepSynchronizationManager;
 import org.springframework.batch.core.step.StepExecution;
@@ -21,17 +20,17 @@ import java.util.Map;
  * Reports per-chunk progress to {@link ProgressTracker} and aborts the step when the failure
  * threshold is exceeded. A single instance is shared by all partition worker threads.
  *
- * The read/write counts come from the {@link StepExecution}, which this callback is not passed,
+ * The read counts come from the {@link StepExecution}, which this callback is not passed,
  * so it is read from the step context.
  */
 @Slf4j
-public class PrototypeProgressListener implements ChunkListener<CoverageSummary, SerializedEobs> {
+public class PrototypeProgressListener implements ItemWriteListener<SerializedEobs> {
 
     private final JobChannelService channel;
     private final JobProgressService progress;
     private final String jobUuid;
-    // stepExecutionId -> last reported [read, write] for the current run
-    private final Map<Long, long[]> reported = new HashMap<>();
+    // stepExecutionId -> last reported read count for the current run
+    private final Map<Long, Long> reportedReads = new HashMap<>();
 
     public PrototypeProgressListener(JobChannelService channel, JobProgressService progress, String jobUuid) {
         this.channel = channel;
@@ -40,28 +39,24 @@ public class PrototypeProgressListener implements ChunkListener<CoverageSummary,
     }
 
     @Override
-    public synchronized void afterChunk(@NonNull Chunk<SerializedEobs> chunk) {
+    public synchronized void afterWrite(@NonNull Chunk<? extends SerializedEobs> chunk) {
         StepExecution stepExecution = currentStepExecution();
         if (stepExecution == null) {
-            log.warn("job {} afterChunk with no bound step context; skipping progress update", jobUuid);
+            log.warn("job {} afterWrite with no bound step context; skipping progress update", jobUuid);
             return;
         }
 
         long read = stepExecution.getReadCount();
-        long write = stepExecution.getWriteCount();
-
-        long[] last = reported.getOrDefault(stepExecution.getId(), new long[2]);
-        long readDelta = read - last[0];
-        long writeDelta = write - last[1];
-        reported.put(stepExecution.getId(), new long[]{read, write});
+        long readDelta = read - reportedReads.getOrDefault(stepExecution.getId(), 0L);
+        reportedReads.put(stepExecution.getId(), read);
 
         // read count includes benes that were skipped, the subset that were skipped is counted
         // separately by the SkipCounter
         if (readDelta > 0) {
             channel.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUESTS_PROCESSED, readDelta);
         }
-        if (writeDelta > 0) {
-            channel.sendUpdate(jobUuid, JobMeasure.PATIENTS_WITH_EOBS, writeDelta);
+        if (!chunk.isEmpty()) {
+            channel.sendUpdate(jobUuid, JobMeasure.PATIENTS_WITH_EOBS, chunk.size());
         }
 
         // Optimistic abort by checking failures against the failure threshold.
