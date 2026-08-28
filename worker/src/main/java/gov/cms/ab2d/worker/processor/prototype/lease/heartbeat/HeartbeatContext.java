@@ -1,18 +1,9 @@
 package gov.cms.ab2d.worker.processor.prototype.lease.heartbeat;
 
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-public class HeartbeatContext {
-	LocalDateTime lastHeartbeatAt;
-	HeartbeatEvent lastEvent;
-	LocalDateTime maxLatestNextHeartbeat;
-
-	public HeartbeatContext(LocalDateTime lastHeartbeatAt, HeartbeatEvent lastEvent, LocalDateTime maxLatestNextHeartbeat) {
-		this.lastHeartbeatAt = lastHeartbeatAt;
-		this.lastEvent = lastEvent;
-		this.maxLatestNextHeartbeat = maxLatestNextHeartbeat;
-	}
+public record HeartbeatContext(
+	LocalDateTime lastHeartbeatAt,
+	HeartbeatEvent lastEvent,
+	LocalDateTime maxLatestNextHeartbeat) {
 }
