@@ -15,30 +15,34 @@ import org.springframework.batch.core.listener.SkipListener;
 public class PrototypeSkipCounter implements SkipListener<CoverageSummary, SerializedEobs> {
 
     private final JobChannelService channel;
+    private final PrototypeMetrics metrics;
     private final String jobUuid;
 
-    public PrototypeSkipCounter(JobChannelService channel, String jobUuid) {
+    public PrototypeSkipCounter(JobChannelService channel, PrototypeMetrics metrics, String jobUuid) {
         this.channel = channel;
+        this.metrics = metrics;
         this.jobUuid = jobUuid;
     }
 
     @Override
     public void onSkipInProcess(@NonNull CoverageSummary item, @NonNull Throwable t) {
-        recordSkip(t);
+        recordSkip("process", t);
     }
 
     @Override
     public void onSkipInRead(@NonNull Throwable t) {
-        recordSkip(t);
+        recordSkip("read", t);
     }
 
     @Override
     public void onSkipInWrite(@NonNull SerializedEobs item, @NonNull Throwable t) {
-        recordSkip(t);
+        recordSkip("write", t);
     }
 
-    private void recordSkip(Throwable t) {
-        log.warn("job {}: skipping a beneficiary after a persistent failure: {}", jobUuid, t.toString());
+
+    private void recordSkip(String phase, Throwable t) {
+        log.warn("job {}: skipping a beneficiary after a persistent failure in {}: {}", jobUuid, phase, t.toString());
+        metrics.beneSkipped(phase, t);
         channel.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUESTS_ERRORED, 1);
     }
 }
