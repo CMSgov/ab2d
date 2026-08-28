@@ -207,3 +207,5 @@ databaseChangeLog:
       file: db/changelog/v2026/create_job_lease_table.sql
   - include:
       file: db/changelog/v2026/spring-batch-schema-postgresql.sql
+  - include:
+      file: db/changelog/v2026/add_job_lease_alerted_at.sql
