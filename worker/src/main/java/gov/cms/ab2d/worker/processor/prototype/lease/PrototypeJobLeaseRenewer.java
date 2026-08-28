@@ -52,7 +52,7 @@ public class PrototypeJobLeaseRenewer  {
 			long token = entry.getKey().fenceToken();
 			val context = entry.getValue();
 			try {
-				if (LocalDateTime.now().isAfter(context.getMaxLatestHeartbeat())) {
+				if (LocalDateTime.now().isAfter(context.getMaxLatestNextHeartbeat())) {
 					log.warn("Too much time elapsed since last heartbeat - not renewing. Last heartbeat: {}, Last event: {}",
 						context.getLastHeartbeatAt(),
 						context.getLastEvent()

@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
 public class HeartbeatContext {
 	LocalDateTime lastHeartbeatAt;
 	HeartbeatEvent lastEvent;
-	LocalDateTime maxLatestHeartbeat;
+	LocalDateTime maxLatestNextHeartbeat;
 
 	public HeartbeatContext(LocalDateTime lastHeartbeatAt, HeartbeatEvent lastEvent, LocalDateTime maxLatestHeartbeat) {
 		this.lastHeartbeatAt = lastHeartbeatAt;
 		this.lastEvent = lastEvent;
-		this.maxLatestHeartbeat = maxLatestHeartbeat;
+		this.maxLatestNextHeartbeat = maxLatestHeartbeat;
 	}
 }
