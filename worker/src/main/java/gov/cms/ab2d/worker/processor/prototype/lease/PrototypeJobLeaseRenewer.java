@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.prototype.lease;
 
+import gov.cms.ab2d.worker.processor.prototype.PrototypeMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,11 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PrototypeJobLeaseRenewer {
 
     private final JobLeaseRepository jobLease;
+    private final PrototypeMetrics metrics;
     // map of jobId to the token this worker holds for it
     private final Map<String, Long> activeTokens = new ConcurrentHashMap<>();
 
-    public PrototypeJobLeaseRenewer(JobLeaseRepository jobLease) {
+    public PrototypeJobLeaseRenewer(JobLeaseRepository jobLease, PrototypeMetrics metrics) {
         this.jobLease = jobLease;
+        this.metrics = metrics;
     }
 
     public void track(String jobUuid, long token) {
@@ -48,6 +51,7 @@ public class PrototypeJobLeaseRenewer {
                 } else {
                     // we lost the lease, remove it from our active jobs
                     log.warn("lease for {} no longer held at token {}", jobUuid, token);
+                    metrics.leaseRenewFailed();
                     activeTokens.remove(jobUuid, token);
                 }
             } catch (Exception e) {
