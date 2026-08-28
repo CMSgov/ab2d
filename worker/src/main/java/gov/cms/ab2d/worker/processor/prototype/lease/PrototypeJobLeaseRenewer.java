@@ -73,24 +73,24 @@ public class PrototypeJobLeaseRenewer  {
 
 	public void postHeartbeat(String jobUuid, long fenceToken, HeartbeatEvent event) {
 		val now = LocalDateTime.now();
-		final LocalDateTime maxLatestHeartBeat;
+		final LocalDateTime maxLatestNextHeartBeat;
 		switch (event) {
 			case CREATE_LEASE -> {
-				maxLatestHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAfterCreateLease());
+				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAfterCreateLease());
 			}
 			case BEFORE_CREATE_AGGREGATED_TABLE -> {
-				maxLatestHeartBeat = now.plusSeconds(props.getMaxDurationSecondsCreateAggregatedTable());
+				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsCreateAggregatedTable());
 			}
 			case AFTER_WRITE_CALLBACK -> {
-				maxLatestHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAfterWriteCallback());
+				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAfterWriteCallback());
 			}
 			case BEFORE_ASSEMBLE_FILES -> {
-				maxLatestHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAssembleFiles());
+				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAssembleFiles());
 			}
 			default -> throw new IllegalStateException("Invalid value: " + event);
 		}
 
-		activeTokens.put(new PrototypeJobLeaseToken(jobUuid, fenceToken), new HeartbeatContext(now, event, maxLatestHeartBeat));
+		activeTokens.put(new PrototypeJobLeaseToken(jobUuid, fenceToken), new HeartbeatContext(now, event, maxLatestNextHeartBeat));
 	}
 
 }

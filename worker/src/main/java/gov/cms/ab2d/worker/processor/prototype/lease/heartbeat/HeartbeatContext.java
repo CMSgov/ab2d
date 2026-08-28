@@ -10,9 +10,9 @@ public class HeartbeatContext {
 	HeartbeatEvent lastEvent;
 	LocalDateTime maxLatestNextHeartbeat;
 
-	public HeartbeatContext(LocalDateTime lastHeartbeatAt, HeartbeatEvent lastEvent, LocalDateTime maxLatestHeartbeat) {
+	public HeartbeatContext(LocalDateTime lastHeartbeatAt, HeartbeatEvent lastEvent, LocalDateTime maxLatestNextHeartbeat) {
 		this.lastHeartbeatAt = lastHeartbeatAt;
 		this.lastEvent = lastEvent;
-		this.maxLatestNextHeartbeat = maxLatestHeartbeat;
+		this.maxLatestNextHeartbeat = maxLatestNextHeartbeat;
 	}
 }
