@@ -2,9 +2,14 @@
 # ECS health and failure alarms
 #
 # These alarms publish to the ab2d-<env>-cloudwatch-alarms SNS topic, which 10-core subscribes to
-# the CDAP alarm-to-slack lambda, so every alarm below lands in the ab2d-slack-alerts channel. That
-# lambda parses the app and env out of the alarm name, so alarm names must stay prefixed with
-# ab2d-<env>-.
+# the CDAP alarm-to-slack lambda. That lambda parses the app and env out of the alarm name, so alarm
+# names must stay prefixed with ab2d-<env>-.
+#
+# Delivery to the ab2d-slack-alerts channel is not working yet, for two reasons outside this repo:
+# ab2d is missing from var.apps_served in CMSgov/cdap terraform/services/alarm-to-slack, so the
+# lambda cannot read AB2D's webhook parameter and drops the notification while returning HTTP 200;
+# and AB2D's Slack webhook is an unpublished Workflow Builder trigger. Until both are fixed these
+# alarms fire correctly and notify nobody.
 ###############################################################################
 
 locals {
@@ -15,7 +20,7 @@ locals {
   ecs_scheduled_tasks = toset(["idr-db-importer"])
 
   ecs_metric_namespace = "AB2D/ECS"
-  ecs_alarm_actions    = [data.aws_sns_topic.cloudwatch_alarms.arn]
+  ecs_alarm_actions = [data.aws_sns_topic.cloudwatch_alarms.arn]
 
   ecs_cluster_arns = concat(
     [for cluster in data.aws_ecs_cluster.service : cluster.arn],
@@ -127,7 +132,6 @@ resource "aws_cloudwatch_metric_alarm" "task_stopped_unexpectedly" {
   treat_missing_data  = "notBreaching"
 
   alarm_actions = local.ecs_alarm_actions
-  ok_actions    = local.ecs_alarm_actions
 }
 
 ###############################################################################
@@ -184,7 +188,6 @@ resource "aws_cloudwatch_metric_alarm" "running_tasks_below_desired" {
   }
 
   alarm_actions = local.ecs_alarm_actions
-  ok_actions    = local.ecs_alarm_actions
 }
 
 ###############################################################################
@@ -225,7 +228,6 @@ resource "aws_cloudwatch_metric_alarm" "deployment_failed" {
   treat_missing_data  = "notBreaching"
 
   alarm_actions = local.ecs_alarm_actions
-  ok_actions    = local.ecs_alarm_actions
 }
 
 ###############################################################################
@@ -268,5 +270,4 @@ resource "aws_cloudwatch_metric_alarm" "scheduled_task_failed" {
   treat_missing_data  = "notBreaching"
 
   alarm_actions = local.ecs_alarm_actions
-  ok_actions    = local.ecs_alarm_actions
 }
