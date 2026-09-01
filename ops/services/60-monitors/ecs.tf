@@ -5,11 +5,6 @@
 # the CDAP alarm-to-slack lambda. That lambda parses the app and env out of the alarm name, so alarm
 # names must stay prefixed with ab2d-<env>-.
 #
-# Delivery to the ab2d-slack-alerts channel is not working yet, for two reasons outside this repo:
-# ab2d is missing from var.apps_served in CMSgov/cdap terraform/services/alarm-to-slack, so the
-# lambda cannot read AB2D's webhook parameter and drops the notification while returning HTTP 200;
-# and AB2D's Slack webhook is an unpublished Workflow Builder trigger. Until both are fixed these
-# alarms fire correctly and notify nobody.
 ###############################################################################
 
 locals {
@@ -20,7 +15,7 @@ locals {
   ecs_scheduled_tasks = toset(["idr-db-importer"])
 
   ecs_metric_namespace = "AB2D/ECS"
-  ecs_alarm_actions = [data.aws_sns_topic.cloudwatch_alarms.arn]
+  ecs_alarm_actions    = [data.aws_sns_topic.cloudwatch_alarms.arn]
 
   ecs_cluster_arns = concat(
     [for cluster in data.aws_ecs_cluster.service : cluster.arn],
