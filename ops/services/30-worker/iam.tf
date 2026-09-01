@@ -55,6 +55,33 @@ data "aws_iam_policy_document" "worker" {
   }
 
   statement {
+    sid    = "SNSAccess"
+    effect = "Allow"
+    actions = [
+      "sns:CreateTopic",
+      "sns:Publish",
+      "sns:Subscribe",
+      "sns:Unsubscribe",
+      "sns:GetTopicAttributes",
+      "sns:SetTopicAttributes",
+      "sns:ListTopics",
+      "sns:DeleteTopic"
+    ]
+    resources = [
+      "arn:aws:sns:${module.platform.primary_region.name}:${module.platform.aws_caller_identity.account_id}:ab2d-${module.platform.env}-*"
+    ]
+  }
+
+  statement {
+    sid    = "SNSListTopics"
+    effect = "Allow"
+    actions = [
+      "sns:ListTopics"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
     sid    = "CloudWatchMetricsAccess"
     effect = "Allow"
     actions = [

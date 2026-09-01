@@ -37,90 +37,6 @@ locals {
   slack_queue_env    = local.parent_env == "test" || local.parent_env == "dev" ? "test" : "prod"
 }
 
-resource "aws_s3_bucket" "main_bucket" {
-  bucket_prefix = "${local.service_prefix}-main"
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "main_bucket" {
-  bucket = aws_s3_bucket.main_bucket.bucket
-  rule {
-    apply_server_side_encryption_by_default {
-      kms_master_key_id = local.env_key_alias.target_key_arn
-      sse_algorithm     = "aws:kms"
-    }
-    bucket_key_enabled = true
-  }
-}
-
-resource "aws_s3_bucket_logging" "main_bucket" {
-  bucket        = aws_s3_bucket.main_bucket.bucket
-  target_bucket = module.platform.logging_bucket.id
-  target_prefix = aws_s3_bucket.main_bucket.bucket_prefix
-}
-
-resource "aws_s3_bucket_versioning" "main_bucket" {
-  bucket = aws_s3_bucket.main_bucket.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_ssm_parameter" "main_bucket" {
-  name  = "/ab2d/${local.env}/core/nonsensitive/main-bucket-name"
-  value = aws_s3_bucket.main_bucket.id
-  type  = "String"
-}
-
-resource "aws_s3_bucket_public_access_block" "main_bucket" {
-  bucket                  = aws_s3_bucket.main_bucket.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-data "aws_iam_policy_document" "main_bucket" {
-  statement {
-    sid    = "AllowSSLRequestsOnly"
-    effect = "Deny"
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-    actions = ["s3:*"]
-    resources = [
-      aws_s3_bucket.main_bucket.arn,
-      "${aws_s3_bucket.main_bucket.arn}/*"
-    ]
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "main_bucket" {
-  bucket = aws_s3_bucket.main_bucket.id
-  policy = data.aws_iam_policy_document.main_bucket.json
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "main_bucket" {
-  bucket = aws_s3_bucket.main_bucket.id
-
-  rule {
-    id     = "noncurrent-ia"
-    status = "Enabled"
-
-    filter {}
-
-    noncurrent_version_transition {
-      noncurrent_days = 30
-      storage_class   = "STANDARD_IA"
-    }
-  }
-}
-
 data "aws_efs_file_system" "efs" {
   count = module.platform.is_ephemeral_env ? 1 : 0
 
@@ -227,7 +143,7 @@ resource "aws_sns_topic_subscription" "splunk" {
 
 # CDAP-managed alarm-to-slack service queue
 data "aws_sqs_queue" "alarm_to_slack" {
-  name = "bcda-${local.slack_queue_env}-alarm-to-slack"
+  name = "cdap-${local.slack_queue_env}-alarm-to-slack"
 }
 
 resource "aws_sns_topic_subscription" "slack" {
