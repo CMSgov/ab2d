@@ -479,10 +479,10 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val queryPeriodCountByMonth =
         """
         SELECT year, month, count(*)
-        FROM v3.coverage_v3
+        FROM %s
         WHERE contract = :contract
         GROUP BY contract, month, year
-        """;
+        """.formatted(COVERAGE_V3_STAGING_TABLE);
 
         val periodCountByMonth = new HashMap<YearMonthRecord, Long>();
         template.query(queryPeriodCountByMonth, Map.of("contract", contract), rs -> {

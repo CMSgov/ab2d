@@ -241,8 +241,6 @@ class CoverageV3SyncServiceImplTest {
 
 
 	@Test
-	@Disabled
-	// TODO Revert
 	void copyFromStagingTablesToRecent_SourceJobHandler() {
 		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
 		when(lock.tryLock()).thenReturn(true);
