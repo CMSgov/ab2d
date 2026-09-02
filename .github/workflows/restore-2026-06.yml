@@ -1,22 +1,10 @@
 name: restore-2026-06
 run-name: restore-2026-06 coverage for S4802/S5601/S5805/S5820/S5884/S9701
 
-# One-off. Delete this workflow and ops/services/30-idr-db-importer/restore-2026-06.sql
-# once the V3 coverage check is green.
-
 on:
-  # workflow_dispatch alone is not usable here: GitHub only offers it for workflows that are on the
-  # default branch, and this pair is throwaway and should never land on main. The push trigger is
-  # what actually runs the restore, from the branch carrying these two files.
-  #
-  # The branch glob means you do not have to match a name exactly -- call the branch anything that
-  # contains "restore-2026-06". It deliberately cannot match main, so merging this file later
-  # cannot fire it.
-  #
-  # paths keeps unrelated pushes to the same branch from re-running a prod write. Note the
-  # corollary: pushing a correction to EITHER file below starts a whole new run.
   push:
     branches:
+      - 'Restore-data-06-for-v3'
       - '**restore-2026-06**'
     paths:
       - '.github/workflows/restore-2026-06.yml'
