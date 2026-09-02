@@ -1,0 +1,114 @@
+name: restore-2026-06
+run-name: restore-2026-06 coverage for S4802/S5601/S5805/S5820/S5884/S9701
+
+# One-off. Delete this workflow and ops/services/30-idr-db-importer/restore-2026-06.sql
+# once the V3 coverage check is green.
+
+on:
+  # workflow_dispatch alone is not usable here: GitHub only offers it for workflows that are on the
+  # default branch, and this pair is throwaway and should never land on main. The push trigger is
+  # what actually runs the restore, from the branch carrying these two files.
+  #
+  # The branch glob means you do not have to match a name exactly -- call the branch anything that
+  # contains "restore-2026-06". It deliberately cannot match main, so merging this file later
+  # cannot fire it.
+  #
+  # paths keeps unrelated pushes to the same branch from re-running a prod write. Note the
+  # corollary: pushing a correction to EITHER file below starts a whole new run.
+  push:
+    branches:
+      - '**restore-2026-06**'
+    paths:
+      - '.github/workflows/restore-2026-06.yml'
+      - 'ops/services/30-idr-db-importer/restore-2026-06.sql'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "restore" to confirm writing to the prod database'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+# One restore at a time. Two pushes in quick succession would otherwise put two runs into the same
+# six DELETE + rebuild transactions concurrently and make them fight for row locks. Queue instead
+# of cancelling: cancel-in-progress would kill psql partway through a multi-hour prod write.
+concurrency:
+  group: restore-2026-06
+  cancel-in-progress: false
+
+jobs:
+  restore-2026-06:
+    # On a push event inputs.confirm is empty, so the dispatch guard has to be scoped to dispatch
+    # only -- otherwise every push produces a green run with the job silently skipped.
+    if: github.event_name == 'push' || inputs.confirm == 'restore'
+    runs-on: codebuild-ab2d-prod-${{ github.run_id }}-${{ github.run_attempt }}
+
+    env:
+      AB2D_ENV: prod
+      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+      # Last extract that still contains 2026-06. The importer pulls the current month and the two
+      # before it, so the 09-01 extract carries 07/08/09 and is no use here.
+      CSV_KEY: coverage_v3_20260831.csv
+      CSV_BYTES: '2631965837'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
+
+      - name: Set env vars from AWS params in AB2D account
+        uses: ./.github/workflows/actions/set-database-params
+        with:
+          aws_region: ${{ vars.AWS_REGION }}
+          environment: prod
+
+      - name: Install psql
+        run: sudo dnf install postgresql16 -y
+
+      # The importer deletes the CSV after each run, so the key carries a delete marker and
+      # aws_s3.table_import_from_s3 (which reads the current version) cannot see it. Removing the
+      # marker is s3:DeleteObjectVersion, which the bucket's DenyObjectAccessExceptIDRDBImporterRoles
+      # statement does not deny -- unlike GetObject/PutObject, so copy-object would fail here.
+      - name: Restore the 2026-08-31 extract in S3
+        run: |
+          BKT=$(aws ssm get-parameter \
+            --name /ab2d/prod/core/nonsensitive/idr-db-importer-bucket \
+            --query 'Parameter.Value' --output text)
+          echo "BKT=$BKT" >> "$GITHUB_ENV"
+
+          # Resolved rather than pinned so a re-run, which finds the marker this workflow's own
+          # cleanup step left behind, still works. The prefix also matches CSV_KEY.tmp, hence the
+          # exact-key filter.
+          MARKER=$(aws s3api list-object-versions --bucket "$BKT" --prefix "$CSV_KEY" \
+            --query "DeleteMarkers[?Key=='${CSV_KEY}' && IsLatest].VersionId | [0]" --output text)
+          echo "Latest delete marker: $MARKER"
+
+          if [ -n "$MARKER" ] && [ "$MARKER" != "None" ]; then
+            aws s3api delete-object --bucket "$BKT" --key "$CSV_KEY" --version-id "$MARKER"
+          fi
+
+          # The real guard: the object now current must be the 2026-08-31 extract.
+          # Verified with list-object-versions, NOT head-object -- HeadObject is s3:GetObject,
+          # which this bucket's policy denies to every role except the two importer roles, so
+          # head-object 403s even when the marker removal succeeded.
+          SIZE=$(aws s3api list-object-versions --bucket "$BKT" --prefix "$CSV_KEY" \
+            --query "Versions[?Key=='${CSV_KEY}' && IsLatest].Size | [0]" --output text)
+          echo "Current version is now $SIZE bytes (expected $CSV_BYTES)"
+          test "$SIZE" = "$CSV_BYTES"
+
+      - name: Run the restore
+        run: psql -v ON_ERROR_STOP=1 -f ops/services/30-idr-db-importer/restore-2026-06.sql
+
+      # No re-hide step: re-adding a delete marker is s3:DeleteObject, which the bucket policy
+      # denies to every principal except ab2d-prod-idr-db-importer-task-role and
+      # ab2d-prod-database-import-s3. This role cannot do it. Leaving the object current is
+      # harmless -- it was already in the bucket as a noncurrent version readable by exactly those
+      # two roles, so nothing about access changes, and the importer writes a new key each day.
