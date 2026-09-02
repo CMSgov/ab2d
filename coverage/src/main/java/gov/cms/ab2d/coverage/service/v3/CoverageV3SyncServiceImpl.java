@@ -3,13 +3,18 @@ package gov.cms.ab2d.coverage.service.v3;
 import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.DatadogSpans;
+import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditAction;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -17,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -284,12 +292,18 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         audit.log(action, null, contract, null, Map.of("rowsInCoverageDeleted", rowsInCoverageDeleted));
 
         log.info("[V3] Preparing to copy rows from staging to coverage for contract {}...", contract);
-        val rowsInserted = executeTimedQuery(
-                format("[V3] copyFromStagingToCoverage contract=%s", contract),
-                () -> copyFromStagingToCoverage(contract)
-        );
-        log.info("[V3] Copied {} rows from staging to coverage for contract {}", rowsInserted, contract);
-        audit.log(action, null, contract, null, Map.of("rowsInserted", rowsInserted));
+        try {
+            val rowsInserted = executeTimedQuery(
+                format("[V3] batchCopyFromStagingToCoverage contract=%s", contract),
+                () -> batchCopyFromStagingToCoverage(contract)
+            );
+            log.info("[V3] Copied {} rows from staging to coverage for contract {}", rowsInserted, contract);
+            audit.log(action, null, contract, null, Map.of("rowsInserted", rowsInserted));
+        } catch (Exception e) {
+            /** if an exception is thrown, {@link #batchCopyFromStagingToCoverage} will record an audit event */
+           throw e;
+        }
+
 
         val rowsInCoverageAfterCopy = executeTimedQuery(
                 format("[V3] getCoveragePeriodCountForCoverageV3 contract=%s", contract),
@@ -450,8 +464,76 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return executeQueryForContract(contract, formattedQuery);
     }
 
+    @Deprecated
+    // Replaced by batchCopyFromStagingToCoverage
     int copyFromStagingToCoverage(final String contract) {
         return executeQueryForContract(contract, COPY_FROM_STAGING_TO_COVERAGE_V3);
+    }
+
+    // Copy from staging to recent coverage for the given contract one month at a time
+    int batchCopyFromStagingToCoverage(final String contract) {
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+
+        val queryPeriodCountByMonth =
+        """
+        SELECT year, month, count(*)
+        FROM v3.coverage_v3
+        WHERE contract = :contract
+        GROUP BY contract, month, year
+        """;
+
+        val periodCountByMonth = new HashMap<YearMonthRecord, Long>();
+        template.query(queryPeriodCountByMonth, Map.of(contract, contract), rs -> {
+            periodCountByMonth.put(
+                new YearMonthRecord(rs.getInt(1), rs.getInt(2)),
+                rs.getLong(3)
+            );
+        });
+
+        val insertRowsByMonth = """
+        with inserted_rows as (
+            insert into %s select * from %s
+            where contract = :contract and year = :year and month = :month
+            returning *
+        )
+        select count(*) from inserted_rows;
+        """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE);
+
+        var rowsInsertedTotal = 0;
+        for (Map.Entry<YearMonthRecord, Long> entry : periodCountByMonth.entrySet()) {
+            val year = entry.getKey().getYear();
+            val month = entry.getKey().getMonth();
+            val rowCountForMonth = entry.getValue();
+
+            val parameters = Map.of("contract", contract, "year", year, "month", month);
+            val rowsInsertedForMonth = DataAccessUtils.intResult(template.queryForList(insertRowsByMonth, parameters, Integer.class));
+            rowsInsertedTotal += rowsInsertedForMonth;
+
+            val periodToString = "%s-%s".formatted(year, month);
+            if (rowsInsertedForMonth != rowCountForMonth) {
+                audit.log(
+                    COPY_FROM_STAGING,
+                    SYNC_FAILED_FOR_CONTRACT,
+                    contract,
+                    "rowsInsertedForMonth does not match expectedRowsInsertedTotal",
+                    Map.of(
+                        "rowsInsertedForMonth", rowsInsertedForMonth,
+                        "rowCountForMonth", rowCountForMonth,
+                        "period", periodToString
+                    )
+                );
+
+                log.error("rowsInsertedForMonth ({}) does not match rowCountForMonth({}) for contract {} and period {}",
+                    rowsInsertedForMonth,
+                    rowCountForMonth,
+                    contract,
+                    periodToString
+                );
+                throw new RuntimeException("batchCopyFromStagingToCoverage failed: rowsInsertedTotal != expectedRowsInsertedTotal");
+            }
+        }
+
+        return rowsInsertedTotal;
     }
 
     int moveToHistoricalInternal(final String contract) {
