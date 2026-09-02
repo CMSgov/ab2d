@@ -8,13 +8,9 @@ import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditAction;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -22,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -511,7 +505,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             val rowsInsertedForMonth = DataAccessUtils.intResult(template.queryForList(insertRowsByMonth, parameters, Integer.class));
             rowsInsertedTotal += rowsInsertedForMonth;
 
-            val periodToString = "%s-%s".formatted(year, month);
+            val yearMonthToString = "%s-%s".formatted(year, month);
             if (rowsInsertedForMonth != rowCountForMonth) {
                 audit.log(
                     COPY_FROM_STAGING,
@@ -521,7 +515,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                     Map.of(
                         "rowsInsertedForMonth", rowsInsertedForMonth,
                         "rowCountForMonth", rowCountForMonth,
-                        "period", periodToString
+                        "period", yearMonthToString
                     )
                 );
 
@@ -529,9 +523,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                     rowsInsertedForMonth,
                     rowCountForMonth,
                     contract,
-                    periodToString
+                    yearMonthToString
                 );
-                throw new RuntimeException("batchCopyFromStagingToCoverage failed: rowsInsertedTotal != expectedRowsInsertedTotal");
+                throw new RuntimeException("batchCopyFromStagingToCoverage failed: rowsInsertedForMonth != rowCountForMonth");
             }
         }
 

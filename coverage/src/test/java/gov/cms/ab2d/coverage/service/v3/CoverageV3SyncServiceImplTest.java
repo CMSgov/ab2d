@@ -1,17 +1,14 @@
 package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLogImpl;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
@@ -27,7 +24,6 @@ import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 @Testcontainers
