@@ -300,10 +300,12 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             log.info("[V3] Copied {} rows from staging to coverage for contract {}", rowsInserted, contract);
             audit.log(action, null, contract, null, Map.of("rowsInserted", rowsInserted));
         } catch (Exception e) {
-            /** if an exception is thrown, {@link #batchCopyFromStagingToCoverage} will record an audit event */
+            /**
+             * if {@link #batchCopyFromStagingToCoverage} throws an exception, it will record an audit event
+             * rethrow exception to rollback transaction
+             */
            throw e;
         }
-
 
         val rowsInCoverageAfterCopy = executeTimedQuery(
                 format("[V3] getCoveragePeriodCountForCoverageV3 contract=%s", contract),
@@ -483,7 +485,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         """;
 
         val periodCountByMonth = new HashMap<YearMonthRecord, Long>();
-        template.query(queryPeriodCountByMonth, Map.of(contract, contract), rs -> {
+        template.query(queryPeriodCountByMonth, Map.of("contract", contract), rs -> {
             periodCountByMonth.put(
                 new YearMonthRecord(rs.getInt(1), rs.getInt(2)),
                 rs.getLong(3)
