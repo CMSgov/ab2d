@@ -307,7 +307,7 @@ class CoverageV3SyncServiceImplTest {
 	}
 
 	@Test
-	void testBatchCopy_SimulateDataIntegrityError(CapturedOutput out) {
+	void testBatchCopy_SimulateSyncFailure(CapturedOutput out) {
 		 new JdbcTemplate(container.getDataSource()).execute(
 		"""
 		INSERT INTO v3.coverage_v3_staging(patient_id, contract, "year", "month", current_mbi)
