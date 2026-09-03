@@ -1,12 +1,11 @@
 package gov.cms.ab2d.worker.processor.prototype;
 
-import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.worker.processor.SerializedEobs;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.springframework.batch.core.listener.ChunkListener;
+import org.springframework.batch.core.listener.ItemWriteListener;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.core.scope.context.StepSynchronizationManager;
 import org.springframework.batch.core.step.StepExecution;
@@ -17,18 +16,18 @@ import org.springframework.batch.infrastructure.item.Chunk;
  * the worker step at the next chunk boundary
  */
 @Slf4j
-public class JobCancellationChunkListener implements ChunkListener<CoverageSummary, SerializedEobs> {
+public class JobCancellationWriteListener implements ItemWriteListener<SerializedEobs> {
 
     private final JobRepository jobRepository;
     private final String jobUuid;
 
-    public JobCancellationChunkListener(JobRepository jobRepository, String jobUuid) {
+    public JobCancellationWriteListener(JobRepository jobRepository, String jobUuid) {
         this.jobRepository = jobRepository;
         this.jobUuid = jobUuid;
     }
 
     @Override
-    public void beforeChunk(@NonNull Chunk<CoverageSummary> chunk) {
+    public void beforeWrite(@NonNull Chunk<? extends SerializedEobs> chunk) {
         if (jobRepository.getJobStatusOfJob(jobUuid) != JobStatus.CANCELLED) {
             return;
         }

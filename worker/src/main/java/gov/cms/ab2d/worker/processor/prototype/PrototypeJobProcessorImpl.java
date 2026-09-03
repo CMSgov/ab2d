@@ -16,6 +16,7 @@ import gov.cms.ab2d.worker.processor.prototype.lease.PrototypeFenceGuard;
 import gov.cms.ab2d.worker.processor.prototype.lease.PrototypeJobLeaseRenewer;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -26,6 +27,7 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemStreamWriter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
@@ -41,7 +43,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PROD_LIST;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COMPLETED;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_FAILURE;
 import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
@@ -86,6 +90,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private final JobProgressService jobProgressService;
     private final JobProgressUpdateService jobProgressUpdateService;
     private final SQSEventClient eventLogger;
+    private final PrototypeMetrics metrics;
     // per-JVM diagnostic identity recorded on the lease so logs/monitoring can attribute ownership
     private final String owner = "worker-" + java.util.UUID.randomUUID();
     private final PrototypeProperties props;
@@ -96,6 +101,8 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private final BeneficiaryItemReader beneficiaryItemReader;
     private final EobItemProcessor eobItemProcessor;
     private final ItemStreamWriter<SerializedEobs> ndjsonItemWriter;
+    // shared by every job on this worker
+    private final AsyncTaskExecutor itemTaskExecutor;
 
     public PrototypeJobProcessorImpl(
             JobRepository jobRepository,
@@ -112,6 +119,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             JobProgressService jobProgressService,
             JobProgressUpdateService jobProgressUpdateService,
             SQSEventClient eventLogger,
+            PrototypeMetrics metrics,
             BeneficiaryItemReader beneficiaryItemReader,
             EobItemProcessor eobItemProcessor,
             ItemStreamWriter<SerializedEobs> ndjsonItemWriter,
@@ -132,9 +140,11 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         this.jobProgressService = jobProgressService;
         this.jobProgressUpdateService = jobProgressUpdateService;
         this.eventLogger = eventLogger;
+        this.metrics = metrics;
         this.beneficiaryItemReader = beneficiaryItemReader;
         this.eobItemProcessor = eobItemProcessor;
         this.ndjsonItemWriter = ndjsonItemWriter;
+        this.itemTaskExecutor = itemTaskExecutor(props.getItemConcurrency());
         this.props = props;
         this.failureThreshold = failureThreshold;
         this.auditFilesTtlHours = auditFilesTtlHours;
@@ -167,6 +177,11 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         PrototypeJobRecovery.Ownership ownership = recovery.acquire(jobUuid, owner);
         long fenceToken = ownership.fenceToken();
         boolean softResume = ownership.softResume();
+        // Recorded before the run so a job that never gets any further is still visible as an attempt, and
+        // so soft resumes (a clean pause picked back up) are countable apart from hard recoveries (a crash).
+        log.info("prototype job {} starting for contract {} as a {} claim at token {}",
+                jobUuid, contractNumber, ownership.mode().tagValue(), fenceToken);
+        metrics.jobStarted(contractNumber, ownership.mode());
 
         // Start renewing the heartbeat
         leaseRenewer.track(jobUuid, fenceToken);
@@ -179,20 +194,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
             // Only build the aggregated attribution table on a fresh start
             JobExecution last = batchJobRepository.getLastJobExecution(PROTOTYPE_JOB_NAME, parameters);
-            if (last == null) {
-                log.info("no prior batch execution for job {} - creating aggregated attribution table", jobUuid);
-                coverageV3Service.createAggregatedAttributionTable(contractNumber);
-            } else if (!coverageV3Service.aggregatedTableExists(contractNumber)) {
-                // A prior worker that failed terminally or was fenced out may have dropped the aggregated
-                // table. We safely remake it because a hard recovery re-runs the partitioner from scratch anyway.
-                log.warn("prior batch execution {} for job {} but aggregated table for contract {} is missing - "
-                        + "rebuilding ({} at token {})",
-                        last.getId(), jobUuid, contractNumber, softResume ? "soft resume" : "hard recovery", fenceToken);
-                coverageV3Service.createAggregatedAttributionTable(contractNumber);
-            } else {
-                log.info("prior batch execution {} for job {} - {} at token {} (reusing aggregated table)",
-                        last.getId(), jobUuid, softResume ? "soft resume" : "hard recovery", fenceToken);
-            }
+            prepareAggregatedTable(last, jobUuid, contractNumber, softResume, fenceToken);
 
             // job progress is initialized on startup since we could be restarting
             // a job that was already in progress
@@ -217,6 +219,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             if (wasFencedOut(jobUuid, fenceToken)) {
                 log.info("prototype job {} was superseded (ran under token {}, newer token now holds the lease) - "
                         + "exiting quietly with no resubmit", jobUuid, fenceToken);
+                metrics.fencedOut(contractNumber, "after_run");
                 return jobRepository.findByJobUuid(jobUuid);
             }
 
@@ -224,6 +227,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             Job current = jobRepository.findByJobUuid(jobUuid);
             if (current != null && current.getStatus() == CANCELLED) {
                 log.warn("prototype job {} was cancelled during processing; leaving CANCELLED and cleaning up", jobUuid);
+                metrics.jobCancelled(contractNumber);
                 coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
                 outputAssembler.deleteJobDirectory(jobUuid);
                 return current;
@@ -245,7 +249,12 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 // and fsynced its file to the saved offset.
                 // The last thing we do is mark the job as suspended. If we crash here, we'll just hard-recover
                 // anyway, which is unfortunate, but will avoid corruption/mistakes.
-                jobLease.markCleanSuspend(jobUuid, fenceToken);
+                boolean cleanSuspend = jobLease.markCleanSuspend(jobUuid, fenceToken);
+                if (!cleanSuspend) {
+                    log.warn("prototype job {} suspended WITHOUT a clean-suspend marker at token {} - the next "
+                            + "pickup will have to hard-recover", jobUuid, fenceToken);
+                }
+                metrics.jobSuspended(contractNumber, cleanSuspend);
                 job.setStatus(SUBMITTED);
                 job.setStatusMessage("Paused via prototype");
             } else if (hasThresholdException(execution) || thresholdExceeded(jobUuid)) {
@@ -264,12 +273,15 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             if (wasFencedOut(jobUuid, fenceToken)) {
                 log.info("prototype job {} threw while superseded (ran under token {}, newer token now holds the "
                         + "lease) - exiting quietly, the current owner is responsible for this job", jobUuid, fenceToken);
+                metrics.fencedOut(contractNumber, "exception");
                 return jobRepository.findByJobUuid(jobUuid);
             }
             // issues with launching are terminal and fail the job without retry
             log.error("prototype job {} failed to launch", jobUuid, e);
+            String message = "Prototype execution failed: " + e.getMessage();
+            alertJobFailed(job, jobUuid, contractNumber, PrototypeMetrics.FailureReason.LAUNCH_FAILED, message);
             job.setStatus(FAILED);
-            job.setStatusMessage("Prototype execution failed: " + e.getMessage());
+            job.setStatusMessage(message);
             coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
         } finally {
             leaseRenewer.untrack(jobUuid);
@@ -289,18 +301,55 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     }
 
     /**
+     * Build the aggregated attribution table on a fresh start, and rebuild it on a resume if a prior worker
+     * dropped it on its way out. Reused as-is otherwise, since it is the immutable snapshot the partitions
+     * are cut from.
+     */
+    private void prepareAggregatedTable(JobExecution last, String jobUuid, String contractNumber,
+                                        boolean softResume, long fenceToken) {
+        if (last == null) {
+            log.info("no prior batch execution for job {} - creating aggregated attribution table", jobUuid);
+            coverageV3Service.createAggregatedAttributionTable(contractNumber);
+        } else if (!coverageV3Service.aggregatedTableExists(contractNumber)) {
+            // A prior worker that failed terminally or was fenced out may have dropped the aggregated
+            // table. We safely remake it because a hard recovery re-runs the partitioner from scratch anyway.
+            log.warn("prior batch execution {} for job {} but aggregated table for contract {} is missing - "
+                    + "rebuilding ({} at token {})",
+                    last.getId(), jobUuid, contractNumber, softResume ? "soft resume" : "hard recovery", fenceToken);
+            coverageV3Service.createAggregatedAttributionTable(contractNumber);
+        } else {
+            log.info("prior batch execution {} for job {} - {} at token {} (reusing aggregated table)",
+                    last.getId(), jobUuid, softResume ? "soft resume" : "hard recovery", fenceToken);
+        }
+    }
+
+    /**
      * Increment the jobs failed attempts, then send it back to be resubmitted
      */
     private void applyFailureOutcome(Job job, String contractNumber, String jobUuid, String message) {
         int failures = batchMeta.failedExecutionCount(jobUuid);
         int maxFailureAttempts = props.getMaxFailureAttempts();
         if (failures < maxFailureAttempts) {
+            // A resumable failure is not a job outcome yet, so it does not alert as one. It does get counted,
+            // and once the remaining attempts run low it is traced to the AB2D channel as an early warning.
+            boolean approachingMax =
+                    maxFailureAttempts - failures <= props.getFailureAttemptsWarnRemaining();
+            metrics.jobFailureAttempt(contractNumber, failures, maxFailureAttempts, approachingMax);
+            if (approachingMax) {
+                eventLogger.trace(String.format(
+                        "AB2D pause/resume: job %s for contract %s has failed %d of %d allowed attempts and "
+                                + "will fail terminally if it keeps failing. Last failure: %s",
+                        jobUuid, contractNumber, failures, maxFailureAttempts, message), PUBLIC_LIST);
+            }
             job.setStatus(SUBMITTED);
             job.setStatusMessage(message + " (attempt " + failures + " of " + maxFailureAttempts + "; will resume)");
             log.warn("prototype job {} failed ({}/{} attempts) - resubmitting for resume", jobUuid, failures, maxFailureAttempts);
         } else {
+            String failureMessage = message + " (failed after " + failures + " attempts)";
+            alertJobFailed(job, jobUuid, contractNumber, PrototypeMetrics.FailureReason.ATTEMPTS_EXHAUSTED,
+                    failureMessage);
             job.setStatus(FAILED);
-            job.setStatusMessage(message + " (failed after " + failures + " attempts)");
+            job.setStatusMessage(failureMessage);
             log.error("prototype job {} exhausted {} failure attempts - marking FAILED", jobUuid, maxFailureAttempts);
             coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
         }
@@ -310,10 +359,30 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      * Terminal failure because too many beneficiaries errored
      */
     private void applyThresholdFailure(Job job, String contractNumber, String jobUuid) {
-        log.error("prototype job {} failed: too many patient records in the job had failures", jobUuid);
+        ProgressTracker tracker = jobProgressService.getStatus(jobUuid);
+        log.error("prototype job {} failed: too many patient records in the job had failures ({} of {})",
+                jobUuid, tracker == null ? -1 : tracker.getPatientFailureCount(),
+                tracker == null ? -1 : tracker.getTotalCount());
+        String message = "Failed: too many patient records in the job had failures";
+        alertJobFailed(job, jobUuid, contractNumber, PrototypeMetrics.FailureReason.THRESHOLD_EXCEEDED, message);
         job.setStatus(FAILED);
-        job.setStatusMessage("Failed: too many patient records in the job had failures");
+        job.setStatusMessage(message);
         coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
+    }
+
+    /**
+     * Every terminal failure in this processor goes through here so all three paths - the failure threshold,
+     * exhausted resume attempts, and a launch/teardown exception - alert to Slack and count under the same
+     * metric with a reason tag. Called before the status is set so the event carries the failure message.
+     */
+    private void alertJobFailed(Job job, String jobUuid, String contractNumber,
+                                PrototypeMetrics.FailureReason reason, String message) {
+        log.error("prototype job {} for contract {} FAILED ({}): {}", jobUuid, contractNumber,
+                reason.tagValue(), message);
+        metrics.jobFailed(contractNumber, reason);
+        eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED,
+                EOB_JOB_FAILURE + " Prototype job " + jobUuid + " for contract " + contractNumber
+                        + " failed (" + reason.tagValue() + "): " + message), PUBLIC_LIST);
     }
 
     /**
@@ -339,6 +408,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         String message = String.format("%s via prototype: processed %d patients into %d file(s)",
                 EOB_JOB_COMPLETED, processed, job.getJobOutputs().size());
         eventLogger.logAndAlert(job.buildJobStatusChangeEvent(SUCCESSFUL, message), PROD_LIST);
+        metrics.jobCompleted(job.getContractNumber(), processed);
 
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
@@ -355,8 +425,16 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
     /** True if the batch failed because a chunk tripped the failure threshold mid-run. */
     private boolean hasThresholdException(JobExecution execution) {
+        return failedWith(execution, ThresholdExceededException.class);
+    }
+
+    /**
+     * True if any of the execution's failures is, or wraps, the given type.
+     */
+    private static boolean failedWith(JobExecution execution, Class<? extends Throwable> type) {
         return execution.getAllFailureExceptions().stream()
-                .anyMatch(ThresholdExceededException.class::isInstance);
+                .flatMap(failure -> ExceptionUtils.getThrowableList(failure).stream())
+                .anyMatch(type::isInstance);
     }
 
     /**
@@ -372,6 +450,8 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             return;
         }
         log.info("shutdown: stopping {} running prototype batch execution(s) before releasing jobs", running.size());
+        metrics.drainStarted();
+        long startedAt = System.currentTimeMillis();
         for (JobExecution je : running) {
             try {
                 jobOperator.stop(je);
@@ -383,21 +463,26 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         // Wait for the partition threads to actually finish before changing status
         // might need a TODO for a more robust system than a sleep
         long shutdownAwaitMs = props.getShutdownAwaitMs();
-        long deadline = System.currentTimeMillis() + shutdownAwaitMs;
+        long deadline = startedAt + shutdownAwaitMs;
         while (System.currentTimeMillis() < deadline) {
             if (batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME).isEmpty()) {
                 log.info("shutdown: all prototype batch executions stopped");
+                metrics.drainFinished(true, System.currentTimeMillis() - startedAt);
                 return;
             }
             try {
                 Thread.sleep(250);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
+                // Interrupted before the drain finished, so the jobs still running will be hard-recovered.
+                log.warn("shutdown: interrupted before the drain finished; remaining jobs will be hard-recovered");
+                metrics.drainFinished(false, System.currentTimeMillis() - startedAt);
                 return;
             }
         }
         log.warn("shutdown: prototype batch executions still running after {}ms; proceeding with status reset anyway",
                 shutdownAwaitMs);
+        metrics.drainFinished(false, System.currentTimeMillis() - startedAt);
     }
 
     /**
@@ -433,8 +518,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      * True if the execution failed because it was interrupted
      */
     private boolean wasInterrupted(JobExecution execution) {
-        return execution.getAllFailureExceptions().stream()
-                .anyMatch(InterruptedException.class::isInstance);
+        return failedWith(execution, InterruptedException.class);
     }
 
     /**
@@ -466,7 +550,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .writer(ndjsonItemWriter)
                 // each chunk commit comes with a fence token which prevents
                 // us from committing work if we've lost the job
-                .listener(new PrototypeFenceGuard(jobLease, jobUuid, fenceToken))
+                .listener(new PrototypeFenceGuard(jobLease, metrics, jobUuid, fenceToken))
                 // per-chunk progress and failure reporting
                 .listener(new PrototypeProgressListener(jobChannelService, jobProgressService, jobUuid))
                 .faultTolerant()
@@ -474,12 +558,16 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .retryLimit(props.getItemRetryLimit())
                 .skipPolicy(new PrototypeSkipPolicy())
                 // count each skipped beneficiary as one error against the error threshold
-                .skipListener(new PrototypeSkipCounter(jobChannelService, jobUuid));
+                .skipListener(new PrototypeSkipCounter(jobChannelService, metrics, jobUuid));
         TRANSIENT_EXCEPTIONS.forEach(workerStepBuilder::retry);
+
+        if (props.isItemConcurrencyEnabled()) {
+            workerStepBuilder.taskExecutor(itemTaskExecutor);
+        }
 
         Step workerStep = workerStepBuilder
                 // abort the step at the next chunk boundary if the job is cancelled mid-run
-                .listener(new JobCancellationChunkListener(jobRepository, jobUuid))
+                .listener(new JobCancellationWriteListener(jobRepository, jobUuid))
                 .allowStartIfComplete(false)
                 // should basically never trip
                 .startLimit(props.getMaxStartAttempts())
@@ -502,6 +590,18 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         return new JobBuilder(PROTOTYPE_JOB_NAME, batchJobRepository)
                 .start(managerStep)
                 .build();
+    }
+
+    /**
+     * Async executor for concurrent chunk work. Uses virtual threads since most threads
+     * are idle waiting for BFD. The concurrency limit prevents a small group of virtual
+     * threads from absolutely hammering BFD with a million requests.
+     */
+    private static AsyncTaskExecutor itemTaskExecutor(int concurrencyLimit) {
+        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("proto-item-");
+        executor.setVirtualThreads(true);
+        executor.setConcurrencyLimit(Math.max(1, concurrencyLimit));
+        return executor;
     }
 
     /**
