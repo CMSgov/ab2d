@@ -12,6 +12,10 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
+        <sonar.coverage.exclusions>
+            **/CoverageV3ScheduledTasks.java,
+            **/CoverageV3Count.java
+        </sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
@@ -41,6 +45,13 @@
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-jpa</artifactId>
+        </dependency>
+
+        <!-- DogStatsD client for emitting Datadog custom metrics. -->
+        <dependency>
+            <groupId>com.datadoghq</groupId>
+            <artifactId>java-dogstatsd-client</artifactId>
+            <version>${dogstatsd-client.version}</version>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>

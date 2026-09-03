@@ -1,24 +1,22 @@
 package gov.cms.ab2d.coverage.service.v3;
 
+import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
-import gov.cms.ab2d.coverage.model.v3.CoverageV3Count;
 import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.query.*;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -49,8 +47,11 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
+    @Trace(operationName = "ab2d.coverage.page_v3")
     public CoveragePagingResult pageCoverage(final CoveragePagingRequest page) {
         final ContractForCoverageDTO contract = page.getContract();
+        DatadogSpans.setTag("contract", contract.getContractNumber());
+        DatadogSpans.setTag("component", "coverage");
 
         // For v3, perform coverage periods check only once (expected vs actual coverage periods) instead for every batch
         // on subsequent batches, page.getCursor() will be populated -- only on first batch will it be absent
@@ -78,6 +79,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
         val beneficiarySummaries = queryAggregatedCoverageMembership(page, page.getPageSize());
         val beneficiaryRecordsFetched = beneficiarySummaries.size();
+        DatadogSpans.setMetric("coverage.v3.beneficiary_records_fetched", beneficiaryRecordsFetched);
         log.info("[V3] beneficiary summary records fetched = {}", beneficiaryRecordsFetched);
 
         if (LOG_ROWS_FETCHED) {
@@ -126,7 +128,10 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
 
     @Override
+    @Trace(operationName = "ab2d.coverage.get_coverage_periods_v3")
     public Map<String, List<YearMonthRecord>> getCoveragePeriods(List<ContractDTO> contracts) {
+        DatadogSpans.setTag("component", "coverage");
+        DatadogSpans.setMetric("coverage.v3.contract_count", contracts.size());
         val result = new HashMap<String, List<YearMonthRecord>>();
         val template = new NamedParameterJdbcTemplate(dataSource);
         val query =
@@ -160,7 +165,10 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     @Override
+    @Trace(operationName = "ab2d.coverage.create_aggregated_table_v3")
     public void createAggregatedAttributionTable(String contract) {
+        DatadogSpans.setTag("contract", contract);
+        DatadogSpans.setTag("component", "coverage");
         new GetAggregatedCoverageMembership(dataSource).createAggregatedAttributionTable(contract);
     }
 
@@ -250,13 +258,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     boolean shouldDeleteAggregatedTable(final String tableName, final List<String> contractsWithActiveJobs) {
-        for (String contractWithActiveJob : contractsWithActiveJobs) {
-            val keepTable = keepAggregatedTable(tableName);
-            if (keepTable) {
-                log.info("Skipping deletion for aggregated table {}", tableName);
-                return false;
-            }
+        val keepTable = keepAggregatedTable(tableName);
+        if (keepTable) {
+            log.info("Skipping deletion for aggregated table {}", tableName);
+            return false;
+        }
 
+        for (String contractWithActiveJob : contractsWithActiveJobs) {
             if (tableName.toLowerCase().endsWith(contractWithActiveJob.toLowerCase())) {
                 return false;
             }
@@ -266,29 +274,21 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     @Override
     @Transactional
+    @Trace(operationName = "ab2d.coverage.move_from_staging_v3")
     public CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3SyncSource source) {
+        DatadogSpans.setTag("contract", contract);
+        DatadogSpans.setTag("component", "coverage");
         return coverageV3SyncService.copyFromStagingTablesToRecent(contract, source);
     }
 
     @Override
     @Transactional
+    @Trace(operationName = "ab2d.coverage.move_to_historical_v3")
     public CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source) {
+        DatadogSpans.setTag("contract", contract);
+        DatadogSpans.setTag("component", "coverage");
 	    return coverageV3SyncService.moveToHistorical(contract, source);
     }
-
-    @Override
-    public int countBeneficiariesByCoveragePeriod(final CoverageV3Periods periods, final String contract) {
-        return executeTimedQuery(
-            format("countBeneficiariesByCoveragePeriod historicalCoverage=%s; recentCoverage=%s; contract=%s",
-                    periods.getHistoricalCoverage(),
-                    periods.getRecentCoverage(),
-                    contract
-            ),
-            () -> new CountBeneficiariesByCoveragePeriods(dataSource)
-                    .countBeneficiaries(contract, periods, isOptOutOn())
-        );
-    }
-
 
     private List<CoverageSummary> queryAggregatedCoverageMembership(CoveragePagingRequest page, long limit) {
         return executeTimedQuery(
@@ -303,10 +303,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     private long reduceAndFilter(List<CoverageSummary> summaries) {
         return new GetAggregatedCoverageMembership(dataSource).reduceAndFilter(summaries);
-    }
-
-    private boolean isOptOutOn() {
-        return propertiesService.isToggleOn("OptOutOn", false);
     }
 
     public static <T> T executeTimedQuery(String queryDescription, Supplier<T> supplier) {

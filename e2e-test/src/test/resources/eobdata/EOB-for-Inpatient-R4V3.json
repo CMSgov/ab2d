@@ -1,0 +1,574 @@
+{
+  "resourceType": "ExplanationOfBenefit",
+  "id": "-6960640775761",
+  "meta": {
+    "lastUpdated": "2026-03-05T21:49:52.394+00:00",
+    "source": "DDPS",
+    "profile": [ "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Pharmacy|2.1.0" ],
+    "tag": [ {
+      "system": "https://bluebutton.cms.gov/fhir/CodeSystem/System-Type",
+      "code": "NationalClaimsHistory"
+    }, {
+      "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Final-Action",
+      "code": "FinalAction"
+    } ]
+  },
+  "contained": [ {
+    "resourceType": "Organization",
+    "id": "BILLING_ID",
+    "identifier": [ {
+      "type": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+          "code": "NPI",
+          "display": "National provider identifier"
+        } ]
+      },
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1104867175"
+    }, {
+      "type": {
+        "coding": [ {
+          "system": "http://bluebutton.cms.gov/fhir/CodeSystem/PRVDR-ID-QLFYR-CD",
+          "code": "12",
+          "display": "DEA"
+        } ]
+      },
+      "system": "http://bluebutton.cms.gov/fhir/identifiers/GenericIdNum",
+      "value": "1104867175"
+    } ],
+    "active": true
+  } ],
+  "identifier": [ {
+    "type": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBIdentifierType",
+        "code": "uc",
+        "display": "Unique Claim ID"
+      } ]
+    },
+    "value": "-6960640775761"
+  }, {
+    "system": "https://bluebutton.cms.gov/identifiers/CLM-CNTL-NUM",
+    "value": "-36942593160064SAG"
+  }, {
+    "system": "https://bluebutton.cms.gov/identifiers/CLM-CNTL-NUM",
+    "value": "-95715325045743WDP"
+  } ],
+  "status": "active",
+  "type": {
+    "coding": [ {
+      "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-TYPE-CD",
+      "code": "1",
+      "display": "MEDICARE PART D ORIGINAL CLAIM"
+    }, {
+      "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+      "code": "pharmacy"
+    } ]
+  },
+  "use": "claim",
+  "patient": {
+    "reference": "Patient/-757111882"
+  },
+  "billablePeriod": {
+    "start": "2024-05-27",
+    "end": "2024-06-14"
+  },
+  "created": "2026-03-05T00:00:00+00:00",
+  "provider": {
+    "reference": "#BILLING_ID"
+  },
+  "outcome": "complete",
+  "supportingInfo": [ {
+    "sequence": 1,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_ADJSTMT_TYPE_CD",
+        "display": "Claim Adjustment Type Code"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-ADJSTMT-TYPE-CD",
+        "code": "2",
+        "display": "REPLACEMENT"
+      } ]
+    }
+  }, {
+    "sequence": 2,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_IDR_LD_DT",
+        "display": "Claim IDR Load Date"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "timingDate": "2024-11-17"
+  }, {
+    "sequence": 3,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_SBMT_FRMT_CD",
+        "display": "Claim Submission Format Code"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-SBMT-FRMT-CD",
+        "code": "C",
+        "display": "COB CLAIM"
+      } ]
+    }
+  }, {
+    "sequence": 4,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_SBMTR_CNTRCT_NUM",
+        "display": "Submitter Contract Number"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "valueString": "Z0005"
+  }, {
+    "sequence": 5,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_SBMTR_CNTRCT_PBP_NUM",
+        "display": "Submitter Contract PBP Number"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "valueString": "005"
+  }, {
+    "sequence": 6,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "clmrecvddate"
+      } ]
+    },
+    "timingDate": "2024-06-14"
+  }, {
+    "sequence": 7,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_CMS_PROC_DT",
+        "display": "FI Claim Process Date"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "timingDate": "2024-06-14"
+  }, {
+    "sequence": 8,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_PHRMCY_SRVC_TYPE_CD",
+        "display": "Pharmacy service type code"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-PHRMCY-SRVC-TYPE-CD",
+        "code": "03",
+        "display": "Home infusion therapy provider"
+      } ]
+    }
+  }, {
+    "sequence": 9,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "rxorigincode"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/NCPDPPrescriptionOriginCode",
+        "code": "5"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-LINE-RX-ORGN-CD",
+        "code": "5"
+      } ]
+    }
+  }, {
+    "sequence": 10,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "brandgenericindicator"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/NCPDPBrandGenericIndicator",
+        "code": "B",
+        "display": "Brand"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-BRND-GNRC-CD",
+        "code": "B",
+        "display": "Brand"
+      } ]
+    }
+  }, {
+    "sequence": 11,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_PTNT_RSDNC_CD",
+        "display": "Patient Residence Code"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-PTNT-RSDNC-CD",
+        "code": "12",
+        "display": "Psychiatric Residential Treatment Facility"
+      } ]
+    }
+  }, {
+    "sequence": 12,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_LTC_DSPNSNG_MTHD_CD",
+        "display": "Submission clarification code"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-LTC-DSPNSNG-MTHD-CD",
+        "code": "00",
+        "display": "(Unknown value – rarely populated)"
+      } ]
+    }
+  }, {
+    "sequence": 13,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "compoundcode"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/NCPDPCompoundCode",
+        "code": "0",
+        "display": "Not specified (missing values are also possible)"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-CMPND-CD",
+        "code": "0",
+        "display": "Not specified (missing values are also possible)"
+      } ]
+    }
+  }, {
+    "sequence": 14,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "dayssupply"
+      } ]
+    },
+    "valueQuantity": {
+      "value": 6,
+      "unit": "days"
+    }
+  }, {
+    "sequence": 15,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "refillnum"
+      } ]
+    },
+    "valueQuantity": {
+      "value": 3,
+      "unit": "fill"
+    }
+  }, {
+    "sequence": 16,
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+        "code": "dawcode"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/NCPDPDispensedAsWrittenOrProductSelectionCode",
+        "code": "2"
+      } ]
+    }
+  }, {
+    "sequence": 17,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_DRUG_CVRG_STUS_CD",
+        "display": "Drug Coverage Status Code"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-DRUG-CVRG-STUS-CD",
+        "code": "O",
+        "display": "Over-the-counter drugs"
+      } ]
+    }
+  }, {
+    "sequence": 18,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_CTSTRPHC_CVRG_IND_CD",
+        "display": "Catastrophic Coverage Code"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "code": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/CLM-CTSTRPHC-CVRG-IND-CD",
+        "code": "A",
+        "display": "Attachment point met on this event"
+      } ]
+    }
+  }, {
+    "sequence": 19,
+    "category": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information",
+        "code": "CLM_LINE_RX_NUM",
+        "display": "Claim Line Prescription Service Reference Number"
+      }, {
+        "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+        "code": "info",
+        "display": "Information"
+      } ]
+    },
+    "valueString": "80217.07"
+  } ],
+  "insurance": [ {
+    "focal": true,
+    "coverage": {
+      "display": "Part D"
+    }
+  } ],
+  "item": [ {
+    "sequence": 1,
+    "productOrService": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/ndc",
+        "code": "00264780020"
+      } ]
+    },
+    "servicedDate": "2024-05-27",
+    "quantity": {
+      "value": 4.0,
+      "unit": "ML"
+    },
+    "adjudication": [ {
+      "category": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_PLRO_AMT",
+          "display": "Patient Liability Reduction Other Paid Amount"
+        } ]
+      },
+      "amount": {
+        "value": 418955.81,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_LIS_AMT",
+          "display": "Low Income Cost Sharing Subsidy Amount"
+        } ]
+      },
+      "amount": {
+        "value": 17018.83,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_GRS_BLW_THRSHLD_AMT",
+          "display": "Gross Drug Cost Below Out Of Pocket Threshold"
+        } ]
+      },
+      "amount": {
+        "value": 208916.78,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_GRS_ABOVE_THRSHLD_AMT",
+          "display": "Gross Drug Cost Above Out Of Pocket Threshold"
+        } ]
+      },
+      "amount": {
+        "value": 264023.17,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "CLM_LINE_RPTD_GAP_DSCNT_AMT",
+          "display": "Claim Line Reported Gap Discount Amount"
+        } ]
+      },
+      "amount": {
+        "value": 284376.62,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+          "code": "submitted",
+          "display": "Submitted Amount"
+        }, {
+          "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+          "code": "TOT_RX_CST_AMT",
+          "display": "Total drug cost (Part D)"
+        } ]
+      },
+      "amount": {
+        "value": 1875346.98,
+        "currency": "USD"
+      }
+    }, {
+      "category": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator",
+          "code": "benefitpaymentstatus",
+          "display": "Benefit Payment Status"
+        } ]
+      },
+      "reason": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus",
+          "code": "other",
+          "display": "Other"
+        } ]
+      }
+    } ],
+    "detail": [ {
+      "sequence": 1,
+      "productOrService": {
+        "coding": [ {
+          "system": "http://hl7.org/fhir/sid/ndc",
+          "code": "00264780020"
+        } ]
+      },
+      "quantity": {
+        "value": 5.0,
+        "unit": "ML",
+        "system": "http://unitsofmeasure.org",
+        "code": "mL"
+      }
+    } ]
+  } ],
+  "total": [ {
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+        "code": "paidbypatient",
+        "display": "Paid by patient"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+        "code": "CLM_BENE_PMT_AMT",
+        "display": "Patient Responsibility Payment Amount"
+      } ]
+    },
+    "amount": {
+      "value": 423.19,
+      "currency": "USD"
+    }
+  }, {
+    "category": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+        "code": "priorpayerpaid",
+        "display": "Prior payer paid"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+        "code": "CLM_OTHR_TP_PD_AMT",
+        "display": "Other Third Party Payer Paid Amount"
+      } ]
+    },
+    "amount": {
+      "value": 107.38,
+      "currency": "USD"
+    }
+  }, {
+    "category": {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+        "code": "submitted",
+        "display": "Submitted Amount"
+      }, {
+        "system": "https://bluebutton.cms.gov/fhir/CodeSystem/Adjudication",
+        "code": "TOT_RX_CST_AMT",
+        "display": "Total drug cost (Part D)"
+      } ]
+    },
+    "amount": {
+      "value": 1875346.98,
+      "currency": "USD"
+    }
+  } ],
+  "payment": {
+    "date": "2024-05-28"
+  }
+}

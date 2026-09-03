@@ -1,5 +1,6 @@
 package gov.cms.ab2d.importer;
 
+import gov.cms.ab2d.common.util.DatadogSpans;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -92,6 +93,50 @@ class CoverageV3ImportServiceTest {
         }
 
         verify(connection).rollback();
+    }
+
+    @Test
+    void tagsSpanAndRecordsStagedRowsOnSuccess() throws Exception {
+        stubNonFirstDayStatements();
+
+        try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class);
+             MockedStatic<DatadogSpans> spans = mockStatic(DatadogSpans.class)) {
+            driverManager.when(() -> DriverManager.getConnection(JDBC_URL, DB_USER, DB_PASSWORD))
+                    .thenReturn(connection);
+
+            service.importWithRetry(FQTN, BUCKET, KEY, REGION);
+
+            spans.verify(() -> DatadogSpans.setTag("component", "idr"));
+            spans.verify(() -> DatadogSpans.setTag("target_table", FQTN + "_staging"));
+            spans.verify(() -> DatadogSpans.setMetric("idr.staged_rows", 10L));
+        }
+    }
+
+    @Test
+    void marksSpanErroredWhenImportFails() throws Exception {
+        when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0, String.class);
+            if (sql.startsWith("SELECT aws_s3.table_import_from_s3")) {
+                return importPs;
+            }
+            if (sql.startsWith("TRUNCATE TABLE")) {
+                return truncatePs;
+            }
+            throw new IllegalArgumentException("Unexpected SQL: " + sql);
+        });
+
+        when(importPs.executeQuery()).thenThrow(new RuntimeException("boom"));
+
+        try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class);
+             MockedStatic<DatadogSpans> spans = mockStatic(DatadogSpans.class)) {
+            driverManager.when(() -> DriverManager.getConnection(JDBC_URL, DB_USER, DB_PASSWORD))
+                    .thenReturn(connection);
+
+            assertThrows(RuntimeException.class,
+                    () -> service.importWithRetry(FQTN, BUCKET, KEY, REGION));
+
+            spans.verify(() -> DatadogSpans.markError(any(RuntimeException.class)));
+        }
     }
 
     private void stubNonFirstDayStatements() throws Exception {

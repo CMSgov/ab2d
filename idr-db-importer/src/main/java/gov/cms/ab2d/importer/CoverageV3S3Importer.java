@@ -1,5 +1,7 @@
 package gov.cms.ab2d.importer;
 
+import datadog.trace.api.Trace;
+import gov.cms.ab2d.common.util.DatadogSpans;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,9 +38,13 @@ public class CoverageV3S3Importer {
         this.importService = importService;
     }
 
+    @Trace(operationName = "ab2d.idr.run_once")
     public void runOnce() throws Exception {
         String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
         String finalKey = "coverage_v3_" + date + ".csv";
+        DatadogSpans.setTag("component", "idr");
+        DatadogSpans.setTag("s3.bucket", bucket);
+        DatadogSpans.setTag("s3.key", finalKey);
 
         if (coverageQueryService != null) {
             try (Connection conn = coverageQueryService.open();

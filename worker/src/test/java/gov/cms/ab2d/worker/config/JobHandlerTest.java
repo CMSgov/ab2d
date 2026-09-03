@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.coverage.service.v3.CoverageV3LockWrapper;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncSource.JOB_HANDLER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -39,7 +41,7 @@ class JobHandlerTest {
 
     @Mock
     private CoverageV3LockWrapper coverageV3LockWrapper;
-    
+
     @DisplayName("Job is not started if worker is set to neutral")
     @Test
     void processingNotTriggeredInNeutral() {
@@ -192,4 +194,43 @@ class JobHandlerTest {
         verify(workerService, times(3)).process(anyString());
     }
 
+    @Test
+    void testV3JobSyncSuccessful() {
+        Job submittedJob = new Job();
+        submittedJob.setStatus(JobStatus.IN_PROGRESS);
+        ReentrantLock lock = new ReentrantLock();
+        when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
+        when(lockRegistry.obtain(anyString())).thenReturn(lock);
+        when(workerService.process(anyString())).thenReturn(submittedJob);
+        when(coverageV3Service.moveFromStagingToRecentCoverage(any(), eq(JOB_HANDLER))).thenReturn(CoverageV3SyncResult.SYNC_SUCCESSFUL_FOR_CONTRACT);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
+        Map<String, Object> jobMap = new HashMap<>() {{
+            put("job_uuid", "DoesNotMatter");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "R4V3");
+        }};
+        List<Map<String, Object>> payload = List.of(jobMap);
+        jobHandler.handleMessage(new GenericMessage<>(payload));
+        assertFalse(lock.isLocked());
+        verify(workerService, times(1)).getEngagement();
+        verify(workerService, times(1)).process(anyString());
+    }
+
+    @Test
+    void testV3JobSyncFailed() {
+        Job submittedJob = new Job();
+        submittedJob.setStatus(JobStatus.IN_PROGRESS);
+        ReentrantLock lock = new ReentrantLock();
+        when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
+        when(lockRegistry.obtain(anyString())).thenReturn(lock);
+        when(coverageV3Service.moveFromStagingToRecentCoverage(any(), eq(JOB_HANDLER))).thenReturn(CoverageV3SyncResult.SYNC_FAILED_FOR_CONTRACT);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
+        Map<String, Object> jobMap = new HashMap<>() {{
+            put("job_uuid", "DoesNotMatter");
+            put("contract_number", "DoesNotMatter");
+            put("fhir_version", "R4V3");
+        }};
+        List<Map<String, Object>> payload = List.of(jobMap);
+        assertThrows(MessagingException.class, () -> jobHandler.handleMessage(new GenericMessage<>(payload)));
+    }
 }

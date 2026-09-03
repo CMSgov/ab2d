@@ -124,7 +124,7 @@ module "cluster" {
 }
 
 module "service" {
-  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=52af0763fab4e65b29ead8bf88774f0bad4bdd87"
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=9e5873303a56eb3360ca9eae93e5c96fc6f3ec64"
 
   cluster_arn                       = module.cluster.this.arn
   cpu                               = local.ecs_task_def_cpu_worker
@@ -154,7 +154,10 @@ module "service" {
     { name = "AWS_SQS_URL", value = data.aws_sqs_queue.events.url },
     { name = "AWS_SNS_TOPIC_PREFIX", value = "ab2d-${local.parent_env}" },
     { name = "IMAGE_VERSION", value = local.worker_image_tag },
-    { name = "MICROSERVICES_URL", value = local.contracts_url }
+    { name = "MICROSERVICES_URL", value = local.contracts_url },
+    { name = "DD_DYNAMIC_INSTRUMENTATION_ENABLED", value = "false" },
+    { name = "DD_EXCEPTION_REPLAY_ENABLED", value = "false" },
+    { name = "DD_CODE_ORIGIN_FOR_SPANS_ENABLED", value = "false" }
   ]
 
   container_secrets = [
