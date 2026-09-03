@@ -11,7 +11,6 @@ import gov.cms.ab2d.worker.processor.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.processor.PatientClaimsRequest;
 import gov.cms.ab2d.worker.processor.SerializedEobs;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
-import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
@@ -19,9 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
-@Slf4j
 @Component
 @StepScope
 public class EobItemProcessor implements ItemProcessor<CoverageSummary, SerializedEobs> {
@@ -30,20 +27,19 @@ public class EobItemProcessor implements ItemProcessor<CoverageSummary, Serializ
     private final PatientClaimsRequest request;
     private final FhirVersion version;
     private final long itemDelayMs;
-    // remove this later
-    private final double crashProbability;
+    private final CrashInjector crashInjector;
 
     public EobItemProcessor(
             PatientClaimsProcessor patientClaimsProcessor,
             JobRepository jobRepository,
             ContractWorkerClient contractWorkerClient,
             SearchConfig searchConfig,
+            CrashInjector crashInjector,
             @Value("#{jobParameters['jobUuid']}") String jobUuid,
-            @Value("${pause-resume.prototype.item-delay-ms:0}") long itemDelayMs,
-            @Value("${pause-resume.prototype.crash-probability:0}") double crashProbability) {
+            @Value("${pause-resume.prototype.item-delay-ms:0}") long itemDelayMs) {
         this.patientClaimsProcessor = patientClaimsProcessor;
         this.itemDelayMs = itemDelayMs;
-        this.crashProbability = crashProbability;
+        this.crashInjector = crashInjector;
         Job job = jobRepository.findByJobUuid(jobUuid);
         this.version = job.getFhirVersion();
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(job.getContractNumber());
@@ -65,12 +61,7 @@ public class EobItemProcessor implements ItemProcessor<CoverageSummary, Serializ
 
     @Override
     public SerializedEobs process(CoverageSummary patient) throws InterruptedException {
-        // dev test code - simulates a hard crash by just throwing the process in the trash
-        // remove this later
-        if (crashProbability > 0 && ThreadLocalRandom.current().nextDouble() < crashProbability) {
-            log.error("Simulating hard crash. Goodbye.");
-            Runtime.getRuntime().halt(137);
-        }
+        crashInjector.maybeCrash("process");
 
         // optional artificial slowdown so a running job stays alive long enough to interrupt in tests
         if (itemDelayMs > 0) {

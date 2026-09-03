@@ -82,10 +82,14 @@ public class PrototypeJobRecovery {
         Optional<Long> adopted = jobLease.tryAdoptCleanSuspend(jobUuid, owner);
         if (adopted.isPresent()) {
             // The token did not move, so the files and checkpoint keys already line up. Nothing to repair.
+            log.info("RECOVERY for job {}: SOFT RESUME on token {} - clean suspend adopted, nothing to redo",
+                    jobUuid, adopted.get());
             return new Ownership(adopted.get(), true);
         }
 
         long fenceToken = jobLease.bump(jobUuid, owner);
+        log.info("RECOVERY for job {}: HARD RECOVERY on new token {} - a crashed or stale worker was fenced, "
+                + "incomplete partitions will be redone", jobUuid, fenceToken);
         // Copy-forward runs first, to see if there are any UNKNOWN statuses
         // If no, it copies the old partition work to the new file
         // If yes, it doesn't copy anything forward, the partition will be restarted
