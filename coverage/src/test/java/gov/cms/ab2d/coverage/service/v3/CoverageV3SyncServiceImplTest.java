@@ -2,6 +2,7 @@ package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
+import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLogImpl;
 import lombok.val;
@@ -13,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -302,6 +304,63 @@ class CoverageV3SyncServiceImplTest {
 
 		assertTrue(service.isContractAttested("ATT1"));
 		System.out.println();
+	}
+
+	@Test
+	void testBatchCopy_SimulateDataIntegrityError(CapturedOutput out) {
+		 new JdbcTemplate(container.getDataSource()).execute(
+		"""
+		INSERT INTO v3.coverage_v3_staging(patient_id, contract, "year", "month", current_mbi)
+		VALUES
+		    (100, 'Z5555', 2025, 12, 'M100'),
+		    (100, 'Z5555', 2026, 1,  'M100'),
+		    (100, 'Z5555', 2026, 2,  'M100'),
+		    (100, 'Z5555', 2026, 3,  'M100'),
+		    (200, 'Z5555', 2025, 12, 'M100'),
+		    (200, 'Z5555', 2026, 1,  'M200'),
+		    (200, 'Z5555', 2026, 2,  'M200'),
+		    (200, 'Z5555', 2026, 3,  'M200')
+		""");
+
+		service = new CoverageV3SyncServiceImpl(
+				container.getDataSource(),
+				lockWrapper,
+				lockWrapper,
+				audit,
+				metrics,
+				propertiesService
+		) {
+			@Override
+			boolean isTestContract(String contract) {
+				return false;
+			}
+
+			@Override
+			boolean isContractAttested(String contract) {
+				return true;
+			}
+
+			@Override
+			int batchCopyFromStagingToCoverage(NamedParameterJdbcTemplate template, String contract, YearMonthRecord yearMonthPeriod) {
+				if (yearMonthPeriod.getMonth() == 2 && yearMonthPeriod.getYear() == 2026) {
+					return 0;
+				}
+				return super.batchCopyFromStagingToCoverage(template, contract, yearMonthPeriod);
+			}
+		};
+
+		when(propertiesService.isToggleOn(V3_AUDIT_LOGGING_ENABLED, false)).thenReturn(true);
+		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
+		when(lock.tryLock()).thenReturn(true);
+
+		assertThrows(RuntimeException.class, () -> service.copyFromStagingTablesToRecent("Z5555", CoverageV3SyncSource.CRON_JOB));
+
+		assertTrue(out.getOut().contains("rowsInsertedForMonth (0) does not match rowCountForMonth(2) for contract Z5555 and period 2026-2"));
+
+		assertAuditLogEquals(getAuditLogs().get(3),
+		"""
+		{action=COPY_FROM_STAGING, result=SYNC_FAILED_FOR_CONTRACT, contract=Z5555, log=rowsInsertedForMonth does not match rowCountForMonth, data={"period": "2026-2", "rowCountForMonth": 2, "rowsInsertedForMonth": 0}}
+		""");
 	}
 
 	void assertAuditLogEquals(Map<String, Object> result, String string) {

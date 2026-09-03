@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -486,32 +487,22 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             );
         });
 
-        val insertRowsByMonth = """
-        with inserted_rows as (
-            insert into %s select * from %s
-            where contract = :contract and year = :year and month = :month
-            returning *
-        )
-        select count(*) from inserted_rows;
-        """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE);
 
         var rowsInsertedTotal = 0;
         for (Map.Entry<YearMonthRecord, Long> entry : periodCountByMonth.entrySet()) {
+            val rowsInsertedForMonth = batchCopyFromStagingToCoverage(template, contract, entry.getKey());
+            rowsInsertedTotal += rowsInsertedForMonth;
+
             val year = entry.getKey().getYear();
             val month = entry.getKey().getMonth();
             val rowCountForMonth = entry.getValue();
-
-            val parameters = Map.of("contract", contract, "year", year, "month", month);
-            val rowsInsertedForMonth = DataAccessUtils.intResult(template.queryForList(insertRowsByMonth, parameters, Integer.class));
-            rowsInsertedTotal += rowsInsertedForMonth;
-
             val yearMonthToString = "%s-%s".formatted(year, month);
             if (rowsInsertedForMonth != rowCountForMonth) {
                 audit.log(
                     COPY_FROM_STAGING,
                     SYNC_FAILED_FOR_CONTRACT,
                     contract,
-                    "rowsInsertedForMonth does not match expectedRowsInsertedTotal",
+                    "rowsInsertedForMonth does not match rowCountForMonth",
                     Map.of(
                         "rowsInsertedForMonth", rowsInsertedForMonth,
                         "rowCountForMonth", rowCountForMonth,
@@ -530,6 +521,23 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         }
 
         return rowsInsertedTotal;
+    }
+
+    int batchCopyFromStagingToCoverage(NamedParameterJdbcTemplate template, String contract, YearMonthRecord yearMonthPeriod) {
+        val year = yearMonthPeriod.getYear();
+        val month = yearMonthPeriod.getMonth();
+
+        val insertRowsByMonth = """
+        with inserted_rows as (
+            insert into %s select * from %s
+            where contract = :contract and year = :year and month = :month
+            returning *
+        )
+        select count(*) from inserted_rows;
+        """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE);
+
+        val parameters = Map.of("contract", contract, "year", year, "month", month);
+        return DataAccessUtils.intResult(template.queryForList(insertRowsByMonth, parameters, Integer.class));
     }
 
     int moveToHistoricalInternal(final String contract) {
