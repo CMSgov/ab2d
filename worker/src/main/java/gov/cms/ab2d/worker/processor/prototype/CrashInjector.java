@@ -7,10 +7,6 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Dev-only crash injection so we can exercise the worker's recovery paths in a real, deployed
- * container. It is off unless crash-probability is set above zero, so it does nothing in normal
- * operation.
- *
  * crash-at picks which point in the pipeline dies (process, read, write, assemble) so a run can be
  * crashed one stage at a time. This is deliberately blunt - it halts the JVM, so the worker dies
  * exactly like a real crash with no shutdown hooks or cleanup. See docs/prototype-crash-testing.md.
