@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
  * Crash recovery integration tests that force failure at each distinct step of the pipeline and then
  * recovers it. The steps are:
  *      partitioning - fail mid-partition, on recovery the partitioning step should restart entirely
+ *      reading      - fail while paging beneficiaries, the chunk rolls back and reading resumes cleanly
  *      processing   - fail while running the job processor, chunk rolls back, restarts from the prior chunk
  *      file writing - fail while writing a file. Recovery ensures no duplicate or corrupted output
  *      assembly     - fail while assembling the finished files. Recovery continues assembly idempotently
@@ -61,6 +63,31 @@ class PrototypeCrashPointIntegrationTest extends AbstractPrototypeRecoveryIntegr
 
         assertEquals(JobStatus.SUCCESSFUL, result.getStatus(), "a partitioning crash should recover on a later pickup");
         assertTrue(thrown.get(), "the partitioning failure should actually have been injected");
+        assertEveryBeneExactlyOnceInOutput(uuid);
+    }
+
+    @Test
+    @DisplayName("Crash during reading: a transient paging failure is retried and every bene is still delivered once")
+    void crashDuringReadingRecovers() throws Exception {
+        Job job = createSubmittedV3Job("crash-reading");
+        String uuid = job.getJobUuid();
+
+        // Fail the first page fetch, then serve pages normally. The chunk rolls back and the reader resumes.
+        AtomicBoolean thrown = new AtomicBoolean(false);
+        when(coverageV3Service.pageCoverageByPatientRange(eq(CONTRACT), anyLong(), anyLong(), any(), anyInt()))
+                .thenAnswer(inv -> {
+                    if (thrown.compareAndSet(false, true)) {
+                        log.info("=== injecting transient reading failure for {} ===", uuid);
+                        throw new org.springframework.web.client.ResourceAccessException(
+                                "injected transient read failure");
+                    }
+                    return pageFor(inv);
+                });
+
+        Job result = processUntilSuccessful(uuid, 3);
+
+        assertEquals(JobStatus.SUCCESSFUL, result.getStatus(), "a transient read blip should recover");
+        assertTrue(thrown.get(), "the reading failure should actually have been injected");
         assertEveryBeneExactlyOnceInOutput(uuid);
     }
 

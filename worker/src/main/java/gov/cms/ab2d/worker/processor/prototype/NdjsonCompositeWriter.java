@@ -19,10 +19,13 @@ public class NdjsonCompositeWriter implements ItemStreamWriter<SerializedEobs> {
 
     private final FlatFileItemWriter<String> dataWriter;
     private final FlatFileItemWriter<String> errorWriter;
+    private final CrashInjector crashInjector;
 
-    public NdjsonCompositeWriter(FlatFileItemWriter<String> dataWriter, FlatFileItemWriter<String> errorWriter) {
+    public NdjsonCompositeWriter(FlatFileItemWriter<String> dataWriter, FlatFileItemWriter<String> errorWriter,
+                                 CrashInjector crashInjector) {
         this.dataWriter = dataWriter;
         this.errorWriter = errorWriter;
+        this.crashInjector = crashInjector;
     }
 
     @Override
@@ -48,6 +51,7 @@ public class NdjsonCompositeWriter implements ItemStreamWriter<SerializedEobs> {
 
     @Override
     public void write(@NonNull Chunk<? extends SerializedEobs> chunk) throws Exception {
+        crashInjector.maybeCrash("write");
         List<String> dataLines = chunk.getItems().stream().flatMap(item -> item.dataLines().stream()).toList();
         List<String> errorLines = chunk.getItems().stream().flatMap(item -> item.errorLines().stream()).toList();
         if (!dataLines.isEmpty()) {

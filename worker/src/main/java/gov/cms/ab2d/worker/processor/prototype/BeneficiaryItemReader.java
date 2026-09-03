@@ -25,6 +25,7 @@ import java.util.Optional;
 public class BeneficiaryItemReader implements ItemStreamReader<CoverageSummary> {
 
     private final CoverageV3Service coverageV3Service;
+    private final CrashInjector crashInjector;
     private final String contract;
     private final long startPatientId; // exclusive lower bound of this partition
     private final long endPatientId;   // inclusive upper bound of this partition
@@ -38,12 +39,14 @@ public class BeneficiaryItemReader implements ItemStreamReader<CoverageSummary> 
 
     public BeneficiaryItemReader(
             CoverageV3Service coverageV3Service,
+            CrashInjector crashInjector,
             @Value("#{stepExecutionContext['contractNumber']}") String contract,
             @Value("#{stepExecutionContext['startPatientId']}") long startPatientId,
             @Value("#{stepExecutionContext['endPatientId']}") long endPatientId,
             @Value("#{jobParameters['fenceToken']}") long fenceToken,
             @Value("${eob.job.patient.queue.page.size}") int pageSize) {
         this.coverageV3Service = coverageV3Service;
+        this.crashInjector = crashInjector;
         this.contract = contract;
         this.startPatientId = startPatientId;
         this.endPatientId = endPatientId;
@@ -68,6 +71,7 @@ public class BeneficiaryItemReader implements ItemStreamReader<CoverageSummary> 
 
     @Override
     public CoverageSummary read() {
+        crashInjector.maybeCrash("read");
         while (buffer.isEmpty() && !exhausted) {
             fetchNextPage();
         }

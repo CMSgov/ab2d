@@ -35,12 +35,14 @@ public class PrototypeOutputAssembler {
     private final SearchConfig searchConfig;
     private final JobOutputRepository jobOutputRepository;
     private final PrototypeBatchMetadataRepository batchMeta;
+    private final CrashInjector crashInjector;
 
     public PrototypeOutputAssembler(SearchConfig searchConfig, JobOutputRepository jobOutputRepository,
-                                    PrototypeBatchMetadataRepository batchMeta) {
+                                    PrototypeBatchMetadataRepository batchMeta, CrashInjector crashInjector) {
         this.searchConfig = searchConfig;
         this.jobOutputRepository = jobOutputRepository;
         this.batchMeta = batchMeta;
+        this.crashInjector = crashInjector;
     }
 
     /**
@@ -65,6 +67,8 @@ public class PrototypeOutputAssembler {
             log.info("assembly for job {}: no completed partitions - empty result, no output files", jobUuid);
             return;
         }
+
+        crashInjector.maybeCrash("assemble");
 
         Path streamingDir = searchConfig.getStreamingDir(jobUuid).toPath();
         Path finishedDir = searchConfig.getFinishedDir(jobUuid).toPath();
