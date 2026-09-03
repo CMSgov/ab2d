@@ -1,7 +1,5 @@
 package gov.cms.ab2d.worker.processor.prototype;
-
 import org.junit.jupiter.api.Test;
-
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
