@@ -296,10 +296,12 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             audit.log(action, null, contract, null, Map.of("rowsInserted", rowsInserted));
         } catch (Exception e) {
             /**
-             * if {@link #batchCopyFromStagingToCoverage} throws an exception, it will record an audit event
-             * rethrow exception to rollback transaction
+             * If {@link #batchCopyFromStagingToCoverage} throws an exception, it will record an audit event
+             * If this step fails, there may be incomplete attribution data copied from staging to the recent coverage
+             * table. The sync will be re-attempted the next time the cron job fires OR when a job is run, so this
+             * will correct itself eventually
              */
-           throw e;
+            return SYNC_FAILED_FOR_CONTRACT;
         }
 
         val rowsInCoverageAfterCopy = executeTimedQuery(
@@ -312,11 +314,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         if (rowsInStaging != rowsInCoverageAfterCopy) {
             log.error("[V3] Row count in staging ({}) != row count in coverage ({}) for contract {}",
                     rowsInStaging,
-                    rowsInCoverageBeforeCopy,
+                    rowsInCoverageAfterCopy,
                     contract
             );
             result = SYNC_FAILED_FOR_CONTRACT;
-            audit.log(action, result, contract, "rowsInStaging does not match rowsInCoverageBeforeCopy", Map.of("rowsInStaging", rowsInStaging, "rowsInCoverageBeforeCopy", rowsInCoverageBeforeCopy));
+            audit.log(action, result, contract, "rowsInStaging does not match rowsInCoverageAfterCopy", Map.of("rowsInStaging", rowsInStaging, "rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
             metrics.recordImport(source, contract, result, rowsInStaging, rowsInCoverageBeforeCopy, rowsInCoverageAfterCopy);
             return result;
         }
@@ -486,7 +488,6 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                 rs.getLong(3)
             );
         });
-
 
         var rowsInsertedTotal = 0;
         for (Map.Entry<YearMonthRecord, Long> entry : periodCountByMonth.entrySet()) {

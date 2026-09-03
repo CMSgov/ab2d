@@ -353,7 +353,7 @@ class CoverageV3SyncServiceImplTest {
 		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
 		when(lock.tryLock()).thenReturn(true);
 
-		assertThrows(RuntimeException.class, () -> service.copyFromStagingTablesToRecent("Z5555", CoverageV3SyncSource.CRON_JOB));
+		service.copyFromStagingTablesToRecent("Z5555", CoverageV3SyncSource.CRON_JOB);
 
 		assertTrue(out.getOut().contains("rowsInsertedForMonth (0) does not match rowCountForMonth(2) for contract Z5555 and period 2026-2"));
 
