@@ -26,6 +26,7 @@ import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemStreamWriter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -42,6 +43,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COMPLETED;
@@ -102,7 +104,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     private final EobItemProcessor eobItemProcessor;
     private final ItemStreamWriter<SerializedEobs> ndjsonItemWriter;
     // shared by every job on this worker
-    private final AsyncTaskExecutor itemTaskExecutor;
+    private final AsyncTaskExecutor patientClaimsPool;
 
     public PrototypeJobProcessorImpl(
             JobRepository jobRepository,
@@ -124,6 +126,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             EobItemProcessor eobItemProcessor,
             ItemStreamWriter<SerializedEobs> ndjsonItemWriter,
             PrototypeProperties props,
+            @Qualifier("patientProcessorThreadPool") Executor patientProcessorThreadPool,
             @Value("${failure.threshold}") int failureThreshold,
             @Value("${audit.files.ttl.hours}") int auditFilesTtlHours) {
         this.jobRepository = jobRepository;
@@ -144,7 +147,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         this.beneficiaryItemReader = beneficiaryItemReader;
         this.eobItemProcessor = eobItemProcessor;
         this.ndjsonItemWriter = ndjsonItemWriter;
-        this.itemTaskExecutor = itemTaskExecutor(props.getItemConcurrency());
+        this.patientClaimsPool = (AsyncTaskExecutor) patientProcessorThreadPool;
         this.props = props;
         this.failureThreshold = failureThreshold;
         this.auditFilesTtlHours = auditFilesTtlHours;
@@ -562,7 +565,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         TRANSIENT_EXCEPTIONS.forEach(workerStepBuilder::retry);
 
         if (props.isItemConcurrencyEnabled()) {
-            workerStepBuilder.taskExecutor(itemTaskExecutor);
+            workerStepBuilder.taskExecutor(new PrototypeItemTaskExecutor(patientClaimsPool, jobUuid));
         }
 
         Step workerStep = workerStepBuilder
@@ -590,18 +593,6 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         return new JobBuilder(PROTOTYPE_JOB_NAME, batchJobRepository)
                 .start(managerStep)
                 .build();
-    }
-
-    /**
-     * Async executor for concurrent chunk work. Uses virtual threads since most threads
-     * are idle waiting for BFD. The concurrency limit prevents a small group of virtual
-     * threads from absolutely hammering BFD with a million requests.
-     */
-    private static AsyncTaskExecutor itemTaskExecutor(int concurrencyLimit) {
-        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("proto-item-");
-        executor.setVirtualThreads(true);
-        executor.setConcurrencyLimit(Math.max(1, concurrencyLimit));
-        return executor;
     }
 
     /**
