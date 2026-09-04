@@ -1,5 +1,7 @@
 package gov.cms.ab2d.api.controller.common;
 
+import ca.uhn.fhir.parser.DataFormatException;
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.api.security.EndpointNotAvailableException;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
@@ -125,15 +127,23 @@ class ApiCommonTest {
     void checkServiceDateTest() {
         List<String> validServiceDates = List.of("gt2020-01-01", "le2020-02-01");
         List<String> validYearOnly = List.of("eq2022");
+        List<String> validLowerBound = List.of("gt2021-11-22");
+        List<String> validUpperBound = List.of("le2021-05-11");
         List<String> invalidOperatorCode = List.of("zz2020-01-01");
         List<String> invalidFormat = List.of("lt20200101");
         List<String> invalidNotRealDate = List.of("eq2020-22-44");
+        List<String> invalidMultipleLowerBound = List.of("gt2020-01-01", "ge2020-07-01");
+        List<String> invalidUpperBoundAndEquals = List.of("gt2024-06-07", "eq2024");
         assertDoesNotThrow(() -> apiCommon.checkServiceDates(null));
         assertDoesNotThrow(() -> apiCommon.checkServiceDates(validServiceDates));
         assertDoesNotThrow(() -> apiCommon.checkServiceDates(validYearOnly));
-        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidOperatorCode));
-        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidFormat));
-        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidNotRealDate));
+        assertDoesNotThrow(() -> apiCommon.checkServiceDates(validLowerBound));
+        assertDoesNotThrow(() -> apiCommon.checkServiceDates(validUpperBound));
+        assertThrows(DataFormatException.class, () -> apiCommon.checkServiceDates(invalidOperatorCode));
+        assertThrows(DataFormatException.class, () -> apiCommon.checkServiceDates(invalidFormat));
+        assertThrows(DataFormatException.class, () -> apiCommon.checkServiceDates(invalidNotRealDate));
+        assertThrows(InvalidRequestException.class, () -> apiCommon.checkServiceDates(invalidMultipleLowerBound));
+        assertThrows(InvalidRequestException.class, () -> apiCommon.checkServiceDates(invalidUpperBoundAndEquals));
     }
 
     @Test

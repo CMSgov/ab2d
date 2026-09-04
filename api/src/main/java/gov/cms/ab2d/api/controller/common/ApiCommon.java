@@ -1,5 +1,7 @@
 package gov.cms.ab2d.api.controller.common;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.QualifiedParamList;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
@@ -23,6 +25,8 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -32,6 +36,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import ca.uhn.fhir.rest.param.DateRangeParam;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.FhirVersion.R4V3;
@@ -57,18 +63,6 @@ public class ApiCommon {
     public static final String AB2D_V3_CONTRACT_NOT_ALLOWED = "V3 access not enabled for this PDP";
 
     private static final String HTTPS_STRING = "https";
-
-    // regex for matching a FHIR DateTime search parameter:
-    // - (eq|gt|ge|lt|le|sa|eb)?: An optional group matching one of the specific two-letter operator codes (equal, greater than, less than, etc.).
-    // -  \\d{4}: Matches 4 digit year (YYYY)
-    // - (-(0[1-9]|1[0-2]) ... )?: Optional month (MM).
-    // - (-(0[1-9]|[1-2]\\d|3[0-1]) ... )?: Optional day (DD).
-    // - (T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?: Optional time component (T + hours, minutes, seconds).
-    // - \\.\\d+: Optional decimal fraction for seconds.
-    // - (Z|[+-]\\d{2}:\\d{2})?: Optional time zone (UTC or offset).
-    // Simplified version of this regex, with the added match on search param prefix: https://hl7.org/fhir/R4/datatypes.html#dateTime
-    private static final String SERVICE_DATE_PARAM_REGEX = "^(eq|gt|ge|lt|le|sa|eb)?(\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2]\\d|3[0-1])(T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?)?)?)?)$"; // NOSONAR
-
     private ContractService contractService;
 
     public ApiCommon(SQSEventClient eventLogger, JobClient jobClient, PropertiesService propertiesService,
@@ -176,13 +170,11 @@ public class ApiCommon {
         if (serviceDates == null || serviceDates.isEmpty()) {
             return;
         }
-
-        for (String serviceDateParam : serviceDates) {
-            if (!serviceDateParam.matches(SERVICE_DATE_PARAM_REGEX)) {
-                log.error("Invalid service-date received {}", serviceDateParam);
-                throw new InvalidClientInputException("invalid service-date parameter: " + serviceDateParam);
-            }
-        }
+        List<QualifiedParamList> qualifiedServiceDateParams = serviceDates.stream()
+                .map(QualifiedParamList::singleton)
+                .collect(Collectors.toList());
+        DateRangeParam serviceDateRange = new DateRangeParam();
+        serviceDateRange.setValuesAsQueryTokens(FhirContext.forR4(), "service-date", qualifiedServiceDateParams);
     }
 
     public void checkIfInMaintenanceMode() {
