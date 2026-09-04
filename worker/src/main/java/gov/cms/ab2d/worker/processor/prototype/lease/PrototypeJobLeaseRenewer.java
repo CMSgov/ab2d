@@ -19,10 +19,9 @@ import static gov.cms.ab2d.worker.processor.prototype.lease.heartbeat.HeartbeatE
  * Renews the heartbeat for jobs this worker is working on periodically.
  * This prevents long chunk commit times from accidentally triggering the loss of a lease.
  *
- * TODO:This creates a rare case where the worker is dead but appears alive if no work is happening but this
- *      scheduled heartbeat keeps going off on schedule.
- *      Ideally we just implement a backoff such that no progress on a job for long enough
- *      naturally leads to expiry of the token.
+ * The job lease token will be renewed periodically as long as an in-memory heartbeat is posted.
+ * If the deadline for a heartbeat is missed, it is assumed the worker could be dead in which case the token will
+ * be removed and lease will be lost.
  *
  */
 @Slf4j
@@ -56,6 +55,7 @@ public class PrototypeJobLeaseRenewer {
 		    long token = entry.getKey().fenceToken();
 		    val context = entry.getValue();
 		    try {
+				// Missed deadline for heartbeat; Current operation is taking longer than expected or worker may be dead
 			    if (LocalDateTime.now().isAfter(context.maxLatestNextHeartbeat())) {
 				    log.warn("Too much time elapsed since last heartbeat - not renewing. Last heartbeat: {}; Last event: {}",
 					    context.lastHeartbeatAt(),
@@ -76,6 +76,9 @@ public class PrototypeJobLeaseRenewer {
 	    }
     }
 
+	/**
+	 * Post in-memory heartbeat and set deadline for next expected heartbeat based on event
+	 */
 	public void postHeartbeat(String jobUuid, long fenceToken, HeartbeatEvent event) {
 		val now = LocalDateTime.now();
 		final LocalDateTime maxLatestNextHeartBeat;
