@@ -61,6 +61,7 @@ public class PrototypeJobLeaseRenewer {
 					    context.lastHeartbeatAt(),
 					    context.event()
 				    );
+				    metrics.leaseRenewFailed();
 				    activeTokens.remove(entry.getKey());
 			    } else if (jobLease.renewHeartbeat(jobUuid, token)) {
 				    log.debug("renewed lease heartbeat for {} at token {}", jobUuid, token);
