@@ -74,6 +74,83 @@ module "datadog_dashboard" {
   custom_widgets = [
     {
       type         = "timeseries"
+      title        = "API Request Rate by Endpoint"
+      query        = "sum:ab2d.api.request.count{$env} by {endpoint}.as_rate()"
+      display_type = "line"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
+      title        = "API Request Rate by Status Code"
+      query        = "sum:ab2d.api.request.count{$env} by {status_code}.as_rate()"
+      display_type = "bars"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
+      title        = "API Request Duration median / p95 / max (ms)"
+      query        = "avg:ab2d.api.request.duration.median{$env}, avg:ab2d.api.request.duration.95percentile{$env}, max:ab2d.api.request.duration.max{$env}"
+      display_type = "line"
+      precision    = 0
+    },
+    {
+      type         = "toplist"
+      title        = "API Request Duration p95 by Endpoint (ms)"
+      query        = "avg:ab2d.api.request.duration.95percentile{$env} by {endpoint}"
+      display_type = "line"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
+      title        = "API Errors by Status Class (4xx vs 5xx)"
+      query        = "sum:ab2d.api.error.count{$env} by {status_class}.as_count()"
+      display_type = "bars"
+      precision    = 0
+    },
+    {
+      type         = "toplist"
+      title        = "API Errors by Error Type"
+      query        = "sum:ab2d.api.error.count{$env} by {error_type}.as_count()"
+      display_type = "bars"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
+      title        = "API Error Rate (%)"
+      query        = "sum:ab2d.api.error.count{$env}.as_count() / sum:ab2d.api.request.count{$env}.as_count() * 100"
+      display_type = "line"
+      precision    = 2
+    },
+    {
+      type         = "toplist"
+      title        = "API Requests by Client Version"
+      query        = "sum:ab2d.api.client.version{$env} by {client_version}.as_count()"
+      display_type = "bars"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
+      title        = "API Requests by API Version"
+      query        = "sum:ab2d.api.client.version{$env} by {api_version}.as_rate()"
+      display_type = "line"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
+      title        = "API Request / Response Payload Size p95 (bytes)"
+      query        = "avg:ab2d.api.request.size.95percentile{$env}, avg:ab2d.api.response.size.95percentile{$env}"
+      display_type = "line"
+      precision    = 0
+    },
+    {
+      type         = "query_value"
+      title        = "API Requests"
+      query        = "sum:ab2d.api.request.count{$env}.as_count()"
+      display_type = "line"
+      precision    = 0
+    },
+    {
+      type         = "timeseries"
       title        = "Coverage V3 Import - Recent Table Rows (staged / before / after)"
       query        = "sum:ab2d.coverage.v3.import.rows_staged{$env}, sum:ab2d.coverage.v3.import.rows_before{$env}, sum:ab2d.coverage.v3.import.rows_after{$env}"
       display_type = "line"
