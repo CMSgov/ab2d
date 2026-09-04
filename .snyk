@@ -1,0 +1,10 @@
+# Snyk (https://snyk.io) policy file
+---
+exclude:
+  global:
+    - ops
+    - e2e-test
+    - fhir-test
+    - e2e-bfd-test
+    - scripts
+    - local-dev
