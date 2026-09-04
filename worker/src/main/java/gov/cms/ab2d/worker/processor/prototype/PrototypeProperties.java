@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.prototype;
 
+import gov.cms.ab2d.worker.processor.prototype.lease.PrototypeFenceGuard;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -69,9 +70,21 @@ public class PrototypeProperties {
      */
     private int leaseAlertCooldownMinutes = 60;
 
-    // TODO add comments
+    /**
+     * Max duration between creating job lease and next in-memory heartbeat
+     */
     private long maxDurationSecondsCreateLease = Duration.ofMinutes(5).toSeconds();
+    /**
+     * Max duration between creating aggregated table lease and next in-memory heartbeat
+     */
     private long maxDurationSecondsCreateAggregatedTable = Duration.ofMinutes(15).toSeconds();
+    /**
+     * Max duration for an item to be processed. Multiplied by chunk size to determine max duration between
+     * the {@link PrototypeFenceGuard#afterWrite} callback and next in-memory heartbeat
+     */
     private long maxDurationSecondsPerItem = Duration.ofMinutes(60).toSeconds();
+    /**
+     * Max duration between assembling output files and next in-memory heartbeat
+     */
     private long maxDurationSecondsAssembleFiles = Duration.ofMinutes(15).toSeconds();
 }

@@ -93,16 +93,13 @@ public class PrototypeJobLeaseRenewer {
 
 		val heartbeatContext = new HeartbeatContext(now, event, maxLatestNextHeartBeat);
 		val leaseToken = new PrototypeJobLeaseToken(jobUuid, fenceToken);
-
 		if (event == CREATE_LEASE) {
 			activeTokens.put(leaseToken, heartbeatContext);
-			log.trace("Posting heartbeat: {}", heartbeatContext);
+			log.debug("Creating new lease and posting heartbeat: {}", heartbeatContext);
+		} else if (activeTokens.replace(leaseToken, heartbeatContext) != null) {
+			log.debug("Posting heartbeat: {}", heartbeatContext);
 		} else {
-			if (activeTokens.replace(leaseToken, heartbeatContext) != null) {
-				log.trace("Posting heartbeat: {}", heartbeatContext);
-			} else {
-				log.warn("Posting heartbeat failed - lease token was removed");
-			}
+			log.warn("Posting heartbeat failed - lease token was removed");
 		}
 	}
 }

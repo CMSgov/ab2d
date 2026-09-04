@@ -314,6 +314,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                                         boolean softResume, long fenceToken) {
         if (last == null) {
             log.info("no prior batch execution for job {} - creating aggregated attribution table", jobUuid);
+            leaseRenewer.postHeartbeat(jobUuid, fenceToken, CREATE_AGGREGATED_TABLE);
             coverageV3Service.createAggregatedAttributionTable(contractNumber);
         } else if (!coverageV3Service.aggregatedTableExists(contractNumber)) {
             // A prior worker that failed terminally or was fenced out may have dropped the aggregated
