@@ -1,7 +1,9 @@
 package gov.cms.ab2d.api.controller.common;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.rest.api.QualifiedParamList;
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
@@ -174,7 +176,12 @@ public class ApiCommon {
                 .map(QualifiedParamList::singleton)
                 .collect(Collectors.toList());
         DateRangeParam serviceDateRange = new DateRangeParam();
-        serviceDateRange.setValuesAsQueryTokens(FhirContext.forR4(), "service-date", qualifiedServiceDateParams);
+        try {
+            serviceDateRange.setValuesAsQueryTokens(FhirContext.forR4(), "service-date", qualifiedServiceDateParams);
+        } catch (InvalidRequestException | DataFormatException e) {
+            log.error("Invalid service-date received {}", serviceDates);
+            throw new InvalidClientInputException(e.getMessage());
+        }
     }
 
     public void checkIfInMaintenanceMode() {

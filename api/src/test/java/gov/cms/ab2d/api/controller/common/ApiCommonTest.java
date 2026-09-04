@@ -1,7 +1,5 @@
 package gov.cms.ab2d.api.controller.common;
 
-import ca.uhn.fhir.parser.DataFormatException;
-import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.api.security.EndpointNotAvailableException;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
@@ -139,11 +137,11 @@ class ApiCommonTest {
         assertDoesNotThrow(() -> apiCommon.checkServiceDates(validYearOnly));
         assertDoesNotThrow(() -> apiCommon.checkServiceDates(validLowerBound));
         assertDoesNotThrow(() -> apiCommon.checkServiceDates(validUpperBound));
-        assertThrows(DataFormatException.class, () -> apiCommon.checkServiceDates(invalidOperatorCode));
-        assertThrows(DataFormatException.class, () -> apiCommon.checkServiceDates(invalidFormat));
-        assertThrows(DataFormatException.class, () -> apiCommon.checkServiceDates(invalidNotRealDate));
-        assertThrows(InvalidRequestException.class, () -> apiCommon.checkServiceDates(invalidMultipleLowerBound));
-        assertThrows(InvalidRequestException.class, () -> apiCommon.checkServiceDates(invalidUpperBoundAndEquals));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidOperatorCode));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidFormat));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidNotRealDate));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidMultipleLowerBound));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkServiceDates(invalidUpperBoundAndEquals));
     }
 
     @Test
