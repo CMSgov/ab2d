@@ -53,9 +53,9 @@ public class PrototypeJobLeaseRenewer  {
 			val context = entry.getValue();
 			try {
 				if (LocalDateTime.now().isAfter(context.maxLatestNextHeartbeat())) {
-					log.warn("Too much time elapsed since last heartbeat - not renewing. Last heartbeat: {}, Last event: {}",
+					log.warn("Too much time elapsed since last heartbeat - not renewing. Last heartbeat: {}; Last event: {}",
 						context.lastHeartbeatAt(),
-						context.lastEvent()
+						context.event()
 					);
 					activeTokens.remove(entry.getKey());
 				} else if (jobLease.renewHeartbeat(jobUuid, token)) {
@@ -85,7 +85,20 @@ public class PrototypeJobLeaseRenewer  {
 				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAssembleFiles());
 			default -> throw new IllegalStateException("Invalid value: " + event);
 		}
-		activeTokens.replace(new PrototypeJobLeaseToken(jobUuid, fenceToken), new HeartbeatContext(now, event, maxLatestNextHeartBeat));
+
+		val heartbeatContext = new HeartbeatContext(now, event, maxLatestNextHeartBeat);
+		val leaseToken = new PrototypeJobLeaseToken(jobUuid, fenceToken);
+
+		if (event == CREATE_LEASE) {
+			activeTokens.put(leaseToken, heartbeatContext);
+			log.trace("Posting heartbeat: {}", heartbeatContext);
+		} else {
+			if (activeTokens.replace(leaseToken, heartbeatContext) != null) {
+				log.trace("Posting heartbeat: {}", heartbeatContext);
+			} else {
+				log.warn("Post heartbeat failed - lease token was removed");
+			}
+		}
 	}
 
 }

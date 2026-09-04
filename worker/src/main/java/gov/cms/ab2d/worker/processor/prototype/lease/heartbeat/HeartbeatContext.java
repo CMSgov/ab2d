@@ -4,6 +4,6 @@ import java.time.LocalDateTime;
 
 public record HeartbeatContext(
 	LocalDateTime lastHeartbeatAt,
-	HeartbeatEvent lastEvent,
+	HeartbeatEvent event,
 	LocalDateTime maxLatestNextHeartbeat) {
 }

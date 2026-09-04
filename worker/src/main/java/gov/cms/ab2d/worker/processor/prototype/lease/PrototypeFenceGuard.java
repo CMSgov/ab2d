@@ -1,7 +1,5 @@
 package gov.cms.ab2d.worker.processor.prototype.lease;
 
-import gov.cms.ab2d.worker.processor.prototype.lease.heartbeat.HeartbeatContext;
-import gov.cms.ab2d.worker.processor.prototype.lease.heartbeat.HeartbeatEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.batch.core.listener.ItemWriteListener;
@@ -34,6 +32,7 @@ public class PrototypeFenceGuard implements ItemWriteListener<Object> {
             jobLease.assertHoldsAndBeat(jobUuid, token);
             leaseRenewer.postHeartbeat(jobUuid, token, AFTER_WRITE_CALLBACK);
         } catch (FenceLostException e) {
+            log.info("Untracking lease token ({}, {}) due to FenceLostException", jobUuid, token);
             leaseRenewer.untrack(jobUuid, token);
             throw e;
         }
