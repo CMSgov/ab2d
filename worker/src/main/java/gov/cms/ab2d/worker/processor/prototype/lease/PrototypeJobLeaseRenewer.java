@@ -75,22 +75,17 @@ public class PrototypeJobLeaseRenewer  {
 		val now = LocalDateTime.now();
 		final LocalDateTime maxLatestNextHeartBeat;
 		switch (event) {
-			case CREATE_LEASE -> {
-				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAfterCreateLease());
-			}
-			case BEFORE_CREATE_AGGREGATED_TABLE -> {
+			case CREATE_LEASE ->
+				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsCreateLease());
+			case CREATE_AGGREGATED_TABLE ->
 				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsCreateAggregatedTable());
-			}
-			case AFTER_WRITE_CALLBACK -> {
-				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAfterWriteCallback());
-			}
-			case BEFORE_ASSEMBLE_FILES -> {
+			case AFTER_WRITE_CALLBACK ->
+				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsPerItem() * props.getChunkSize());
+			case ASSEMBLE_FILES ->
 				maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAssembleFiles());
-			}
 			default -> throw new IllegalStateException("Invalid value: " + event);
 		}
-
-		activeTokens.put(new PrototypeJobLeaseToken(jobUuid, fenceToken), new HeartbeatContext(now, event, maxLatestNextHeartBeat));
+		activeTokens.replace(new PrototypeJobLeaseToken(jobUuid, fenceToken), new HeartbeatContext(now, event, maxLatestNextHeartBeat));
 	}
 
 }

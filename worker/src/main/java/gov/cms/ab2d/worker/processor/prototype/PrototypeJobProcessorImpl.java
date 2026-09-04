@@ -23,6 +23,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.listener.ChunkListener;
 import org.springframework.batch.core.listener.ItemWriteListener;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -189,7 +190,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             JobExecution last = batchJobRepository.getLastJobExecution(PROTOTYPE_JOB_NAME, parameters);
             if (last == null) {
                 log.info("no prior batch execution for job {} - creating aggregated attribution table", jobUuid);
-                leaseRenewer.postHeartbeat(jobUuid, fenceToken, BEFORE_CREATE_AGGREGATED_TABLE);
+                leaseRenewer.postHeartbeat(jobUuid, fenceToken, CREATE_AGGREGATED_TABLE);
                 coverageV3Service.createAggregatedAttributionTable(contractNumber);
             } else if (!coverageV3Service.aggregatedTableExists(contractNumber)) {
                 // A prior worker that failed terminally or was fenced out may have dropped the aggregated
@@ -197,7 +198,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 log.warn("prior batch execution {} for job {} but aggregated table for contract {} is missing - "
                         + "rebuilding ({} at token {})",
                         last.getId(), jobUuid, contractNumber, softResume ? "soft resume" : "hard recovery", fenceToken);
-                leaseRenewer.postHeartbeat(jobUuid, fenceToken, BEFORE_CREATE_AGGREGATED_TABLE);
+                leaseRenewer.postHeartbeat(jobUuid, fenceToken, CREATE_AGGREGATED_TABLE);
                 coverageV3Service.createAggregatedAttributionTable(contractNumber);
             } else {
                 log.info("prior batch execution {} for job {} - {} at token {} (reusing aggregated table)",
@@ -244,7 +245,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                     // The batch finished but too many beneficiaries errored, this is a terminal failure
                     applyThresholdFailure(job, contractNumber, jobUuid);
                 } else {
-                    leaseRenewer.postHeartbeat(jobUuid, fenceToken, BEFORE_ASSEMBLE_FILES);
+                    leaseRenewer.postHeartbeat(jobUuid, fenceToken, ASSEMBLE_FILES);
                     // Failure during assembly is terminal and fails the job. We can recover from a crash
                     // during assembly, but not from an exception e.g. missing files in a "completed" job.
                     outputAssembler.assemble(job, jobUuid, contractNumber);
@@ -484,13 +485,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .writer(ndjsonItemWriter)
                 // each chunk commit comes with a fence token which prevents
                 // us from committing work if we've lost the job
-                .listener(new PrototypeFenceGuard(jobLease, jobUuid, fenceToken))
-                .listener(new ItemWriteListener<>() {
-                    @Override
-                    public void afterWrite(Chunk<?> items) {
-                        leaseRenewer.postHeartbeat(jobUuid, fenceToken, AFTER_WRITE_CALLBACK);
-                    }
-                })
+                .listener(new PrototypeFenceGuard(jobLease, leaseRenewer, jobUuid, fenceToken))
                 // per-chunk progress and failure reporting
                 .listener(new PrototypeProgressListener(jobChannelService, jobProgressService, jobUuid))
                 .faultTolerant()

@@ -1,9 +1,13 @@
 package gov.cms.ab2d.worker.processor.prototype.lease;
 
+import gov.cms.ab2d.worker.processor.prototype.lease.heartbeat.HeartbeatContext;
+import gov.cms.ab2d.worker.processor.prototype.lease.heartbeat.HeartbeatEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.batch.core.listener.ItemWriteListener;
 import org.springframework.batch.infrastructure.item.Chunk;
+
+import static gov.cms.ab2d.worker.processor.prototype.lease.heartbeat.HeartbeatEvent.AFTER_WRITE_CALLBACK;
 
 /**
  * Registers on the worker step. Before committing a chunk, check the token to ensure
@@ -13,17 +17,25 @@ import org.springframework.batch.infrastructure.item.Chunk;
 public class PrototypeFenceGuard implements ItemWriteListener<Object> {
 
     private final JobLeaseRepository jobLease;
+    private final PrototypeJobLeaseRenewer leaseRenewer;
     private final String jobUuid;
     private final long token;
 
-    public PrototypeFenceGuard(JobLeaseRepository jobLease, String jobUuid, long token) {
+    public PrototypeFenceGuard(JobLeaseRepository jobLease, PrototypeJobLeaseRenewer leaseRenewer, String jobUuid, long token) {
         this.jobLease = jobLease;
-        this.jobUuid = jobUuid;
+	    this.leaseRenewer = leaseRenewer;
+	    this.jobUuid = jobUuid;
         this.token = token;
     }
 
     @Override
     public void afterWrite(@NonNull Chunk<?> items) {
-        jobLease.assertHoldsAndBeat(jobUuid, token);
+        try {
+            jobLease.assertHoldsAndBeat(jobUuid, token);
+            leaseRenewer.postHeartbeat(jobUuid, token, AFTER_WRITE_CALLBACK);
+        } catch (FenceLostException e) {
+            leaseRenewer.untrack(jobUuid, token);
+            throw e;
+        }
     }
 }

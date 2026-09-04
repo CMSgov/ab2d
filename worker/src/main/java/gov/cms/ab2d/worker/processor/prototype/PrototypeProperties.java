@@ -55,8 +55,8 @@ public class PrototypeProperties {
      */
     private boolean copyForwardEnabled = true;
 
-    private long maxDurationSecondsAfterCreateLease = Duration.ofMinutes(1).toSeconds();
-    private long maxDurationSecondsCreateAggregatedTable = Duration.ofMinutes(10).toSeconds();
-    private long maxDurationSecondsAfterWriteCallback = Duration.ofMinutes(2).toSeconds();
-    private long maxDurationSecondsAssembleFiles = Duration.ofMinutes(5).toSeconds();
+    private long maxDurationSecondsCreateLease = Duration.ofMinutes(5).toSeconds();
+    private long maxDurationSecondsCreateAggregatedTable = Duration.ofMinutes(15).toSeconds();
+    private long maxDurationSecondsPerItem = Duration.ofMinutes(60).toSeconds();
+    private long maxDurationSecondsAssembleFiles = Duration.ofMinutes(15).toSeconds();
 }
