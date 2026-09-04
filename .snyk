@@ -1,4 +1,6 @@
 # Snyk (https://snyk.io) policy file
+# Exclude these for Snyk Code / SAST source code file scans
+# This file is used when calling `snyk code test` such as in CMSGov/CDAP/.github/workflows/code-checks-snyk.yml
 ---
 exclude:
   global:
