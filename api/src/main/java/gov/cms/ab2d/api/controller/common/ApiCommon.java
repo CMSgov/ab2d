@@ -180,7 +180,7 @@ public class ApiCommon {
             serviceDateRange.setValuesAsQueryTokens(FhirContext.forR4(), "service-date", qualifiedServiceDateParams);
         } catch (InvalidRequestException | DataFormatException e) {
             log.error("Invalid service-date received {}", serviceDates);
-            throw new InvalidClientInputException(e.getMessage());
+            throw new InvalidClientInputException("invalid service-date parameter: " + e.getMessage());
         }
     }
 
