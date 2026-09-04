@@ -93,8 +93,8 @@ class PrototypeConcurrentItemIntegrationTest extends AbstractPrototypeRecoveryIn
 
         assertTrue(new HashSet<>(threadNames).size() > 1,
                 "expected more than one worker thread to serve the partition, saw " + new HashSet<>(threadNames));
-        assertTrue(threadNames.stream().allMatch(name -> name.startsWith("proto-item-")),
-                "bene work should run on the prototype item executor");
+        assertTrue(threadNames.stream().allMatch(name -> name.startsWith("pcp-")),
+                "bene work should run on the shared patient claims pool");
     }
 
     @Test
