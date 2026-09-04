@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.security;
 
+import gov.cms.ab2d.api.util.ApiRequestMetrics;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,9 @@ public class FilterChainExceptionHandler extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, response);
         } catch (Exception e) {
+            // Record the type before the exception is turned into a response so the metrics filter can
+            // tag ab2d.api.error.count with it
+            request.setAttribute(ApiRequestMetrics.ERROR_TYPE_ATTRIBUTE, e.getClass().getSimpleName());
             handlerExceptionResolver.resolveException(request, response, null, e);
         }
     }
