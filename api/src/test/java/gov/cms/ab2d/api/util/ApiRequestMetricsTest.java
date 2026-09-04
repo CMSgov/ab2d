@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.util;
 
 import com.timgroup.statsd.StatsDClient;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @ExtendWith(MockitoExtension.class)
 class ApiRequestMetricsTest {
 
-    private static final String ENV_TAG = "environment:ab2d-east-test";
+    private static final String ENV_TAG = "environment:" + Ab2dEnvironment.IMPL.getName();
 
     @Mock
     private StatsDClient statsDClient;
@@ -32,7 +33,7 @@ class ApiRequestMetricsTest {
 
     @BeforeEach
     void setUp() {
-        metrics = new ApiRequestMetrics("ab2d-east-test", statsDClient);
+        metrics = new ApiRequestMetrics(Ab2dEnvironment.IMPL.getName(), statsDClient);
     }
 
     @Test
