@@ -29,7 +29,7 @@ class PrototypeJobLeaseExpirationIntegrationTest extends AbstractPrototypeRecove
 		// Simulate createAggregatedAttributionTable() longer than expected so that PrototypeJobLeaseRenewer
 	    // does not renew the lease token given the in-memory heartbeat deadline is missed
 		doAnswer(invocation -> {
-            Thread.sleep(3000);
+            Thread.sleep(2000);
             return null;
         }).when(coverageV3Service).createAggregatedAttributionTable(any());
         val job = createSubmittedV3Job("test");
