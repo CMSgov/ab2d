@@ -556,11 +556,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .writer(ndjsonItemWriter)
                 // each chunk commit comes with a fence token which prevents
                 // us from committing work if we've lost the job
-<<<<<<< HEAD
-                .listener(new PrototypeFenceGuard(jobLease, leaseRenewer, jobUuid, fenceToken))
-=======
-                .listener(new PrototypeFenceGuard(jobLease, metrics, jobUuid, fenceToken))
->>>>>>> AB2D-7319/pause-resume-prototype
+                .listener(new PrototypeFenceGuard(jobLease, metrics, leaseRenewer, jobUuid, fenceToken))
                 // per-chunk progress and failure reporting
                 .listener(new PrototypeProgressListener(jobChannelService, jobProgressService, jobUuid))
                 .faultTolerant()
