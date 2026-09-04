@@ -213,6 +213,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
             org.springframework.batch.core.job.Job batchJob = buildPartitionedJob(contractNumber, jobUuid, fenceToken);
 
+            leaseRenewer.postHeartbeat(jobUuid, fenceToken, BEFORE_LAUNCH_OR_RESUME_JOB);
             JobExecution execution = launchOrResume(batchJob, parameters, last);
             log.info("prototype job {} finished with status {}", jobUuid, execution.getStatus());
 

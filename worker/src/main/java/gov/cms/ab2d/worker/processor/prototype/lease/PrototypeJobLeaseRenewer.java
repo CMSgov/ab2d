@@ -87,7 +87,7 @@ public class PrototypeJobLeaseRenewer {
 					maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsCreateLease());
 			case CREATE_AGGREGATED_TABLE ->
 					maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsCreateAggregatedTable());
-			case AFTER_WRITE_CALLBACK ->
+			case AFTER_WRITE_CALLBACK, BEFORE_LAUNCH_OR_RESUME_JOB ->
 					maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsPerItem() * props.getChunkSize());
 			case ASSEMBLE_FILES ->
 					maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAssembleFiles());
