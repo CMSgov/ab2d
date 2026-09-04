@@ -13,4 +13,8 @@ public class HPMSAttestation {
     private boolean attested;
     private String attestationDate;
     private String endDate;
+
+    // HPMS contract lifecycle status, e.g. whether the contract is currently active. Left as the
+    // raw upstream string so an unrecognised value is stored rather than dropped.
+    private String contractStatus;
 }

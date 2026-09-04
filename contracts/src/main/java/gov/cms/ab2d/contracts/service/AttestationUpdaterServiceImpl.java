@@ -76,6 +76,11 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                 Optional<HPMSAttestation> attestionOpt = attestationSet.stream().findFirst();
                 if (attestionOpt.isPresent()) {
                     HPMSAttestation attestation = attestionOpt.get();
+                    contract.setAttestationStatus(Contract.AttestationStatus.fromHpms(attestation.isAttested()));
+                    contract.setContractStatus(attestation.getContractStatus());
+                    if (attestation.getContractStatus() == null) {
+                        log.warn("HPMS returned no contract status for contract: {}", contract.getContractNumber());
+                    }
                     if (attestation.isAttested()) {
                         String dateWithTZ = attestation.getAttestationDate() + " " + DateUtil.getESTOffset();
                         contract.setAttestedOn(OffsetDateTime.parse(dateWithTZ, FORMATTER));
@@ -142,7 +147,8 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         // Get contracts that were not updated and make sure their attestation is removed
         for (Contract c : existingMap.values()) {
             if (!pulledContracts.containsKey(c.getContractNumber())) {
-                c.setAttestedOn(null);
+                // HPMS no longer returns this contract, so it is neither attested nor tracked upstream
+                c.clearAttestation();
                 contractRepository.save(c);
             }
         }
@@ -176,12 +182,20 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             String msg = CONTRACT_CHANGED + " *Changed Contract*\n\nName: " + oldContract.getContractName() + "\n"
                     + "Number: " + oldContract.getContractNumber() + "\n"
                     + "HPMS Attested On: " + newContract.getAttestedOn() + "\n"
-                    + "Contract Attested On: " + oldContract.getAttestedOn() + "\n";
+                    + "Contract Attested On: " + oldContract.getAttestedOn() + "\n"
+                    + "HPMS Attestation Status: " + newContract.getAttestationStatus() + "\n";
             if (eventLogger != null) {
                 eventLogger.alert(msg, Ab2dEnvironment.ALL);
             }
         }
         oldContract.setAttestedOn(newContract.getAttestedOn());
+        // Leave the stored statuses alone when HPMS did not answer, rather than blanking known values
+        if (newContract.getAttestationStatus() != null) {
+            oldContract.setAttestationStatus(newContract.getAttestationStatus());
+        }
+        if (newContract.getContractStatus() != null) {
+            oldContract.setContractStatus(newContract.getContractStatus());
+        }
         if (newContract.getHpmsEndDate() != null) {
             oldContract.setHpmsEndDate(newContract.getHpmsEndDate());
         }

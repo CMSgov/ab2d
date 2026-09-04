@@ -26,6 +26,15 @@ public class Contract extends TimestampBase {
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
 
     public enum UpdateMode { AUTOMATIC, NONE, MANUAL }
+
+    public enum AttestationStatus {
+        ATTESTED, WITHOUT_ATTESTATION;
+
+        public static AttestationStatus fromHpms(boolean attested) {
+            return attested ? ATTESTED : WITHOUT_ATTESTATION;
+        }
+    }
+
     public enum ContractType {
         NORMAL, CLASSIC_TEST, SYNTHEA;
 
@@ -84,6 +93,19 @@ public class Contract extends TimestampBase {
     @Column(name = "hpms_end_date", columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime hpmsEndDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attestation_status")
+    private AttestationStatus attestationStatus;
+
+    /**
+     * Contract lifecycle status as reported by HPMS, stored verbatim. This is what says whether a
+     * contract is active, without inferring it from {@link #attestedOn} / {@link #hpmsEndDate}.
+     * Kept as a String rather than an enum because the HPMS value set is owned upstream — an
+     * unexpected value must be recorded, not rejected.
+     */
+    @Column(name = "contract_status")
+    private String contractStatus;
+
     public boolean isTestContract() {
         return contractType.isTestContract();
     }
@@ -94,6 +116,7 @@ public class Contract extends TimestampBase {
 
     public void clearAttestation() {
         attestedOn = null;
+        attestationStatus = AttestationStatus.WITHOUT_ATTESTATION;
     }
 
     public boolean hasChanges(String hmpsContractName, long parentOrgId, String parentOrgName, String orgMarketingName,
@@ -134,6 +157,7 @@ public class Contract extends TimestampBase {
             return false;
 
         boolean hasAttestation = hasAttestation();
+        attestationStatus = AttestationStatus.fromHpms(attested);
         if (attested == hasAttestation) {
             return false;   // No changes needed
         }
