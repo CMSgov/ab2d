@@ -77,14 +77,14 @@ public class PrototypeProperties {
     /**
      * Max duration between creating aggregated table lease and next in-memory heartbeat
      */
-    private long maxDurationSecondsCreateAggregatedTable = Duration.ofMinutes(15).toSeconds();
+    private long maxDurationSecondsCreateAggregatedTable = Duration.ofMinutes(30).toSeconds();
     /**
      * Max duration for an item to be processed. Multiplied by chunk size to determine max duration between
      * the {@link PrototypeFenceGuard#afterWrite} callback and next in-memory heartbeat
      */
-    private long maxDurationSecondsPerItem = Duration.ofMinutes(60).toSeconds();
+    private long maxDurationSecondsPerItem = Duration.ofMinutes(1).toSeconds();
     /**
      * Max duration between assembling output files and next in-memory heartbeat
      */
-    private long maxDurationSecondsAssembleFiles = Duration.ofMinutes(15).toSeconds();
+    private long maxDurationSecondsAssembleFiles = Duration.ofMinutes(30).toSeconds();
 }
