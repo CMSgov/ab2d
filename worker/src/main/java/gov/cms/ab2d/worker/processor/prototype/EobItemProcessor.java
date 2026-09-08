@@ -61,7 +61,7 @@ public class EobItemProcessor implements ItemProcessor<CoverageSummary, Serializ
 
     @Override
     public SerializedEobs process(CoverageSummary patient) throws InterruptedException {
-        crashInjector.maybeCrash("process");
+        crashInjector.maybeCrash(CrashPoint.PROCESS);
 
         // optional artificial slowdown so a running job stays alive long enough to interrupt in tests
         if (itemDelayMs > 0) {

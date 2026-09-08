@@ -68,7 +68,7 @@ public class PrototypeOutputAssembler {
             return;
         }
 
-        crashInjector.maybeCrash("assemble");
+        crashInjector.maybeCrash(CrashPoint.ASSEMBLE);
 
         Path streamingDir = searchConfig.getStreamingDir(jobUuid).toPath();
         Path finishedDir = searchConfig.getFinishedDir(jobUuid).toPath();

@@ -5,7 +5,9 @@ The pause/resume prototype worker has recovery paths for crashes at each stage o
 in-process. This runbook is for the other half: proving a **deployed** worker container recovers from a
 real crash without corrupting or duplicating output.
 
-Crash injection is off by default and is only meant for `dev`/`test`. **Never arm it in prod.**
+Crash injection is off by default and is only meant for `dev`/`test`. As a backstop the injector reads
+`execution.env` and **refuses to arm in prod or sandbox** even if the properties are set, so it can only
+ever crash a dev/test worker.
 
 ## How the injector works
 
@@ -17,6 +19,8 @@ properties:
 | --- | --- | --- |
 | `pause-resume.prototype.crash-probability` | `PAUSE_RESUME_PROTOTYPE_CRASH_PROBABILITY` | Chance (0-1) of crashing each time the armed point is hit. `0` = off. |
 | `pause-resume.prototype.crash-at` | `PAUSE_RESUME_PROTOTYPE_CRASH_AT` | Which point crashes: `process`, `read`, `write`, or `assemble`. |
+
+An unrecognised `crash-at`, or a prod/sandbox `execution.env`, leaves the injector disarmed and logs why.
 
 A small probability (e.g. `0.01`) crashes somewhere in the middle of a large job, which is the
 interesting case for recovery. `1.0` crashes at the first opportunity.
@@ -65,18 +69,18 @@ you should see:
 | --- | --- |
 | `CRASH-INJECTION ARMED at '<point>'` | the worker started in crash-test mode (logged once at startup) |
 | `CRASH-INJECTION firing at '<point>'` | the crash just happened - the worker is halting (exit 137) |
-| `RECOVERY for job <uuid>: HARD RECOVERY` | a replacement worker fenced the dead one and is redoing incomplete partitions |
+| `prototype job <uuid> starting ... as a hard claim` | a replacement worker took over and is redoing incomplete partitions |
 | `finished with status COMPLETED` | the job's batch run completed on the replacement |
 | `assembly for job <uuid>: ... new JobOutput row(s)` | the final output was assembled and delivered |
 
 A quick way to pull the whole story for a job:
 
 ```
-grep -E "CRASH-INJECTION|RECOVERY for job|finished with status|assembly for job" <worker-logs>
+grep -E "CRASH-INJECTION|starting for contract|finished with status|assembly for job" <worker-logs>
 ```
 
-(A graceful shutdown logs `SOFT RESUME` instead of `HARD RECOVERY` - same job, no lost work, resumed
-from the last checkpoint.)
+(A graceful shutdown claims the job as a `soft` resume instead of a `hard` one - same job, no lost work,
+resumed from the last checkpoint.)
 
 ## What to verify after recovery
 

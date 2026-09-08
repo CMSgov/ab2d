@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.processor.prototype;
+
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.anyString;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -9,40 +11,71 @@ import static org.mockito.Mockito.verify;
 
 /**
  * The injector actually halts the JVM, so these tests spy the halt out and just check the decision:
- * is it off by default, does it only fire at the configured point, and is the point match forgiving.
+ * is it off by default, does it only fire at the configured point, is the config value forgiving, and
+ * does it refuse to arm where it must never crash.
  */
 class CrashInjectorTest {
 
     @Test
     void offByDefaultSoNothingCrashes() {
-        CrashInjector injector = spy(new CrashInjector("process", 0));
-        doNothing().when(injector).halt(anyString());
+        CrashInjector injector = spy(new CrashInjector("process", 0, "test"));
+        doNothing().when(injector).halt(any());
 
-        injector.maybeCrash("process");
+        injector.maybeCrash(CrashPoint.PROCESS);
 
-        verify(injector, never()).halt(anyString());
+        verify(injector, never()).halt(any());
     }
 
     @Test
     void crashesOnlyAtTheConfiguredPoint() {
-        CrashInjector injector = spy(new CrashInjector("write", 1.0));
-        doNothing().when(injector).halt(anyString());
+        CrashInjector injector = spy(new CrashInjector("write", 1.0, "test"));
+        doNothing().when(injector).halt(any());
 
-        injector.maybeCrash("read");
-        injector.maybeCrash("process");
-        verify(injector, never()).halt(anyString());
+        injector.maybeCrash(CrashPoint.READ);
+        injector.maybeCrash(CrashPoint.PROCESS);
+        verify(injector, never()).halt(any());
 
-        injector.maybeCrash("write");
-        verify(injector, times(1)).halt("write");
+        injector.maybeCrash(CrashPoint.WRITE);
+        verify(injector, times(1)).halt(CrashPoint.WRITE);
     }
 
     @Test
-    void pointMatchIsCaseInsensitive() {
-        CrashInjector injector = spy(new CrashInjector("ASSEMBLE", 1.0));
-        doNothing().when(injector).halt(anyString());
+    void configValueIsCaseInsensitive() {
+        CrashInjector injector = spy(new CrashInjector("ASSEMBLE", 1.0, "test"));
+        doNothing().when(injector).halt(any());
 
-        injector.maybeCrash("assemble");
+        injector.maybeCrash(CrashPoint.ASSEMBLE);
 
-        verify(injector, times(1)).halt("assemble");
+        verify(injector, times(1)).halt(CrashPoint.ASSEMBLE);
+    }
+
+    @Test
+    void unknownConfigValueDoesNotArm() {
+        CrashInjector injector = spy(new CrashInjector("banana", 1.0, "test"));
+        doNothing().when(injector).halt(any());
+
+        injector.maybeCrash(CrashPoint.WRITE);
+
+        verify(injector, never()).halt(any());
+    }
+
+    @Test
+    void refusesToArmInProd() {
+        CrashInjector injector = spy(new CrashInjector("write", 1.0, "ab2d-east-prod"));
+        doNothing().when(injector).halt(any());
+
+        injector.maybeCrash(CrashPoint.WRITE);
+
+        verify(injector, never()).halt(any());
+    }
+
+    @Test
+    void refusesToArmInSandbox() {
+        CrashInjector injector = spy(new CrashInjector("write", 1.0, "ab2d-sbx-sandbox"));
+        doNothing().when(injector).halt(any());
+
+        injector.maybeCrash(CrashPoint.WRITE);
+
+        verify(injector, never()).halt(any());
     }
 }

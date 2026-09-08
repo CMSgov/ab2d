@@ -51,7 +51,7 @@ public class NdjsonCompositeWriter implements ItemStreamWriter<SerializedEobs> {
 
     @Override
     public void write(@NonNull Chunk<? extends SerializedEobs> chunk) throws Exception {
-        crashInjector.maybeCrash("write");
+        crashInjector.maybeCrash(CrashPoint.WRITE);
         List<String> dataLines = chunk.getItems().stream().flatMap(item -> item.dataLines().stream()).toList();
         List<String> errorLines = chunk.getItems().stream().flatMap(item -> item.errorLines().stream()).toList();
         if (!dataLines.isEmpty()) {

@@ -71,7 +71,7 @@ public class BeneficiaryItemReader implements ItemStreamReader<CoverageSummary> 
 
     @Override
     public CoverageSummary read() {
-        crashInjector.maybeCrash("read");
+        crashInjector.maybeCrash(CrashPoint.READ);
         while (buffer.isEmpty() && !exhausted) {
             fetchNextPage();
         }
