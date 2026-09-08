@@ -97,12 +97,6 @@ public class Contract extends TimestampBase {
     @Column(name = "attestation_status")
     private AttestationStatus attestationStatus;
 
-    /**
-     * Contract lifecycle status as reported by HPMS, stored verbatim. This is what says whether a
-     * contract is active, without inferring it from {@link #attestedOn} / {@link #hpmsEndDate}.
-     * Kept as a String rather than an enum because the HPMS value set is owned upstream — an
-     * unexpected value must be recorded, not rejected.
-     */
     @Column(name = "contract_status")
     private String contractStatus;
 

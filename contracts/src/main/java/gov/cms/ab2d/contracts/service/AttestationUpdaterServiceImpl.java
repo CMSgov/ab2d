@@ -189,7 +189,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             }
         }
         oldContract.setAttestedOn(newContract.getAttestedOn());
-        // Leave the stored statuses alone when HPMS did not answer, rather than blanking known values
+
         if (newContract.getAttestationStatus() != null) {
             oldContract.setAttestationStatus(newContract.getAttestationStatus());
         }
