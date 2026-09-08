@@ -9,11 +9,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-/**
- * The injector actually halts the JVM, so these tests spy the halt out and just check the decision:
- * is it off by default, does it only fire at the configured point, is the config value forgiving, and
- * does it refuse to arm where it must never crash.
- */
+/** halt() is stubbed out so we can check the arm/fire decision without killing the test JVM. */
 class CrashInjectorTest {
 
     @Test

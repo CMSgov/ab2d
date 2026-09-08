@@ -8,19 +8,11 @@ import java.util.Optional;
  */
 public enum CrashPoint {
 
-    /** While turning a bene's claims into ndjson. */
     PROCESS,
-
-    /** While reading the next bene out of the partition. */
     READ,
-
-    /** While writing a chunk to the output file. */
     WRITE,
-
-    /** While assembling the finished per-partition files into the delivered output. */
     ASSEMBLE;
 
-    /** The name a worker uses to select this point, e.g. "write". */
     public String configValue() {
         return name().toLowerCase();
     }

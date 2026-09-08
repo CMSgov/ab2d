@@ -41,19 +41,16 @@ public class CrashInjector {
 
         this.armed = requested && point.isPresent() && !protectedEnv;
         if (armed) {
-            // Loud on purpose: if you see this in a deployed worker's logs, it is going to crash itself.
             log.warn("CRASH-INJECTION ARMED at '{}' with probability {} - this worker will halt itself, "
                     + "FOR RECOVERY TESTING ONLY", this.crashAt.configValue(), crashProbability);
         }
     }
 
-    /** A prod or sandbox worker must never crash itself, no matter what the properties say. */
     private static boolean isProtectedEnv(String executionEnv) {
         String env = executionEnv == null ? "" : executionEnv.toLowerCase();
         return env.contains("prod") || env.contains("sandbox");
     }
 
-    /** Halt the worker if injection is armed for this point. A no-op unless armed for testing. */
     public void maybeCrash(CrashPoint point) {
         if (!armed || crashAt != point) {
             return;
@@ -63,7 +60,7 @@ public class CrashInjector {
         }
     }
 
-    /** Split out from the decision so tests can check what would fire without killing the JVM. */
+    // package-private so tests can stub it instead of actually halting the JVM
     void halt(CrashPoint point) {
         log.error("CRASH-INJECTION firing at '{}': halting worker now (exit 137) to test recovery", point.configValue());
         Runtime.getRuntime().halt(137);
