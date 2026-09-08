@@ -34,13 +34,14 @@ class PrototypeJobLeaseExpirationIntegrationTest extends AbstractPrototypeRecove
         }).when(coverageV3Service).createAggregatedAttributionTable(any());
         val job = createSubmittedV3Job("test");
         val owner = startWorkerUntilOnePartitionDone(job.getJobUuid(), "test-owner");
-        owner.run();
+		owner.killHard();
 	    await()
 		    .atMost(5, SECONDS)
 		    .pollInterval(100, TimeUnit.MILLISECONDS)
 		    .untilAsserted(() -> {
 			    assertTrue(out.getOut().contains("Too much time elapsed since last heartbeat - not renewing"));
 		    });
+
     }
 
     @Test
@@ -49,7 +50,7 @@ class PrototypeJobLeaseExpirationIntegrationTest extends AbstractPrototypeRecove
         val job = createSubmittedV3Job("test");
 		val jobUuid = job.getJobUuid();
         val owner = startWorkerUntilOnePartitionDone(jobUuid, "test-owner");
-        owner.run();
+		owner.killHard();
         bumpLeaseOutOfBand(job.getJobUuid(), "peer");
         await()
             .atMost(5, SECONDS)
