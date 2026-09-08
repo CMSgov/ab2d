@@ -224,6 +224,11 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
 
     /** Persist a fresh SUBMITTED R4V3 job for test contract. */
     protected Job createSubmittedV3Job(String uuidPrefix) {
+        return createSubmittedV3Job(uuidPrefix, CONTRACT);
+    }
+
+    /** Persist a fresh SUBMITTED R4V3 job for a given contract. */
+    protected Job createSubmittedV3Job(String uuidPrefix, String contractNumber) {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(uuidPrefix + "-client");
         pdpClient.setOrganization(uuidPrefix + "-org");
@@ -239,7 +244,7 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
         job.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(R4V3);
-        job.setContractNumber(CONTRACT);
+        job.setContractNumber(contractNumber);
 
         job = jobRepository.saveAndFlush(job);
         addJobForCleanup(job);
