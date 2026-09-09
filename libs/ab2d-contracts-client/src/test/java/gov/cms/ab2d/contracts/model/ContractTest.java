@@ -125,6 +125,35 @@ class ContractTest {
     }
 
     @Test
+    void testAttestationStatusFromHpms() {
+        assertEquals(Contract.AttestationStatus.ATTESTED, Contract.AttestationStatus.fromHpms(true));
+        assertEquals(Contract.AttestationStatus.WITHOUT_ATTESTATION, Contract.AttestationStatus.fromHpms(false));
+    }
+
+    @Test
+    void testAttestationStatusTracksAttestedOn() {
+        contract.setAttestationStatus(Contract.AttestationStatus.ATTESTED);
+        contract.clearAttestation();
+        assertEquals(Contract.AttestationStatus.WITHOUT_ATTESTATION, contract.getAttestationStatus());
+
+        contract.updateAttestation(true, NOW_STRING);
+        assertEquals(Contract.AttestationStatus.ATTESTED, contract.getAttestationStatus());
+        assertTrue(contract.hasAttestation());
+
+        contract.updateAttestation(false, NOW_STRING);
+        assertEquals(Contract.AttestationStatus.WITHOUT_ATTESTATION, contract.getAttestationStatus());
+        assertFalse(contract.hasAttestation());
+    }
+
+    @Test
+    void testAttestationStatusNotUpdatedWhenNotAutoUpdatable() {
+        contract.setAttestationStatus(Contract.AttestationStatus.ATTESTED);
+        contract.setUpdateMode(Contract.UpdateMode.MANUAL);
+        contract.updateAttestation(false, NOW_STRING);
+        assertEquals(Contract.AttestationStatus.ATTESTED, contract.getAttestationStatus());
+    }
+
+    @Test
     void testUpdate() {
         contract.updateOrg(CONTRACT_NAME + "1",
                 PARENT_ID + 1, PARENT_NAME + "1",
