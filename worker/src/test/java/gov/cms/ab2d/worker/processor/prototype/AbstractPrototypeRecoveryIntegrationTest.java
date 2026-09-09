@@ -181,18 +181,7 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
 
         // paging mock
         when(coverageV3Service.pageCoverageByPatientRange(eq(CONTRACT), anyLong(), anyLong(), any(), anyInt()))
-                .thenAnswer(inv -> {
-                    long start = inv.getArgument(1);
-                    long end = inv.getArgument(2);
-                    Optional<Long> cursor = inv.getArgument(3);
-                    long from = cursor.orElse(start);
-                    List<CoverageSummary> page = allBenes.stream()
-                            .filter(cs -> patientId(cs) > from && patientId(cs) <= end)
-                            .sorted((a, b) -> Long.compare(patientId(a), patientId(b)))
-                            .collect(Collectors.toList());
-                    // page size (1000) always covers a partition, so there is never a second page
-                    return new CoveragePagingResult(page, null);
-                });
+                .thenAnswer(this::pageFor);
 
         // BFD mock
         when(patientClaimsProcessor.getEobBundleResources(any(), any())).thenAnswer(inv -> oneEobFor(inv.getArgument(1)));
@@ -203,6 +192,20 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
         jobCleanup();
         dataSetup.cleanup();
         pdpClientRepository.deleteAll();
+    }
+
+    /** One page of coverage for the paging mock. Shared so a read-failure test can reuse it after throwing. */
+    protected CoveragePagingResult pageFor(org.mockito.invocation.InvocationOnMock inv) {
+        long start = inv.getArgument(1);
+        long end = inv.getArgument(2);
+        Optional<Long> cursor = inv.getArgument(3);
+        long from = cursor.orElse(start);
+        List<CoverageSummary> page = allBenes.stream()
+                .filter(cs -> patientId(cs) > from && patientId(cs) <= end)
+                .sorted((a, b) -> Long.compare(patientId(a), patientId(b)))
+                .collect(Collectors.toList());
+        // page size (1000) always covers a partition, so there is never a second page
+        return new CoveragePagingResult(page, null);
     }
 
     /** One ExplanationOfBenefit per beneficiary, recording the call in processedLog. */
