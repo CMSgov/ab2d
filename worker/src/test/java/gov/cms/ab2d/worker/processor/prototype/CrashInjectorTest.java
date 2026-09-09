@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.processor.prototype;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -55,29 +57,10 @@ class CrashInjectorTest {
         verify(injector, never()).halt(any());
     }
 
-    @Test
-    void refusesToArmInProd() {
-        CrashInjector injector = spy(new CrashInjector("write", 1.0, "ab2d-east-prod"));
-        doNothing().when(injector).halt(any());
-
-        injector.maybeCrash(CrashPoint.WRITE);
-
-        verify(injector, never()).halt(any());
-    }
-
-    @Test
-    void refusesToArmInSandbox() {
-        CrashInjector injector = spy(new CrashInjector("write", 1.0, "ab2d-sbx-sandbox"));
-        doNothing().when(injector).halt(any());
-
-        injector.maybeCrash(CrashPoint.WRITE);
-
-        verify(injector, never()).halt(any());
-    }
-
-    @Test
-    void refusesToArmInAnUnrecognisedEnv() {
-        CrashInjector injector = spy(new CrashInjector("write", 1.0, "somewhere-new"));
+    @ParameterizedTest
+    @ValueSource(strings = {"ab2d-east-prod", "ab2d-sbx-sandbox", "an-env-we-dont-know"})
+    void refusesToArmOutsideDevTestLocal(String executionEnv) {
+        CrashInjector injector = spy(new CrashInjector("write", 1.0, executionEnv));
         doNothing().when(injector).halt(any());
 
         injector.maybeCrash(CrashPoint.WRITE);
