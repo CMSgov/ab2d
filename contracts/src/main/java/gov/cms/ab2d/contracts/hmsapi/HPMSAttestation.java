@@ -13,4 +13,5 @@ public class HPMSAttestation {
     private boolean attested;
     private String attestationDate;
     private String endDate;
+    private String contractStatus;
 }
