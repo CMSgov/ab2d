@@ -35,12 +35,14 @@ public class PrototypeOutputAssembler {
     private final SearchConfig searchConfig;
     private final JobOutputRepository jobOutputRepository;
     private final PrototypeBatchMetadataRepository batchMeta;
+    private final CrashInjector crashInjector;
 
     public PrototypeOutputAssembler(SearchConfig searchConfig, JobOutputRepository jobOutputRepository,
-                                    PrototypeBatchMetadataRepository batchMeta) {
+                                    PrototypeBatchMetadataRepository batchMeta, CrashInjector crashInjector) {
         this.searchConfig = searchConfig;
         this.jobOutputRepository = jobOutputRepository;
         this.batchMeta = batchMeta;
+        this.crashInjector = crashInjector;
     }
 
     /**
@@ -158,6 +160,8 @@ public class PrototypeOutputAssembler {
                 }
                 Files.move(source, dest, StandardCopyOption.REPLACE_EXISTING);
                 promoted.add(dest);
+                // crash mid-promotion, so a restart has to finish a half-promoted assembly idempotently
+                crashInjector.maybeCrash(CrashPoint.ASSEMBLE);
             } else if (Files.isRegularFile(dest)) {
                 if (!required && Files.size(dest) == 0) {
                     continue;
