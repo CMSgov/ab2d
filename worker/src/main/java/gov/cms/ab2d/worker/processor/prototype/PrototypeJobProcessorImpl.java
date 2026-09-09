@@ -53,6 +53,7 @@ import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.worker.processor.prototype.lease.heartbeat.HeartbeatEvent.*;
 
 /**
  * prototype implementation of the pause/resume processor.
@@ -212,6 +213,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
             org.springframework.batch.core.job.Job batchJob = buildPartitionedJob(contractNumber, jobUuid, fenceToken);
 
+            leaseRenewer.postHeartbeat(jobUuid, fenceToken, BEFORE_LAUNCH_OR_RESUME_JOB);
             JobExecution execution = launchOrResume(batchJob, parameters, last);
             log.info("prototype job {} finished with status {}", jobUuid, execution.getStatus());
 
@@ -241,6 +243,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                     // The batch finished but too many beneficiaries errored, this is a terminal failure
                     applyThresholdFailure(job, contractNumber, jobUuid);
                 } else {
+                    leaseRenewer.postHeartbeat(jobUuid, fenceToken, ASSEMBLE_FILES);
                     // Failure during assembly is terminal and fails the job. We can recover from a crash
                     // during assembly, but not from an exception e.g. missing files in a "completed" job.
                     outputAssembler.assemble(job, jobUuid, contractNumber);
@@ -287,7 +290,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             job.setStatusMessage(message);
             coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
         } finally {
-            leaseRenewer.untrack(jobUuid);
+            leaseRenewer.untrack(jobUuid, fenceToken);
         }
 
         preserveLiveProgress(job, jobUuid);
@@ -312,6 +315,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                                         boolean softResume, long fenceToken) {
         if (last == null) {
             log.info("no prior batch execution for job {} - creating aggregated attribution table", jobUuid);
+            leaseRenewer.postHeartbeat(jobUuid, fenceToken, CREATE_AGGREGATED_TABLE);
             coverageV3Service.createAggregatedAttributionTable(contractNumber);
         } else if (!coverageV3Service.aggregatedTableExists(contractNumber)) {
             // A prior worker that failed terminally or was fenced out may have dropped the aggregated
@@ -319,6 +323,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             log.warn("prior batch execution {} for job {} but aggregated table for contract {} is missing - "
                     + "rebuilding ({} at token {})",
                     last.getId(), jobUuid, contractNumber, softResume ? "soft resume" : "hard recovery", fenceToken);
+            leaseRenewer.postHeartbeat(jobUuid, fenceToken, CREATE_AGGREGATED_TABLE);
             coverageV3Service.createAggregatedAttributionTable(contractNumber);
         } else {
             log.info("prior batch execution {} for job {} - {} at token {} (reusing aggregated table)",
@@ -553,7 +558,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .writer(ndjsonItemWriter)
                 // each chunk commit comes with a fence token which prevents
                 // us from committing work if we've lost the job
-                .listener(new PrototypeFenceGuard(jobLease, metrics, jobUuid, fenceToken))
+                .listener(new PrototypeFenceGuard(jobLease, metrics, leaseRenewer, jobUuid, fenceToken))
                 // per-chunk progress and failure reporting
                 .listener(new PrototypeProgressListener(jobChannelService, jobProgressService, jobUuid))
                 .faultTolerant()
