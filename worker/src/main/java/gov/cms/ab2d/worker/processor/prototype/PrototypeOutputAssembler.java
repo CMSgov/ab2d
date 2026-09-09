@@ -68,8 +68,6 @@ public class PrototypeOutputAssembler {
             return;
         }
 
-        crashInjector.maybeCrash(CrashPoint.ASSEMBLE);
-
         Path streamingDir = searchConfig.getStreamingDir(jobUuid).toPath();
         Path finishedDir = searchConfig.getFinishedDir(jobUuid).toPath();
         Path jobRoot = Path.of(searchConfig.getEfsMount(), jobUuid);
@@ -162,6 +160,8 @@ public class PrototypeOutputAssembler {
                 }
                 Files.move(source, dest, StandardCopyOption.REPLACE_EXISTING);
                 promoted.add(dest);
+                // crash mid-promotion, so a restart has to finish a half-promoted assembly idempotently
+                crashInjector.maybeCrash(CrashPoint.ASSEMBLE);
             } else if (Files.isRegularFile(dest)) {
                 if (!required && Files.size(dest) == 0) {
                     continue;

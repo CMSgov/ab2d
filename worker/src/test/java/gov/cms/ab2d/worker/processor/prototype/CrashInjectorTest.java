@@ -74,4 +74,14 @@ class CrashInjectorTest {
 
         verify(injector, never()).halt(any());
     }
+
+    @Test
+    void refusesToArmInAnUnrecognisedEnv() {
+        CrashInjector injector = spy(new CrashInjector("write", 1.0, "somewhere-new"));
+        doNothing().when(injector).halt(any());
+
+        injector.maybeCrash(CrashPoint.WRITE);
+
+        verify(injector, never()).halt(any());
+    }
 }
