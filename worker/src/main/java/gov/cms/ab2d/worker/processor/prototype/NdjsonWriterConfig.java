@@ -26,6 +26,7 @@ public class NdjsonWriterConfig {
     @StepScope
     public ItemStreamWriter<SerializedEobs> ndjsonItemWriter(
             SearchConfig searchConfig,
+            CrashInjector crashInjector,
             @Value("#{jobParameters['jobUuid']}") String jobUuid,
             @Value("#{jobParameters['fenceToken']}") long fenceToken,
             @Value("#{stepExecutionContext['contractNumber']}") String contract,
@@ -46,7 +47,7 @@ public class NdjsonWriterConfig {
                 streamingDir.resolve(PrototypePartitionNaming.fileName(contract, partitionIndex, fenceToken,
                         PrototypePartitionNaming.ERROR_STREAM)),
                 PrototypePartitionNaming.errorWriterName(partitionIndex, fenceToken));
-        return new NdjsonCompositeWriter(dataWriter, errorWriter);
+        return new NdjsonCompositeWriter(dataWriter, errorWriter, crashInjector);
     }
 
     /**
