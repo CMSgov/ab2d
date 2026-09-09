@@ -131,7 +131,7 @@ class ApiCommonTest {
         List<String> invalidFormat = List.of("lt20200101");
         List<String> invalidNotRealDate = List.of("eq2020-22-44");
         List<String> invalidMultipleLowerBound = List.of("gt2020-01-01", "ge2020-07-01");
-        List<String> invalidUpperBoundAndEquals = List.of("gt2024-06-07", "eq2024");
+        List<String> invalidUpperBoundAndEquals = List.of("lt2024-06-07", "eq2024");
         assertDoesNotThrow(() -> apiCommon.checkServiceDates(null));
         assertDoesNotThrow(() -> apiCommon.checkServiceDates(validServiceDates));
         assertDoesNotThrow(() -> apiCommon.checkServiceDates(validYearOnly));
