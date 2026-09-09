@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.prototype;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -18,9 +17,7 @@ class CrashInjectorTest {
     void offByDefaultSoNothingCrashes() {
         CrashInjector injector = spy(new CrashInjector("process", 0, "test"));
         doNothing().when(injector).halt(any());
-
         injector.maybeCrash(CrashPoint.PROCESS);
-
         verify(injector, never()).halt(any());
     }
 
@@ -28,11 +25,9 @@ class CrashInjectorTest {
     void crashesOnlyAtTheConfiguredPoint() {
         CrashInjector injector = spy(new CrashInjector("write", 1.0, "test"));
         doNothing().when(injector).halt(any());
-
         injector.maybeCrash(CrashPoint.READ);
         injector.maybeCrash(CrashPoint.PROCESS);
         verify(injector, never()).halt(any());
-
         injector.maybeCrash(CrashPoint.WRITE);
         verify(injector, times(1)).halt(CrashPoint.WRITE);
     }
@@ -41,9 +36,7 @@ class CrashInjectorTest {
     void configValueIsCaseInsensitive() {
         CrashInjector injector = spy(new CrashInjector("ASSEMBLE", 1.0, "test"));
         doNothing().when(injector).halt(any());
-
         injector.maybeCrash(CrashPoint.ASSEMBLE);
-
         verify(injector, times(1)).halt(CrashPoint.ASSEMBLE);
     }
 
@@ -51,9 +44,7 @@ class CrashInjectorTest {
     void unknownConfigValueDoesNotArm() {
         CrashInjector injector = spy(new CrashInjector("banana", 1.0, "test"));
         doNothing().when(injector).halt(any());
-
         injector.maybeCrash(CrashPoint.WRITE);
-
         verify(injector, never()).halt(any());
     }
 
@@ -62,9 +53,7 @@ class CrashInjectorTest {
     void refusesToArmOutsideDevTestLocal(String executionEnv) {
         CrashInjector injector = spy(new CrashInjector("write", 1.0, executionEnv));
         doNothing().when(injector).halt(any());
-
         injector.maybeCrash(CrashPoint.WRITE);
-
         verify(injector, never()).halt(any());
     }
 }

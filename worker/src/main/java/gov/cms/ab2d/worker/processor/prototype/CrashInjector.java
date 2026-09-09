@@ -30,7 +30,6 @@ public class CrashInjector {
         this.crashProbability = crashProbability;
         Optional<CrashPoint> point = CrashPoint.from(crashAt);
         this.crashAt = point.orElse(null);
-
         boolean requested = crashProbability > 0;
         boolean safeEnv = isSafeEnv(executionEnv);
         if (requested && point.isEmpty()) {
@@ -39,7 +38,6 @@ public class CrashInjector {
         if (requested && !safeEnv) {
             log.warn("CRASH-INJECTION disabled: refusing to arm in '{}', crash testing only runs in dev/test/local", executionEnv);
         }
-
         this.armed = requested && point.isPresent() && safeEnv;
         if (armed) {
             log.warn("CRASH-INJECTION ARMED at '{}' with probability {} - this worker will halt itself, "
@@ -50,7 +48,6 @@ public class CrashInjector {
     // Only dev, test (deployed as ab2d-east-impl), and local may crash. Anything else - prod, sandbox, or
     // an env we don't recognise - is denied, so a bad or missing value fails closed.
     private static final Set<String> SAFE_ENVS = Set.of("local", "dev", "test", "impl");
-
     private static boolean isSafeEnv(String executionEnv) {
         if (executionEnv == null) {
             return false;
