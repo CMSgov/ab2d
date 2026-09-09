@@ -29,14 +29,13 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 /**
- * Crash recovery integration tests that force failure at each distinct step of the pipeline and then
- * recovers it. The steps are:
- *      partitioning - fail mid-partition, on recovery the partitioning step should restart entirely
+ * Crash recovery integration tests that force a failure at a distinct step of the pipeline and then let
+ * the job recover. The steps are:
+ *      partitioning - fail mid-partition. Partitioning has no resume, so on restart the whole step re-runs.
  *      reading      - fail while paging beneficiaries, the chunk rolls back and reading resumes cleanly
  *      processing   - fail while running the job processor, chunk rolls back, restarts from the prior chunk
  *      file writing - fail while writing a file. Recovery ensures no duplicate or corrupted output
  *      assembly     - fail while assembling the finished files. Recovery continues assembly idempotently
- *
  */
 class PrototypeCrashPointIntegrationTest extends AbstractPrototypeRecoveryIntegrationTest {
 
