@@ -16,4 +16,5 @@ jobs:
     with:
       app: ab2d
       ref: main
-    secrets: inherit
+    secrets:
+      PROD_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
