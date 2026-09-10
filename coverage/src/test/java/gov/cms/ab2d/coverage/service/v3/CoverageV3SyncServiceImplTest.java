@@ -1,8 +1,8 @@
 package gov.cms.ab2d.coverage.service.v3;
 
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.coverage.CoverageV3PostgresContainer;
+import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLogImpl;
 import lombok.val;
@@ -10,11 +10,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -26,7 +26,6 @@ import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 @Testcontainers
@@ -75,8 +74,9 @@ class CoverageV3SyncServiceImplTest {
 			}
 		};
 
-
-		new JdbcTemplate(container.getDataSource()).execute("truncate v3.coverage_v3_audit");
+		val template = new JdbcTemplate(container.getDataSource());
+		template.execute("truncate v3.coverage_v3_audit");
+		template.execute("truncate ab2d.bene_coverage_period");
 	}
 
 	@Test
@@ -90,6 +90,22 @@ class CoverageV3SyncServiceImplTest {
 		"""
 		{action=COPY_TO_HISTORICAL, result=JOB_IN_PROGRESS_FOR_CONTRACT, contract=Z0001, log=, data={}}
 		""");
+	}
+
+	@Test
+	void moveToHistorical_Z0001_bfdSyncInProgress(CapturedOutput out) {
+		assertNotEquals(BFD_COVERAGE_SYNC_IN_PROGRESS, service.moveToHistorical("Z0001", CoverageV3SyncSource.CRON_JOB));
+
+		new JdbcTemplate(container.getDataSource()).execute(
+		"""
+		INSERT INTO ab2d.bene_coverage_period(month, year, status, contract_number)
+		VALUES
+			(8, 2026, 'IN_PROGRESS', 'Z0001');
+		""");
+
+		assertEquals(BFD_COVERAGE_SYNC_IN_PROGRESS, service.moveToHistorical("Z0001", CoverageV3SyncSource.CRON_JOB));
+
+		assertTrue(out.getOut().contains("[V3] Detected BFD coverage sync is in progress for Z0001-2026-8"));
 	}
 
 	@Test
@@ -131,6 +147,21 @@ class CoverageV3SyncServiceImplTest {
 		"""
 		{action=COPY_FROM_STAGING, result=SYNC_SUCCESSFUL_FOR_CONTRACT, contract=Z9999, log=, data={"rowsInStagingDeleted": 4, "rowsInCoverageAfterCopy": 4}}
 		""");
+	}
+
+	@Test
+	void copyFromStagingTablesToRecent_Z9999_bfdSyncInProgress(CapturedOutput out) {
+		assertNotEquals(BFD_COVERAGE_SYNC_IN_PROGRESS, service.copyFromStagingTablesToRecent("Z9999", CoverageV3SyncSource.CRON_JOB));
+
+		new JdbcTemplate(container.getDataSource()).execute(
+		"""
+		INSERT INTO ab2d.bene_coverage_period(month, year, status, contract_number)
+		VALUES
+			(8, 2026, 'IN_PROGRESS', 'Z9999');
+		""");
+
+		assertEquals(BFD_COVERAGE_SYNC_IN_PROGRESS, service.copyFromStagingTablesToRecent("Z9999", CoverageV3SyncSource.CRON_JOB));
+		assertTrue(out.getOut().contains("[V3] Detected BFD coverage sync is in progress for Z9999-2026-8"));
 	}
 
 	@Test
@@ -273,6 +304,63 @@ class CoverageV3SyncServiceImplTest {
 
 		assertTrue(service.isContractAttested("ATT1"));
 		System.out.println();
+	}
+
+	@Test
+	void testBatchCopy_SimulateSyncFailure(CapturedOutput out) {
+		 new JdbcTemplate(container.getDataSource()).execute(
+		"""
+		INSERT INTO v3.coverage_v3_staging(patient_id, contract, "year", "month", current_mbi)
+		VALUES
+		    (100, 'Z5555', 2025, 12, 'M100'),
+		    (100, 'Z5555', 2026, 1,  'M100'),
+		    (100, 'Z5555', 2026, 2,  'M100'),
+		    (100, 'Z5555', 2026, 3,  'M100'),
+		    (200, 'Z5555', 2025, 12, 'M100'),
+		    (200, 'Z5555', 2026, 1,  'M200'),
+		    (200, 'Z5555', 2026, 2,  'M200'),
+		    (200, 'Z5555', 2026, 3,  'M200')
+		""");
+
+		service = new CoverageV3SyncServiceImpl(
+				container.getDataSource(),
+				lockWrapper,
+				lockWrapper,
+				audit,
+				metrics,
+				propertiesService
+		) {
+			@Override
+			boolean isTestContract(String contract) {
+				return false;
+			}
+
+			@Override
+			boolean isContractAttested(String contract) {
+				return true;
+			}
+
+			@Override
+			int batchCopyFromStagingToCoverage(NamedParameterJdbcTemplate template, String contract, YearMonthRecord yearMonthPeriod) {
+				if (yearMonthPeriod.getMonth() == 2 && yearMonthPeriod.getYear() == 2026) {
+					return 0;
+				}
+				return super.batchCopyFromStagingToCoverage(template, contract, yearMonthPeriod);
+			}
+		};
+
+		when(propertiesService.isToggleOn(V3_AUDIT_LOGGING_ENABLED, false)).thenReturn(true);
+		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
+		when(lock.tryLock()).thenReturn(true);
+
+		service.copyFromStagingTablesToRecent("Z5555", CoverageV3SyncSource.CRON_JOB);
+
+		assertTrue(out.getOut().contains("rowsInsertedForMonth (0) does not match rowCountForMonth(2) for contract Z5555 and period 2026-2"));
+
+		assertAuditLogEquals(getAuditLogs().get(3),
+		"""
+		{action=COPY_FROM_STAGING, result=SYNC_FAILED_FOR_CONTRACT, contract=Z5555, log=rowsInsertedForMonth does not match rowCountForMonth, data={"period": "2026-2", "rowCountForMonth": 2, "rowsInsertedForMonth": 0}}
+		""");
 	}
 
 	void assertAuditLogEquals(Map<String, Object> result, String string) {

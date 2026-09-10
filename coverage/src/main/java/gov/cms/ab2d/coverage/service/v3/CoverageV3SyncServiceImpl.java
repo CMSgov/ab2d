@@ -3,6 +3,7 @@ package gov.cms.ab2d.coverage.service.v3;
 import datadog.trace.api.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.DatadogSpans;
+import gov.cms.ab2d.coverage.model.YearMonthRecord;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditAction;
 import gov.cms.ab2d.coverage.service.v3.audit.CoverageV3AuditLog;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
+import java.time.YearMonth;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -191,6 +194,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     DO NOTHING
     """;
 
+    private static final String QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS =
+    """
+    select month, year, contract_number from ab2d.bene_coverage_period where status='IN_PROGRESS'
+    """;
+
     @Transactional
     @Trace(operationName = "ab2d.coverage.sync_from_staging_v3")
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
@@ -207,7 +215,13 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
             audit.log(action, result, contract, "Contract is not attested", null);
             return result;
-        } else if (idrImporterInProgress()) {
+        } else if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            log.info("[V3] BFD coverage sync is in progress; Skipping copyFromStagingTablesToRecent() for contract {}", contract);
+            result = BFD_COVERAGE_SYNC_IN_PROGRESS;
+            audit.log(action, result, contract, null, null);
+            return result;
+        }
+        else if (idrImporterInProgress()) {
             result = IDR_IMPORTER_IN_PROGRESS;
             audit.log(action, result, contract, null, null);
             return result;
@@ -273,12 +287,22 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         audit.log(action, null, contract, null, Map.of("rowsInCoverageDeleted", rowsInCoverageDeleted));
 
         log.info("[V3] Preparing to copy rows from staging to coverage for contract {}...", contract);
-        val rowsInserted = executeTimedQuery(
-                format("[V3] copyFromStagingToCoverage contract=%s", contract),
-                () -> copyFromStagingToCoverage(contract)
-        );
-        log.info("[V3] Copied {} rows from staging to coverage for contract {}", rowsInserted, contract);
-        audit.log(action, null, contract, null, Map.of("rowsInserted", rowsInserted));
+        try {
+            val rowsInserted = executeTimedQuery(
+                format("[V3] batchCopyFromStagingToCoverage contract=%s", contract),
+                () -> batchCopyFromStagingToCoverage(contract)
+            );
+            log.info("[V3] Copied {} rows from staging to coverage for contract {}", rowsInserted, contract);
+            audit.log(action, null, contract, null, Map.of("rowsInserted", rowsInserted));
+        } catch (Exception e) {
+            /**
+             * If {@link #batchCopyFromStagingToCoverage} throws an exception, it will record an audit event
+             * If this step fails, there may be incomplete attribution data copied from staging to the recent coverage
+             * table. The sync will be re-attempted the next time the cron job fires OR when a job is run, so this
+             * will correct itself eventually
+             */
+            return SYNC_FAILED_FOR_CONTRACT;
+        }
 
         val rowsInCoverageAfterCopy = executeTimedQuery(
                 format("[V3] getCoveragePeriodCountForCoverageV3 contract=%s", contract),
@@ -290,11 +314,11 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         if (rowsInStaging != rowsInCoverageAfterCopy) {
             log.error("[V3] Row count in staging ({}) != row count in coverage ({}) for contract {}",
                     rowsInStaging,
-                    rowsInCoverageBeforeCopy,
+                    rowsInCoverageAfterCopy,
                     contract
             );
             result = SYNC_FAILED_FOR_CONTRACT;
-            audit.log(action, result, contract, "rowsInStaging does not match rowsInCoverageBeforeCopy", Map.of("rowsInStaging", rowsInStaging, "rowsInCoverageBeforeCopy", rowsInCoverageBeforeCopy));
+            audit.log(action, result, contract, "rowsInStaging does not match rowsInCoverageAfterCopy", Map.of("rowsInStaging", rowsInStaging, "rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
             metrics.recordImport(source, contract, result, rowsInStaging, rowsInCoverageBeforeCopy, rowsInCoverageAfterCopy);
             return result;
         }
@@ -339,7 +363,13 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         if (isTestContract(contract)) {
             result = NO_COVERAGE_FOUND_FOR_CONTRACT;
             return result;
-        } else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
+        } else if (source == CRON_JOB && isBfdCoverageSyncInProgress()) {
+            log.info("[V3] BFD coverage sync is in progress; Skipping moveToHistorical() for contract {}", contract);
+            result = BFD_COVERAGE_SYNC_IN_PROGRESS;
+            audit.log(action, result, contract, null, null);
+            return result;
+        }
+        else if (source == CRON_JOB && contractHasJobInProgress(contract)) {
             result = JOB_IN_PROGRESS_FOR_CONTRACT;
             audit.log(action, result, contract, null, null);
             return result;
@@ -433,8 +463,82 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return executeQueryForContract(contract, formattedQuery);
     }
 
+    @Deprecated
+    // Replaced by batchCopyFromStagingToCoverage
     int copyFromStagingToCoverage(final String contract) {
         return executeQueryForContract(contract, COPY_FROM_STAGING_TO_COVERAGE_V3);
+    }
+
+    // Copy from staging to recent coverage for the given contract one month at a time
+    int batchCopyFromStagingToCoverage(final String contract) {
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+
+        val queryPeriodCountByMonth =
+        """
+        SELECT year, month, count(*)
+        FROM %s
+        WHERE contract = :contract
+        GROUP BY contract, month, year
+        """.formatted(COVERAGE_V3_STAGING_TABLE);
+
+        val periodCountByMonth = new HashMap<YearMonthRecord, Long>();
+        template.query(queryPeriodCountByMonth, Map.of("contract", contract), rs -> {
+            periodCountByMonth.put(
+                new YearMonthRecord(rs.getInt(1), rs.getInt(2)),
+                rs.getLong(3)
+            );
+        });
+
+        var rowsInsertedTotal = 0;
+        for (Map.Entry<YearMonthRecord, Long> entry : periodCountByMonth.entrySet()) {
+            val rowsInsertedForMonth = batchCopyFromStagingToCoverage(template, contract, entry.getKey());
+            rowsInsertedTotal += rowsInsertedForMonth;
+
+            val year = entry.getKey().getYear();
+            val month = entry.getKey().getMonth();
+            val rowCountForMonth = entry.getValue();
+            val yearMonthToString = "%s-%s".formatted(year, month);
+            if (rowsInsertedForMonth != rowCountForMonth) {
+                audit.log(
+                    COPY_FROM_STAGING,
+                    SYNC_FAILED_FOR_CONTRACT,
+                    contract,
+                    "rowsInsertedForMonth does not match rowCountForMonth",
+                    Map.of(
+                        "rowsInsertedForMonth", rowsInsertedForMonth,
+                        "rowCountForMonth", rowCountForMonth,
+                        "period", yearMonthToString
+                    )
+                );
+
+                log.error("rowsInsertedForMonth ({}) does not match rowCountForMonth({}) for contract {} and period {}",
+                    rowsInsertedForMonth,
+                    rowCountForMonth,
+                    contract,
+                    yearMonthToString
+                );
+                throw new RuntimeException("batchCopyFromStagingToCoverage failed: rowsInsertedForMonth != rowCountForMonth");
+            }
+        }
+
+        return rowsInsertedTotal;
+    }
+
+    int batchCopyFromStagingToCoverage(NamedParameterJdbcTemplate template, String contract, YearMonthRecord yearMonthPeriod) {
+        val year = yearMonthPeriod.getYear();
+        val month = yearMonthPeriod.getMonth();
+
+        val insertRowsByMonth = """
+        with inserted_rows as (
+            insert into %s select * from %s
+            where contract = :contract and year = :year and month = :month
+            returning *
+        )
+        select count(*) from inserted_rows;
+        """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE);
+
+        val parameters = Map.of("contract", contract, "year", year, "month", month);
+        return DataAccessUtils.intResult(template.queryForList(insertRowsByMonth, parameters, Integer.class));
     }
 
     int moveToHistoricalInternal(final String contract) {
@@ -509,6 +613,25 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         DatadogSpans.setMetric("coverage.v3.inactive_contracts_deleted", deletedContracts.size());
         audit.log(CoverageV3AuditAction.DELETE_INACTIVE_CONTACTS, null, null, null, Map.of("deletedContracts", deletedContracts));
         return deletedContracts.size();
+    }
+
+    @Override
+    public boolean isBfdCoverageSyncInProgress() {
+        val template = new NamedParameterJdbcTemplate(this.dataSource);
+
+        val coveragePeriodsInProgress = template.query(QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS, (rs, rowNum) -> {
+            val month = rs.getInt(1);
+            val year = rs.getInt(2);
+            val contract = rs.getString(3);
+            return "%s-%s-%s".formatted(contract, year, month);
+        });
+
+        if (coveragePeriodsInProgress.isEmpty()) {
+            return false;
+        } else {
+            coveragePeriodsInProgress.forEach(period -> log.info("[V3] Detected BFD coverage sync is in progress for {}", period));
+            return true;
+        }
     }
 
     void populateHistorySummaryCoveragePeriodsForContract(String contract) {
