@@ -2,6 +2,9 @@ name: total-benes-served-update
 run-name: total-benes-served-update prod
 
 on:
+  push:
+    branches:
+      - fix_total_benes_served_update_workflow
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * 3,5'  # Tuesday and Thursday at 11pm EST (UTC-5)
