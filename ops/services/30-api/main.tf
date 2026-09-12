@@ -320,11 +320,6 @@ module "service" {
   ]
 }
 
-resource "aws_sns_topic" "api" {
-  name              = "${local.service_prefix}-api-healthy-host"
-  kms_master_key_id = local.kms_master_key_id
-}
-
 resource "aws_cloudwatch_metric_alarm" "health" {
   alarm_name          = "${local.service_prefix}-api-healthy-host"
   comparison_operator = "LessThanThreshold"
@@ -342,13 +337,6 @@ resource "aws_cloudwatch_metric_alarm" "health" {
     LoadBalancer = aws_lb.ab2d_api.arn_suffix
     TargetGroup  = regex("targetgroup/.+", module.service.target_group_arn)
   }
-}
-
-resource "aws_sns_topic_subscription" "splunk_api" {
-  count     = local.splunk_alert_email != null ? 1 : 0
-  topic_arn = aws_sns_topic.api.arn
-  protocol  = "email"
-  endpoint  = local.splunk_alert_email
 }
 
 resource "aws_lb" "ab2d_api" {

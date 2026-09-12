@@ -5,6 +5,7 @@ variable "aurora_snapshot" {
 }
 
 variable "slack_alerts_enabled" {
+  description = "Subscribe the CloudWatch alarm topic to the CDAP alarm-to-slack queue. Defaults to prod only."
   default     = null
   type        = bool
 }

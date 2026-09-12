@@ -77,9 +77,8 @@ locals {
       thresholds = {
         critical = 0
       }
-      notify_no_data            = true
-      no_data_timeframe_minutes = 1500
-      tags                      = ["service:coverage", "feature:coverage-v3-import"]
+      on_missing_data = "show_and_notify_no_data"
+      tags            = ["service:coverage", "feature:coverage-v3-import"]
     },
     {
       name    = "AB2D Coverage V3 - Import row delta anomaly (${local.env})"
@@ -89,9 +88,7 @@ locals {
       thresholds = {
         critical = 1
       }
-      notify_no_data            = false
-      no_data_timeframe_minutes = 1500
-      tags                      = ["service:coverage", "feature:coverage-v3-import"]
+      tags = ["service:coverage", "feature:coverage-v3-import"]
     },
     {
       name    = "AB2D Coverage V3 - Sync failures detected (${local.env})"
@@ -101,9 +98,7 @@ locals {
       thresholds = {
         critical = 0
       }
-      notify_no_data            = false
-      no_data_timeframe_minutes = 1500
-      tags                      = ["service:coverage", "feature:coverage-v3-import"]
+      tags = ["service:coverage", "feature:coverage-v3-import"]
     },
   ]
 }
@@ -118,5 +113,5 @@ module "common_datadog_monitors" {
   app             = "ab2d"
   env             = local.env
   monitor_config  = local.monitor_config
-  custom_monitors = local.coverage_v3_monitors
+  custom_monitors = concat(local.coverage_v3_monitors, local.ecs_monitors)
 }

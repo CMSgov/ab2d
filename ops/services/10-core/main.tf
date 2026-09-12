@@ -108,13 +108,6 @@ resource "aws_efs_mount_target" "this" {
   security_groups = [aws_security_group.efs[0].id]
 }
 
-resource "aws_sns_topic" "efs" {
-  count = module.platform.is_ephemeral_env ? 0 : 1
-
-  name              = "${local.service_prefix}-efs-connections"
-  kms_master_key_id = local.env_key_alias.target_key_id
-}
-
 resource "aws_cloudwatch_metric_alarm" "efs_health" {
   count = module.platform.is_ephemeral_env ? 0 : 1
 
