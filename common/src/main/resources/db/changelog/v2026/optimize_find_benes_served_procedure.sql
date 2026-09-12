@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE ab2d.find_benes_served()
+CREATE OR REPLACE PROCEDURE ab2d.find_benes_served_optimized()
     LANGUAGE plpgsql
 AS
 $$
