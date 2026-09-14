@@ -1,1 +1,1 @@
-SET statement_timeout='7h'; CALL find_benes_served_optimized();
+SET statement_timeout='4h'; CALL find_benes_served();
