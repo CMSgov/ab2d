@@ -35,8 +35,6 @@ locals {
   vpc_id             = module.platform.vpc_id
   splunk_alert_email = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
   slack_queue_env    = local.parent_env == "test" || local.parent_env == "dev" ? "test" : "prod"
-
-  slack_alerts_enabled = coalesce(var.slack_alerts_enabled, local.parent_env == "prod")
 }
 
 data "aws_efs_file_system" "efs" {
@@ -108,6 +106,13 @@ resource "aws_efs_mount_target" "this" {
   security_groups = [aws_security_group.efs[0].id]
 }
 
+resource "aws_sns_topic" "efs" {
+  count = module.platform.is_ephemeral_env ? 0 : 1
+
+  name              = "${local.service_prefix}-efs-connections"
+  kms_master_key_id = local.env_key_alias.target_key_id
+}
+
 resource "aws_cloudwatch_metric_alarm" "efs_health" {
   count = module.platform.is_ephemeral_env ? 0 : 1
 
@@ -121,8 +126,8 @@ resource "aws_cloudwatch_metric_alarm" "efs_health" {
   threshold           = "1"
   alarm_description   = "EFS connection count"
   treat_missing_data  = "ignore"
-  alarm_actions       = [aws_sns_topic.alarms.arn]
-  ok_actions          = [aws_sns_topic.alarms.arn]
+  alarm_actions       = [aws_sns_topic.efs[0].arn]
+  ok_actions          = [aws_sns_topic.efs[0].arn]
 
   dimensions = {
     FileSystemId = aws_efs_file_system.efs[0].id
@@ -141,10 +146,7 @@ data "aws_sqs_queue" "alarm_to_slack" {
   name = "cdap-${local.slack_queue_env}-alarm-to-slack"
 }
 
-# Only prod is subscribed.
 resource "aws_sns_topic_subscription" "slack" {
-  count = local.slack_alerts_enabled ? 1 : 0
-
   topic_arn = aws_sns_topic.alarms.arn
   protocol  = "sqs"
   endpoint  = data.aws_sqs_queue.alarm_to_slack.arn

@@ -77,8 +77,9 @@ locals {
       thresholds = {
         critical = 0
       }
-      on_missing_data = "show_and_notify_no_data"
-      tags            = ["service:coverage", "feature:coverage-v3-import"]
+      notify_no_data            = true
+      no_data_timeframe_minutes = 1500
+      tags                      = ["service:coverage", "feature:coverage-v3-import"]
     },
     {
       name    = "AB2D Coverage V3 - Import row delta anomaly (${local.env})"
@@ -88,7 +89,9 @@ locals {
       thresholds = {
         critical = 1
       }
-      tags = ["service:coverage", "feature:coverage-v3-import"]
+      notify_no_data            = false
+      no_data_timeframe_minutes = 1500
+      tags                      = ["service:coverage", "feature:coverage-v3-import"]
     },
     {
       name    = "AB2D Coverage V3 - Sync failures detected (${local.env})"
@@ -98,7 +101,9 @@ locals {
       thresholds = {
         critical = 0
       }
-      tags = ["service:coverage", "feature:coverage-v3-import"]
+      notify_no_data            = false
+      no_data_timeframe_minutes = 1500
+      tags                      = ["service:coverage", "feature:coverage-v3-import"]
     },
   ]
 }
