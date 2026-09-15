@@ -42,18 +42,18 @@ public class WorkerConfig {
     private final int jobCorePoolSize;
     private final int jobMaxPoolSize;
     private final int jobQueueCapacity;
-    private final int lockTimeToLive;
+    private final int pickupLockTtlSeconds;
 
     public WorkerConfig(@Value("${pcp.core.pool.size}") int pcpCorePoolSize,
                         @Value("${job.core.pool.size}") int jobCorePoolSize,
                         @Value("${job.max.pool.size}") int jobMaxPoolSize,
                         @Value("${job.queue.capacity}") int jobQueueCapacity,
-                        @Value("${job.lock.ttl}") int lockTimeToLive) {
+                        @Value("${job.pickup.lock.ttl}") int pickupLockTtlSeconds) {
         this.pcpCorePoolSize = pcpCorePoolSize;
         this.jobCorePoolSize = jobCorePoolSize;
         this.jobMaxPoolSize = jobMaxPoolSize;
         this.jobQueueCapacity = jobQueueCapacity;
-        this.lockTimeToLive = lockTimeToLive;
+        this.pickupLockTtlSeconds = pickupLockTtlSeconds;
     }
 
     @Bean
@@ -100,6 +100,6 @@ public class WorkerConfig {
      */
     @Bean
     public LockRegistry<DistributedLock> lockRegistry(LockRepository lockRepository) {
-        return new JdbcLockRegistry(lockRepository, Duration.ofSeconds(lockTimeToLive));
+        return new JdbcLockRegistry(lockRepository, Duration.ofSeconds(pickupLockTtlSeconds));
     }
 }

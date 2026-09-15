@@ -114,8 +114,17 @@ class JobMessageSourceQueryIntegrationTest {
     @DisplayName("A SUBMITTED job that already has an int_lock is skipped")
     void submittedWithIntLockIsSkipped() {
         String uuid = createJob(JobStatus.SUBMITTED);
-        insertIntLock(uuid);
-        assertFalse(poll().contains(uuid), "a SUBMITTED job with an int_lock row must not be polled");
+        insertIntLock(uuid, 3600);
+        assertFalse(poll().contains(uuid), "a SUBMITTED job with a live int_lock row must not be polled");
+    }
+
+    @Test
+    @DisplayName("A SUBMITTED job whose int_lock has expired is eligible again")
+    void submittedWithExpiredIntLockIsEligible() {
+        String uuid = createJob(JobStatus.SUBMITTED);
+        // what a worker that died between taking the lock and marking the job IN_PROGRESS leaves behind
+        insertIntLock(uuid, -1);
+        assertTrue(poll().contains(uuid), "a SUBMITTED job whose lock has lapsed must be polled again");
     }
 
     @Test
@@ -178,9 +187,10 @@ class JobMessageSourceQueryIntegrationTest {
         return uuid;
     }
 
-    private void insertIntLock(String uuid) {
+    private void insertIntLock(String uuid, int secondsUntilExpiry) {
         jdbc.update("INSERT INTO int_lock (lock_key, region, created_date, expired_after) "
-                + "VALUES (?, 'AB2D', now(), now() + make_interval(secs => 3600))", uuid);
+                + "VALUES (?, 'AB2D', now() AT TIME ZONE 'UTC', "
+                + "(now() AT TIME ZONE 'UTC') + make_interval(secs => ?))", uuid, secondsUntilExpiry);
     }
 
     private void insertLease(String uuid, int heartbeatAgeSeconds) {

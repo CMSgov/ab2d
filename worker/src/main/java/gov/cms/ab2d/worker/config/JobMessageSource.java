@@ -22,7 +22,9 @@ public class JobMessageSource extends JdbcPollingChannelAdapter {
     WHERE (
             (
                 status = 'SUBMITTED'
-                AND NOT EXISTS (SELECT 1 FROM int_lock WHERE lock_key = job.job_uuid)
+                AND NOT EXISTS (SELECT 1 FROM int_lock
+                                WHERE lock_key = job.job_uuid
+                                  AND expired_after > (now() AT TIME ZONE 'UTC'))
             )
             OR (
                 status = 'IN_PROGRESS'
