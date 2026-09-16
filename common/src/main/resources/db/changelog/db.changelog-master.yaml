@@ -203,3 +203,5 @@ databaseChangeLog:
       file: db/changelog/v2026/add_int_lock_expired_after.sql
   - include:
       file: db/changelog/v2026/alter_historic_mbis_type.sql
+  - include:
+      file: db/changelog/v2026/optimize_find_benes_served_procedure.sql
