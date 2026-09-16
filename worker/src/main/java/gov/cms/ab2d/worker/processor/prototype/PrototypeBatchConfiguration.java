@@ -32,6 +32,8 @@ public class PrototypeBatchConfiguration extends DefaultBatchConfiguration {
             factory.setTransactionManager(transactionManager);
             // prevent two jobs starting at the same time from failing
             factory.setIsolationLevelForCreateEnum(Isolation.READ_COMMITTED);
+            // by default, exit_message is truncated to 2000 characters and the full error message is not captured
+            factory.setMaxVarCharLengthForExitMessage(25_000);
             factory.afterPropertiesSet();
             return factory.getObject();
         } catch (Exception e) {
