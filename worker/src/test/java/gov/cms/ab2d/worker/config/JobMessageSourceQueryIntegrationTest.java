@@ -13,6 +13,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.integration.support.locks.DistributedLock;
+import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -23,12 +25,15 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
@@ -68,6 +73,9 @@ class JobMessageSourceQueryIntegrationTest {
 
     @Autowired
     private JobRepository jobRepository;
+
+    @Autowired
+    private LockRegistry<DistributedLock> lockRegistry;
 
     // mocked purely so the worker context boots without a real coverage/BFD backend
     @MockitoBean
@@ -125,6 +133,25 @@ class JobMessageSourceQueryIntegrationTest {
         // what a worker that died between taking the lock and marking the job IN_PROGRESS leaves behind
         insertIntLock(uuid, -1);
         assertTrue(poll().contains(uuid), "a SUBMITTED job whose lock has lapsed must be polled again");
+    }
+
+    @Test
+    @DisplayName("The lock expiry has the expected duration")
+    void lockUsesThePickupTtl() {
+        String uuid = createJob(JobStatus.SUBMITTED);
+
+        Lock lock = lockRegistry.obtain(uuid);
+        assertTrue(lock.tryLock());
+        try {
+            assertFalse(poll().contains(uuid));
+            OffsetDateTime expiry = jdbc.queryForObject(
+                    "SELECT expired_after FROM int_lock WHERE lock_key = ?", OffsetDateTime.class, uuid
+            );
+            long secondsOut = Duration.between(OffsetDateTime.now(ZoneOffset.UTC), expiry).toSeconds();
+            assertTrue(secondsOut > 500, "expected pickup TTL, got " + secondsOut);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Test
