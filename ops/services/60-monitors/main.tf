@@ -118,5 +118,5 @@ module "common_datadog_monitors" {
   app             = "ab2d"
   env             = local.env
   monitor_config  = local.monitor_config
-  custom_monitors = local.coverage_v3_monitors
+  custom_monitors = concat(local.coverage_v3_monitors, local.ecs_monitors)
 }
