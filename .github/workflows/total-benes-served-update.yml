@@ -43,13 +43,18 @@ jobs:
           COUNT_QUERY="SELECT statistic_value FROM ab2d.ab2d_statistics WHERE statistic_name = 'total_benes_served';"
 
           echo "Procedure started"
+          START_SECONDS=${SECONDS}
+
           COUNT_BEFORE=$(psql -t --command="${COUNT_QUERY}" | xargs)
           echo "Count before: ${COUNT_BEFORE}"
 
-          SQL_TOTAL_BENE_SERVED=$(envsubst < .github/workflows/resources/total-benes-served.sql)
-          psql -t --command="${SQL_TOTAL_BENE_SERVED}"
+          # ON_ERROR_STOP is required: without it psql prints SQL errors and still
+          # exits 0, so a failed procedure reports as a green run that silently
+          # leaves the statistic stale.
+          psql -v ON_ERROR_STOP=1 -f .github/workflows/resources/total-benes-served.sql
 
           COUNT_AFTER=$(psql -t --command="${COUNT_QUERY}" | xargs)
           echo "Count after: ${COUNT_AFTER}"
           echo "Difference: $((COUNT_AFTER - COUNT_BEFORE))"
+          echo "Elapsed: $(( (SECONDS - START_SECONDS) / 60 )) minutes"
           echo "Procedure completed"
