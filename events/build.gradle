@@ -2,7 +2,7 @@
 plugins {
     id 'java'
     id 'jacoco'
-    id 'org.springframework.boot' version '4.0.7'
+    id 'org.springframework.boot' version '4.1.1'
     id "org.sonarqube" version "7.3.0.8198"
     id 'maven-publish'
     id 'org.cyclonedx.bom' version '2.0.0' apply true
@@ -14,7 +14,7 @@ version="2.0.1"
 group = "gov.cms.ab2d"
 
 ext {
-    springBootVersion= '4.0.7'
+    springBootVersion= '4.1.1'
     springCloudAwsVersion = '4.0.2'
     liquibaseVersion='5.0.0'
     jacksonVersion='2.21.5'

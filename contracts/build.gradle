@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.7'
+    id 'org.springframework.boot' version '4.1.1'
     id "org.sonarqube" version "7.3.0.8198"
     id 'maven-publish'
     id 'org.cyclonedx.bom' version '3.0.0' apply true
@@ -14,7 +14,7 @@ group = "gov.cms.ab2d"
 ext {
     lombokVersion = '1.18.38'
     springCloudAwsVersion = '4.0.2'
-    springBootVersion='4.0.7'
+    springBootVersion='4.1.1'
     testContainerVersion='1.21.4'
     liquibaseVersion = '5.0.0'
     eventClientVersion='3.3.17'
