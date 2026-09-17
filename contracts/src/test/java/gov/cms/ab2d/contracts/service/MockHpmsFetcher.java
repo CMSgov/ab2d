@@ -14,10 +14,11 @@ public class MockHpmsFetcher implements HPMSFetcher {
     private static final Map<String, HPMSEnrollment> enrolls = new HashMap<>();
 
     static {
-        attests.put("S1234", new HPMSAttestation("S1234", true, "2020-01-31 14:57:34", null));
-        attests.put("S2341", new HPMSAttestation("S2341", true, "2020-02-13 14:57:34", null));
-        attests.put("S3412", new HPMSAttestation("S3412", true, "2020-03-24 14:57:34", null));
-        attests.put("S4123", new HPMSAttestation("S4123", true, "2020-04-15 14:57:34", null));
+        attests.put("S1234", new HPMSAttestation("S1234", true, "2020-01-31 14:57:34", null, "Active"));
+        attests.put("S2341", new HPMSAttestation("S2341", true, "2020-02-13 14:57:34", null, "Active"));
+        attests.put("S3412", new HPMSAttestation("S3412", true, "2020-03-24 14:57:34", null, "Active"));
+        attests.put("S4123", new HPMSAttestation("S4123", true, "2020-04-15 14:57:34", null, "Terminated"));
+        attests.put("S5432", new HPMSAttestation("S5432", false, null, null, null));
 
         HPMSOrganizationInfo orgInfo = new HPMSOrganizationInfo("ABC Org", 5, "S1234", "Contract ABC", "ABC Marketing");
         orgSet.add(orgInfo);
@@ -27,11 +28,14 @@ public class MockHpmsFetcher implements HPMSFetcher {
         orgSet.add(orgInfo);
         orgInfo = new HPMSOrganizationInfo("TNT Org", 8, "S4123", "Contract TNT", "TNT Marketing");
         orgSet.add(orgInfo);
+        orgInfo = new HPMSOrganizationInfo("HBO Org", 9, "S5432", "Contract HBO", "HBO Marketing");
+        orgSet.add(orgInfo);
 
         enrolls.put("S1234", new HPMSEnrollment(2023, 12, "S1234", 100, 95));
         enrolls.put("S2341", new HPMSEnrollment(2023, 12, "S2341", 200, 195));
         enrolls.put("S3412", new HPMSEnrollment(2023, 12, "S3412", 300, 295));
         enrolls.put("S4123", new HPMSEnrollment(2023, 12, "S4123", 400, 395));
+        enrolls.put("S5432", new HPMSEnrollment(2023, 12, "S5432", 500, 495));
     }
 
     @Override
