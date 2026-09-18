@@ -30,7 +30,7 @@
         <java.version>25</java.version>
         <hapi.version>8.12.1</hapi.version>
         <mockito.core.version>5.16.1</mockito.core.version>
-<!--        <okhttp3.version>5.5.0</okhttp3.version>-->
+        <okhttp3.version>5.5.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>9.0</logback-encoder.version>
         <testcontainers.version>1.21.4</testcontainers.version>
@@ -119,14 +119,14 @@
             <dependency>
                 <groupId>io.opentelemetry</groupId>
                 <artifactId>opentelemetry-bom</artifactId>
-                <version>1.62.0</version>
+                <version>1.66.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.github.jnr</groupId>
                 <artifactId>jnr-posix</artifactId>
-                <version>3.1.8</version>
+                <version>3.2.4</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
