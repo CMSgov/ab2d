@@ -30,11 +30,6 @@ allprojects {
 
     dependencies {
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
-
-        // override spring boot's managed versions, these two are removable once spring boot updates them
-//        implementation platform("io.netty:netty-bom:4.2.16.Final")
-//        implementation platform("tools.jackson:jackson-bom:3.1.5")
-
         testImplementation enforcedPlatform("org.testcontainers:testcontainers-bom:${testContainerVersion}")
         implementation "gov.cms.ab2d:ab2d-events-client:${eventClientVersion}"
         implementation "gov.cms.ab2d:ab2d-contracts-client:${contractClientVersion}"

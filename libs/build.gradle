@@ -166,10 +166,6 @@ subprojects {
 
     dependencies {
         implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
-        // override spring boot's managed versions, these two are removable once spring boot updates them
-//        implementation(platform("io.netty:netty-bom:4.2.16.Final"))
-//        implementation(platform("tools.jackson:jackson-bom:3.1.5"))
-
         implementation(platform("org.liquibase:liquibase-core:$liquibaseVersion"))
         // testcontainers is test-only: keep it on testImplementation so it is not published
         // into the runtimeElements variant of the module metadata (.module), which would
@@ -195,13 +191,6 @@ subprojects {
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.utilities:$hl7Version")
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:$hl7Version")
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.r4:$hl7Version")
-            // spring boot dependencies - should be removed when spring boot upgrades these
-//            implementation('org.apache.tomcat.embed:tomcat-embed-core:11.0.23')
-//            implementation('org.apache.tomcat.embed:tomcat-embed-el:11.0.23')
-//            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23')
-//            implementation('ch.qos.logback:logback-core:1.5.36')
-//            implementation('ch.qos.logback:logback-classic:1.5.36')
-//            implementation('org.apache.thrift:libthrift:0.24.0')
         }
     }
 
