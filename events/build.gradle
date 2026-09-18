@@ -20,8 +20,8 @@ ext {
     jacksonVersion='2.22.2'
     testContainerVersion='1.21.4'
     eventClientVersion='3.3.18'
-    lombokVersion = '1.18.38'
-    commonsLangVersion='3.18.0'
+    lombokVersion = '1.18.48'
+    commonsLangVersion='3.20.0'
 }
 
 allprojects {
@@ -64,7 +64,7 @@ allprojects {
         runtimeOnly 'org.postgresql:postgresql:42.7.13'
         testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
         testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-        testImplementation "commons-io:commons-io:2.18.0"
+//        testImplementation "commons-io:commons-io:2.22.0"
         testImplementation "org.springframework.data:spring-data-jpa"
         testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
         testImplementation "org.testcontainers:testcontainers:${testContainerVersion}"
@@ -90,11 +90,11 @@ allprojects {
             implementation("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
             implementation("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
             // spring boot dependencies, remove as spring boot upgrades these
-            implementation('org.apache.tomcat.embed:tomcat-embed-core:11.0.23')
-            implementation('org.apache.tomcat.embed:tomcat-embed-el:11.0.23')
-            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23')
-            implementation('ch.qos.logback:logback-core:1.5.36')
-            implementation('ch.qos.logback:logback-classic:1.5.36')
+//            implementation('org.apache.tomcat.embed:tomcat-embed-core:11.0.23')
+//            implementation('org.apache.tomcat.embed:tomcat-embed-el:11.0.23')
+//            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23')
+//            implementation('ch.qos.logback:logback-core:1.5.36')
+//            implementation('ch.qos.logback:logback-classic:1.5.36')
         }
 
         // make sure this doesn't cause any issues
