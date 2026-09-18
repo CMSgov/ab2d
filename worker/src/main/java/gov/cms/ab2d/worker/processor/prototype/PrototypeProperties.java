@@ -87,4 +87,24 @@ public class PrototypeProperties {
      * Max duration between assembling output files and next in-memory heartbeat
      */
     private long maxDurationSecondsAssembleFiles = Duration.ofMinutes(30).toSeconds();
+
+    /** Whether the worker sweeps expired Spring Batch metadata at all. */
+    private boolean cleanupEnabled = true;
+
+    /**
+     * How often the worker checks whether to do the cleanup
+     */
+    private Duration cleanupInterval = Duration.ofHours(6);
+
+    /**
+     * How long metadata is retained. Metadata contains only job management info, so 30 days is already
+     * longer than it probably needs.
+     */
+    private int cleanupRetentionDays = 30;
+
+    /**
+     * 200 is much higher than how fast data accumulates right now. If we ever have to make this number bigger
+     * I would be scared.
+     */
+    private int cleanupMaxExecutionsPerSweep = 200;
 }
