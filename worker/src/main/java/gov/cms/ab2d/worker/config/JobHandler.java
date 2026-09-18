@@ -17,6 +17,7 @@ import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Component;
 
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -105,11 +106,23 @@ public class JobHandler implements MessageHandler {
                 } catch (Exception exception) {
                     throw new MessagingException("could not check coverage due to unexpected exception", exception);
                 } finally {
-                    lock.unlock();
+                    unlockQuietly(lock, jobId);
                 }
             }
 
             MDC.remove(JOB_LOG);
+        }
+    }
+
+    /**
+     * Unlocks the lock, but if the lock was lost, just warn and don't do anything
+     */
+    private void unlockQuietly(Lock lock, String jobId) {
+        try {
+            lock.unlock();
+        } catch (ConcurrentModificationException lockLost) {
+            log.warn("lock for {} was lost, exiting",
+                    jobId);
         }
     }
 
