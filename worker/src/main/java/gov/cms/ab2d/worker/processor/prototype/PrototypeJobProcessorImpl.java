@@ -61,7 +61,7 @@ import static gov.cms.ab2d.worker.processor.prototype.lease.heartbeat.HeartbeatE
 @Slf4j
 @Component
 public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
-    static final String PROTOTYPE_JOB_NAME = "ab2dPrototypeJob";
+    public static final String PROTOTYPE_JOB_NAME = "ab2dPrototypeJob";
     static final String MANAGER_STEP_NAME = "ab2dPrototypePartitionManagerStep";
     static final String WORKER_STEP_NAME = "ab2dPrototypeWorkerStep";
     static final String JOB_UUID_PARAM = "jobUuid";
