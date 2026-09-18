@@ -45,11 +45,8 @@ jobs:
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
 
-      - name: Lockfiles
-        run: ../scripts/regenerate-lockfiles.sh
-
       - name: Build and test libraries
-        run: ./gradlew clean test --info
+        run: ./gradlew clean test --info --write-locks
 
       - name: Build JARs
         run: ./gradlew jar --warn
