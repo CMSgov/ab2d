@@ -24,29 +24,27 @@ ext {
     // AB2D libraries
     fhirVersion='2.5.10'
     bfdVersion='4.8.4'
-    aggregatorVersion='2.1.7'
-    filtersVersion='3.2.3'
-    eventClientVersion='3.3.17'
-    propertiesClientVersion='2.1.1'
-    contractClientVersion='2.3.0'
-    snsClientVersion='1.1.12'
+    aggregatorVersion='2.1.8'
+    filtersVersion='3.2.4'
+    eventClientVersion='3.3.18'
+    contractClientVersion='2.3.1'
+    snsClientVersion='1.1.13'
 
     sourcesRepo = 'ab2d-maven-repo'
     deployerRepo = 'ab2d-main'
     resolverRepo = 'ab2d-main'
 
-    commonsLangVersion='3.18.0'
-    lombokVersion = '1.18.38'
-    springBootVersion='4.0.7'
-    springCloudAwsVersion = '4.0.2'
-    hapiVersion = '8.8.0'
+    lombokVersion = '1.18.48'
+    springBootVersion='4.1.1'
+    springCloudAwsVersion = '4.1.1'
+    hapiVersion = '8.12.1'
     ddTraceApiVersion='1.63.0'
     testContainerVersion='1.21.4'
     mockServerVersion='5.15.0'
     liquibaseVersion="5.0.0"
-    jacksonVersion = "2.21.5"
+    jacksonVersion = "2.22.2"
     slackAPIVersion='1.35.0'
-    hl7Version = '6.9.10'
+    hl7Version = '6.10.4'
 
 }
 
@@ -159,8 +157,8 @@ subprojects {
     }
 
     java {
-        sourceCompatibility = 17
-        targetCompatibility = 17
+        sourceCompatibility = 25
+        targetCompatibility = 25
     }
 
 
@@ -169,8 +167,8 @@ subprojects {
     dependencies {
         implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
         // override spring boot's managed versions, these two are removable once spring boot updates them
-        implementation(platform("io.netty:netty-bom:4.2.16.Final"))
-        implementation(platform("tools.jackson:jackson-bom:3.1.5"))
+//        implementation(platform("io.netty:netty-bom:4.2.16.Final"))
+//        implementation(platform("tools.jackson:jackson-bom:3.1.5"))
 
         implementation(platform("org.liquibase:liquibase-core:$liquibaseVersion"))
         // testcontainers is test-only: keep it on testImplementation so it is not published
@@ -198,12 +196,12 @@ subprojects {
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:$hl7Version")
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.r4:$hl7Version")
             // spring boot dependencies - should be removed when spring boot upgrades these
-            implementation('org.apache.tomcat.embed:tomcat-embed-core:11.0.23')
-            implementation('org.apache.tomcat.embed:tomcat-embed-el:11.0.23')
-            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23')
-            implementation('ch.qos.logback:logback-core:1.5.36')
-            implementation('ch.qos.logback:logback-classic:1.5.36')
-            implementation('org.apache.thrift:libthrift:0.24.0')
+//            implementation('org.apache.tomcat.embed:tomcat-embed-core:11.0.23')
+//            implementation('org.apache.tomcat.embed:tomcat-embed-el:11.0.23')
+//            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23')
+//            implementation('ch.qos.logback:logback-core:1.5.36')
+//            implementation('ch.qos.logback:logback-classic:1.5.36')
+//            implementation('org.apache.thrift:libthrift:0.24.0')
         }
     }
 

@@ -182,6 +182,7 @@ allprojects {
     }
 
     repositories {
+        mavenLocal()
         mavenCentral()
         [sourcesRepo, resolverRepo].unique().each { repoKey ->
             maven {
