@@ -71,12 +71,6 @@ allprojects {
             implementation 'org.mozilla:rhino:1.7.15'
             implementation 'com.fasterxml.jackson.core:jackson-core:2.22.2'
             implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.2'
-            // spring boot dependencies, remove as spring boot upgrades these
-//            implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.23'
-//            implementation 'org.apache.tomcat.embed:tomcat-embed-el:11.0.23'
-//            implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23'
-//            implementation 'ch.qos.logback:logback-core:1.5.36'
-//            implementation 'ch.qos.logback:logback-classic:1.5.36'
         }
     }
 

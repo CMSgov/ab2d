@@ -86,12 +86,6 @@ allprojects {
             implementation('org.mozilla:rhino:1.8.1')
             implementation("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
             implementation("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-            // spring boot dependencies, remove as spring boot upgrades these
-//            implementation('org.apache.tomcat.embed:tomcat-embed-core:11.0.23')
-//            implementation('org.apache.tomcat.embed:tomcat-embed-el:11.0.23')
-//            implementation('org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23')
-//            implementation('ch.qos.logback:logback-core:1.5.36')
-//            implementation('ch.qos.logback:logback-classic:1.5.36')
         }
 
         // make sure this doesn't cause any issues
