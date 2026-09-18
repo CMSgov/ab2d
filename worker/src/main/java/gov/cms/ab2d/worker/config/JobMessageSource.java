@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.config;
 
-import org.springframework.integration.jdbc.JdbcPollingChannelAdapter;
+
+import org.springframework.integration.jdbc.inbound.JdbcPollingChannelAdapter;
 
 import javax.sql.DataSource;
 
