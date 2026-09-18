@@ -71,13 +71,13 @@ jobs:
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
-        run: ./gradlew clean test --info
+        run: ./gradlew clean test --info --write-locks
 
       - name: Build and push Docker image
         if: ${{ inputs.push_image == true }}
         id: build_image
         run: |
-          ./gradlew bootJar
+          ./gradlew bootJar --write-locks
           ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
           SHA_SHORT=$(git rev-parse --short HEAD)
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
@@ -88,4 +88,3 @@ jobs:
           docker push "$ECR_URI" --all-tags
           echo "Published **$ECR_URI:$TAG_SHORT**" >> $GITHUB_STEP_SUMMARY
           echo "image_tag=$TAG_SHORT" >> $GITHUB_OUTPUT
-

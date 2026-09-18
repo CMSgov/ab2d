@@ -10,6 +10,7 @@ repositories {
 
 ext {
     jupiterVersion='5.9.3'
+    commonsLangVersion='3.20.0'
 }
 
 dependencies {
