@@ -128,6 +128,11 @@
                 <artifactId>jnr-posix</artifactId>
                 <version>3.2.4</version>
             </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp3.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
