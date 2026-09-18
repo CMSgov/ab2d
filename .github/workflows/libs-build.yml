@@ -26,7 +26,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3 #TODO: Update to Node24
         with:
-          java-version: '17'
+          java-version: '25'
           distribution: 'corretto'
 
       - name: Assume role in target account

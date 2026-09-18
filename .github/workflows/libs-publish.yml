@@ -43,7 +43,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3 #TODO: Update to Node24
         with:
-          java-version: '17'
+          java-version: '25'
           distribution: 'corretto'
 
       - name: Set env vars from AWS params
@@ -86,4 +86,3 @@ jobs:
         run: |
           echo "Force publishing (overwriting) all artifacts to Artifactory"
           ./gradlew artifactoryPublish
-
