@@ -179,7 +179,7 @@ resource "aws_sns_topic_subscription" "events" {
 module "events_service" {
   source = "github.com/CMSgov/cdap//terraform/modules/service?ref=52af0763fab4e65b29ead8bf88774f0bad4bdd87"
 
-  cluster_arn                   = module.cluster.this.id
+  cluster_arn                   = data.aws_ecs_cluster.this.arn
   cpu                           = 512
   desired_count                 = 1
   force_new_deployment          = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
