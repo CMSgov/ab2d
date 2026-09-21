@@ -16,6 +16,11 @@ regenerate() {
     local dir="$1"
     local path="${REPO_ROOT}/${dir}"
 
+    if [[ "$dir" == "idr-db-importer" ]]; then
+        echo "Installing dependency for idb-db-importer: gov.cms.ab2d:common:0.0.1-SNAPSHOT"
+        mvn clean install -pl common -am -Dcheckstyle.skip -DskipTests
+    fi
+
     if [[ ! -x "${path}/gradlew" ]]; then
         echo "!! ${dir}: no gradlew wrapper found, skipping" >&2
         return 1

@@ -28,6 +28,8 @@ dependencyLocking {
 ext {
 	awssdkVersion = '2.41.5'
 	ddTraceApiVersion = '1.63.0'
+	hapiVersion = '8.12.1'
+	hl7Version = '6.10.4'
 	// override spring boot's managed versions like so:
 	// set('xyz.version', '1.0.0')
 }
@@ -68,16 +70,22 @@ dependencies {
 configurations.all {
 	resolutionStrategy.force(
 		'org.springframework.retry:spring-retry:2.0.13',
-		'ca.uhn.hapi.fhir:org.hl7.fhir.utilities:6.10.4',
-		'ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:6.10.4',
-		'ca.uhn.hapi.fhir:org.hl7.fhir.r4:6.10.4'
+		"ca.uhn.hapi.fhir:org.hl7.fhir.utilities:${hl7Version}",
+		"ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:${hl7Version}",
+		"ca.uhn.hapi.fhir:org.hl7.fhir.r4:${hl7Version}",
+		"ca.uhn.hapi.fhir:hapi-fhir-base:${hapiVersion}",
+		"ca.uhn.hapi.fhir:hapi-fhir-client:${hapiVersion}",
+		"ca.uhn.hapi.fhir:hapi-fhir-structures-dstu3:${hapiVersion}",
+		"ca.uhn.hapi.fhir:hapi-fhir-structures-r4:${hapiVersion}"
 	)
 }
 
-
+// override spring boot's version - can be updated when the managed version updates
 dependencyManagement {
 	dependencies {
-		// override any dependencies here
+		dependency 'io.opentelemetry:opentelemetry-api:1.66.0'
+		dependency 'io.opentelemetry:opentelemetry-context:1.66.0'
+		dependency 'io.opentelemetry:opentelemetry-common:1.66.0'
 	}
 }
 
