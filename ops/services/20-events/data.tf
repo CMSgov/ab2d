@@ -25,6 +25,10 @@ data "aws_rds_cluster" "this" {
   cluster_identifier = local.service_prefix
 }
 
+data "aws_ecs_cluster" "this" {
+  cluster_name = "ab2d-${module.platform.env}"
+}
+
 data "aws_iam_role" "task_execution_role" {
   name = "${local.service_prefix}-microservices"
 }
