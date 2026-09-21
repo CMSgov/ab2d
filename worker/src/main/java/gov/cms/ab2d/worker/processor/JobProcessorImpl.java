@@ -86,6 +86,14 @@ public class JobProcessorImpl implements JobProcessor {
         final Job job = jobRepository.findByJobUuid(jobUuid);
         log.info("Found job");
 
+        // reject all pause/resume eligible jobs. They are not meant for this processor.
+        if (job.isPauseEligible()) {
+            job.setStatus(FAILED);
+            job.setStatusMessage("Rejected because the job is pause/resume eligible");
+            log.error("Job {} was rejected due to being a pause/resume job", jobUuid);
+            return jobRepository.save(job);
+        }
+
         // Determine the output directory based on the job id
         Path outputDirPath = null;
         try {

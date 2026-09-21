@@ -211,3 +211,7 @@ databaseChangeLog:
       file: db/changelog/v2026/add_job_lease_alerted_at.sql
   - include:
       file: db/changelog/v2026/spring-batch-schema-exit-message.sql
+  - include:
+      file: db/changelog/v2026/add_pause_resume_prototype_tunables.sql
+  - include:
+      file: db/changelog/v2026/add_job_pause_eligible.sql

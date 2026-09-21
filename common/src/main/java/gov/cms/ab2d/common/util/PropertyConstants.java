@@ -56,4 +56,14 @@ public final class PropertyConstants {
     // prototype feature flag
     public static final String PAUSE_RESUME_PROTOTYPE_ENABLED = "pause-resume.prototype.enabled";
 
+    // Beneficiaries per file
+    public static final String PAUSE_RESUME_PROTOTYPE_PARTITION_SIZE = "pause-resume.prototype.partition-size";
+
+    // Beneficiaries per progress save
+    public static final String PAUSE_RESUME_PROTOTYPE_CHUNK_SIZE = "pause-resume.prototype.chunk-size";
+
+    // Whether hard recovery attempts to repair partitions on resume or just restart them
+    public static final String PAUSE_RESUME_PROTOTYPE_COPY_FORWARD_ENABLED =
+            "pause-resume.prototype.copy-forward-enabled";
+
 }

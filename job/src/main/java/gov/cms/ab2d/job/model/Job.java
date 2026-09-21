@@ -100,6 +100,8 @@ public class Job {
     @NotNull
     private String contractNumber;
 
+    private boolean pauseEligible;
+
     public void addJobOutput(JobOutput jobOutput) {
         jobOutputs.add(jobOutput);
         jobOutput.setJob(this);

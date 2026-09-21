@@ -33,4 +33,9 @@ public class WorkerServiceStub implements WorkerService {
     public FeatureEngagement getEngagement() {
         return FeatureEngagement.fromString(propertiesService.getProperty(PropertyConstants.WORKER_ENGAGEMENT, FeatureEngagement.IN_GEAR.getSerialValue()));
     }
+
+    @Override
+    public boolean isPrototypeAdmissible() {
+        return true;
+    }
 }

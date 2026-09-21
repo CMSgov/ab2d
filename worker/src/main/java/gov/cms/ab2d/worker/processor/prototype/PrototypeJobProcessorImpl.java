@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.prototype;
 
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
@@ -44,6 +45,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_CHUNK_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_PARTITION_SIZE;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COMPLETED;
@@ -69,6 +72,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     // is used to namespace outputs so that different workers cannot corrupt the work
     // of other workers.
     static final String FENCE_TOKEN_PARAM = "fenceToken";
+    static final String PARTITION_SIZE_PARAM = "partitionSize";
 
     // IO exceptions from contacting BFD are worth retrying
     private static final List<Class<? extends Throwable>> TRANSIENT_EXCEPTIONS = List.of(
@@ -97,6 +101,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     // per-JVM diagnostic identity recorded on the lease so logs/monitoring can attribute ownership
     private final String owner = "worker-" + java.util.UUID.randomUUID();
     private final PrototypeProperties props;
+    private final PropertiesService propertiesService;
 
     private final int failureThreshold;
     private final int auditFilesTtlHours;
@@ -127,6 +132,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             EobItemProcessor eobItemProcessor,
             ItemStreamWriter<SerializedEobs> ndjsonItemWriter,
             PrototypeProperties props,
+            PropertiesService propertiesService,
             @Qualifier("patientProcessorThreadPool") Executor patientProcessorThreadPool,
             @Value("${failure.threshold}") int failureThreshold,
             @Value("${audit.files.ttl.hours}") int auditFilesTtlHours) {
@@ -150,6 +156,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         this.ndjsonItemWriter = ndjsonItemWriter;
         this.patientClaimsPool = (AsyncTaskExecutor) patientProcessorThreadPool;
         this.props = props;
+        this.propertiesService = propertiesService;
         this.failureThreshold = failureThreshold;
         this.auditFilesTtlHours = auditFilesTtlHours;
     }
@@ -165,6 +172,13 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         if (job.getFhirVersion() != FhirVersion.R4V3) {
             job.setStatus(FAILED);
             job.setStatusMessage("Rejected due to version (not v3)");
+            return jobRepository.save(job);
+        }
+
+        // the prototype only takes jobs that have been opted in
+        if (!job.isPauseEligible()) {
+            job.setStatus(FAILED);
+            job.setStatusMessage("Rejected because the job is not pause/resume eligible");
             return jobRepository.save(job);
         }
 
@@ -187,18 +201,26 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 jobUuid, contractNumber, ownership.mode().tagValue(), fenceToken);
         metrics.jobStarted(contractNumber, ownership.mode());
 
+        int chunkSize = getIntProperty(PAUSE_RESUME_PROTOTYPE_CHUNK_SIZE, props.getChunkSize());
+
         // Start renewing the heartbeat
-        leaseRenewer.track(jobUuid, fenceToken);
+        leaseRenewer.track(jobUuid, fenceToken, chunkSize);
         try {
             // jobUuid identifies the instance
-            JobParameters parameters = new JobParametersBuilder()
+            JobParameters lookupParameters = new JobParametersBuilder()
                     .addString(JOB_UUID_PARAM, jobUuid)
                     .addLong(FENCE_TOKEN_PARAM, fenceToken, false)
                     .toJobParameters();
 
             // Only build the aggregated attribution table on a fresh start
-            JobExecution last = batchJobRepository.getLastJobExecution(PROTOTYPE_JOB_NAME, parameters);
+            JobExecution last = batchJobRepository.getLastJobExecution(PROTOTYPE_JOB_NAME, lookupParameters);
             prepareAggregatedTable(last, jobUuid, contractNumber, softResume, fenceToken);
+
+            // each job maintains its original partitionSize so that resumes can re-partition the job correctly
+            int partitionSize = effectivePartitionSize(last, jobUuid);
+            JobParameters parameters = new JobParametersBuilder(lookupParameters)
+                    .addLong(PARTITION_SIZE_PARAM, (long) partitionSize, false)
+                    .toJobParameters();
 
             // job progress is initialized on startup since we could be restarting
             // a job that was already in progress
@@ -211,7 +233,8 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUESTS_PROCESSED, alreadyProcessed);
             }
 
-            org.springframework.batch.core.job.Job batchJob = buildPartitionedJob(contractNumber, jobUuid, fenceToken);
+            org.springframework.batch.core.job.Job batchJob =
+                    buildPartitionedJob(contractNumber, jobUuid, fenceToken, partitionSize, chunkSize);
 
             leaseRenewer.postHeartbeat(jobUuid, fenceToken, BEFORE_LAUNCH_OR_RESUME_JOB);
             JobExecution execution = launchOrResume(batchJob, parameters, last);
@@ -283,9 +306,20 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 return jobRepository.findByJobUuid(jobUuid);
             }
             // issues with launching are terminal and fail the job without retry
-            log.error("prototype job {} failed to launch", jobUuid, e);
-            String message = "Prototype execution failed: " + e.getMessage();
-            alertJobFailed(job, jobUuid, contractNumber, PrototypeMetrics.FailureReason.LAUNCH_FAILED, message);
+            boolean snapshotLost = e instanceof AttributionSnapshotLostException;
+            if (snapshotLost) {
+                log.error("prototype job {} cannot be resumed", jobUuid);
+            } else {
+                log.error("prototype job {} failed to launch", jobUuid, e);
+            }
+            String message = snapshotLost
+                    ? "Prototype cannot resume: " + e.getMessage()
+                    : "Prototype execution failed: " + e.getMessage();
+            alertJobFailed(job, jobUuid, contractNumber,
+                    snapshotLost
+                            ? PrototypeMetrics.FailureReason.ATTRIBUTION_SNAPSHOT_LOST
+                            : PrototypeMetrics.FailureReason.LAUNCH_FAILED,
+                    message);
             job.setStatus(FAILED);
             job.setStatusMessage(message);
             coverageV3Service.deleteAggregatedTableForContract(contractNumber, Optional.of(jobUuid));
@@ -307,9 +341,8 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     }
 
     /**
-     * Build the aggregated attribution table on a fresh start, and rebuild it on a resume if a prior worker
-     * dropped it on its way out. Reused as-is otherwise, since it is the immutable snapshot the partitions
-     * are cut from.
+     * Build the aggregated attribution table on a fresh start. If we're not starting fresh and there's no
+     * attribution table, the job can't be resumed.
      */
     private void prepareAggregatedTable(JobExecution last, String jobUuid, String contractNumber,
                                         boolean softResume, long fenceToken) {
@@ -318,16 +351,39 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             leaseRenewer.postHeartbeat(jobUuid, fenceToken, CREATE_AGGREGATED_TABLE);
             coverageV3Service.createAggregatedAttributionTable(contractNumber);
         } else if (!coverageV3Service.aggregatedTableExists(contractNumber)) {
-            // A prior worker that failed terminally or was fenced out may have dropped the aggregated
-            // table. We safely remake it because a hard recovery re-runs the partitioner from scratch anyway.
-            log.warn("prior batch execution {} for job {} but aggregated table for contract {} is missing - "
-                    + "rebuilding ({} at token {})",
+            log.error("prior batch execution {} for job {} but aggregated table for contract {} is missing "
+                    + "({} at token {}) - the job cannot be resumed",
                     last.getId(), jobUuid, contractNumber, softResume ? "soft resume" : "hard recovery", fenceToken);
-            leaseRenewer.postHeartbeat(jobUuid, fenceToken, CREATE_AGGREGATED_TABLE);
-            coverageV3Service.createAggregatedAttributionTable(contractNumber);
+            throw new AttributionSnapshotLostException(jobUuid, contractNumber);
         } else {
             log.info("prior batch execution {} for job {} - {} at token {} (reusing aggregated table)",
                     last.getId(), jobUuid, softResume ? "soft resume" : "hard recovery", fenceToken);
+        }
+    }
+
+    /**
+     * The partition size to cut this job's partitions at. It's either the value from the props if
+     * it's a fresh job, or the value in the job parameters if it's resuming.
+     */
+    private int effectivePartitionSize(JobExecution last, String jobUuid) {
+        if (last != null) {
+            Long pinned = last.getJobParameters().getLong(PARTITION_SIZE_PARAM);
+            if (pinned != null && pinned > 0) {
+                return pinned.intValue();
+            }
+        }
+        return getIntProperty(PAUSE_RESUME_PROTOTYPE_PARTITION_SIZE, props.getPartitionSize());
+    }
+
+    /**
+     * TODO: consolidate this function, it's reused here and there
+     */
+    private int getIntProperty(String property, int defaultValue) {
+        try {
+            return Integer.parseInt(propertiesService.getProperty(property, Integer.toString(defaultValue)).trim());
+        } catch (Exception e) {
+            log.warn("property {} is not a number - using {}", property, defaultValue);
+            return defaultValue;
         }
     }
 
@@ -388,7 +444,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         log.error("prototype job {} for contract {} FAILED ({}): {}", jobUuid, contractNumber,
                 reason.tagValue(), message);
         metrics.jobFailed(contractNumber, reason);
-        eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED,
+        eventLogger.logAndTrace(job.buildJobStatusChangeEvent(FAILED,
                 EOB_JOB_FAILURE + " Prototype job " + jobUuid + " for contract " + contractNumber
                         + " failed (" + reason.tagValue() + "): " + message), PUBLIC_LIST);
     }
@@ -415,7 +471,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         int processed = tracker == null ? 0 : tracker.getPatientRequestProcessedCount();
         String message = String.format("%s via prototype: processed %d patients into %d file(s)",
                 EOB_JOB_COMPLETED, processed, job.getJobOutputs().size());
-        eventLogger.logAndAlert(job.buildJobStatusChangeEvent(SUCCESSFUL, message), PROD_LIST);
+        eventLogger.logAndTrace(job.buildJobStatusChangeEvent(SUCCESSFUL, message), PROD_LIST);
         metrics.jobCompleted(job.getContractNumber(), processed);
 
         job.setStatus(SUCCESSFUL);
@@ -453,20 +509,11 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      */
     @Override
     public void stopForShutdown() {
-        Set<JobExecution> running = batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME);
-        if (running.isEmpty()) {
+        long startedAt = System.currentTimeMillis();
+        if (signalStop("shutdown") == 0) {
             return;
         }
-        log.info("shutdown: stopping {} running prototype batch execution(s) before releasing jobs", running.size());
         metrics.drainStarted();
-        long startedAt = System.currentTimeMillis();
-        for (JobExecution je : running) {
-            try {
-                jobOperator.stop(je);
-            } catch (Exception e) {
-                log.warn("shutdown: failed to signal stop for batch execution {}", je.getId(), e);
-            }
-        }
 
         // Wait for the partition threads to actually finish before changing status
         // might need a TODO for a more robust system than a sleep
@@ -491,6 +538,30 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         log.warn("shutdown: prototype batch executions still running after {}ms; proceeding with status reset anyway",
                 shutdownAwaitMs);
         metrics.drainFinished(false, System.currentTimeMillis() - startedAt);
+    }
+
+    @Override
+    public void stopRunning() {
+        signalStop("yield");
+    }
+
+    /**
+     * Ask every running prototype batch execution to stop at its next chunk
+     */
+    private int signalStop(String reason) {
+        Set<JobExecution> running = batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME);
+        if (running.isEmpty()) {
+            return 0;
+        }
+        log.info("stopping {} running prototype batch execution(s) because of {}", running.size(), reason);
+        for (JobExecution je : running) {
+            try {
+                jobOperator.stop(je);
+            } catch (Exception e) {
+                log.warn("Stop failed for batch execution {}", je.getId(), e);
+            }
+        }
+        return running.size();
     }
 
     /**
@@ -550,9 +621,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      * build the partitioned batch job for a contract
      */
     private org.springframework.batch.core.job.Job buildPartitionedJob(String contractNumber, String jobUuid,
-            long fenceToken) {
+            long fenceToken, int partitionSize, int chunkSize) {
         var workerStepBuilder = new StepBuilder(WORKER_STEP_NAME, batchJobRepository)
-                .<CoverageSummary, SerializedEobs>chunk(props.getChunkSize())
+                .<CoverageSummary, SerializedEobs>chunk(chunkSize)
                 .reader(beneficiaryItemReader)
                 .processor(eobItemProcessor)
                 .writer(ndjsonItemWriter)
@@ -583,7 +654,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
                 .build();
 
         BeneficiaryPartitioner partitioner =
-                new BeneficiaryPartitioner(coverageV3Service, contractNumber, props.getPartitionSize());
+                new BeneficiaryPartitioner(coverageV3Service, contractNumber, partitionSize);
 
         // the manager partitions the work, and each partition gets its own
         // workerStep, which brings along its own reader/processor/writer

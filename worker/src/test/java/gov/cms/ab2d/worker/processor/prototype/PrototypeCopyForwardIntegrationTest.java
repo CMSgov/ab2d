@@ -2,13 +2,12 @@ package gov.cms.ab2d.worker.processor.prototype;
 
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_COPY_FORWARD_ENABLED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,14 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PrototypeCopyForwardIntegrationTest extends AbstractPrototypeRecoveryIntegrationTest {
 
     private static final int CHUNKS_BEFORE_CRASH = 3;
-
-    @Autowired
-    private PrototypeProperties props;
-
-    @AfterEach
-    void restoreCopyForward() {
-        props.setCopyForwardEnabled(true);
-    }
 
     @Test
     @DisplayName("A hard-crashed partition resumes from its last chunk instead of being redone")
@@ -55,7 +46,7 @@ class PrototypeCopyForwardIntegrationTest extends AbstractPrototypeRecoveryInteg
     @Test
     @DisplayName("With copy-forward off, the same crash redoes everything the partition had committed")
     void disablingCopyForwardRedoesTheInFlightPartition() throws Exception {
-        props.setCopyForwardEnabled(false);
+        propertiesService.updateProperty(PAUSE_RESUME_PROTOTYPE_COPY_FORWARD_ENABLED, "false");
         Job job = createSubmittedV3Job("no-copy-fwd");
         String uuid = job.getJobUuid();
 

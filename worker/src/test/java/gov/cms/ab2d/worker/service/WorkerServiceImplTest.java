@@ -20,6 +20,7 @@ import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
 import gov.cms.ab2d.worker.processor.prototype.PrototypeJobProcessor;
+import gov.cms.ab2d.worker.processor.prototype.PrototypeProperties;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ class WorkerServiceImplTest {
 
     // assertDoesNotThrow is really the best we can do here... all the function does is log.
     assertDoesNotThrow(() -> {
-      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service, prototypeJobProcessor);
+      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service, prototypeJobProcessor, new PrototypeProperties());
       workerServiceImpl.process("jobUuid");
     });
   }
@@ -57,7 +58,7 @@ class WorkerServiceImplTest {
     PrototypeJobProcessor prototypeJobProcessor = mock(PrototypeJobProcessor.class);
 
 
-    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service, prototypeJobProcessor);
+    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service, prototypeJobProcessor, new PrototypeProperties());
 
     // verify "resetInProgressJobs" wasn't called, because "activeJobs" is empty
     workerServiceImpl.resetInProgressJobs();

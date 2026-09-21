@@ -51,6 +51,16 @@ public class PrototypeProperties {
     private boolean copyForwardEnabled = true;
 
     /**
+     * Whether a prototype job yields for "real" jobs.
+     */
+    private boolean pauseUnderLoad = true;
+
+    /**
+     * How many real jobs this worker may be running before the prototype yields
+     */
+    private int realJobTolerance = 1;
+
+    /**
      * How many attempts can be left before a failing job is reported as approaching its cap. Failing a job
      * is expected and recoverable, but grinding toward the terminal failure is worth knowing about early.
      */

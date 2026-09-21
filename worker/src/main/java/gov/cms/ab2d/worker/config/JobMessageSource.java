@@ -17,7 +17,7 @@ public class JobMessageSource extends JdbcPollingChannelAdapter {
     // Jobs without a lease row are started by the normal worker, and are ignored.
     private static final String QUERY_TEMPLATE =
     """
-    SELECT id, job_uuid, status, contract_number, fhir_version
+    SELECT id, job_uuid, status, contract_number, fhir_version, pause_eligible
     FROM job
     WHERE (
             (
@@ -30,6 +30,7 @@ public class JobMessageSource extends JdbcPollingChannelAdapter {
                 status = 'IN_PROGRESS'
                 AND EXISTS (SELECT 1 FROM property.properties
                             WHERE key = 'pause-resume.prototype.enabled' AND value = 'true')
+                AND job.pause_eligible
                 AND EXISTS (
                     SELECT 1 FROM ab2d.job_lease l
                     WHERE l.job_uuid = job.job_uuid
