@@ -18,7 +18,7 @@ regenerate() {
 
     if [[ "$dir" == "idr-db-importer" ]]; then
         echo "Installing dependency for idr-db-importer: gov.cms.ab2d:common:0.0.1-SNAPSHOT"
-        mvn clean install -pl common -am -Dcheckstyle.skip -DskipTests
+        mvn -f "${REPO_ROOT}/pom.xml" clean install -pl common -am -Dcheckstyle.skip -DskipTests || return 1
     fi
 
     if [[ ! -x "${path}/gradlew" ]]; then
