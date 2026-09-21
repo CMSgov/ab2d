@@ -41,6 +41,6 @@ echo
 if [[ ${#failed[@]} -eq 0 ]]; then
     echo "All lockfiles regenerated."
 else
-    echo "Completed with failures: ${failed[*]}" >&2
+    echo -e "*** ERROR *** \nFailed to generate lockfile for: ${failed[*]}" >&2
     exit 1
 fi

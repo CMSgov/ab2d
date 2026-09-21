@@ -178,8 +178,8 @@ subprojects {
 
         // constrain packages not managed by springboot
         constraints {
-            implementation('com.github.jnr:jnr-posix:3.1.8')
-            implementation('io.opentelemetry:opentelemetry-api:1.62.0')
+            implementation('com.github.jnr:jnr-posix:3.2.4')
+            implementation('io.opentelemetry:opentelemetry-api:1.66.0')
             implementation('commons-beanutils:commons-beanutils:1.11.0')
             implementation('org.springframework.retry:spring-retry:2.0.13')
             implementation('org.bouncycastle:bcprov-jdk18on:1.85')
@@ -193,11 +193,10 @@ subprojects {
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.r4:$hl7Version")
         }
     }
-
     // special downstream cases, these cannot be constrained normally
     configurations.all {
         resolutionStrategy.force(
-            'org.apache.commons:commons-lang3:3.18.0',
+            'org.apache.commons:commons-lang3:3.20.0',
             'commons-beanutils:commons-beanutils:1.11.0',
             'org.apache.httpcomponents.core5:httpcore5:5.4.3',
             'org.apache.httpcomponents.core5:httpcore5-h2:5.4.3',
