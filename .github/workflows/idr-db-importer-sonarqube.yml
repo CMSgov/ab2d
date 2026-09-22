@@ -45,7 +45,7 @@ jobs:
             SONAR_TOKEN=/sonarqube/token
 
       - name: Run tests
-        run: ./gradlew clean test --info
+        run: ./gradlew clean test --info --write-locks
 
       - name: SonarQube Analysis
         run: |

@@ -46,7 +46,7 @@ jobs:
             HPMS_AUTH_KEY_SECRET=/ab2d/dev/core/sensitive/hpms_auth_key_secret
 
       - name: Run tests
-        run: ./gradlew clean test --info
+        run: ./gradlew clean test --info --write-locks
 
       - name: SonarQube Analysis
         run: |

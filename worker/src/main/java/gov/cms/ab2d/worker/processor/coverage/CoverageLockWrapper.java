@@ -8,6 +8,7 @@ import org.springframework.integration.jdbc.lock.LockRepository;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 import java.util.concurrent.locks.Lock;
 
 @Component
@@ -38,7 +39,7 @@ public class CoverageLockWrapper {
     }
 
     public JdbcLockRegistry contractLockRegistry(LockRepository lockRepository) {
-        return new JdbcLockRegistry(lockRepository);
+        return new JdbcLockRegistry(lockRepository, Duration.ofMillis(TEN_MINUTES_IN_MILLIS));
     }
 
     public LockRepository contractLockRepository() {
@@ -50,7 +51,6 @@ public class CoverageLockWrapper {
         // you need to renew the lock otherwise you will lose it and get undefined
         // behavior when you attempt to unlock your lock.
         defaultLockRepository.setApplicationContext(context);
-        defaultLockRepository.setTimeToLive(TEN_MINUTES_IN_MILLIS);
         defaultLockRepository.afterSingletonsInstantiated();
         defaultLockRepository.afterPropertiesSet();
         return defaultLockRepository;

@@ -1,7 +1,5 @@
 package gov.cms.ab2d.api.controller.common;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.rest.api.QualifiedParamList;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
@@ -178,7 +176,7 @@ public class ApiCommon {
         DateRangeParam serviceDateRange = new DateRangeParam();
         try {
             serviceDateRange.setValuesAsQueryTokens(FhirVersion.R4.getContext(), "service-date", qualifiedServiceDateParams);
-        } catch (InvalidRequestException | DataFormatException e) {
+        } catch (InvalidRequestException e) {
             log.error("Invalid service-date received {}", serviceDates);
             throw new InvalidClientInputException("invalid service-date parameter: " + e.getMessage());
         }

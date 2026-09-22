@@ -16,6 +16,11 @@ regenerate() {
     local dir="$1"
     local path="${REPO_ROOT}/${dir}"
 
+    if [[ "$dir" == "idr-db-importer" ]]; then
+        echo "Installing dependency for idr-db-importer: gov.cms.ab2d:common:0.0.1-SNAPSHOT"
+        mvn -f "${REPO_ROOT}/pom.xml" clean install -pl common -am -Dcheckstyle.skip -DskipTests || return 1
+    fi
+
     if [[ ! -x "${path}/gradlew" ]]; then
         echo "!! ${dir}: no gradlew wrapper found, skipping" >&2
         return 1
@@ -41,6 +46,6 @@ echo
 if [[ ${#failed[@]} -eq 0 ]]; then
     echo "All lockfiles regenerated."
 else
-    echo "Completed with failures: ${failed[*]}" >&2
+    echo -e "*** ERROR *** \nFailed to generate lockfile for: ${failed[*]}" >&2
     exit 1
 fi
