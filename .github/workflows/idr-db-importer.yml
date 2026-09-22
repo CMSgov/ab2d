@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
       - id: check
         run: |
-          echo "apply=${{ inputs.apply }}" >> $GITHUB_OUTPUT
+          echo "apply=${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.apply == true) }}" >> $GITHUB_OUTPUT
           echo "branch=${{ github.head_ref || github.ref }}" >> $GITHUB_OUTPUT
           echo "environment=${{ (github.event_name == 'workflow_dispatch' && inputs.environment) || 'dev' }}" >> $GITHUB_OUTPUT
           echo "image_tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
