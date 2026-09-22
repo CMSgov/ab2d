@@ -88,11 +88,15 @@ jobs:
         if: ${{ inputs.run_tests == true }}
         run: gradle clean test --info --write-locks
 
+      - name: Generate lockfile if tests are skipped
+        if: ${{ inputs.run_tests == false }}
+        run: gradle dependencies --write-locks
+
       - name: Build and push Docker image
         if: ${{ inputs.push_image == true }}
         id: build_image
         run: |
-          gradle bootJar --write-locks
+          gradle bootJar 
           ECR_DOMAIN="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
           SHA_SHORT=$(git rev-parse --short HEAD)
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
