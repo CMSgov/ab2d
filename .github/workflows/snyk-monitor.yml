@@ -1,9 +1,6 @@
 name: Snyk monitor
 
 on:
-  push:
-    branches:
-      - "snyk-cli-workflow"
   workflow_call:
   workflow_dispatch:
 
