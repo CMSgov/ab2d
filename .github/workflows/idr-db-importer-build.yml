@@ -86,7 +86,7 @@ jobs:
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
-        run: gradle clean test --info
+        run: gradle clean test --info --write-locks
 
       - name: Build and push Docker image
         if: ${{ inputs.push_image == true }}

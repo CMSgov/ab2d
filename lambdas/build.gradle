@@ -4,7 +4,7 @@ plugins {
     id "org.sonarqube" version "7.3.0.8198"
     id 'org.cyclonedx.bom' version '3.0.0' apply true
 }
-version = "1.1.10"
+version = "1.1.11"
 group = "gov.cms.ab2d"
 
 dependencies {
@@ -74,8 +74,8 @@ subprojects {
             'org.apache.httpcomponents.core5:httpcore5:5.4.3',
             'org.apache.httpcomponents.core5:httpcore5-h2:5.4.3',
             'org.springframework.retry:spring-retry:2.0.13',
-            'com.fasterxml.jackson.core:jackson-core:2.21.5',
-            'com.fasterxml.jackson.core:jackson-databind:2.21.5'
+            'com.fasterxml.jackson.core:jackson-core:2.22.2',
+            'com.fasterxml.jackson.core:jackson-databind:2.22.2'
         )
     }
     ext {
@@ -182,6 +182,7 @@ allprojects {
     }
 
     repositories {
+        mavenLocal()
         mavenCentral()
         [sourcesRepo, resolverRepo].unique().each { repoKey ->
             maven {
