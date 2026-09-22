@@ -92,7 +92,7 @@ jobs:
         if: ${{ inputs.push_image == true }}
         id: build_image
         run: |
-          gradle bootJar
+          gradle bootJar --write-locks
           ECR_DOMAIN="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
           SHA_SHORT=$(git rev-parse --short HEAD)
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
