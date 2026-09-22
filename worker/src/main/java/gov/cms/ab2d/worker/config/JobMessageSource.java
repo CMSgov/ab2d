@@ -38,6 +38,9 @@ public class JobMessageSource extends JdbcPollingChannelAdapter {
                 )
             )
           )
+      AND NOT EXISTS (SELECT 1 FROM ab2d.job_lease held
+                      WHERE held.job_uuid = job.job_uuid
+                        AND held.pause_requested)
     ORDER BY created_at;
     """;
 
@@ -49,7 +52,7 @@ public class JobMessageSource extends JdbcPollingChannelAdapter {
     /**
      * Exposes the query so that tests can use it
      */
-    static String buildQuery(int leaseTtlSeconds) {
+    public static String buildQuery(int leaseTtlSeconds) {
         return String.format(QUERY_TEMPLATE, leaseTtlSeconds);
     }
 }

@@ -7,6 +7,7 @@ import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.worker.config.JobHandler;
+import gov.cms.ab2d.worker.config.JobMessageSource;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
 import gov.cms.ab2d.worker.service.ShutDownService;
@@ -25,7 +26,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_ENABLED;
 import static gov.cms.ab2d.fhir.FhirVersion.R4V3;
@@ -130,6 +133,50 @@ class PrototypeGatingIntegrationTest extends AbstractPrototypeRecoveryIntegratio
                         + " benes), so it restarted rather than resumed");
     }
 
+
+    @Test
+    @DisplayName("A pause request holds the job until it is released, then it resumes from its checkpoint")
+    void pauseRequestHoldsTheJobUntilReleased() throws Exception {
+        Job job = createSubmittedV3Job("pause-request");
+        String uuid = job.getJobUuid();
+
+        RunningWorker worker = startWorkerUntilOnePartitionDone(uuid, "test-pause-request-worker");
+
+        assertEquals(1, jdbc.update(
+                "UPDATE ab2d.job_lease SET pause_requested = true WHERE job_uuid = ?", uuid),
+                "expected exactly one lease row to mark for " + uuid);
+
+        worker.awaitReturn(90);
+
+        assertEquals(JobStatus.SUBMITTED, jobRepository.findByJobUuid(uuid).getStatus(),
+                "a job asked to pause should be left SUBMITTED, not cancelled or failed");
+        assertTrue(processedLog.size() < TOTAL_BENES,
+                "the pause should have stopped the job mid-stream, saw " + processedLog.size()
+                        + " of " + TOTAL_BENES);
+
+        // directly paused jobs are not polled
+        assertTrue(jobLease.isPauseRequested(uuid), "the request should stand until it is released");
+        assertFalse(polledJobUuids().contains(uuid),
+                "a held job must not be polled");
+
+        // releasing makes it eligible again
+        jobLease.clearPauseRequest(uuid);
+        assertTrue(polledJobUuids().contains(uuid), "a released job should be polled again");
+
+        Job resumed = prototypeJobProcessor.process(uuid);
+
+        assertEquals(JobStatus.SUCCESSFUL, resumed.getStatus(), "a released job should resume and finish");
+        assertTrue(new HashSet<>(processedLog).containsAll(ALL_BENES),
+                "every beneficiary should still be processed; missing="
+                        + missing(ALL_BENES, new HashSet<>(processedLog)));
+    }
+
+    /** Job uuids the real poll query currently selects. */
+    private Set<String> polledJobUuids() {
+        return jdbc.queryForList(JobMessageSource.buildQuery(60)).stream()
+                .map(row -> String.valueOf(row.get("job_uuid")))
+                .collect(Collectors.toSet());
+    }
 
     @Test
     @DisplayName("A worker admits a prototype job up to its real-job tolerance, and asks one to pause past it")

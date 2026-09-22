@@ -646,7 +646,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
 
         Step workerStep = workerStepBuilder
                 // abort the step at the next chunk boundary if the job is cancelled mid-run
-                .listener(new JobCancellationWriteListener(jobRepository, jobUuid))
+                .listener(new JobCancellationWriteListener(jobRepository, jobLease, jobUuid))
                 .allowStartIfComplete(false)
                 // should basically never trip
                 .startLimit(props.getMaxStartAttempts())

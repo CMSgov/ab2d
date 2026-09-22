@@ -215,3 +215,5 @@ databaseChangeLog:
       file: db/changelog/v2026/add_pause_resume_prototype_tunables.sql
   - include:
       file: db/changelog/v2026/add_job_pause_eligible.sql
+  - include:
+      file: db/changelog/v2026/add_job_lease_pause_requested.sql

@@ -67,8 +67,7 @@ locals {
 
   ecs_task_def_cpu_worker    = module.platform.parent_env == "prod" ? 16384 : 4096
   ecs_task_def_memory_worker = module.platform.parent_env == "prod" ? 32768 : 8192
-  # can go back to 2 when prototype testing is over.
-  max_concurrent_eob_jobs    = "3"
+  max_concurrent_eob_jobs    = "2"
   worker_desired_instances   = 1
 
   ab2d_db_host             = data.aws_rds_cluster.this.endpoint
