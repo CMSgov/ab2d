@@ -34,7 +34,7 @@ public class SnowflakeCoverageQueryService {
     private static final String SQL = """
             WITH month_series AS (
                      SELECT DATEADD(month, -seq4(), DATE_TRUNC('month', CURRENT_DATE()))::DATE AS month_start
-                     FROM TABLE(GENERATOR(ROWCOUNT => 3))
+                     FROM TABLE(GENERATOR(ROWCOUNT => 4))
                    )
                SELECT
                  bene.bene_xref_efctv_sk AS "patient_id",

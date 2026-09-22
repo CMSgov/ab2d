@@ -26,6 +26,7 @@ import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Testcontainers
@@ -361,6 +362,134 @@ class CoverageV3SyncServiceImplTest {
 		"""
 		{action=COPY_FROM_STAGING, result=SYNC_FAILED_FOR_CONTRACT, contract=Z5555, log=rowsInsertedForMonth does not match rowCountForMonth, data={"period": "2026-2", "rowCountForMonth": 2, "rowsInsertedForMonth": 0}}
 		""");
+	}
+
+	@Test
+	void copyFromStagingTablesToRecent_preservesMonthThatIsInNeitherStagingNorHistorical(CapturedOutput out) {
+		insertCoverage("v3.coverage_v3", "Z6001", 601, 3, "M601");
+		insertCoverage("v3.coverage_v3", "Z6001", 601, 2, "M601");
+		insertCoverage("v3.coverage_v3", "Z6001", 601, 1, "M601");
+		insertCoverage("v3.coverage_v3", "Z6001", 601, 0, "M601");
+
+		insertCoverage("v3.coverage_v3_staging", "Z6001", 601, 2, "M601");
+		insertCoverage("v3.coverage_v3_staging", "Z6001", 601, 1, "M601");
+		insertCoverage("v3.coverage_v3_staging", "Z6001", 601, 0, "M601");
+
+		when(propertiesService.isToggleOn(V3_AUDIT_LOGGING_ENABLED, false)).thenReturn(true);
+		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
+		when(lock.tryLock()).thenReturn(true);
+
+		val result = service.copyFromStagingTablesToRecent("Z6001", CoverageV3SyncSource.CRON_JOB);
+
+		assertEquals(SYNC_SUCCESSFUL_FOR_CONTRACT, result);
+		assertTrue(hasCoverageForMonth("v3.coverage_v3", "Z6001", 3),
+			"coverage absent from both staging and historical must survive the staging copy");
+		assertEquals(4, countCoverage("v3.coverage_v3", "Z6001"));
+
+		assertTrue(out.getOut().contains("[V3] Preserving 1 rows for contract Z6001"));
+		verify(metrics).recordPreservedRows(CoverageV3SyncSource.CRON_JOB, "Z6001", 1);
+
+		assertAuditLogEquals(getAuditLogs().get(2),
+		"""
+		{action=COPY_FROM_STAGING, result=, contract=Z6001, log=Preserved unreplaceable coverage months, data={"rowsPreserved": 1}}
+		""");
+	}
+
+	@Test
+	void moveToHistorical_archivesMonthThatTheStagingCopyPreserved() {
+		insertCoverage("v3.coverage_v3", "Z6002", 602, 3, "M602");
+		insertCoverage("v3.coverage_v3", "Z6002", 602, 1, "M602");
+		insertCoverage("v3.coverage_v3", "Z6002", 602, 0, "M602");
+
+		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
+		when(lock.tryLock()).thenReturn(true);
+
+		val result = service.moveToHistorical("Z6002", CoverageV3SyncSource.CRON_JOB);
+
+		assertEquals(SYNC_SUCCESSFUL_FOR_CONTRACT, result);
+		assertTrue(hasCoverageForMonth("v3.coverage_v3_historical", "Z6002", 3),
+			"the preserved month must reach the historical table on the next pass");
+		assertFalse(hasCoverageForMonth("v3.coverage_v3", "Z6002", 3));
+		assertEquals(2, countCoverage("v3.coverage_v3", "Z6002"));
+		verify(metrics).recordUnarchivedOldRows(CoverageV3SyncSource.CRON_JOB, "Z6002", 0);
+	}
+
+	@Test
+	void copyFromStagingTablesToRecent_deletesArchivedMonthEvenWhenStagingNoLongerCarriesIt() {
+		insertCoverage("v3.coverage_v3", "Z6003", 603, 3, "M603");
+		insertCoverage("v3.coverage_v3_historical", "Z6003", 603, 3, "M603");
+		insertCoverage("v3.coverage_v3", "Z6003", 603, 1, "M603");
+		insertCoverage("v3.coverage_v3", "Z6003", 603, 0, "M603");
+
+		insertCoverage("v3.coverage_v3_staging", "Z6003", 603, 1, "M603");
+		insertCoverage("v3.coverage_v3_staging", "Z6003", 603, 0, "M603");
+
+		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
+		when(lock.tryLock()).thenReturn(true);
+
+		val result = service.copyFromStagingTablesToRecent("Z6003", CoverageV3SyncSource.CRON_JOB);
+
+		assertEquals(SYNC_SUCCESSFUL_FOR_CONTRACT, result);
+		assertFalse(hasCoverageForMonth("v3.coverage_v3", "Z6003", 3));
+		assertEquals(2, countCoverage("v3.coverage_v3", "Z6003"));
+		verify(metrics).recordPreservedRows(CoverageV3SyncSource.CRON_JOB, "Z6003", 0);
+	}
+
+	@Test
+	void moveToHistorical_succeedsWhenMoreRowsAreDeletedThanMoved() {
+		insertCoverage("v3.coverage_v3", "Z6004", 604, 3, "M604");             // not archived -> moved
+		insertCoverage("v3.coverage_v3", "Z6004", 605, 4, "M605");             // archived -> deleted only
+		insertCoverage("v3.coverage_v3_historical", "Z6004", 605, 4, "M605");
+
+		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
+		when(lock.tryLock()).thenReturn(true);
+
+		val result = service.moveToHistorical("Z6004", CoverageV3SyncSource.CRON_JOB);
+
+		assertEquals(SYNC_SUCCESSFUL_FOR_CONTRACT, result);
+		assertEquals(0, countCoverage("v3.coverage_v3", "Z6004"));
+		verify(metrics).recordHistorical(CoverageV3SyncSource.CRON_JOB, "Z6004", SYNC_SUCCESSFUL_FOR_CONTRACT, 1, 2);
+	}
+
+	@Test
+	void moveToHistorical_trimsAlreadyArchivedMonthsWhenNothingIsLeftToMove() {
+		insertCoverage("v3.coverage_v3", "Z6006", 607, 3, "M607");
+		insertCoverage("v3.coverage_v3_historical", "Z6006", 607, 3, "M607");
+
+		when(lockWrapper.getCoverageLock(any())).thenReturn(lock);
+		when(lock.tryLock()).thenReturn(true);
+
+		val result = service.moveToHistorical("Z6006", CoverageV3SyncSource.CRON_JOB);
+
+		assertEquals(SYNC_SUCCESSFUL_FOR_CONTRACT, result);
+		assertEquals(0, countCoverage("v3.coverage_v3", "Z6006"));
+		verify(metrics).recordHistorical(CoverageV3SyncSource.CRON_JOB, "Z6006", SYNC_SUCCESSFUL_FOR_CONTRACT, 0, 1);
+	}
+
+	void insertCoverage(String table, String contract, long patientId, int monthsAgo, String mbi) {
+		new JdbcTemplate(container.getDataSource()).update(
+		"""
+		INSERT INTO %s(patient_id, contract, "year", "month", current_mbi)
+		SELECT ?, ?, EXTRACT(YEAR FROM month_start)::int, EXTRACT(MONTH FROM month_start)::int, ?
+		FROM (SELECT date_trunc('month', CURRENT_DATE) - make_interval(months => ?) AS month_start) months
+		""".formatted(table), patientId, contract, mbi, monthsAgo);
+	}
+
+	int countCoverage(String table, String contract) {
+		val count = new JdbcTemplate(container.getDataSource()).queryForObject(
+			"select count(*) from %s where contract = ?".formatted(table), Integer.class, contract);
+		return count == null ? 0 : count;
+	}
+
+	boolean hasCoverageForMonth(String table, String contract, int monthsAgo) {
+		val count = new JdbcTemplate(container.getDataSource()).queryForObject(
+		"""
+		select count(*) from %s
+		where contract = ?
+		  and make_date("year", "month", 1)
+			  = (date_trunc('month', CURRENT_DATE) - make_interval(months => ?))::date
+		""".formatted(table), Integer.class, contract, monthsAgo);
+		return count != null && count > 0;
 	}
 
 	void assertAuditLogEquals(Map<String, Object> result, String string) {
