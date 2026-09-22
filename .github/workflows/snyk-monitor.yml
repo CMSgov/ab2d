@@ -1,0 +1,44 @@
+name: Snyk monitor
+
+on:
+  workflow_call:
+
+env:
+  SNYK_CLI_VERSION: 1.1306.2
+
+jobs:
+  checks:
+    name: 'Snyk monitor '
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-prod-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ inputs.app }}-prod-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: cmsgov/cdap/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            SNYK_TOKEN=/cdap/prod/code-checks/sensitive/snyk-api-token/${{ inputs.app }}
+
+      # Install Snyk (authenticates via the SNYK_TOKEN env var automatically)
+      - name: Install Snyk
+        run: |
+          sudo npm install -g snyk@${SNYK_CLI_VERSION}
+
+      - name: Run Snyk Code
+        env:
+          PROJECT_NAME: 'Snyk monitor'
+        run: |
+          snyk monitor --all-projects \
+            --exclude=e2e-bfd-test,e2e-test,fhir-test,common,coverage,job,libs,ops,local-dev,scripts 
