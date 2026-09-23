@@ -18,8 +18,8 @@ permissions:
   contents: read
 
 jobs:
-  scheduled-code-checks:
-    name: 'Scheduled Code Checks for AB2D'
+  snyk-monitor:
+    name: 'Snyk monitor for AB2D'
     uses: CMSGov/CDAP/.github/workflows/snyk-monitor.yml@ab2d-snyk-testing
     with:
       app: ab2d
