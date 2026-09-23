@@ -142,7 +142,7 @@ class CoverageV3SyncServiceImplTest {
 		when(lock.tryLock()).thenReturn(true);
 		service.copyFromStagingTablesToRecent("Z9999", CoverageV3SyncSource.CRON_JOB);
 
-		val rows = new JdbcTemplate(container.getDataSource()).queryForList("select * from v3.coverage_v3_audit");
+		val rows = new JdbcTemplate(container.getDataSource()).queryForList("SELECT * FROM v3.coverage_v3_audit");
 
 		assertAuditLogEquals(rows.get(6),
 		"""
@@ -477,16 +477,16 @@ class CoverageV3SyncServiceImplTest {
 
 	int countCoverage(String table, String contract) {
 		val count = new JdbcTemplate(container.getDataSource()).queryForObject(
-			"select count(*) from %s where contract = ?".formatted(table), Integer.class, contract);
+			"SELECT count(*) FROM %s WHERE contract = ?".formatted(table), Integer.class, contract);
 		return count == null ? 0 : count;
 	}
 
 	boolean hasCoverageForMonth(String table, String contract, int monthsAgo) {
 		val count = new JdbcTemplate(container.getDataSource()).queryForObject(
 		"""
-		select count(*) from %s
-		where contract = ?
-		  and make_date("year", "month", 1)
+		SELECT count(*) FROM %s
+		WHERE contract = ?
+		  AND make_date("year", "month", 1)
 			  = (date_trunc('month', CURRENT_DATE) - make_interval(months => ?))::date
 		""".formatted(table), Integer.class, contract, monthsAgo);
 		return count != null && count > 0;
@@ -501,7 +501,7 @@ class CoverageV3SyncServiceImplTest {
 	}
 
 	List<Map<String, Object>>  getAuditLogs() {
-		return new JdbcTemplate(container.getDataSource()).queryForList("select * from v3.coverage_v3_audit");
+		return new JdbcTemplate(container.getDataSource()).queryForList("SELECT * FROM v3.coverage_v3_audit");
 	}
 
 }

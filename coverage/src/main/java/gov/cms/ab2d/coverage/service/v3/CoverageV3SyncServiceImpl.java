@@ -66,74 +66,74 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging";
 
     private static final String RECORD_COUNT_BY_CONTRACT =
-        "select count(*) from %s where contract = :contract";
+        "SELECT count(*) FROM %s WHERE contract = :contract";
 
     private static final String DELETE_RECORDS_FOR_CONTRACT_AND_GET_ROWS_DELETED =
     """
-    with deleted_rows as (
-        delete from %s where contract = :contract returning *
+    WITH deleted_rows AS (
+        DELETE FROM %s WHERE contract = :contract RETURNING *
     )
-    select count(*) from deleted_rows
+    SELECT count(*) FROM deleted_rows
     """;
 
     private static final String DELETE_REPLACEABLE_RECORDS_FOR_CONTRACT_AND_GET_ROWS_DELETED =
     """
-    with deleted_rows as (
-        delete from %s recent
-        where recent.contract = :contract
-          and (
-              exists (
-                  select 1 from %s staging
-                  where staging.contract = recent.contract
-                    and staging.year = recent.year
-                    and staging.month = recent.month
+    WITH deleted_rows AS (
+        DELETE FROM %s recent
+        WHERE recent.contract = :contract
+          AND (
+              EXISTS (
+                  SELECT 1 FROM %s staging
+                  WHERE staging.contract = recent.contract
+                    AND staging.year = recent.year
+                    AND staging.month = recent.month
               )
-              or exists (
-                  select 1 from %s historical
-                  where historical.contract = recent.contract
-                    and historical.year = recent.year
-                    and historical.month = recent.month
-                    and historical.patient_id = recent.patient_id
-                    and historical.current_mbi is not distinct from recent.current_mbi
+              OR EXISTS (
+                  SELECT 1 FROM %s historical
+                  WHERE historical.contract = recent.contract
+                    AND historical.year = recent.year
+                    AND historical.month = recent.month
+                    AND historical.patient_id = recent.patient_id
+                    AND historical.current_mbi IS NOT DISTINCT FROM recent.current_mbi
               )
           )
-        returning *
+        RETURNING *
     )
-    select count(*) from deleted_rows
+    SELECT count(*) FROM deleted_rows
     """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE, COVERAGE_V3_TABLE_HISTORICAL);
 
     private static final String COUNT_UNREPLACEABLE_ROWS_FOR_CONTRACT =
     """
-    select count(*)
-    from %s recent
-    where recent.contract = :contract
-      and not exists (
-          select 1 from %s staging
-          where staging.contract = recent.contract
-            and staging.year = recent.year
-            and staging.month = recent.month
+    SELECT count(*)
+    FROM %s recent
+    WHERE recent.contract = :contract
+      AND NOT EXISTS (
+          SELECT 1 FROM %s staging
+          WHERE staging.contract = recent.contract
+            AND staging.year = recent.year
+            AND staging.month = recent.month
       )
-      and not exists (
-          select 1 from %s historical
-          where historical.contract = recent.contract
-            and historical.year = recent.year
-            and historical.month = recent.month
-            and historical.patient_id = recent.patient_id
-            and historical.current_mbi is not distinct from recent.current_mbi
+      AND NOT EXISTS (
+          SELECT 1 FROM %s historical
+          WHERE historical.contract = recent.contract
+            AND historical.year = recent.year
+            AND historical.month = recent.month
+            AND historical.patient_id = recent.patient_id
+            AND historical.current_mbi IS NOT DISTINCT FROM recent.current_mbi
       )
     """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE, COVERAGE_V3_TABLE_HISTORICAL);
 
     private static final String COPY_FROM_STAGING_TO_COVERAGE_V3 =
     """
-    with inserted_rows as (
-        insert into %s select * from %s where contract = :contract returning *
+    WITH inserted_rows AS (
+        INSERT INTO %s SELECT * FROM %s WHERE contract = :contract RETURNING *
     )
-    select count(*) from inserted_rows;
+    SELECT count(*) FROM inserted_rows;
     """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE);
 
     private static final String HISTORICAL_SYNC_FOR_CONTRACT =
     """
-    with inserted_rows as (
+    WITH inserted_rows AS (
         INSERT INTO %s (patient_id, contract, year, month, current_mbi)
         SELECT coverage.patient_id, coverage.contract, coverage.year, coverage.month, coverage.current_mbi
         FROM %s coverage
@@ -153,12 +153,12 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         RETURNING *
     )
     
-    select count(*) from inserted_rows;
+    SELECT count(*) FROM inserted_rows;
     """.formatted(COVERAGE_V3_TABLE_HISTORICAL, COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_TABLE_HISTORICAL);
 
     private static final String DELETE_OLD_MONTHS_SQL_FOR_CONTRACT =
     """
-    with deleted_rows as (
+    WITH deleted_rows AS (
         DELETE FROM %s recent
         WHERE recent.contract = :contract
           AND make_date(recent.year, recent.month, 1) < (date_trunc('month', CURRENT_DATE) - interval '2 months')::date
@@ -173,7 +173,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         RETURNING *
     )
 
-    select count(*) from deleted_rows;
+    SELECT count(*) FROM deleted_rows;
     """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_TABLE_HISTORICAL);
 
     private static final String COUNT_UNARCHIVED_OLD_ROWS_FOR_CONTRACT =
@@ -207,17 +207,17 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     """;
 
     private static final String GET_CONTRACTS_WITH_ACTIVE_V3_JOBS =
-        "select distinct contract_number from job where status in ('IN_PROGRESS', 'SUBMITTED') and fhir_version='R4V3'" ;
+        "SELECT DISTINCT contract_number FROM job WHERE status IN ('IN_PROGRESS', 'SUBMITTED') AND fhir_version='R4V3'" ;
 
     private static final String IS_CONTRACT_ATTESTED =
-        "select count(*) from contract.contract where contract_number = :contract and attested_on is not null";
+        "SELECT count(*) FROM contract.contract WHERE contract_number = :contract AND attested_on IS NOT NULL";
 
     private static final String GET_CONTRACTS_WITH_COVERAGE_IN_STAGING =
-        "select distinct contract from %s"
+        "SELECT DISTINCT contract FROM %s"
         .formatted(COVERAGE_V3_STAGING_TABLE);
 
     private static final String GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE =
-        "select distinct contract from %s"
+        "SELECT DISTINCT contract FROM %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
 
     private static final String GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY =
@@ -232,7 +232,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
     private static final String DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY =
     """
-    with deleted_rows as (
+    WITH deleted_rows AS (
         DELETE FROM v3.coverage_v3_history_summary
         WHERE contract IN (
             SELECT contract_number FROM contract.contract
@@ -241,20 +241,20 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         )
         RETURNING contract
     )
-    select contract from deleted_rows;
+    SELECT contract FROM deleted_rows;
     """;
 
     private static final String POPULATE_HISTORY_SUMMARY_COVERAGE_PERIODS_FOR_CONTRACT =
     """
     WITH
     coverage_periods_unparsed AS (
-        SELECT DISTINCT json_array_elements(to_json(historical_coverage_summaries))::TEXT as text
+        SELECT DISTINCT json_array_elements(to_json(historical_coverage_summaries))::TEXT AS text
         FROM v3.coverage_v3_history_summary
         WHERE contract='%s'
     ),
     coverage_periods_parsed AS (
         SELECT
-        '%s' as contract,
+        '%s' AS contract,
         split_part(translate(text, '[]', ''), ',', 1)::INT AS year,
         split_part(translate(text, '[]', ''), ',', 2)::INT AS month
         FROM coverage_periods_unparsed
@@ -269,7 +269,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
     private static final String QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS =
     """
-    select month, year, contract_number from ab2d.bene_coverage_period where status='IN_PROGRESS'
+    SELECT month, year, contract_number FROM ab2d.bene_coverage_period WHERE status='IN_PROGRESS'
     """;
 
     @Transactional
@@ -626,12 +626,12 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val month = yearMonthPeriod.getMonth();
 
         val insertRowsByMonth = """
-        with inserted_rows as (
-            insert into %s select * from %s
-            where contract = :contract and year = :year and month = :month
-            returning *
+        WITH inserted_rows AS (
+            INSERT INTO %s SELECT * FROM %s
+            WHERE contract = :contract AND year = :year AND month = :month
+            RETURNING *
         )
-        select count(*) from inserted_rows;
+        SELECT count(*) FROM inserted_rows;
         """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE);
 
         val parameters = Map.of("contract", contract, "year", year, "month", month);
