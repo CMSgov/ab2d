@@ -2,7 +2,16 @@ name: code-checks (snyk code scheduled)
 
 on:
   workflow_dispatch:
-  workflow:call:
+    inputs:
+      branch:
+        required: true
+        type: string
+        description: 'Branch to scan'
+  workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
 
 permissions:
   id-token: write
