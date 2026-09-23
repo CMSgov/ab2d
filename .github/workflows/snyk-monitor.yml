@@ -1,4 +1,4 @@
-name: code-checks (snyk code scheduled)
+name: Snyk monitor
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ jobs:
     uses: CMSGov/CDAP/.github/workflows/snyk-monitor.yml@ab2d-snyk-testing
     with:
       app: ab2d
-      ref: main
+      ref: ${{ inputs.branch }}
       cli_args: "--all-projects --exclude=e2e-bfd-test,e2e-test,fhir-test,common,coverage,job,libs,ops,local-dev,scripts"
     secrets:
       PROD_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
