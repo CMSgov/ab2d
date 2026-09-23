@@ -71,6 +71,17 @@ public class JobLeaseRepository {
             SELECT token FROM ab2d.job_lease WHERE job_uuid = :jobUuid
             """;
 
+    // Has someone asked this job to pause?
+    private static final String PAUSE_REQUESTED_SQL = """
+            SELECT pause_requested FROM ab2d.job_lease WHERE job_uuid = :jobUuid
+            """;
+
+    // unpause the paused job
+    private static final String CLEAR_PAUSE_REQUEST_SQL = """
+            UPDATE ab2d.job_lease SET pause_requested = FALSE
+             WHERE job_uuid = :jobUuid AND pause_requested
+            """;
+
     // Find a job
     private static final String FIND_SQL = """
             SELECT owner, token, clean_suspend_token,
@@ -179,6 +190,28 @@ public class JobLeaseRepository {
             log.warn("could not record clean suspend for job {} at token {} - superseded during shutdown", jobUuid, token);
         }
         return marked;
+    }
+
+    /**
+     * Whether someone has asked this job to pause. A job with no lease row is not running, so there is
+     * nothing to pause and this is false.
+     */
+    public boolean isPauseRequested(String jobUuid) {
+        try {
+            return Boolean.TRUE.equals(
+                    jdbc.queryForObject(PAUSE_REQUESTED_SQL, Map.of("jobUuid", jobUuid), Boolean.class));
+        } catch (EmptyResultDataAccessException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Release a job that was held by a pause request, so the poller can pick it back up.
+     */
+    public void clearPauseRequest(String jobUuid) {
+        if (jdbc.update(CLEAR_PAUSE_REQUEST_SQL, Map.of("jobUuid", jobUuid)) == 1) {
+            log.info("released the pause request on job {}", jobUuid);
+        }
     }
 
     /**

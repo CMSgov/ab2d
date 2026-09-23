@@ -226,7 +226,13 @@ public class PrototypeMetrics {
         ATTEMPTS_EXHAUSTED,
 
         /** The batch job could not be launched or threw outside the execution itself. */
-        LAUNCH_FAILED;
+        LAUNCH_FAILED,
+
+        /**
+         * The attribution table the job was partitioned from is gone, so the work cannot
+         * be resumed
+         */
+        ATTRIBUTION_SNAPSHOT_LOST;
 
         public String tagValue() {
             return name().toLowerCase();
