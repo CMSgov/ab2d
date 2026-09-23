@@ -94,6 +94,42 @@ locals {
       tags                      = ["service:coverage", "feature:coverage-v3-import"]
     },
     {
+      name    = "AB2D Coverage V3 - Coverage preserved by the staging-copy guard (${local.env})"
+      message = "The Coverage V3 staging copy preserved one or more months for ${local.env} that are in neither the staging table nor the historical table. Those rows exist only in v3.coverage_v3; the archive for that month has not completed and the IDR extract may no longer carry it."
+      type    = "metric alert"
+      query   = "max(last_1d):max:ab2d.coverage.v3.import.rows_preserved{environment:${local.coverage_v3_env_tag}} by {contract} > 0"
+      thresholds = {
+        critical = 0
+      }
+      notify_no_data            = false
+      no_data_timeframe_minutes = 1500
+      tags                      = ["service:coverage", "feature:coverage-v3-import"]
+    },
+    {
+      name    = "AB2D Coverage V3 - Coverage below retention cutoff missing from historical (${local.env})"
+      message = "One or more Coverage V3 contracts in ${local.env} have coverage below the retention cutoff that is absent from v3.coverage_v3_historical after an archive pass."
+      type    = "metric alert"
+      query   = "max(last_1d):max:ab2d.coverage.v3.historical.rows_unarchived{environment:${local.coverage_v3_env_tag}} by {contract} > 0"
+      thresholds = {
+        critical = 0
+      }
+      notify_no_data            = false
+      no_data_timeframe_minutes = 1500
+      tags                      = ["service:coverage", "feature:coverage-v3-historical"]
+    },
+    {
+      name    = "AB2D Coverage V3 - Historical sync failures detected (${local.env})"
+      message = "One or more Coverage V3 archive passes reported SYNC_FAILED_FOR_CONTRACT in the last 24h for ${local.env}. The recent-to-historical copy did not complete for the affected contract(s)."
+      type    = "metric alert"
+      query   = "sum(last_1d):sum:ab2d.coverage.v3.historical.completed{environment:${local.coverage_v3_env_tag},result:sync_failed_for_contract}.as_count() > 0"
+      thresholds = {
+        critical = 0
+      }
+      notify_no_data            = false
+      no_data_timeframe_minutes = 1500
+      tags                      = ["service:coverage", "feature:coverage-v3-historical"]
+    },
+    {
       name    = "AB2D Coverage V3 - Sync failures detected (${local.env})"
       type    = "metric alert"
       message = "One or more Coverage V3 staging syncs reported SYNC_FAILED_FOR_CONTRACT in the last 24h for ${local.env} (row-count mismatch during the staging copy). Coverage data may be inconsistent for the affected contract(s)."
