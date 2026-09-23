@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -107,7 +108,6 @@ public class WorkerConfig {
     @Bean
     public LockRepository lockRepository(DataSource dataSource) {
         final DefaultLockRepository defaultLockRepository = new DefaultLockRepository(dataSource);
-        defaultLockRepository.setTimeToLive(60_000);        // 60 seconds
         return defaultLockRepository;
     }
 
@@ -116,6 +116,6 @@ public class WorkerConfig {
      */
     @Bean
     public LockRegistry lockRegistry(LockRepository lockRepository) {
-        return new JdbcLockRegistry(lockRepository);
+        return new JdbcLockRegistry(lockRepository, Duration.ofMillis(60_000));
     }
 }

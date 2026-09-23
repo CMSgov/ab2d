@@ -320,11 +320,6 @@ module "service" {
   ]
 }
 
-resource "aws_sns_topic" "api" {
-  name              = "${local.service_prefix}-api-healthy-host"
-  kms_master_key_id = local.kms_master_key_id
-}
-
 resource "aws_cloudwatch_metric_alarm" "health" {
   alarm_name          = "${local.service_prefix}-api-healthy-host"
   comparison_operator = "LessThanThreshold"
@@ -335,8 +330,8 @@ resource "aws_cloudwatch_metric_alarm" "health" {
   statistic           = "Maximum"
   threshold           = "1"
   alarm_description   = "Healthy host count for API target group"
-  alarm_actions       = [aws_sns_topic.api.arn]
-  ok_actions          = [aws_sns_topic.api.arn]
+  alarm_actions       = [local.cloudwatch_sns_topic]
+  ok_actions          = [local.cloudwatch_sns_topic]
 
   dimensions = {
     LoadBalancer = aws_lb.ab2d_api.arn_suffix
@@ -344,15 +339,8 @@ resource "aws_cloudwatch_metric_alarm" "health" {
   }
 }
 
-resource "aws_sns_topic_subscription" "splunk_api" {
-  count     = local.splunk_alert_email != null ? 1 : 0
-  topic_arn = aws_sns_topic.api.arn
-  protocol  = "email"
-  endpoint  = local.splunk_alert_email
-}
-
 resource "aws_lb" "ab2d_api" {
-  #TODO Consider using name_prefix for ephemeral environments... thhey may only be up to 6-characters
+  #TODO Consider using name_prefix for ephemeral environments... they may only be up to 6-characters
   name               = "${local.service_prefix}-api"
   internal           = local.alb_internal
   load_balancer_type = "application"

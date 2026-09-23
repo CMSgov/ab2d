@@ -8,6 +8,7 @@ import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 import java.util.concurrent.locks.Lock;
 
 @Slf4j
@@ -21,10 +22,9 @@ public class CoverageV3HistoricalLockWrapperImpl implements CoverageV3LockWrappe
     public CoverageV3HistoricalLockWrapperImpl(ApplicationContext context, DataSource dataSource) {
         val defaultLockRepository = new DefaultLockRepository(dataSource);
         defaultLockRepository.setApplicationContext(context);
-        defaultLockRepository.setTimeToLive(LOCK_TTL_MILLIS);
         defaultLockRepository.afterSingletonsInstantiated();
         defaultLockRepository.afterPropertiesSet();
-        this.lockRegistry = new JdbcLockRegistry(defaultLockRepository);
+        this.lockRegistry = new JdbcLockRegistry(defaultLockRepository, Duration.ofMillis(LOCK_TTL_MILLIS));
     }
 
     @Override
