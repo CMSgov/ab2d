@@ -61,7 +61,7 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
 
         for (Job stuckJob : stuckJobs) {
             // For pause/resume jobs, the runtime of the job must not include time spent paused
-            if (prototypeEnabled && stuckJob.getFhirVersion() == FhirVersion.R4V3) {
+            if (prototypeEnabled && stuckJob.getFhirVersion() == FhirVersion.R4V3 && stuckJob.isPauseEligible()) {
                 final long activeSeconds = batchMeta.activeRuntimeSeconds(stuckJob.getJobUuid());
                 final long thresholdSeconds = (long) cancelThreshold * 3600L;
                 if (activeSeconds < thresholdSeconds) {

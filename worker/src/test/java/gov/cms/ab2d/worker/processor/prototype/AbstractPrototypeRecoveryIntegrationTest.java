@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.prototype;
 
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
@@ -60,6 +61,9 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_CHUNK_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_COPY_FORWARD_ENABLED;
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_PARTITION_SIZE;
 import static gov.cms.ab2d.fhir.FhirVersion.R4V3;
 import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi_V3;
@@ -67,6 +71,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -142,6 +147,12 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
     @Autowired
     protected JobLeaseRepository jobLease;
 
+    @Autowired
+    protected PropertiesService propertiesService;
+
+    @Autowired
+    protected PrototypeProperties prototypeProperties;
+
     @MockitoBean
     protected CoverageV3Service coverageV3Service;
 
@@ -162,6 +173,7 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
     void setUpHarness() {
         jdbc = new JdbcTemplate(dataSource);
         processedLog.clear();
+        syncTunablesToProperties();
 
         Contract contract = new Contract();
         contract.setContractName(CONTRACT);
@@ -178,6 +190,8 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
         // partitioning mock
         when(coverageV3Service.getMaxRowNumber(CONTRACT)).thenReturn((long) TOTAL_BENES);
         when(coverageV3Service.getPartitionBoundaryPatientIds(eq(CONTRACT), anyInt())).thenReturn(BOUNDARIES);
+        // the snapshot a resuming job was partitioned from is normally still there
+        when(coverageV3Service.aggregatedTableExists(anyString())).thenReturn(true);
 
         // paging mock
         when(coverageV3Service.pageCoverageByPatientRange(eq(CONTRACT), anyLong(), anyLong(), any(), anyInt()))
@@ -192,6 +206,18 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
         jobCleanup();
         dataSetup.cleanup();
         pdpClientRepository.deleteAll();
+    }
+
+    /**
+     * set the db properties for the test properly
+     */
+    private void syncTunablesToProperties() {
+        propertiesService.updateProperty(PAUSE_RESUME_PROTOTYPE_PARTITION_SIZE,
+                Integer.toString(prototypeProperties.getPartitionSize()));
+        propertiesService.updateProperty(PAUSE_RESUME_PROTOTYPE_CHUNK_SIZE,
+                Integer.toString(prototypeProperties.getChunkSize()));
+        propertiesService.updateProperty(PAUSE_RESUME_PROTOTYPE_COPY_FORWARD_ENABLED,
+                Boolean.toString(prototypeProperties.isCopyForwardEnabled()));
     }
 
     /** One page of coverage for the paging mock. Shared so a read-failure test can reuse it after throwing. */
@@ -245,6 +271,7 @@ abstract class AbstractPrototypeRecoveryIntegrationTest extends JobCleanup {
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(R4V3);
         job.setContractNumber(contractNumber);
+        job.setPauseEligible(true);
 
         job = jobRepository.saveAndFlush(job);
         addJobForCleanup(job);

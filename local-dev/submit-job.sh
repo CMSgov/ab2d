@@ -60,9 +60,11 @@ submit_v3() {
   # omit id so the job_seq default assigns it, keeping the sequence in sync with
   # Hibernate-inserted rows (a manual MAX(id)+1 desyncs job_seq and later collides)
   psql_q "INSERT INTO ab2d.job (job_uuid, created_at, status, fhir_version, started_by,
-                                contract_number, organization, resource_types, output_format, progress)
+                                contract_number, organization, resource_types, output_format, progress,
+                                pause_eligible)
           VALUES ('$uuid', now(), 'SUBMITTED', 'R4V3', 'PDP',
-                  '$CONTRACT', '$ORG', 'ExplanationOfBenefit', 'application/fhir+ndjson', 0);" >/dev/null
+                  '$CONTRACT', '$ORG', 'ExplanationOfBenefit', 'application/fhir+ndjson', 0,
+                  true);" >/dev/null
   log "Job UUID: $uuid"
 
   log "Polling job status ..."

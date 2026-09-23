@@ -46,7 +46,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Tests the polling SQL directly to ensure that the recovery/restart path doesn't accidentally
  * restart/recover jobs it's not supposed to. It checks that:
  *   - a SUBMITTED job with an int_lock row does not get picked up
- *   - an IN_PROGRESS job is recoverable only when it is prototype or pause/resume eligible
+ *   - an IN_PROGRESS job is recoverable only when the prototype flag is on and the job itself is
+ *     pause/resume eligible
  */
 @SpringBootTest
 @Testcontainers
@@ -183,6 +184,15 @@ class JobMessageSourceQueryIntegrationTest {
     }
 
     @Test
+    @DisplayName("A stale IN_PROGRESS job that never opted in to pause/resume is not recovered")
+    void inProgressWithStaleLeaseButNotEligibleIsNotRecovered() {
+        enablePrototypeFlag();
+        String uuid = createJob(JobStatus.IN_PROGRESS, false);
+        insertLease(uuid, TTL_SECONDS * 2);
+        assertFalse(poll().contains(uuid), "in_progress jobs should only appear if they are pause/resume");
+    }
+
+    @Test
     @DisplayName("A stale IN_PROGRESS job is not recovered while the prototype flag is off")
     void inProgressWithStaleLeaseButFlagOffIsNotRecovered() {
         // this test can be removed after integrating
@@ -198,6 +208,10 @@ class JobMessageSourceQueryIntegrationTest {
     }
 
     private String createJob(JobStatus status) {
+        return createJob(status, true);
+    }
+
+    private String createJob(JobStatus status, boolean pauseEligible) {
         Job job = new Job();
         // a real 36-char UUID so it matches the CHAR(36) int_lock.lock_key without padding surprises
         String uuid = UUID.randomUUID().toString();
@@ -209,6 +223,7 @@ class JobMessageSourceQueryIntegrationTest {
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(R4V3);
         job.setContractNumber(CONTRACT);
+        job.setPauseEligible(pauseEligible);
         jobRepository.saveAndFlush(job);
         createdJobUuids.add(uuid);
         return uuid;
