@@ -11,5 +11,6 @@ import java.time.LocalDateTime;
 public record HeartbeatContext(
 	LocalDateTime lastHeartbeatAt,
 	HeartbeatEvent event,
-	LocalDateTime maxLatestNextHeartbeat) {
+	LocalDateTime maxLatestNextHeartbeat,
+	int chunkSize) {
 }

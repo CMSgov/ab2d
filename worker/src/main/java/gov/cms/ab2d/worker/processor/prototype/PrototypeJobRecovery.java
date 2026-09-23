@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.prototype;
 
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.prototype.lease.JobLeaseRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_COPY_FORWARD_ENABLED;
 import static gov.cms.ab2d.worker.processor.prototype.PrototypeJobProcessorImpl.JOB_UUID_PARAM;
 import static gov.cms.ab2d.worker.processor.prototype.PrototypeJobProcessorImpl.PROTOTYPE_JOB_NAME;
 import static gov.cms.ab2d.worker.processor.prototype.PrototypeJobProcessorImpl.WORKER_STEP_NAME;
@@ -47,16 +49,19 @@ public class PrototypeJobRecovery {
     private final PrototypeBatchMetadataRepository batchMeta;
     private final SearchConfig searchConfig;
     private final PrototypeProperties props;
+    private final PropertiesService propertiesService;
     private final PrototypeMetrics metrics;
 
     public PrototypeJobRecovery(JobLeaseRepository jobLease, JobRepository batchJobRepository,
                                 PrototypeBatchMetadataRepository batchMeta, SearchConfig searchConfig,
-                                PrototypeProperties props, PrototypeMetrics metrics) {
+                                PrototypeProperties props, PropertiesService propertiesService,
+                                PrototypeMetrics metrics) {
         this.jobLease = jobLease;
         this.batchJobRepository = batchJobRepository;
         this.batchMeta = batchMeta;
         this.searchConfig = searchConfig;
         this.props = props;
+        this.propertiesService = propertiesService;
         this.metrics = metrics;
     }
 
@@ -106,7 +111,7 @@ public class PrototypeJobRecovery {
      * over to the new file.
      */
     private CopyForwardResult copyForward(String jobUuid, long newToken) {
-        if (!props.isCopyForwardEnabled()) {
+        if (!propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_COPY_FORWARD_ENABLED, props.isCopyForwardEnabled())) {
             log.info("copy-forward is disabled for job {}", jobUuid);
             return CopyForwardResult.NONE;
         }

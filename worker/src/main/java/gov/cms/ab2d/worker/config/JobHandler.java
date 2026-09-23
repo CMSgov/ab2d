@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
@@ -66,6 +65,14 @@ public class JobHandler implements MessageHandler {
 
             MDC.put(JOB_LOG, jobId);
 
+            // prototype jobs can be deferred and left for the worker to retry picking up when it's not as busy
+            // TODO: remove when done with testing
+            if (isPrototypeJob(submittedJob) && !workerService.isPrototypeAdmissible()) {
+                log.info("{} is a prototype job and this worker is too busy to start one", jobId);
+                MDC.remove(JOB_LOG);
+                continue;
+            }
+
             final Lock lock = lockRegistry.obtain(jobId);
 
             // Inability to obtain a lock means other worker is already taking care of the request
@@ -106,6 +113,15 @@ public class JobHandler implements MessageHandler {
 
     private String getJobId(Map<String, Object> submittedJob) {
         return String.valueOf(submittedJob.get("job_uuid"));
+    }
+
+    private FhirVersion getFhirVersion(Map<String, Object> submittedJob) {
+        return FhirVersion.valueOf(String.valueOf(submittedJob.get("fhir_version")));
+    }
+
+    private boolean isPrototypeJob(Map<String, Object> submittedJob) {
+        return Boolean.TRUE.equals(submittedJob.get("pause_eligible"))
+                && getFhirVersion(submittedJob) == FhirVersion.R4V3;
     }
 
 }

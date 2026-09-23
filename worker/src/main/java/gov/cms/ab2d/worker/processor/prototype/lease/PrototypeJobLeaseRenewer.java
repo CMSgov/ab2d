@@ -40,8 +40,8 @@ public class PrototypeJobLeaseRenewer {
 	    this.props = props;
     }
 
-    public void track(String jobUuid, long fenceToken) {
-	    postHeartbeat(jobUuid, fenceToken, CREATE_LEASE);
+    public void track(String jobUuid, long fenceToken, int chunkSize) {
+	    postHeartbeat(jobUuid, fenceToken, CREATE_LEASE, chunkSize);
     }
 
     public void untrack(String jobUuid, long fenceToken) {
@@ -81,6 +81,15 @@ public class PrototypeJobLeaseRenewer {
 	 * Post in-memory heartbeat and set deadline for next expected heartbeat based on event
 	 */
 	public void postHeartbeat(String jobUuid, long fenceToken, HeartbeatEvent event) {
+		val tracked = activeTokens.get(new PrototypeJobLeaseToken(jobUuid, fenceToken));
+		if (tracked == null) {
+			log.warn("Posting heartbeat failed, there's no tracked job with the associated token");
+			return;
+		}
+		postHeartbeat(jobUuid, fenceToken, event, tracked.chunkSize());
+	}
+
+	private void postHeartbeat(String jobUuid, long fenceToken, HeartbeatEvent event, int chunkSize) {
 		val now = LocalDateTime.now();
 		final LocalDateTime maxLatestNextHeartBeat;
 		switch (event) {
@@ -89,13 +98,13 @@ public class PrototypeJobLeaseRenewer {
 			case CREATE_AGGREGATED_TABLE ->
 					maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsCreateAggregatedTable());
 			case AFTER_WRITE_CALLBACK, BEFORE_LAUNCH_OR_RESUME_JOB ->
-					maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsPerItem() * props.getChunkSize());
+					maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsPerItem() * chunkSize);
 			case ASSEMBLE_FILES ->
 					maxLatestNextHeartBeat = now.plusSeconds(props.getMaxDurationSecondsAssembleFiles());
 			default -> throw new IllegalStateException("Invalid value: " + event);
 		}
 
-		val heartbeatContext = new HeartbeatContext(now, event, maxLatestNextHeartBeat);
+		val heartbeatContext = new HeartbeatContext(now, event, maxLatestNextHeartBeat, chunkSize);
 		val leaseToken = new PrototypeJobLeaseToken(jobUuid, fenceToken);
 		if (event == CREATE_LEASE) {
 			activeTokens.put(leaseToken, heartbeatContext);

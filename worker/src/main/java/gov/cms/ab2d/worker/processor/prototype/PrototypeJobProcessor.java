@@ -11,4 +11,9 @@ public interface PrototypeJobProcessor {
      * threads to finish.
      */
     void stopForShutdown();
+
+    /**
+     * Signal prototype jobs to stop
+     */
+    void stopRunning();
 }

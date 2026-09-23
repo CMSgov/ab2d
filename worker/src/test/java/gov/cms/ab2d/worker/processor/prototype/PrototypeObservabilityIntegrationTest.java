@@ -248,7 +248,7 @@ class PrototypeObservabilityIntegrationTest extends AbstractPrototypeRecoveryInt
     /** Descriptions of every FAILED status-change event alerted to Slack for the given job. */
     private List<String> failureAlertMessages(String jobUuid) {
         ArgumentCaptor<LoggableEvent> event = ArgumentCaptor.forClass(LoggableEvent.class);
-        verify(eventLogger, atLeast(0)).logAndAlert(event.capture(), any());
+        verify(eventLogger, atLeast(0)).logAndTrace(event.capture(), any());
         return event.getAllValues().stream()
                 .filter(JobStatusChangeEvent.class::isInstance)
                 .map(JobStatusChangeEvent.class::cast)

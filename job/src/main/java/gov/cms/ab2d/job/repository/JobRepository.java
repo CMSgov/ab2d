@@ -30,7 +30,9 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     Job findByJobUuid(String jobUuid);
 
-    @Query("select j from Job j where j.organization = :organization and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
+    // exclude pause/resume jobs, TODO: revert this once testing is done
+    @Query("select j from Job j where j.organization = :organization and j.pauseEligible = false "
+            + "and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
     List<Job> findActiveJobsByClient(String organization);
 
     List<Job> findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
