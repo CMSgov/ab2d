@@ -59,32 +59,81 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     }
 
 
+    private static final String HISTORY_SUMMARY_WORK_MEM = "512MB";
+
     private static final String COVERAGE_V3_TABLE_RECENT = "v3.coverage_v3";
     private static final String COVERAGE_V3_TABLE_HISTORICAL = "v3.coverage_v3_historical";
     private static final String COVERAGE_V3_STAGING_TABLE = "v3.coverage_v3_staging";
 
     private static final String RECORD_COUNT_BY_CONTRACT =
-        "select count(*) from %s where contract = :contract";
+        "SELECT count(*) FROM %s WHERE contract = :contract";
 
     private static final String DELETE_RECORDS_FOR_CONTRACT_AND_GET_ROWS_DELETED =
     """
-    with deleted_rows as (
-        delete from %s where contract = :contract returning *
+    WITH deleted_rows AS (
+        DELETE FROM %s WHERE contract = :contract RETURNING *
     )
-    select count(*) from deleted_rows
+    SELECT count(*) FROM deleted_rows
     """;
+
+    private static final String DELETE_REPLACEABLE_RECORDS_FOR_CONTRACT_AND_GET_ROWS_DELETED =
+    """
+    WITH deleted_rows AS (
+        DELETE FROM %s recent
+        WHERE recent.contract = :contract
+          AND (
+              EXISTS (
+                  SELECT 1 FROM %s staging
+                  WHERE staging.contract = recent.contract
+                    AND staging.year = recent.year
+                    AND staging.month = recent.month
+              )
+              OR EXISTS (
+                  SELECT 1 FROM %s historical
+                  WHERE historical.contract = recent.contract
+                    AND historical.year = recent.year
+                    AND historical.month = recent.month
+                    AND historical.patient_id = recent.patient_id
+                    AND historical.current_mbi IS NOT DISTINCT FROM recent.current_mbi
+              )
+          )
+        RETURNING *
+    )
+    SELECT count(*) FROM deleted_rows
+    """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE, COVERAGE_V3_TABLE_HISTORICAL);
+
+    private static final String COUNT_UNREPLACEABLE_ROWS_FOR_CONTRACT =
+    """
+    SELECT count(*)
+    FROM %s recent
+    WHERE recent.contract = :contract
+      AND NOT EXISTS (
+          SELECT 1 FROM %s staging
+          WHERE staging.contract = recent.contract
+            AND staging.year = recent.year
+            AND staging.month = recent.month
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM %s historical
+          WHERE historical.contract = recent.contract
+            AND historical.year = recent.year
+            AND historical.month = recent.month
+            AND historical.patient_id = recent.patient_id
+            AND historical.current_mbi IS NOT DISTINCT FROM recent.current_mbi
+      )
+    """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE, COVERAGE_V3_TABLE_HISTORICAL);
 
     private static final String COPY_FROM_STAGING_TO_COVERAGE_V3 =
     """
-    with inserted_rows as (
-        insert into %s select * from %s where contract = :contract returning *
+    WITH inserted_rows AS (
+        INSERT INTO %s SELECT * FROM %s WHERE contract = :contract RETURNING *
     )
-    select count(*) from inserted_rows;
+    SELECT count(*) FROM inserted_rows;
     """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE);
 
     private static final String HISTORICAL_SYNC_FOR_CONTRACT =
     """
-    with inserted_rows as (
+    WITH inserted_rows AS (
         INSERT INTO %s (patient_id, contract, year, month, current_mbi)
         SELECT coverage.patient_id, coverage.contract, coverage.year, coverage.month, coverage.current_mbi
         FROM %s coverage
@@ -104,20 +153,44 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         RETURNING *
     )
     
-    select count(*) from inserted_rows;
+    SELECT count(*) FROM inserted_rows;
     """.formatted(COVERAGE_V3_TABLE_HISTORICAL, COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_TABLE_HISTORICAL);
 
     private static final String DELETE_OLD_MONTHS_SQL_FOR_CONTRACT =
     """
-    with deleted_rows as (
-        DELETE FROM %s
-        WHERE make_date(year, month, 1) < (date_trunc('month', CURRENT_DATE) - interval '2 months')::date
-        and contract = :contract
+    WITH deleted_rows AS (
+        DELETE FROM %s recent
+        WHERE recent.contract = :contract
+          AND make_date(recent.year, recent.month, 1) < (date_trunc('month', CURRENT_DATE) - interval '2 months')::date
+          AND EXISTS (
+              SELECT 1 FROM %s historical
+              WHERE historical.contract = recent.contract
+                AND historical.year = recent.year
+                AND historical.month = recent.month
+                AND historical.patient_id = recent.patient_id
+                AND historical.current_mbi IS NOT DISTINCT FROM recent.current_mbi
+          )
         RETURNING *
     )
-    
-    select count(*) from deleted_rows;
-    """.formatted(COVERAGE_V3_TABLE_RECENT);
+
+    SELECT count(*) FROM deleted_rows;
+    """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_TABLE_HISTORICAL);
+
+    private static final String COUNT_UNARCHIVED_OLD_ROWS_FOR_CONTRACT =
+    """
+    SELECT count(*)
+    FROM %s recent
+    WHERE recent.contract = :contract
+      AND make_date(recent.year, recent.month, 1) < (date_trunc('month', CURRENT_DATE) - interval '2 months')::date
+      AND NOT EXISTS (
+          SELECT 1 FROM %s historical
+          WHERE historical.contract = recent.contract
+            AND historical.year = recent.year
+            AND historical.month = recent.month
+            AND historical.patient_id = recent.patient_id
+            AND historical.current_mbi IS NOT DISTINCT FROM recent.current_mbi
+      )
+    """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_TABLE_HISTORICAL);
 
     private static final String DELETE_HISTORY_SUMMARY_FOR_CONTRACT =
         "DELETE FROM v3.coverage_v3_history_summary WHERE contract = :contract";
@@ -134,17 +207,17 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     """;
 
     private static final String GET_CONTRACTS_WITH_ACTIVE_V3_JOBS =
-        "select distinct contract_number from job where status in ('IN_PROGRESS', 'SUBMITTED') and fhir_version='R4V3'" ;
+        "SELECT DISTINCT contract_number FROM job WHERE status IN ('IN_PROGRESS', 'SUBMITTED') AND fhir_version='R4V3'" ;
 
     private static final String IS_CONTRACT_ATTESTED =
-        "select count(*) from contract.contract where contract_number = :contract and attested_on is not null";
+        "SELECT count(*) FROM contract.contract WHERE contract_number = :contract AND attested_on IS NOT NULL";
 
     private static final String GET_CONTRACTS_WITH_COVERAGE_IN_STAGING =
-        "select distinct contract from %s"
+        "SELECT DISTINCT contract FROM %s"
         .formatted(COVERAGE_V3_STAGING_TABLE);
 
     private static final String GET_CONTRACTS_IN_RECENT_COVERAGE_TABLE =
-        "select distinct contract from %s"
+        "SELECT DISTINCT contract FROM %s"
         .formatted(COVERAGE_V3_TABLE_RECENT);
 
     private static final String GET_INACTIVE_CONTRACTS_IN_HISTORY_SUMMARY =
@@ -159,7 +232,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
     private static final String DELETE_INACTIVE_CONTRACTS_FROM_HISTORY_SUMMARY =
     """
-    with deleted_rows as (
+    WITH deleted_rows AS (
         DELETE FROM v3.coverage_v3_history_summary
         WHERE contract IN (
             SELECT contract_number FROM contract.contract
@@ -168,20 +241,20 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         )
         RETURNING contract
     )
-    select contract from deleted_rows;
+    SELECT contract FROM deleted_rows;
     """;
 
     private static final String POPULATE_HISTORY_SUMMARY_COVERAGE_PERIODS_FOR_CONTRACT =
     """
     WITH
     coverage_periods_unparsed AS (
-        SELECT DISTINCT json_array_elements(to_json(historical_coverage_summaries))::TEXT as text
+        SELECT DISTINCT json_array_elements(to_json(historical_coverage_summaries))::TEXT AS text
         FROM v3.coverage_v3_history_summary
         WHERE contract='%s'
     ),
     coverage_periods_parsed AS (
         SELECT
-        '%s' as contract,
+        '%s' AS contract,
         split_part(translate(text, '[]', ''), ',', 1)::INT AS year,
         split_part(translate(text, '[]', ''), ',', 2)::INT AS month
         FROM coverage_periods_unparsed
@@ -196,7 +269,7 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
 
     private static final String QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS =
     """
-    select month, year, contract_number from ab2d.bene_coverage_period where status='IN_PROGRESS'
+    SELECT month, year, contract_number FROM ab2d.bene_coverage_period WHERE status='IN_PROGRESS'
     """;
 
     @Transactional
@@ -278,10 +351,22 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         log.info("Found {} rows in coverage table for contract {}", rowsInCoverageBeforeCopy, contract);
         audit.log(action, null, contract, null, Map.of("rowsInCoverageBeforeCopy", rowsInCoverageBeforeCopy));
 
+        val rowsPreserved = executeTimedQuery(
+                format("[V3] countUnreplaceableRowsForContract contract=%s", contract),
+                () -> countUnreplaceableRowsForContract(contract)
+        );
+
+        metrics.recordPreservedRows(source, contract, rowsPreserved);
+        if (rowsPreserved > 0) {
+            log.warn("[V3] Preserving {} rows for contract {} whose coverage months are in neither staging nor "
+                    + "historical; the staging copy would previously have destroyed them", rowsPreserved, contract);
+            audit.log(action, null, contract, "Preserved unreplaceable coverage months", Map.of("rowsPreserved", rowsPreserved));
+        }
+
         log.info("[V3] Preparing to delete rows in coverage table for contract {}...", contract);
         val rowsInCoverageDeleted = executeTimedQuery(
-                format("[V3] deleteFromCoverageAndGetRowsDeleted contract=%s", contract),
-                () -> deleteFromCoverageAndGetRowsDeleted(contract)
+                format("[V3] deleteReplaceableFromCoverageAndGetRowsDeleted contract=%s", contract),
+                () -> deleteReplaceableFromCoverageAndGetRowsDeleted(contract)
         );
         log.info("[V3] Deleted {} rows in coverage table for contract {}", rowsInCoverageDeleted, contract);
         audit.log(action, null, contract, null, Map.of("rowsInCoverageDeleted", rowsInCoverageDeleted));
@@ -311,14 +396,17 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         log.info("[V3] Coverage table now contains {} rows for contract {}", rowsInCoverageAfterCopy, contract);
         audit.log(action, null, contract, null, Map.of("rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
 
-        if (rowsInStaging != rowsInCoverageAfterCopy) {
-            log.error("[V3] Row count in staging ({}) != row count in coverage ({}) for contract {}",
+        val expectedRowsAfterCopy = rowsInStaging + rowsPreserved;
+        if (expectedRowsAfterCopy != rowsInCoverageAfterCopy) {
+            log.error("[V3] Expected row count in coverage ({} staged + {} preserved) != actual ({}) for contract {}",
                     rowsInStaging,
+                    rowsPreserved,
                     rowsInCoverageAfterCopy,
                     contract
             );
             result = SYNC_FAILED_FOR_CONTRACT;
-            audit.log(action, result, contract, "rowsInStaging does not match rowsInCoverageAfterCopy", Map.of("rowsInStaging", rowsInStaging, "rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
+            audit.log(action, result, contract, "expectedRowsAfterCopy does not match rowsInCoverageAfterCopy",
+                    Map.of("rowsInStaging", rowsInStaging, "rowsPreserved", rowsPreserved, "rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
             metrics.recordImport(source, contract, result, rowsInStaging, rowsInCoverageBeforeCopy, rowsInCoverageAfterCopy);
             return result;
         }
@@ -330,15 +418,15 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         );
         audit.log(action, result, contract, null, Map.of("rowsInStagingDeleted", rowsInStagingDeleted));
 
-        if (!rowsInStagingDeleted.equals(rowsInCoverageAfterCopy)) {
-            log.error("[V3] Row count deleted from staging ({}) != row count in coverage ({}) for contract {}",
+        if (rowsInStagingDeleted != rowsInStaging) {
+            log.error("[V3] Row count deleted from staging ({}) != row count staged ({}) for contract {}",
                     rowsInStagingDeleted,
-                    rowsInCoverageAfterCopy,
+                    rowsInStaging,
                     contract
             );
             result = SYNC_FAILED_FOR_CONTRACT;
-            audit.log(action, result, contract, "rowsInStagingDeleted does not match rowsInCoverageAfterCopy",
-                    Map.of("rowsInStagingDeleted", rowsInStagingDeleted, "rowsInCoverageAfterCopy", rowsInCoverageAfterCopy));
+            audit.log(action, result, contract, "rowsInStagingDeleted does not match rowsInStaging",
+                    Map.of("rowsInStagingDeleted", rowsInStagingDeleted, "rowsInStaging", rowsInStaging));
             metrics.recordImport(source, contract, result, rowsInStaging, rowsInCoverageBeforeCopy, rowsInCoverageAfterCopy);
             return result;
         }
@@ -382,11 +470,8 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                 int rowsMoved = moveToHistoricalInternal(contract);
                 DatadogSpans.setMetric("coverage.v3.rows_moved", rowsMoved);
                 log.info("[V3] Moved {} rows to historical coverage table for contract {}", rowsMoved, contract);
-                if (rowsMoved == 0) {
-                    // skip audit logging to prevent noise - this operation would only copy records > 0 once a month
-                    metrics.recordHistorical(source, contract, NO_COVERAGE_FOUND_FOR_CONTRACT, 0, null);
-                    return NO_COVERAGE_FOUND_FOR_CONTRACT;
-                } else {
+
+                if (rowsMoved > 0) {
                     audit.log(action, null, contract, null, Map.of("rowsMoved", rowsMoved));
 
                     try {
@@ -410,17 +495,29 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
                 DatadogSpans.setMetric("coverage.v3.rows_deleted", rowsDeleted);
                 log.info("[V3] Deleted {} rows from recent coverage table for contract {}", rowsDeleted, contract);
 
-                if (rowsDeleted != rowsMoved) {
+                int unarchivedOldRows = countUnarchivedOldRowsForContract(contract);
+                DatadogSpans.setMetric("coverage.v3.unarchived_old_rows", unarchivedOldRows);
+                metrics.recordUnarchivedOldRows(source, contract, unarchivedOldRows);
+
+                if (unarchivedOldRows > 0) {
+                    log.error("[V3] {} rows for contract {} are below the retention cutoff but absent from the "
+                            + "historical table; archive is incomplete", unarchivedOldRows, contract);
                     result = SYNC_FAILED_FOR_CONTRACT;
-                    audit.log(action, result, contract, "rowsDeleted does not match rowsMoved", Map.of("rowsDeleted", rowsDeleted, "rowsMoved", rowsMoved));
-                    metrics.recordHistorical(source, contract, result, rowsMoved, rowsDeleted);
-                    return result;
-                } else {
-                    result = SYNC_SUCCESSFUL_FOR_CONTRACT;
-                    audit.log(action, result, contract, null, Map.of("rowsDeleted", rowsDeleted, "rowsMoved", rowsMoved));
+                    audit.log(action, result, contract, "Coverage below retention cutoff is missing from historical",
+                            Map.of("unarchivedOldRows", unarchivedOldRows, "rowsMoved", rowsMoved, "rowsDeleted", rowsDeleted));
                     metrics.recordHistorical(source, contract, result, rowsMoved, rowsDeleted);
                     return result;
                 }
+
+                if (rowsMoved == 0 && rowsDeleted == 0) {
+                    metrics.recordHistorical(source, contract, NO_COVERAGE_FOUND_FOR_CONTRACT, 0, 0);
+                    return NO_COVERAGE_FOUND_FOR_CONTRACT;
+                }
+
+                result = SYNC_SUCCESSFUL_FOR_CONTRACT;
+                audit.log(action, result, contract, null, Map.of("rowsDeleted", rowsDeleted, "rowsMoved", rowsMoved));
+                metrics.recordHistorical(source, contract, result, rowsMoved, rowsDeleted);
+                return result;
             } else {
                 log.info("[V3] Unable to acquire lock for contract {}", contract);
                 result = UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT;
@@ -529,12 +626,12 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         val month = yearMonthPeriod.getMonth();
 
         val insertRowsByMonth = """
-        with inserted_rows as (
-            insert into %s select * from %s
-            where contract = :contract and year = :year and month = :month
-            returning *
+        WITH inserted_rows AS (
+            INSERT INTO %s SELECT * FROM %s
+            WHERE contract = :contract AND year = :year AND month = :month
+            RETURNING *
         )
-        select count(*) from inserted_rows;
+        SELECT count(*) FROM inserted_rows;
         """.formatted(COVERAGE_V3_TABLE_RECENT, COVERAGE_V3_STAGING_TABLE);
 
         val parameters = Map.of("contract", contract, "year", year, "month", month);
@@ -551,9 +648,16 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return executeQueryForContract(contract, formattedQuery);
     }
 
-    int deleteFromCoverageAndGetRowsDeleted(String contract) {
-        val formattedQuery = format(DELETE_RECORDS_FOR_CONTRACT_AND_GET_ROWS_DELETED, COVERAGE_V3_TABLE_RECENT);
-        return executeQueryForContract(contract, formattedQuery);
+    int deleteReplaceableFromCoverageAndGetRowsDeleted(String contract) {
+        return executeQueryForContract(contract, DELETE_REPLACEABLE_RECORDS_FOR_CONTRACT_AND_GET_ROWS_DELETED);
+    }
+
+    int countUnreplaceableRowsForContract(String contract) {
+        return executeQueryForContract(contract, COUNT_UNREPLACEABLE_ROWS_FOR_CONTRACT);
+    }
+
+    int countUnarchivedOldRowsForContract(String contract) {
+        return executeQueryForContract(contract, COUNT_UNARCHIVED_OLD_ROWS_FOR_CONTRACT);
     }
 
     int deleteFromStagingAndGetRowsDeleted(String contract) {
@@ -570,6 +674,9 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     void populateHistorySummaryForContract(String contract) {
         val parameters = new MapSqlParameterSource().addValue("contract", contract);
         val template = new NamedParameterJdbcTemplate(dataSource);
+
+        template.getJdbcTemplate().execute("SET LOCAL work_mem = '" + HISTORY_SUMMARY_WORK_MEM + "'");
+
         template.update(DELETE_HISTORY_SUMMARY_FOR_CONTRACT, parameters);
         int rowsInserted = template.update(INSERT_HISTORY_SUMMARY_FOR_CONTRACT, parameters);
         log.info("[V3] Inserted {} rows into coverage_v3_history_summary for contract {}", rowsInserted, contract);
