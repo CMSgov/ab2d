@@ -21,8 +21,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult.*;
@@ -41,6 +39,8 @@ public class WorkerServiceImpl implements WorkerService {
     private final ShutDownService shutDownService;
     private final PropertiesService propertiesService;
     private final CoverageV3Service coverageV3Service;
+    // Time to wait before retrying to sync v3 coverage if IDR importer is in progress
+    private Duration waitTimeIfIdrImporterInProgress = Duration.ofMinutes(3);
 
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
@@ -55,6 +55,7 @@ public class WorkerServiceImpl implements WorkerService {
                 log.info("{} has been started", jobUuid);
 
                 if (job.getFhirVersion() == FhirVersion.R4V3) {
+                    log.info("Attempting to sync v3 coverage before creating aggregated table for {}", job.getContractNumber());
                     trySyncCoverageV3(job.getContractNumber());
                     coverageV3Service.createAggregatedAttributionTable(job.getContractNumber());
                 }
@@ -94,6 +95,12 @@ public class WorkerServiceImpl implements WorkerService {
         log.info("House keeping done - Shutting down");
     }
 
+    void setWaitTimeIfIdrImporterInProgress(Duration waitTimeIfIdrImporterInProgress) {
+        if (waitTimeIfIdrImporterInProgress != null) {
+            this.waitTimeIfIdrImporterInProgress = waitTimeIfIdrImporterInProgress;
+        }
+    }
+
     private void trySyncCoverageV3(String contract) throws CoverageV3SyncException {
         log.info("Calling moveOldCoverageToHistoricalCoverage() for contract {}", contract);
         coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, JOB_HANDLER);
@@ -111,23 +118,23 @@ public class WorkerServiceImpl implements WorkerService {
                 log.info("moveFromStagingToRecentCoverage() completed with {}", result);
                 return;
             }
-            else if (result == SYNC_FAILED_FOR_CONTRACT || result == UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT) {
-                log.info("moveFromStagingToRecentCoverage() returned {}; Retrying sync", result);
-            }
             else if (result == IDR_IMPORTER_IN_PROGRESS) {
-                val waitTimeBeforeRetrying = Duration.ofMinutes(3);
-                log.info("moveFromStagingToRecentCoverage() returned {}; Waiting {} minutes before retrying sync",
+                log.info("moveFromStagingToRecentCoverage() returned {}; Waiting {} seconds before retrying sync",
                     result,
-                    waitTimeBeforeRetrying.toMinutes()
+                    waitTimeIfIdrImporterInProgress.toSeconds()
                 );
                 try {
-                    Thread.sleep(waitTimeBeforeRetrying.toMillis());
+                    Thread.sleep(waitTimeIfIdrImporterInProgress.toMillis());
                 } catch (InterruptedException e) {
                     throw new CoverageV3SyncException("Error sleeping thread inside trySyncCoverageV3()", e);
                 }
+            } else {
+                log.warn("moveFromStagingToRecentCoverage() returned {}; Retrying sync", result);
             }
         }
 
-        throw new CoverageV3SyncException("trySyncCoverageV3 failed with:" + result);
+        throw new CoverageV3SyncException(
+            "trySyncCoverageV3 failed with %s after %s attempts".formatted(result, maxAttempts)
+        );
     }
 }
