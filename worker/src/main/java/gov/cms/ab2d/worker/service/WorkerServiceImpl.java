@@ -55,7 +55,14 @@ public class WorkerServiceImpl implements WorkerService {
                 log.info("{} has been started", jobUuid);
 
                 if (job.getFhirVersion() == FhirVersion.R4V3) {
-                    log.info("Attempting to sync v3 coverage before creating aggregated table for {}", job.getContractNumber());
+                    // TODO remove
+                    log.info("Sleeping for 5 minutes to simulate long execution times for v3 sync and aggregated table creation");
+	                try {
+		                Thread.sleep(Duration.ofMillis(10));
+	                } catch (InterruptedException e) {
+		                throw new RuntimeException("oops", e);
+	                }
+	                log.info("Attempting to sync v3 coverage before creating aggregated table for {}", job.getContractNumber());
                     trySyncCoverageV3(job.getContractNumber());
                     coverageV3Service.createAggregatedAttributionTable(job.getContractNumber());
                 }
