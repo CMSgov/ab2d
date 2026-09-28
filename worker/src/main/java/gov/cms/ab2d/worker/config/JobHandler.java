@@ -77,21 +77,7 @@ public class JobHandler implements MessageHandler {
             // Inability to obtain a lock means other worker is already taking care of the request
             // in which case we do nothing and return.
             if (lock.tryLock()) {
-
                 try {
-
-                    var syncCoverageV3Successful = true;
-                    try {
-                        syncCoverageV3Successful = trySyncCoverageV3(submittedJob);
-                    } catch (Exception e) {
-                        log.error("Error calling trySyncCoverageV3", e);
-                        throw e;
-                    }
-
-                    if (!syncCoverageV3Successful) {
-                        throw new IllegalStateException("trySyncCoverageV3 failed to sync coverage");
-                    }
-
                     // Attempt to start (mark an eob job as in progress) an eob job.
                     // A job may not be started if the workers are busy or if coverage metadata needs an update.
                     Job job = workerService.process(jobId);
@@ -108,46 +94,12 @@ public class JobHandler implements MessageHandler {
                     lock.unlock();
                 }
             }
-
             MDC.remove(JOB_LOG);
         }
     }
 
     private String getJobId(Map<String, Object> submittedJob) {
         return String.valueOf(submittedJob.get("job_uuid"));
-    }
-    
-    private String getContractNumber(Map<String, Object> submittedJob) {
-        return String.valueOf(submittedJob.get("contract_number"));
-    }
-
-    private FhirVersion getFhirVersion(Map<String, Object> submittedJob) {
-        return FhirVersion.valueOf(String.valueOf(submittedJob.get("fhir_version")));
-    }
-
-    private boolean trySyncCoverageV3(Map<String, Object> submittedJob) throws InterruptedException {
-        val fhirVersion = getFhirVersion(submittedJob);
-        if (fhirVersion != FhirVersion.R4V3) {
-            return true;
-        }
-
-        val contract = getContractNumber(submittedJob);
-        log.info("Calling moveOldCoverageToHistoricalCoverage() for contract {}", contract);
-        coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, JOB_HANDLER);
-        log.info("Calling moveFromStagingToRecentCoverage() for contract {}", contract);
-        val result = coverageV3Service.moveFromStagingToRecentCoverage(contract, JOB_HANDLER);
-        if (result == CoverageV3SyncResult.SYNC_SUCCESSFUL_FOR_CONTRACT ||
-            result == CoverageV3SyncResult.NO_COVERAGE_FOUND_FOR_CONTRACT ||
-            result == CoverageV3SyncResult.IDR_IMPORTER_IN_PROGRESS) {
-
-            // Note: Aggregated attribution table created in WorkerServiceImpl
-
-            return true;
-        }
-
-        log.error("trySyncCoverageV3 failed with result {}", result);
-        return false;
-
     }
 
 }

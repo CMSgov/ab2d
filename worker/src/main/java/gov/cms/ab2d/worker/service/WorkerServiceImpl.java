@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -8,16 +9,20 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
+import gov.cms.ab2d.worker.processor.coverage.CoverageV3SyncException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncSource.JOB_HANDLER;
 
 /**
  * This class is responsible for actually processing the job and preparing bulk downloads for clients.
@@ -46,6 +51,7 @@ public class WorkerServiceImpl implements WorkerService {
                 log.info("{} has been started", jobUuid);
 
                 if (job.getFhirVersion() == FhirVersion.R4V3) {
+                    trySyncCoverageV3(job.getContractNumber());
                     coverageV3Service.createAggregatedAttributionTable(job.getContractNumber());
                 }
 
@@ -82,5 +88,19 @@ public class WorkerServiceImpl implements WorkerService {
         }
 
         log.info("House keeping done - Shutting down");
+    }
+
+    private void trySyncCoverageV3(String contract) {
+        log.info("Calling moveOldCoverageToHistoricalCoverage() for contract {}", contract);
+        coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, JOB_HANDLER);
+        log.info("Calling moveFromStagingToRecentCoverage() for contract {}", contract);
+        val result = coverageV3Service.moveFromStagingToRecentCoverage(contract, JOB_HANDLER);
+        if (result == CoverageV3SyncResult.SYNC_SUCCESSFUL_FOR_CONTRACT ||
+            result == CoverageV3SyncResult.NO_COVERAGE_FOUND_FOR_CONTRACT) {
+            return;
+        }
+
+
+
     }
 }
