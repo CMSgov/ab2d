@@ -18,8 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -42,7 +40,6 @@ class WorkerServiceImplTest {
   ShutDownService shutDownService = mock(ShutDownService.class);
   PropertiesService propertiesService = mock(PropertiesService.class);
   CoverageV3Service coverageV3Service = mock(CoverageV3Service.class);
-
 
   @ParameterizedTest
   @EnumSource(JobStatus.class)
@@ -118,7 +115,6 @@ class WorkerServiceImplTest {
     workerServiceImpl.process(job.getJobUuid());
     assertTrue(out.getOut().contains("moveFromStagingToRecentCoverage() completed with %s".formatted(result)));
   }
-
 
   private Job createInProgressV3Job(String contract, String jobUuid) {
     val job = new Job();
