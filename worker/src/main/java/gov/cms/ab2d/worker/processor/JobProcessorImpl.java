@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
+import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
 import gov.cms.ab2d.eventclient.events.FileEvent;
@@ -10,6 +11,7 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobOutputRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
+import gov.cms.ab2d.worker.processor.coverage.CoverageV3SyncException;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import java.io.File;
@@ -19,6 +21,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult.*;
+import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncSource.JOB_HANDLER;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_CALL_FAILURE;
@@ -71,6 +77,8 @@ public class JobProcessorImpl implements JobProcessor {
     private final ContractProcessor contractProcessor;
     private final SQSEventClient eventLogger;
     private final CoverageV3Service coverageV3Service;
+    // Time to wait before retrying to sync v3 coverage if IDR importer is in progress
+    private Duration waitTimeIfIdrImporterInProgress = Duration.ofMinutes(3);
 
     /**
      * Load the job and process it
@@ -90,6 +98,12 @@ public class JobProcessorImpl implements JobProcessor {
         Path outputDirPath = null;
         try {
             outputDirPath = Paths.get(efsMount, jobUuid);
+            // For v3, sync coverage if necessary and create aggregated table before processing job
+            if (job.getFhirVersion() == FhirVersion.R4V3) {
+                log.info("Attempting to sync v3 coverage before creating aggregated table for {}", job.getContractNumber());
+                trySyncCoverageV3(job.getContractNumber());
+                coverageV3Service.createAggregatedAttributionTable(job.getContractNumber());
+            }
             processJob(job, outputDirPath);
 
         } catch (JobCancelledException e) {
@@ -359,6 +373,52 @@ public class JobProcessorImpl implements JobProcessor {
         log.info("Job: [{}] is DONE", job.getJobUuid());
         if (job.getFhirVersion() == FhirVersion.R4V3) {
             coverageV3Service.deleteAggregatedTableForContract(job.getContractNumber(), Optional.of(job.getJobUuid()));
+        }
+    }
+
+    void setWaitTimeIfIdrImporterInProgress(Duration waitTimeIfIdrImporterInProgress) {
+        if (waitTimeIfIdrImporterInProgress != null) {
+            this.waitTimeIfIdrImporterInProgress = waitTimeIfIdrImporterInProgress;
+        }
+    }
+
+    private void trySyncCoverageV3(String contract) throws CoverageV3SyncException {
+        log.info("Calling moveOldCoverageToHistoricalCoverage() for contract {}", contract);
+        coverageV3Service.moveOldCoverageToHistoricalCoverage(contract, JOB_HANDLER);
+
+        var attempts = 0;
+        val maxAttempts = 3;
+        CoverageV3SyncResult result = null;
+        while (attempts < maxAttempts) {
+            log.info("Calling moveFromStagingToRecentCoverage() for contract {}", contract);
+            result = coverageV3Service.moveFromStagingToRecentCoverage(contract, JOB_HANDLER);
+            attempts++;
+
+            if (result == SYNC_SUCCESSFUL_FOR_CONTRACT ||
+                result == NO_COVERAGE_FOUND_FOR_CONTRACT) {
+                log.info("moveFromStagingToRecentCoverage() completed with {}", result);
+                return;
+            }
+
+            if (attempts == maxAttempts) {
+                throw new CoverageV3SyncException(
+                        "trySyncCoverageV3 failed with %s after %s attempts".formatted(result, maxAttempts)
+                );
+            }
+
+            else if (result == IDR_IMPORTER_IN_PROGRESS) {
+                log.info("moveFromStagingToRecentCoverage() returned {}; Waiting {} seconds before retrying sync",
+                        result,
+                        waitTimeIfIdrImporterInProgress.toSeconds()
+                );
+                try {
+                    Thread.sleep(waitTimeIfIdrImporterInProgress.toMillis());
+                } catch (InterruptedException e) {
+                    throw new CoverageV3SyncException("Error sleeping thread inside trySyncCoverageV3()", e);
+                }
+            } else {
+                log.warn("moveFromStagingToRecentCoverage() returned {}; Retrying sync", result);
+            }
         }
     }
 }

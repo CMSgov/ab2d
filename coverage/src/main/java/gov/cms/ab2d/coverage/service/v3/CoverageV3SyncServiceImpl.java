@@ -272,7 +272,8 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
     SELECT month, year, contract_number FROM ab2d.bene_coverage_period WHERE status='IN_PROGRESS'
     """;
 
-    @Transactional
+    // Set query timeout of 90 minutes, otherwise large contracts may cause org.springframework.dao.QueryTimeoutException
+    @Transactional(timeout=5400)
     @Trace(operationName = "ab2d.coverage.sync_from_staging_v3")
     public CoverageV3SyncResult copyFromStagingTablesToRecent(String contract, CoverageV3SyncSource source) {
         DatadogSpans.setTag("contract", contract);
@@ -438,8 +439,8 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return result;
     }
 
-    // Set query timeout of 1 hour, otherwise large contracts may cause org.springframework.dao.QueryTimeoutException
-    @Transactional(timeout=3600)
+    // Set query timeout of 90 minutes, otherwise large contracts may cause org.springframework.dao.QueryTimeoutException
+    @Transactional(timeout=5400)
     @Trace(operationName = "ab2d.coverage.sync_to_historical_v3")
     public CoverageV3SyncResult moveToHistorical(String contract, CoverageV3SyncSource source) {
         DatadogSpans.setTag("contract", contract);
