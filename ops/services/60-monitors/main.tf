@@ -74,9 +74,6 @@ locals {
     local.monitor_config.shadow_mode ? "shadow-mode:true" : "shadow-mode:false",
   ]
 
-  # Readable alert time for the Slack message. The CDAP slack webhook's Date field is $DATE (epoch
-  # milliseconds), which the Slack workflow prints verbatim; Datadog has no human-readable date
-  # variable for webhooks, and Workflow Builder does not render <!date^...> tokens.
   alert_time = "Triggered at {{local_time 'last_triggered_at' 'UTC'}} (UTC)."
 
   coverage_v3_import_eval_hour   = 23
@@ -87,7 +84,7 @@ locals {
     {
       name    = "AB2D Coverage V3 - Import row delta anomaly (${local.env})"
       type    = "query alert"
-      message = "The Coverage V3 staging copy for contract {{contract.name}} in ${local.env} removed more than 5% of its recent coverage rows ({{value}}% change) in the last 24h. The IDR extract for that contract is probably incomplete; check the idr-db-importer ECS task for the day and the worker's copyFromStagingTablesToRecentForAllContracts log for the contract."
+      message = "Contract {{contract.name}} lost more than 5% of its Coverage V3 rows ({{value}}%) in the last 24 hours. The IDR extract for this contract is probably incomplete. Check the latest idr-db-importer ECS task and the worker's copyFromStagingTablesToRecentForAllContracts log."
       query   = "min(last_1d):sum:ab2d.coverage.v3.import.rows_delta{environment:${local.coverage_v3_env_tag}} by {contract} / sum:ab2d.coverage.v3.import.rows_before{environment:${local.coverage_v3_env_tag}} by {contract} * 100 < -5"
       thresholds = {
         critical = -5
@@ -98,7 +95,7 @@ locals {
     {
       name    = "AB2D Coverage V3 - Sync failures detected (${local.env})"
       type    = "metric alert"
-      message = "One or more Coverage V3 staging syncs reported SYNC_FAILED_FOR_CONTRACT in the last 24h for ${local.env} (row-count mismatch during the staging copy). Coverage data may be inconsistent for the affected contract(s)."
+      message = "A Coverage V3 staging sync failed (SYNC_FAILED_FOR_CONTRACT) in the last 24 hours because row counts did not match. Coverage data may be wrong for some contracts. Check the worker's copyFromStagingTablesToRecentForAllContracts log."
       query   = "sum(last_1d):sum:ab2d.coverage.v3.import.completed{environment:${local.coverage_v3_env_tag},result:sync_failed_for_contract}.as_count() > 0"
       thresholds = {
         critical = 0
@@ -132,12 +129,9 @@ resource "datadog_monitor" "coverage_v3_import_staged_zero_rows" {
   type = "query alert"
 
   message = join(" ", [
-    "No Coverage V3 rows were staged into the recent coverage table on a day the IDR importer was",
-    "scheduled to run (Mon-Sat) for ${local.env}. The IDR import or the staging sync may have",
-    "stalled, or completed without updating coverage data. This is evaluated once per scheduled",
-    "import day at ${format("%02d:%02d", local.coverage_v3_import_eval_hour, local.coverage_v3_import_eval_minute)} UTC over that UTC calendar day only, so it is not",
-    "satisfied by the previous day's import. Start with the idr-db-importer ECS task for the day",
-    "and then the worker's copyFromStagingTablesToRecentForAllContracts run.",
+    "No Coverage V3 rows were staged today (UTC), on a day the IDR importer should run (Mon-Sat).",
+    "The import or the staging sync may have stalled or finished without changes.",
+    "Check today's idr-db-importer ECS task, then the worker's copyFromStagingTablesToRecentForAllContracts log.",
     local.alert_time,
     module.common_datadog_monitors.notify,
   ])
