@@ -381,12 +381,16 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
             audit.log(action, null, contract, null, Map.of("rowsInserted", rowsInserted));
         } catch (Exception e) {
             /**
-             * If {@link #batchCopyFromStagingToCoverage} throws an exception, it will record an audit event
              * If this step fails, there may be incomplete attribution data copied from staging to the recent coverage
              * table. The sync will be re-attempted the next time the cron job fires OR when a job is run, so this
              * will correct itself eventually
              */
-            return SYNC_FAILED_FOR_CONTRACT;
+            log.error("[V3] Failed to copy rows from staging to coverage for contract {}", contract, e);
+            result = SYNC_FAILED_FOR_CONTRACT;
+            audit.log(action, result, contract, "batchCopyFromStagingToCoverage failed: " + e.getMessage(),
+                    Map.of("exception", e.getClass().getName()));
+            metrics.recordImport(source, contract, result, rowsInStaging, rowsInCoverageBeforeCopy, null);
+            return result;
         }
 
         val rowsInCoverageAfterCopy = executeTimedQuery(
