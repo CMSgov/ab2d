@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.DatadogSpans;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.*;
-import gov.cms.ab2d.coverage.model.v3.CoverageV3Periods;
 import gov.cms.ab2d.coverage.query.*;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import lombok.extern.slf4j.Slf4j;
