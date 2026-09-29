@@ -1,15 +1,12 @@
 package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
-import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult;
-import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.worker.service.WorkerService;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.slf4j.MDC;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.messaging.Message;
@@ -22,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
-import static gov.cms.ab2d.coverage.service.v3.CoverageV3SyncSource.JOB_HANDLER;
 
 
 /**
@@ -41,15 +37,12 @@ public class JobHandler implements MessageHandler {
      */
     private final LockRegistry lockRegistry;
     private final WorkerService workerService;
-    private final CoverageV3Service coverageV3Service;
 
     public JobHandler(
             LockRegistry lockRegistry,
-            WorkerService workerService,
-            CoverageV3Service coverageV3Service) {
+            WorkerService workerService) {
         this.lockRegistry = lockRegistry;
         this.workerService = workerService;
-        this.coverageV3Service = coverageV3Service;
     }
 
     @Override
