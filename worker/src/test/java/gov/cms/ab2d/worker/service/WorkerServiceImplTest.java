@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.ArrayList;
 
+@ExtendWith({OutputCaptureExtension.class})
 class WorkerServiceImplTest {
 
   JobPreProcessor jobPreprocessor = mock(JobPreProcessor.class);
@@ -72,7 +73,7 @@ class WorkerServiceImplTest {
 
   @Test
   @DisplayName("v3 sync fails if max attempts exceeded (IDR import takes longer than expected)")
-  void testV3SyncRetriesExceededIdrImport() {
+  void testV3SyncRetriesExceededIdrImporter(CapturedOutput out) {
     val job = createInProgressV3Job("XYZ", "1234");
     when(coverageV3Service.moveFromStagingToRecentCoverage(any(), any())).thenReturn(CoverageV3SyncResult.IDR_IMPORTER_IN_PROGRESS);
     when(jobPreprocessor.preprocess(any())).thenReturn(job);
@@ -82,11 +83,12 @@ class WorkerServiceImplTest {
 
     val exception = assertThrows(CoverageV3SyncException.class, () -> workerServiceImpl.process(job.getJobUuid()));
     assertEquals(exception.getMessage(), "trySyncCoverageV3 failed with IDR_IMPORTER_IN_PROGRESS after 3 attempts");
+    assertTrue(out.getOut().contains("moveFromStagingToRecentCoverage() returned IDR_IMPORTER_IN_PROGRESS; Waiting 1 seconds before retrying sync"));
   }
 
   @Test
   @DisplayName("v3 sync fails if max attempts exceeded (unable to acquire lock)")
-  void testV3SyncRetriesExceededGenericError() {
+  void testV3SyncRetriesExceededGenericError(CapturedOutput out) {
     val job = createInProgressV3Job("XYZ", "1234");
     when(coverageV3Service.moveFromStagingToRecentCoverage(any(), any())).thenReturn(CoverageV3SyncResult.UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT);
     when(jobPreprocessor.preprocess(any())).thenReturn(job);
@@ -104,13 +106,14 @@ class WorkerServiceImplTest {
         value = CoverageV3SyncResult.class,
         names = {"SYNC_SUCCESSFUL_FOR_CONTRACT", "NO_COVERAGE_FOUND_FOR_CONTRACT"}
   )
-  void testV3SyncSuccessful(CoverageV3SyncResult result) {
+  void testV3SyncSuccessful(CoverageV3SyncResult result, CapturedOutput out) {
     val job = createInProgressV3Job("XYZ", "1234");
     when(coverageV3Service.moveFromStagingToRecentCoverage(any(), any())).thenReturn(result);
     when(jobPreprocessor.preprocess(any())).thenReturn(job);
 
     val workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service);
     workerServiceImpl.process(job.getJobUuid());
+    assertTrue(out.getOut().contains("moveFromStagingToRecentCoverage() completed with %s".formatted(result)));
   }
 
   private Job createInProgressV3Job(String contract, String jobUuid) {
