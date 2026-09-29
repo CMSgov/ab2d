@@ -86,7 +86,7 @@ class WorkerServiceImplTest {
 
   @Test
   @DisplayName("v3 sync fails if max attempts exceeded (unable to acquire lock)")
-  void testV3SyncRetriesExceededGenericError(CapturedOutput out) {
+  void testV3SyncRetriesExceededGenericError() {
     val job = createInProgressV3Job("XYZ", "1234");
     when(coverageV3Service.moveFromStagingToRecentCoverage(any(), any())).thenReturn(CoverageV3SyncResult.UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT);
     when(jobPreprocessor.preprocess(any())).thenReturn(job);
