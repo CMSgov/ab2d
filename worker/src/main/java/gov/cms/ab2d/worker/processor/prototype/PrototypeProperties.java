@@ -43,7 +43,7 @@ public class PrototypeProperties {
     private int itemRetryLimit = 3;
 
     /** How long shutdown waits for the batch execution to finish cleaning up before shutting down. */
-    private long shutdownAwaitMs = 32000;
+    private long shutdownAwaitMs = 15000;
 
     /**
      * Whether hard recovery restarts partitions from scratch or from the last good chunk
