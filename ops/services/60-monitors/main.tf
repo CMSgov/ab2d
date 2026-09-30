@@ -67,31 +67,30 @@ locals {
     prod    = "ab2d-east-prod"
   }, local.env, local.env)
 
+  coverage_v3_base_tags = [
+    "application:${local.app}",
+    "environment:${local.env}",
+    "managed-by:tofu",
+    local.monitor_config.shadow_mode ? "shadow-mode:true" : "shadow-mode:false",
+  ]
+
+  alert_time = "Triggered at {{local_time 'last_triggered_at' 'UTC'}} (UTC)."
+
+  coverage_v3_import_eval_hour   = 23
+  coverage_v3_import_eval_minute = 45
+
   # Alerts for suspicious Coverage V3 import behavior
   coverage_v3_monitors = [
     {
-      name    = "AB2D Coverage V3 - Import staged zero rows in 24h (${local.env})"
-      type    = "metric alert"
-      message = "No Coverage V3 rows were staged into the recent coverage table in the last 24h for ${local.env}. The IDR import or staging sync may have stalled, or completed without updating coverage data."
-      query   = "sum(last_1d):sum:ab2d.coverage.v3.import.rows_staged{environment:${local.coverage_v3_env_tag}} <= 0"
-      thresholds = {
-        critical = 0
-      }
-      notify_no_data            = true
-      no_data_timeframe_minutes = 1500
-      tags                      = ["service:coverage", "feature:coverage-v3-import"]
-    },
-    {
       name    = "AB2D Coverage V3 - Import row delta anomaly (${local.env})"
       type    = "query alert"
-      message = "The Coverage V3 import row delta for ${local.env} is anomalous (unusually high or low) compared to its historical baseline."
-      query   = "avg(last_4h):anomalies(sum:ab2d.coverage.v3.import.rows_delta{environment:${local.coverage_v3_env_tag}}, 'agile', 3) >= 1"
+      message = "Contract {{contract.name}} lost more than 5% of its Coverage V3 rows ({{value}}%) in the last 24 hours. The IDR extract for this contract is probably incomplete. Check the latest idr-db-importer ECS task and the worker's copyFromStagingTablesToRecentForAllContracts log."
+      query   = "min(last_1d):sum:ab2d.coverage.v3.import.rows_delta{environment:${local.coverage_v3_env_tag}} by {contract} / sum:ab2d.coverage.v3.import.rows_before{environment:${local.coverage_v3_env_tag}} by {contract} * 100 < -5"
       thresholds = {
-        critical = 1
+        critical = -5
       }
-      notify_no_data            = false
-      no_data_timeframe_minutes = 1500
-      tags                      = ["service:coverage", "feature:coverage-v3-import"]
+      on_missing_data = "resolve"
+      tags            = ["service:coverage", "feature:coverage-v3-import"]
     },
     {
       name    = "AB2D Coverage V3 - Coverage preserved by the staging-copy guard (${local.env})"
@@ -132,14 +131,12 @@ locals {
     {
       name    = "AB2D Coverage V3 - Sync failures detected (${local.env})"
       type    = "metric alert"
-      message = "One or more Coverage V3 staging syncs reported SYNC_FAILED_FOR_CONTRACT in the last 24h for ${local.env} (row-count mismatch during the staging copy). Coverage data may be inconsistent for the affected contract(s)."
+      message = "A Coverage V3 staging sync failed (SYNC_FAILED_FOR_CONTRACT) in the last 24 hours because row counts did not match. Coverage data may be wrong for some contracts. Check the worker's copyFromStagingTablesToRecentForAllContracts log."
       query   = "sum(last_1d):sum:ab2d.coverage.v3.import.completed{environment:${local.coverage_v3_env_tag},result:sync_failed_for_contract}.as_count() > 0"
       thresholds = {
         critical = 0
       }
-      notify_no_data            = false
-      no_data_timeframe_minutes = 1500
-      tags                      = ["service:coverage", "feature:coverage-v3-import"]
+      tags = ["service:coverage", "feature:coverage-v3-import"]
     },
   ]
 }
@@ -151,8 +148,54 @@ locals {
 module "common_datadog_monitors" {
   source = "github.com/CMSgov/cdap//terraform/modules/datadog_monitors?ref=f6fe4544d0d6ed72c50605261f0c3091487753e1"
 
-  app             = "ab2d"
-  env             = local.env
-  monitor_config  = local.monitor_config
-  custom_monitors = concat(local.coverage_v3_monitors, local.ecs_monitors)
+  app            = "ab2d"
+  env            = local.env
+  monitor_config = local.monitor_config
+  custom_monitors = [
+    for m in concat(local.coverage_v3_monitors, local.ecs_monitors) :
+    merge(m, { message = "${m.message} ${local.alert_time}" })
+  ]
+}
+
+##############################
+# Coverage V3 Import Monitor #
+##############################
+resource "datadog_monitor" "coverage_v3_import_staged_zero_rows" {
+  name = "AB2D Coverage V3 - Import staged no rows on a scheduled import day (${local.env})"
+  type = "query alert"
+
+  message = join(" ", [
+    "No Coverage V3 rows were staged today (UTC), on a day the IDR importer should run (Mon-Sat).",
+    "The import or the staging sync may have stalled or finished without changes.",
+    "Check today's idr-db-importer ECS task, then the worker's copyFromStagingTablesToRecentForAllContracts log.",
+    local.alert_time,
+    module.common_datadog_monitors.notify,
+  ])
+
+  query = "sum(current_1d):sum:ab2d.coverage.v3.import.rows_staged{environment:${local.coverage_v3_env_tag}} <= 0"
+
+  monitor_thresholds {
+    critical = 0
+  }
+
+  on_missing_data = "show_and_notify_no_data"
+
+  require_full_window = false
+  include_tags        = true
+
+  scheduling_options {
+    evaluation_window {
+      day_starts = "00:00"
+      timezone   = "UTC"
+    }
+
+    custom_schedule {
+      recurrence {
+        rrule    = "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA;BYHOUR=${local.coverage_v3_import_eval_hour};BYMINUTE=${local.coverage_v3_import_eval_minute}"
+        timezone = "UTC"
+      }
+    }
+  }
+
+  tags = concat(local.coverage_v3_base_tags, ["service:coverage", "feature:coverage-v3-import"])
 }
