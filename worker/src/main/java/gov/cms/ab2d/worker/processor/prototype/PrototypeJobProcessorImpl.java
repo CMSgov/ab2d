@@ -24,6 +24,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.listener.ItemWriteListener;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemStreamWriter;
@@ -644,9 +645,11 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             workerStepBuilder.taskExecutor(new PrototypeItemTaskExecutor(patientClaimsPool, jobUuid));
         }
 
+        JobStopListener stopListener = new JobStopListener(jobRepository, jobLease, jobUuid);
         Step workerStep = workerStepBuilder
-                // abort the step at the next chunk boundary if the job is cancelled mid-run
-                .listener(new JobCancellationWriteListener(jobRepository, jobLease, jobUuid))
+                // stop the job at the next chunk if its cancelled or pausing
+                .listener((ItemWriteListener<SerializedEobs>) stopListener)
+                .listener(stopListener)
                 .allowStartIfComplete(false)
                 // should basically never trip
                 .startLimit(props.getMaxStartAttempts())
