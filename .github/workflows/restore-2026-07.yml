@@ -1,0 +1,85 @@
+name: restore-2026-07
+run-name: restore-2026-07 coverage for S4802/S5884/S5921
+
+on:
+  push:
+    branches:
+      - 'backfill-july-2026'
+      - '**restore-2026-07**'
+    paths:
+      - '.github/workflows/restore-2026-07.yml'
+      - 'ops/services/30-idr-db-importer/restore-2026-07.sql'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "restore" to confirm writing to the prod database'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: restore-2026-07
+  cancel-in-progress: false
+
+jobs:
+  restore-2026-07:
+    if: github.event_name == 'push' || inputs.confirm == 'restore'
+    runs-on: codebuild-ab2d-prod-${{ github.run_id }}-${{ github.run_attempt }}
+
+    env:
+      AB2D_ENV: prod
+      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+      CSV_KEY: coverage_v3_20260930.csv
+      CSV_BYTES: '2639663842'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
+
+      - name: Set env vars from AWS params in AB2D account
+        uses: ./.github/workflows/actions/set-database-params
+        with:
+          aws_region: ${{ vars.AWS_REGION }}
+          environment: prod
+
+      - name: Install psql
+        run: sudo dnf install postgresql16 -y
+
+      - name: Restore the 2026-09-30 extract in S3
+        run: |
+          BKT=$(aws ssm get-parameter \
+            --name /ab2d/prod/core/nonsensitive/idr-db-importer-bucket \
+            --query 'Parameter.Value' --output text)
+          echo "BKT=$BKT" >> "$GITHUB_ENV"
+
+          # Resolved rather than pinned so a re-run, which finds the marker this workflow's own
+          # cleanup step left behind, still works. The prefix also matches CSV_KEY.tmp, hence the
+          # exact-key filter.
+          MARKER=$(aws s3api list-object-versions --bucket "$BKT" --prefix "$CSV_KEY" \
+            --query "DeleteMarkers[?Key=='${CSV_KEY}' && IsLatest].VersionId | [0]" --output text)
+          echo "Latest delete marker: $MARKER"
+
+          if [ -n "$MARKER" ] && [ "$MARKER" != "None" ]; then
+            aws s3api delete-object --bucket "$BKT" --key "$CSV_KEY" --version-id "$MARKER"
+          fi
+
+          # The real guard: the object now current must be the 2026-09-30 extract.
+          # Verified with list-object-versions, NOT head-object -- HeadObject is s3:GetObject,
+          # which this bucket's policy denies to every role except the two importer roles, so
+          # head-object 403s even when the marker removal succeeded.
+          SIZE=$(aws s3api list-object-versions --bucket "$BKT" --prefix "$CSV_KEY" \
+            --query "Versions[?Key=='${CSV_KEY}' && IsLatest].Size | [0]" --output text)
+          echo "Current version is now $SIZE bytes (expected $CSV_BYTES)"
+          test "$SIZE" = "$CSV_BYTES"
+
+      - name: Run the restore
+        run: psql -v ON_ERROR_STOP=1 -f ops/services/30-idr-db-importer/restore-2026-07.sql
