@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.prototype;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.coverage.service.v3.CoverageV3Service;
-import gov.cms.ab2d.coverage.service.v3.CoverageV3SyncResult;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.worker.config.JobHandler;
@@ -238,12 +237,9 @@ class PrototypeGatingIntegrationTest extends AbstractPrototypeRecoveryIntegratio
 
         LockRegistry lockRegistry = mock(LockRegistry.class);
         when(lockRegistry.obtain(anyString())).thenReturn(new ReentrantLock());
-        CoverageV3Service coverage = mock(CoverageV3Service.class);
-        when(coverage.moveFromStagingToRecentCoverage(anyString(), any()))
-                .thenReturn(CoverageV3SyncResult.SYNC_SUCCESSFUL_FOR_CONTRACT);
 
         // a prototype row behind real work: the prototype row is passed over, the real one still runs
-        new JobHandler(lockRegistry, busy, coverage).handleMessage(new GenericMessage<>(List.of(
+        new JobHandler(lockRegistry, busy).handleMessage(new GenericMessage<>(List.of(
                 pollRow(PROTOTYPE_JOB, "R4V3", true), pollRow("a-real-job", "STU3", false))));
 
         verify(busy, never()).process(PROTOTYPE_JOB);
@@ -255,7 +251,7 @@ class PrototypeGatingIntegrationTest extends AbstractPrototypeRecoveryIntegratio
         when(quiet.isPrototypeAdmissible()).thenReturn(true);
         when(quiet.process(anyString())).thenReturn(started);
 
-        new JobHandler(lockRegistry, quiet, coverage)
+        new JobHandler(lockRegistry, quiet)
                 .handleMessage(new GenericMessage<>(List.of(pollRow(PROTOTYPE_JOB, "R4V3", true))));
 
         verify(quiet).process(PROTOTYPE_JOB);
@@ -320,7 +316,6 @@ class PrototypeGatingIntegrationTest extends AbstractPrototypeRecoveryIntegratio
         private final JobPreProcessor jobPreprocessor = mock(JobPreProcessor.class);
         private final JobProcessor jobProcessor = mock(JobProcessor.class);
         private final PropertiesService propertiesService = mock(PropertiesService.class);
-        private final CoverageV3Service coverageV3Service = mock(CoverageV3Service.class);
         private final PrototypeJobProcessor prototypeJobProcessor = mock(PrototypeJobProcessor.class);
         private final PrototypeProperties props = new PrototypeProperties();
         private final WorkerServiceImpl workerService;
@@ -328,7 +323,7 @@ class PrototypeGatingIntegrationTest extends AbstractPrototypeRecoveryIntegratio
         private Harness() {
             when(propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false)).thenReturn(true);
             workerService = new WorkerServiceImpl(jobPreprocessor, jobProcessor, mock(ShutDownService.class),
-                    propertiesService, coverageV3Service, prototypeJobProcessor, props);
+                    propertiesService, prototypeJobProcessor, props);
         }
 
         private void givenPrototypeJob(String jobUuid) {
