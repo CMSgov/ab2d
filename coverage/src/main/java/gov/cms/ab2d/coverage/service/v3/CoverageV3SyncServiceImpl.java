@@ -439,8 +439,8 @@ public class CoverageV3SyncServiceImpl  implements CoverageV3SyncService {
         return result;
     }
 
-    // Set query timeout of 90 minutes, otherwise large contracts may cause org.springframework.dao.QueryTimeoutException
-    @Transactional(timeout=5400)
+    // Set query timeout of 180 minutes, otherwise large contracts may cause org.springframework.dao.QueryTimeoutException
+    @Transactional(timeout=10_800)
     @Trace(operationName = "ab2d.coverage.sync_to_historical_v3")
     public CoverageV3SyncResult moveToHistorical(String contract, CoverageV3SyncSource source) {
         DatadogSpans.setTag("contract", contract);

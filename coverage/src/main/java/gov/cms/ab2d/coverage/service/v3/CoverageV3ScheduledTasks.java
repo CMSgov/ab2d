@@ -45,7 +45,7 @@ public class CoverageV3ScheduledTasks {
 					log.info("[V3] IDR import is in progress; Aborting copyFromStagingTablesToRecentForAllContracts()");
 					return;
 				} else if(result == JOB_IN_PROGRESS_FOR_CONTRACT) {
-					log.info("[V3] Contract {} has a job in progress; Skipping moveToHistorical for contract {}", contract);
+					log.info("[V3] Contract {} has a job in progress; Skipping copyFromStagingTablesToRecent for contract {}", contract);
 				} else if (result == SYNC_FAILED_FOR_CONTRACT) {
 					log.error("[V3] Staging table sync failed for {}", contract);
 				} else if (result == UNABLE_TO_ACQUIRE_LOCK_FOR_CONTRACT) {
