@@ -9,6 +9,7 @@ on:
     paths:
       - '.github/workflows/restore-2026-07.yml'
       - 'ops/services/30-idr-db-importer/restore-2026-07.sql'
+      - 'ops/services/30-idr-db-importer/restore-2026-07-resume.sql'
   workflow_dispatch:
     inputs:
       confirm:
@@ -81,5 +82,7 @@ jobs:
           echo "Current version is now $SIZE bytes (expected $CSV_BYTES)"
           test "$SIZE" = "$CSV_BYTES"
 
+      # The first run (36908812593) committed the import, the July insert and S4802's summary
+      # before the runner died at 5h09m. The resume file finishes the rest; see its header.
       - name: Run the restore
-        run: psql -v ON_ERROR_STOP=1 -f ops/services/30-idr-db-importer/restore-2026-07.sql
+        run: psql -v ON_ERROR_STOP=1 -f ops/services/30-idr-db-importer/restore-2026-07-resume.sql
