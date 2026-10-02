@@ -509,9 +509,9 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
      * If we don't drain in time, we don't mark the job as suspended, so it will be hard-recovered.
      */
     @Override
-    public void stopForShutdown() {
+    public void stopForShutdown(Set<String> ownedJobs) {
         long startedAt = System.currentTimeMillis();
-        if (signalStop("shutdown") == 0) {
+        if (signalStop("shutdown", ownedJobs) == 0) {
             return;
         }
         metrics.drainStarted();
@@ -521,7 +521,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         long shutdownAwaitMs = props.getShutdownAwaitMs();
         long deadline = startedAt + shutdownAwaitMs;
         while (System.currentTimeMillis() < deadline) {
-            if (batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME).isEmpty()) {
+            if (runningExecutionsFor(ownedJobs).isEmpty()) {
                 log.info("shutdown: all prototype batch executions stopped");
                 metrics.drainFinished(true, System.currentTimeMillis() - startedAt);
                 return;
@@ -542,15 +542,15 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
     }
 
     @Override
-    public void stopRunning() {
-        signalStop("yield");
+    public void stopRunning(Set<String> ownedJobs) {
+        signalStop("yield", ownedJobs);
     }
 
     /**
      * Ask every running prototype batch execution to stop at its next chunk
      */
-    private int signalStop(String reason) {
-        Set<JobExecution> running = batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME);
+    private int signalStop(String reason, Set<String> ownedJobs) {
+        List<JobExecution> running = runningExecutionsFor(ownedJobs);
         if (running.isEmpty()) {
             return 0;
         }
@@ -563,6 +563,19 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
             }
         }
         return running.size();
+    }
+
+    /**
+     * The executions only for this particular worker. Needed to prevent jobs this worker isn't
+     * responsible for from messing with shutdown.
+     */
+    private List<JobExecution> runningExecutionsFor(Set<String> ownedJobs) {
+        if (ownedJobs.isEmpty()) {
+            return List.of();
+        }
+        return batchJobRepository.findRunningJobExecutions(PROTOTYPE_JOB_NAME).stream()
+                .filter(execution -> ownedJobs.contains(execution.getJobParameters().getString(JOB_UUID_PARAM)))
+                .toList();
     }
 
     /**
