@@ -52,12 +52,14 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -404,6 +406,76 @@ class CoverageDriverUnitTest {
 
         verify(localSnapshotService, times(1)).sendCoverageCounts(eq(AB2DServices.AB2D), eq(Set.of("Z1234")));
         verify(coverageProcessor, times(1)).queueCoveragePeriod(eq(period), anyBoolean());
+    }
+
+    @DisplayName("When every stale coverage period is already submitted or in progress coverage counts are not published")
+    @Test
+    void queueStaleCoveragePeriodsSkipsCoverageCountsForInFlightSearches() throws InterruptedException {
+
+        CoverageSnapshotService localSnapshotService = mock(CoverageSnapshotService.class);
+
+        when(lockWrapper.getCoverageLock()).thenReturn(tryLockTrue);
+
+        CoveragePeriod submitted = new CoveragePeriod();
+        submitted.setId(1);
+        submitted.setContractNumber("Z1234");
+        submitted.setMonth(1);
+        submitted.setYear(2024);
+        submitted.setStatus(CoverageJobStatus.SUBMITTED);
+
+        CoveragePeriod inProgress = new CoveragePeriod();
+        inProgress.setId(2);
+        inProgress.setContractNumber("Z5678");
+        inProgress.setMonth(2);
+        inProgress.setYear(2024);
+        inProgress.setStatus(CoverageJobStatus.IN_PROGRESS);
+
+        doReturn(List.of(submitted, inProgress)).when(coverageService).coveragePeriodNeverSearchedSuccessfully();
+        when(coverageService.coveragePeriodStuckJobs(any())).thenReturn(Collections.emptyList());
+        when(coverageService.coveragePeriodNotUpdatedSince(anyInt(), anyInt(), any())).thenReturn(Collections.emptyList());
+
+        driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, propertiesService, coverageProcessor,
+                lockWrapper, mapping, localSnapshotService);
+
+        driver.queueStaleCoveragePeriods();
+
+        verify(localSnapshotService, never()).sendCoverageCounts(any(AB2DServices.class), anySet());
+        verify(coverageProcessor, times(1)).queueCoveragePeriod(eq(submitted), anyBoolean());
+        verify(coverageProcessor, times(1)).queueCoveragePeriod(eq(inProgress), anyBoolean());
+    }
+
+    @DisplayName("When some stale coverage periods are in flight coverage counts are published only for newly queued contracts")
+    @Test
+    void queueStaleCoveragePeriodsPublishesCoverageCountsOnlyForNewlyQueuedContracts() throws InterruptedException {
+
+        CoverageSnapshotService localSnapshotService = mock(CoverageSnapshotService.class);
+
+        when(lockWrapper.getCoverageLock()).thenReturn(tryLockTrue);
+
+        CoveragePeriod inProgress = new CoveragePeriod();
+        inProgress.setId(1);
+        inProgress.setContractNumber("Z1234");
+        inProgress.setMonth(1);
+        inProgress.setYear(2024);
+        inProgress.setStatus(CoverageJobStatus.IN_PROGRESS);
+
+        CoveragePeriod successful = new CoveragePeriod();
+        successful.setId(2);
+        successful.setContractNumber("Z5678");
+        successful.setMonth(2);
+        successful.setYear(2024);
+        successful.setStatus(CoverageJobStatus.SUCCESSFUL);
+
+        doReturn(List.of(inProgress, successful)).when(coverageService).coveragePeriodNeverSearchedSuccessfully();
+        when(coverageService.coveragePeriodStuckJobs(any())).thenReturn(Collections.emptyList());
+        when(coverageService.coveragePeriodNotUpdatedSince(anyInt(), anyInt(), any())).thenReturn(Collections.emptyList());
+
+        driver = new CoverageDriverImpl(null, null, coverageService, coverageV3Service, propertiesService, coverageProcessor,
+                lockWrapper, mapping, localSnapshotService);
+
+        driver.queueStaleCoveragePeriods();
+
+        verify(localSnapshotService, times(1)).sendCoverageCounts(eq(AB2DServices.AB2D), eq(Set.of("Z5678")));
     }
 
     @DisplayName("When sending coverage counts fails stale coverage periods are still queued")

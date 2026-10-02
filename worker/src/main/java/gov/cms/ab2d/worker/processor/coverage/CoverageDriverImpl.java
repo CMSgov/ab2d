@@ -142,15 +142,20 @@ public class CoverageDriverImpl implements CoverageDriver {
                     log.info("Attempting to add {}-{}-{} to queue", period.getContractNumber(),
                             period.getYear(), period.getMonth());
                 }
-                Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
+                Set<String> contracts = outOfDateInfo.stream()
+                        .filter(period -> !isSearchInFlight(period))
+                        .map(CoveragePeriod::getContractNumber)
+                        .collect(Collectors.toSet());
 
                 // Sending coverage counts runs a heavy aggregate query and publishes to SNS.
                 // Guard it so a failure to dispatch the counts (e.g. a rejected async task)
                 // can never prevent stale coverage periods from being queued below.
-                try {
-                    coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
-                } catch (Exception e) {
-                    log.error("Failed to send coverage counts; continuing to queue stale coverage periods", e);
+                if (!contracts.isEmpty()) {
+                    try {
+                        coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
+                    } catch (Exception e) {
+                        log.error("Failed to send coverage counts; continuing to queue stale coverage periods", e);
+                    }
                 }
                 for (CoveragePeriod period : outOfDateInfo) {
                     coverageProcessor.queueCoveragePeriod(period, false);
@@ -180,6 +185,11 @@ public class CoverageDriverImpl implements CoverageDriver {
      *
      * @return list of coverage periods that need to be updated
      */
+    private static boolean isSearchInFlight(CoveragePeriod period) {
+        CoverageJobStatus status = period.getStatus();
+        return status == CoverageJobStatus.SUBMITTED || status == CoverageJobStatus.IN_PROGRESS;
+    }
+
     private Set<CoveragePeriod> getCoveragePeriods() {
         log.debug("attempting to find all stale coverage periods");
 
