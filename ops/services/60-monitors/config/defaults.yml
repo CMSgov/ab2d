@@ -1,5 +1,13 @@
 shadow_mode: false
 notifications:
   slack: true
+  # Sends EVERY monitor (including the CDAP module's warning-level ones) to VictorOps. Leave this
+  # off and use victorops_critical below, which pages only for the monitors marked critical in
+  # main.tf and ecs.tf.
   victorops: false
   additional_webhooks: []
+
+# AB2D-only setting; the CDAP module never sees it. When true, monitors marked `critical = true`
+# also notify VictorOps (@webhook-victorops-ab2d-critical/-recovery). Every environment uses the
+# same VictorOps routing key, so enabling this anywhere pages the real AB2D on-call rotation.
+victorops_critical: false

@@ -76,16 +76,25 @@ locals {
 
   alert_time = "Triggered at {{local_time 'last_triggered_at' 'UTC'}} (UTC)."
 
+  # VictorOps handles for monitors marked `critical = true`. Skipped in shadow mode, and when
+  # notifications.victorops already adds them to every monitor.
+  victorops_critical_notify = (
+    local.monitor_config.victorops_critical
+    && !local.monitor_config.shadow_mode
+    && !try(local.monitor_config.notifications.victorops, false)
+  ) ? module.common_datadog_monitors.victorops_notify : ""
+
   coverage_v3_import_eval_hour   = 23
   coverage_v3_import_eval_minute = 45
 
   # Alerts for suspicious Coverage V3 import behavior
   coverage_v3_monitors = [
     {
-      name    = "AB2D Coverage V3 - Import row delta anomaly (${local.env})"
-      type    = "query alert"
-      message = "Contract {{contract.name}} lost more than 5% of its Coverage V3 rows ({{value}}%) in the last 24 hours. The IDR extract for this contract is probably incomplete. Check the latest idr-db-importer ECS task and the worker's copyFromStagingTablesToRecentForAllContracts log."
-      query   = "min(last_1d):sum:ab2d.coverage.v3.import.rows_delta{environment:${local.coverage_v3_env_tag}} by {contract} / sum:ab2d.coverage.v3.import.rows_before{environment:${local.coverage_v3_env_tag}} by {contract} * 100 < -5"
+      name     = "AB2D Coverage V3 - Import row delta anomaly (${local.env})"
+      critical = true
+      type     = "query alert"
+      message  = "Contract {{contract.name}} lost more than 5% of its Coverage V3 rows ({{value}}%) in the last 24 hours. The IDR extract for this contract is probably incomplete. Check the latest idr-db-importer ECS task and the worker's copyFromStagingTablesToRecentForAllContracts log."
+      query    = "min(last_1d):sum:ab2d.coverage.v3.import.rows_delta{environment:${local.coverage_v3_env_tag}} by {contract} / sum:ab2d.coverage.v3.import.rows_before{environment:${local.coverage_v3_env_tag}} by {contract} * 100 < -5"
       thresholds = {
         critical = -5
       }
@@ -105,10 +114,11 @@ locals {
       tags                      = ["service:coverage", "feature:coverage-v3-import"]
     },
     {
-      name    = "AB2D Coverage V3 - Coverage below retention cutoff missing from historical (${local.env})"
-      message = "One or more Coverage V3 contracts in ${local.env} have coverage below the retention cutoff that is absent from v3.coverage_v3_historical after an archive pass."
-      type    = "metric alert"
-      query   = "max(last_1d):max:ab2d.coverage.v3.historical.rows_unarchived{environment:${local.coverage_v3_env_tag}} by {contract} > 0"
+      name     = "AB2D Coverage V3 - Coverage below retention cutoff missing from historical (${local.env})"
+      critical = true
+      message  = "One or more Coverage V3 contracts in ${local.env} have coverage below the retention cutoff that is absent from v3.coverage_v3_historical after an archive pass."
+      type     = "metric alert"
+      query    = "max(last_1d):max:ab2d.coverage.v3.historical.rows_unarchived{environment:${local.coverage_v3_env_tag}} by {contract} > 0"
       thresholds = {
         critical = 0
       }
@@ -117,10 +127,11 @@ locals {
       tags                      = ["service:coverage", "feature:coverage-v3-historical"]
     },
     {
-      name    = "AB2D Coverage V3 - Historical sync failures detected (${local.env})"
-      message = "One or more Coverage V3 archive passes reported SYNC_FAILED_FOR_CONTRACT in the last 24h for ${local.env}. The recent-to-historical copy did not complete for the affected contract(s)."
-      type    = "metric alert"
-      query   = "sum(last_1d):sum:ab2d.coverage.v3.historical.completed{environment:${local.coverage_v3_env_tag},result:sync_failed_for_contract}.as_count() > 0"
+      name     = "AB2D Coverage V3 - Historical sync failures detected (${local.env})"
+      critical = true
+      message  = "One or more Coverage V3 archive passes reported SYNC_FAILED_FOR_CONTRACT in the last 24h for ${local.env}. The recent-to-historical copy did not complete for the affected contract(s)."
+      type     = "metric alert"
+      query    = "sum(last_1d):sum:ab2d.coverage.v3.historical.completed{environment:${local.coverage_v3_env_tag},result:sync_failed_for_contract}.as_count() > 0"
       thresholds = {
         critical = 0
       }
@@ -129,10 +140,11 @@ locals {
       tags                      = ["service:coverage", "feature:coverage-v3-historical"]
     },
     {
-      name    = "AB2D Coverage V3 - Sync failures detected (${local.env})"
-      type    = "metric alert"
-      message = "A Coverage V3 staging sync failed (SYNC_FAILED_FOR_CONTRACT) in the last 24 hours because row counts did not match. Coverage data may be wrong for some contracts. Check the worker's copyFromStagingTablesToRecentForAllContracts log."
-      query   = "sum(last_1d):sum:ab2d.coverage.v3.import.completed{environment:${local.coverage_v3_env_tag},result:sync_failed_for_contract}.as_count() > 0"
+      name     = "AB2D Coverage V3 - Sync failures detected (${local.env})"
+      critical = true
+      type     = "metric alert"
+      message  = "A Coverage V3 staging sync failed (SYNC_FAILED_FOR_CONTRACT) in the last 24 hours because row counts did not match. Coverage data may be wrong for some contracts. Check the worker's copyFromStagingTablesToRecentForAllContracts log."
+      query    = "sum(last_1d):sum:ab2d.coverage.v3.import.completed{environment:${local.coverage_v3_env_tag},result:sync_failed_for_contract}.as_count() > 0"
       thresholds = {
         critical = 0
       }
@@ -151,9 +163,12 @@ module "common_datadog_monitors" {
   app            = "ab2d"
   env            = local.env
   monitor_config = local.monitor_config
+  # `critical` is ours, not the module's, so drop it before handing the monitor over.
   custom_monitors = [
     for m in concat(local.coverage_v3_monitors, local.ecs_monitors) :
-    merge(m, { message = "${m.message} ${local.alert_time}" })
+    merge({ for k, v in m : k => v if k != "critical" }, {
+      message = trimspace("${m.message} ${local.alert_time} ${try(m.critical, false) ? local.victorops_critical_notify : ""}")
+    })
   ]
 }
 

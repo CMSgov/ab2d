@@ -7,3 +7,6 @@ enabled:
   rds: true
 lambda:
   error_rate_threshold: 1
+
+# Off until the lower-environment VictorOps rollout is reviewed and approved (AB2D-7447).
+victorops_critical: false
