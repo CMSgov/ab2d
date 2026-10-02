@@ -128,7 +128,7 @@ class PrototypeObservabilityIntegrationTest extends AbstractPrototypeRecoveryInt
         String uuid = job.getJobUuid();
 
         RunningWorker worker = startWorkerUntilOnePartitionDone(uuid, "test-obs-soft-worker");
-        prototypeJobProcessor.stopForShutdown();
+        prototypeJobProcessor.stopForShutdown(Set.of(uuid));
         worker.awaitReturn(90);
         assertEquals(JobStatus.SUBMITTED, jobRepository.findByJobUuid(uuid).getStatus());
 
