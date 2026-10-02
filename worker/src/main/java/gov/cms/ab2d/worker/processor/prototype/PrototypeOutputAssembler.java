@@ -72,6 +72,8 @@ public class PrototypeOutputAssembler {
         Path finishedDir = searchConfig.getFinishedDir(jobUuid).toPath();
         Path jobRoot = Path.of(searchConfig.getEfsMount(), jobUuid);
         long rolloverBytes = (long) searchConfig.getNdjsonRollOver() * BYTES_PER_MB;
+        log.info("assembly for job {}: starting - combining files from {} completed partition(s)",
+                jobUuid, partitions.size());
 
         Files.createDirectories(finishedDir);
         Files.createDirectories(jobRoot);
@@ -88,9 +90,11 @@ public class PrototypeOutputAssembler {
         List<Path> errorRollover = concatenate(errorWinners, contractNumber, jobRoot, rolloverBytes,
                 PrototypePartitionNaming.ERROR_STREAM);
 
-        List<JobOutput> outputs = new ArrayList<>(dataRollover.size() + errorRollover.size());
-        registerOutputs(dataRollover, job, outputs);
-        registerOutputs(errorRollover, job, outputs);
+        int totalRollover = dataRollover.size() + errorRollover.size();
+        log.info("assembly for job {}: combined into {} file(s), compressing", jobUuid, totalRollover);
+        List<JobOutput> outputs = new ArrayList<>(totalRollover);
+        registerOutputs(dataRollover, job, outputs, jobUuid, totalRollover);
+        registerOutputs(errorRollover, job, outputs, jobUuid, totalRollover);
         if (!outputs.isEmpty()) {
             jobOutputRepository.saveAll(outputs);
         }
@@ -101,10 +105,12 @@ public class PrototypeOutputAssembler {
 
     /**
      * Compress each rollover file and register a JobOutput row for it. Idempotency is handled by parent.
+     * Progress is numbered across all streams, so {@code totalFiles} is the job-wide rollover count.
      */
-    private void registerOutputs(List<Path> rolloverFiles, Job job, List<JobOutput> outputs)
-            throws IOException {
+    private void registerOutputs(List<Path> rolloverFiles, Job job, List<JobOutput> outputs, String jobUuid,
+                                 int totalFiles) throws IOException {
         for (Path file : rolloverFiles) {
+            log.info("assembly for job {}: compressing file {}/{}", jobUuid, outputs.size() + 1, totalFiles);
             StreamOutput streamOutput = new StreamOutput(file.toFile());
             JobOutput output = new JobOutput();
             output.setFilePath(streamOutput.getFilePath());
