@@ -115,7 +115,7 @@ public class WorkerServiceImpl implements WorkerService {
             return;
         }
         log.info("All prototype jobs will be paused");
-        prototypeJobProcessor.stopRunning();
+        prototypeJobProcessor.stopRunning(prototypeJobs);
     }
 
     /**
@@ -139,15 +139,20 @@ public class WorkerServiceImpl implements WorkerService {
      */
     @EventListener(ContextClosedEvent.class)
     public void stopPrototypeJobsBeforeClose() {
-        prototypeJobProcessor.stopForShutdown();
+        prototypeJobProcessor.stopForShutdown(prototypeJobs);
     }
 
     @PreDestroy
     public void resetInProgressJobs() {
         log.info("Shutdown in progress ... Do house keeping ...");
 
-        if (!activeJobs.isEmpty()) {
-            shutDownService.resetInProgressJobs(activeJobs);
+        // this is a stopgap to prevent jobs from being forced to hard-recovery
+        // prototype jobs handle their own shutdown behavior.
+        List<String> jobsToReset = new ArrayList<>(activeJobs);
+        jobsToReset.removeAll(prototypeJobs);
+
+        if (!jobsToReset.isEmpty()) {
+            shutDownService.resetInProgressJobs(jobsToReset);
         }
 
         log.info("House keeping done - Shutting down");

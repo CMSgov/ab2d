@@ -45,7 +45,7 @@ class PrototypeJobPauseResumeIntegrationTest extends AbstractPrototypeRecoveryIn
                 processedLog.size(), TOTAL_BENES);
 
         // Step 3 gracefully shut down the worker
-        prototypeJobProcessor.stopForShutdown();
+        prototypeJobProcessor.stopForShutdown(Set.of(uuid));
         worker.awaitReturn(90);
 
         int processedInPhase1 = processedLog.size();
@@ -129,5 +129,52 @@ class PrototypeJobPauseResumeIntegrationTest extends AbstractPrototypeRecoveryIn
         assertTrue(deliveredOutputFiles(uuid).isEmpty() && finishedFiles(uuid).isEmpty()
                         && streamingFiles(uuid).isEmpty(),
                 "a cancelled job should leave no output or working files behind");
+    }
+
+    @Test
+    @DisplayName("A shutdown leaves batch executions this worker does not own alone, stranded ones included")
+    void shutdownOnlyStopsThisWorkersExecutions() throws Exception {
+        Job job = createSubmittedV3Job("stranded-neighbour");
+        String uuid = job.getJobUuid();
+
+        // A worker killed mid-stop leaves its execution in STOPPING with no end time
+        // spring batch considers that row as a "running" execution, basically forever
+        long strandedId = strandPrototypeExecution("job-owned-by-another-worker");
+
+        RunningWorker worker = startWorkerUntilOnePartitionDone(uuid, "test-stranded-neighbour-worker");
+
+        long startedAt = System.currentTimeMillis();
+        prototypeJobProcessor.stopForShutdown(Set.of(uuid));
+        long drainMs = System.currentTimeMillis() - startedAt;
+        worker.awaitReturn(90);
+
+        assertEquals(JobStatus.SUBMITTED, jobRepository.findByJobUuid(uuid).getStatus(),
+                "the job this worker owns should still suspend cleanly");
+        assertTrue(drainMs < prototypeProperties.getShutdownAwaitMs(),
+                "the drain waited out its full " + prototypeProperties.getShutdownAwaitMs() + "ms budget ("
+                        + drainMs + "ms), so it never noticed its own job had stopped");
+        assertEquals("STOPPING", jdbc.queryForObject(
+                        "SELECT status FROM batch_job_execution WHERE job_execution_id = ?", String.class, strandedId),
+                "another worker's stranded execution should be untouched");
+    }
+
+    /**
+     * Write the batch metadata a worker leaves behind when it is killed between being told to stop and
+     * finishing
+     */
+    private long strandPrototypeExecution(String foreignJobUuid) {
+        long instanceId = jdbc.queryForObject("SELECT nextval('batch_job_instance_seq')", Long.class);
+        long executionId = jdbc.queryForObject("SELECT nextval('batch_job_execution_seq')", Long.class);
+        jdbc.update("INSERT INTO batch_job_instance (job_instance_id, version, job_name, job_key) "
+                        + "VALUES (?, 0, ?, ?)",
+                instanceId, PrototypeJobProcessorImpl.PROTOTYPE_JOB_NAME, "stranded-" + instanceId);
+        jdbc.update("INSERT INTO batch_job_execution (job_execution_id, version, job_instance_id, create_time, "
+                        + "start_time, end_time, status, exit_code, last_updated) "
+                        + "VALUES (?, 1, ?, now(), now(), NULL, 'STOPPING', 'UNKNOWN', now())",
+                executionId, instanceId);
+        jdbc.update("INSERT INTO batch_job_execution_params (job_execution_id, parameter_name, parameter_type, "
+                        + "parameter_value, identifying) VALUES (?, 'jobUuid', ?, ?, 'Y')",
+                executionId, String.class.getName(), foreignJobUuid);
+        return executionId;
     }
 }

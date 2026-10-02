@@ -99,7 +99,7 @@ class PrototypeGatingIntegrationTest extends AbstractPrototypeRecoveryIntegratio
 
         // real work has arrived, so the prototype is asked to step aside
         long before = System.currentTimeMillis();
-        prototypeJobProcessor.stopRunning();
+        prototypeJobProcessor.stopRunning(Set.of(uuid));
         long elapsed = System.currentTimeMillis() - before;
         assertTrue(elapsed < 2000, "stopRunning should only signal the stop, but it took " + elapsed + "ms");
 
@@ -186,11 +186,11 @@ class PrototypeGatingIntegrationTest extends AbstractPrototypeRecoveryIntegratio
 
         harness.withRealJobsRunning(1, () -> assertTrue(harness.workerService.isPrototypeAdmissible(),
                 "the default tolerance of 1 leaves room next to one real job"));
-        verify(harness.prototypeJobProcessor, never()).stopRunning();
+        verify(harness.prototypeJobProcessor, never()).stopRunning(any());
 
         harness.withRealJobsRunning(2, () -> assertFalse(harness.workerService.isPrototypeAdmissible(),
                 "two real jobs is over the default tolerance"));
-        verify(harness.prototypeJobProcessor).stopRunning();
+        verify(harness.prototypeJobProcessor).stopRunning(any());
 
         assertTrue(harness.workerService.isPrototypeAdmissible(),
                 "the worker should reopen once the real work has finished");
@@ -204,7 +204,7 @@ class PrototypeGatingIntegrationTest extends AbstractPrototypeRecoveryIntegratio
 
         harness.workerService.process(PROTOTYPE_JOB);
 
-        verify(harness.prototypeJobProcessor, never()).stopRunning();
+        verify(harness.prototypeJobProcessor, never()).stopRunning(any());
     }
 
     @Test
@@ -214,13 +214,13 @@ class PrototypeGatingIntegrationTest extends AbstractPrototypeRecoveryIntegratio
         when(flagOff.propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false)).thenReturn(false);
         flagOff.withRealJobsRunning(2, () -> assertTrue(flagOff.workerService.isPrototypeAdmissible(),
                 "with the feature off nothing is routed to the prototype, so nothing is held back"));
-        verify(flagOff.prototypeJobProcessor, never()).stopRunning();
+        verify(flagOff.prototypeJobProcessor, never()).stopRunning(any());
 
         Harness pauseOff = new Harness();
         pauseOff.props.setPauseUnderLoad(false);
         pauseOff.withRealJobsRunning(2, () -> assertTrue(pauseOff.workerService.isPrototypeAdmissible(),
                 "with pause-under-load off the prototype keeps running under any load"));
-        verify(pauseOff.prototypeJobProcessor, never()).stopRunning();
+        verify(pauseOff.prototypeJobProcessor, never()).stopRunning(any());
     }
 
 
