@@ -362,6 +362,12 @@ class CoverageV3SyncServiceImplTest {
 		"""
 		{action=COPY_FROM_STAGING, result=SYNC_FAILED_FOR_CONTRACT, contract=Z5555, log=rowsInsertedForMonth does not match rowCountForMonth, data={"period": "2026-2", "rowCountForMonth": 2, "rowsInsertedForMonth": 0}}
 		""");
+
+		assertTrue(out.getOut().contains("[V3] Failed to copy rows from staging to coverage for contract Z5555"));
+		assertAuditLogEquals(getAuditLogs().get(4),
+		"""
+		{action=COPY_FROM_STAGING, result=SYNC_FAILED_FOR_CONTRACT, contract=Z5555, log=batchCopyFromStagingToCoverage failed: batchCopyFromStagingToCoverage failed: rowsInsertedForMonth != rowCountForMonth, data={"exception": "java.lang.RuntimeException"}}
+		""");
 	}
 
 	@Test
