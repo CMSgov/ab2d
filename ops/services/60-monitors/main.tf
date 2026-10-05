@@ -76,8 +76,6 @@ locals {
 
   alert_time = "Triggered at {{local_time 'last_triggered_at' 'UTC'}} (UTC)."
 
-  # VictorOps handles for monitors marked `critical = true`. Skipped in shadow mode, and when
-  # notifications.victorops already adds them to every monitor.
   victorops_critical_notify = (
     local.monitor_config.victorops_critical
     && !local.monitor_config.shadow_mode
@@ -163,7 +161,6 @@ module "common_datadog_monitors" {
   app            = "ab2d"
   env            = local.env
   monitor_config = local.monitor_config
-  # `critical` is ours, not the module's, so drop it before handing the monitor over.
   custom_monitors = [
     for m in concat(local.coverage_v3_monitors, local.ecs_monitors) :
     merge({ for k, v in m : k => v if k != "critical" }, {

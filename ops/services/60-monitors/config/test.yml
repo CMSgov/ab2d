@@ -8,5 +8,4 @@ enabled:
 lambda:
   error_rate_threshold: 1
 
-# Critical monitors page VictorOps (see defaults.yml).
 victorops_critical: true
