@@ -3,4 +3,4 @@ notifications:
   slack: true
   victorops: false
   additional_webhooks: []
-  victorops_critical: false
+victorops_critical: false

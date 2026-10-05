@@ -7,5 +7,3 @@ enabled:
   rds: true
 lambda:
   error_rate_threshold: 1
-
-victorops_critical: true

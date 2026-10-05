@@ -8,4 +8,4 @@ enabled:
 lambda:
   error_rate_threshold: 1
 
-victorops_critical: false
+victorops_critical: true
