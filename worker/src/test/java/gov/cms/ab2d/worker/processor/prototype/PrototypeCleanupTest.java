@@ -46,6 +46,20 @@ class PrototypeCleanupTest extends AbstractPrototypeRecoveryIntegrationTest {
         props.setCleanupMaxExecutionsPerSweep(200);
         props.setCleanupEnabled(true);
         propertiesService.updateProperty(PAUSE_RESUME_PROTOTYPE_ENABLED, "true");
+        clearBatchMetadata();
+    }
+
+    /**
+     * Start from an empty set of batch metadata tables.
+     */
+    private void clearBatchMetadata() {
+        // order of deletion matters
+        jdbc.update("DELETE FROM batch_step_execution_context");
+        jdbc.update("DELETE FROM batch_step_execution");
+        jdbc.update("DELETE FROM batch_job_execution_context");
+        jdbc.update("DELETE FROM batch_job_execution_params");
+        jdbc.update("DELETE FROM batch_job_execution");
+        jdbc.update("DELETE FROM batch_job_instance");
     }
 
     @Test
