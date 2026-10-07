@@ -24,6 +24,6 @@ jobs:
     with:
       app: ab2d
       ref: ${{ inputs.branch }}
-      cli_args: "--all-projects --exclude=e2e-bfd-test,e2e-test,fhir-test,common,coverage,job,libs,ops,local-dev,scripts"
+      cli_args: "--all-projects --exclude=e2e-bfd-test,e2e-test,fhir-test,common,coverage,job,libs,ops,local-dev,scripts --policy-path=.snyk"
     secrets:
       PROD_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
