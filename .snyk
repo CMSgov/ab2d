@@ -1,7 +1,4 @@
-# Snyk (https://snyk.io) policy file
-# Exclude these for Snyk Code / SAST source code file scans
-# This file is used when calling `snyk code test` such as in CMSGov/CDAP/.github/workflows/code-checks-snyk.yml
----
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
 exclude:
   global:
     - e2e-test
@@ -9,3 +6,17 @@ exclude:
     - e2e-bfd-test
     - scripts
     - local-dev
+version: v1.25.1
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  SNYK-JAVA-COMFASTERXMLJACKSONCORE-20059179:
+    - '*':
+        reason: Low Risk (CLI test)
+        expires: 2026-11-06T19:31:18.106Z
+        created: 2026-10-07T19:31:18.110Z
+  SNYK-JAVA-ORGAPACHETOMCATEMBED-20302842:
+    - '*':
+        reason: Low Risk (CLI test)
+        expires: 2026-11-06T19:31:23.810Z
+        created: 2026-10-07T19:31:23.815Z
+patch: {}
