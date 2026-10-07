@@ -205,3 +205,19 @@ databaseChangeLog:
       file: db/changelog/v2026/alter_historic_mbis_type.sql
   - include:
       file: db/changelog/v2026/optimize_find_benes_served_procedure.sql
+  - include:
+      file: db/changelog/v2026/add_pause_resume_prototype_property.sql
+  - include:
+      file: db/changelog/v2026/create_job_lease_table.sql
+  - include:
+      file: db/changelog/v2026/spring-batch-schema-postgresql.sql
+  - include:
+      file: db/changelog/v2026/add_job_lease_alerted_at.sql
+  - include:
+      file: db/changelog/v2026/spring-batch-schema-exit-message.sql
+  - include:
+      file: db/changelog/v2026/add_pause_resume_prototype_tunables.sql
+  - include:
+      file: db/changelog/v2026/add_job_pause_eligible.sql
+  - include:
+      file: db/changelog/v2026/add_job_lease_pause_requested.sql
