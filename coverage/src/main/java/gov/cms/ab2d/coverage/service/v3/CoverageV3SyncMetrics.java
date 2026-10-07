@@ -22,11 +22,13 @@ public class CoverageV3SyncMetrics {
     static final String IMPORT_ROWS_AFTER = "coverage.v3.import.rows_after";
     static final String IMPORT_ROWS_DELTA = "coverage.v3.import.rows_delta";
     static final String IMPORT_COMPLETED = "coverage.v3.import.completed";
+    static final String IMPORT_ROWS_PRESERVED = "coverage.v3.import.rows_preserved";
 
     static final String HISTORICAL_ROWS_MOVED = "coverage.v3.historical.rows_moved";
     static final String HISTORICAL_ROWS_DELETED = "coverage.v3.historical.rows_deleted";
     static final String HISTORICAL_ROWS_DELTA = "coverage.v3.historical.rows_delta";
     static final String HISTORICAL_COMPLETED = "coverage.v3.historical.completed";
+    static final String HISTORICAL_ROWS_UNARCHIVED = "coverage.v3.historical.rows_unarchived";
 
     private final String executionEnv;
     private final StatsDClient statsDClient;
@@ -71,6 +73,14 @@ public class CoverageV3SyncMetrics {
             gauge(HISTORICAL_ROWS_DELTA, rowsMoved, tags);
         }
         increment(HISTORICAL_COMPLETED, tags);
+    }
+
+    public void recordPreservedRows(CoverageV3SyncSource source, String contract, int rowsPreserved) {
+        gauge(IMPORT_ROWS_PRESERVED, rowsPreserved, buildTags(COPY_FROM_STAGING, source, contract, null));
+    }
+
+    public void recordUnarchivedOldRows(CoverageV3SyncSource source, String contract, int unarchivedOldRows) {
+        gauge(HISTORICAL_ROWS_UNARCHIVED, unarchivedOldRows, buildTags(COPY_TO_HISTORICAL, source, contract, null));
     }
 
     private void gauge(String aspect, Integer value, String[] tags) {

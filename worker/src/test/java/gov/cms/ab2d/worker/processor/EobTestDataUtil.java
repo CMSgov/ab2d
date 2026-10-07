@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4V3;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerSTU3;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -37,6 +38,30 @@ public final class EobTestDataUtil {
                 LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()));
         //noinspection ConstantConditions
         ((org.hl7.fhir.dstu3.model.ExplanationOfBenefit) eob).setBillablePeriod(billingPeriod);
+
+        return eob;
+    }
+
+
+    public static IBaseResource createEOBV3() {
+        IBaseResource eob;
+
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        Resource resource = resourceLoader.getResource("classpath:" + File.separator +
+                                                       "test-data" + File.separator + "EOB-for-Carrier-v2.json");
+        InputStream inputStream = getEOBInputStream(resource);
+
+        final EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
+        final IParser parser = respType.newParser(FhirContext.forR4());
+        final org.hl7.fhir.r4.model.ExplanationOfBenefit explanationOfBenefit = parser.parseResource(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, inputStream);
+        eob = ExplanationOfBenefitTrimmerR4V3.getBenefit(explanationOfBenefit);
+        org.hl7.fhir.r4.model.Period billingPeriod = new org.hl7.fhir.r4.model.Period();
+        billingPeriod.setStart(Date.from(
+                LocalDate.of(2020, 1, 2).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        billingPeriod.setEnd(Date.from(
+                LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        //noinspection ConstantConditions
+        ((org.hl7.fhir.r4.model.ExplanationOfBenefit) eob).setBillablePeriod(billingPeriod);
 
         return eob;
     }
