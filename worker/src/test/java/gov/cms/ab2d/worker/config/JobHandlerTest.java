@@ -49,7 +49,7 @@ class JobHandlerTest {
         ReentrantLock lock = new ReentrantLock();
         when(workerService.getEngagement()).thenReturn(FeatureEngagement.NEUTRAL);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
@@ -72,7 +72,7 @@ class JobHandlerTest {
         ReentrantLock lock = new ReentrantLock();
         when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
 
         List<Map<String, Object>> payload = List.of();
 
@@ -97,7 +97,7 @@ class JobHandlerTest {
         when(lockRegistry.obtain(anyString())).thenReturn(lock);
         when(workerService.process(anyString())).thenReturn(submittedJob);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
@@ -124,7 +124,7 @@ class JobHandlerTest {
         when(lockRegistry.obtain(anyString())).thenReturn(lock);
         when(workerService.process(anyString())).thenThrow(ResourceNotFoundException.class);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
@@ -158,7 +158,7 @@ class JobHandlerTest {
 
         when(workerService.process(anyString())).thenReturn(submittedJob, submittedJob, startedJob, startedJob);
 
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
 
         Map<String, Object> first = new HashMap<>() {{
             put("job_uuid", "first job id");
@@ -194,43 +194,4 @@ class JobHandlerTest {
         verify(workerService, times(3)).process(anyString());
     }
 
-    @Test
-    void testV3JobSyncSuccessful() {
-        Job submittedJob = new Job();
-        submittedJob.setStatus(JobStatus.IN_PROGRESS);
-        ReentrantLock lock = new ReentrantLock();
-        when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
-        when(lockRegistry.obtain(anyString())).thenReturn(lock);
-        when(workerService.process(anyString())).thenReturn(submittedJob);
-        when(coverageV3Service.moveFromStagingToRecentCoverage(any(), eq(JOB_HANDLER))).thenReturn(CoverageV3SyncResult.SYNC_SUCCESSFUL_FOR_CONTRACT);
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
-        Map<String, Object> jobMap = new HashMap<>() {{
-            put("job_uuid", "DoesNotMatter");
-            put("contract_number", "DoesNotMatter");
-            put("fhir_version", "R4V3");
-        }};
-        List<Map<String, Object>> payload = List.of(jobMap);
-        jobHandler.handleMessage(new GenericMessage<>(payload));
-        assertFalse(lock.isLocked());
-        verify(workerService, times(1)).getEngagement();
-        verify(workerService, times(1)).process(anyString());
-    }
-
-    @Test
-    void testV3JobSyncFailed() {
-        Job submittedJob = new Job();
-        submittedJob.setStatus(JobStatus.IN_PROGRESS);
-        ReentrantLock lock = new ReentrantLock();
-        when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
-        when(lockRegistry.obtain(anyString())).thenReturn(lock);
-        when(coverageV3Service.moveFromStagingToRecentCoverage(any(), eq(JOB_HANDLER))).thenReturn(CoverageV3SyncResult.SYNC_FAILED_FOR_CONTRACT);
-        JobHandler jobHandler = new JobHandler(lockRegistry, workerService, coverageV3Service);
-        Map<String, Object> jobMap = new HashMap<>() {{
-            put("job_uuid", "DoesNotMatter");
-            put("contract_number", "DoesNotMatter");
-            put("fhir_version", "R4V3");
-        }};
-        List<Map<String, Object>> payload = List.of(jobMap);
-        assertThrows(MessagingException.class, () -> jobHandler.handleMessage(new GenericMessage<>(payload)));
-    }
 }

@@ -10,6 +10,7 @@ import lombok.val;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
@@ -35,7 +36,7 @@ public class CoverageV3AuditLogImpl implements CoverageV3AuditLog {
 		this.propertiesService = propertiesService;
 	}
 
-	@Transactional
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	@Override
 	public void log(CoverageV3AuditAction action, CoverageV3SyncResult result, String contract, String logText, Object data) {
 		if (!propertiesService.isToggleOn(PropertyConstants.V3_AUDIT_LOGGING_ENABLED, false)) {

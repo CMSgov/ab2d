@@ -40,7 +40,7 @@ class WorkerServiceImplTest {
 
     // assertDoesNotThrow is really the best we can do here... all the function does is log.
     assertDoesNotThrow(() -> {
-      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service);
+      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService);
       workerServiceImpl.process("jobUuid");
     });
   }
@@ -54,7 +54,7 @@ class WorkerServiceImplTest {
     CoverageV3Service coverageV3Service = mock(CoverageV3Service.class);
 
 
-    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, coverageV3Service);
+    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService);
 
     // verify "resetInProgressJobs" wasn't called, because "activeJobs" is empty
     workerServiceImpl.resetInProgressJobs();
