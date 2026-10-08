@@ -11,12 +11,26 @@ version: v1.25.1
 ignore:
   SNYK-JAVA-COMFASTERXMLJACKSONCORE-20059179:
     - '*':
-        reason: Low Risk (CLI test)
-        expires: 2026-11-06T19:31:18.106Z
+        reason: Low Risk
+        expires: 2026-12-31T00:00:00.000Z
         created: 2026-10-07T19:31:18.110Z
   SNYK-JAVA-ORGAPACHETOMCATEMBED-20302842:
     - '*':
-        reason: Low Risk (CLI test)
-        expires: 2026-11-06T19:31:23.810Z
+        reason: Low Risk
+        expires: 2026-12-31T00:00:00.000Z
         created: 2026-10-07T19:31:23.815Z
+  SNYK-JAVA-ORGSPRINGFRAMEWORKCLOUD-19268251:
+    - '*':
+        reason: Not exploitable; /actuator/env endpoint is not accessible
+        expires: 2026-12-31T00:00:00.000Z
+        created: 2026-10-08T22:50:35.601Z
+  SNYK-JAVA-ORGAPACHEHTTPCOMPONENTSCLIENT5-19432178:
+    - '*':
+        reason: >-
+          False positive; Snyk is reporting on a hidden configuration checkstyle
+          uses: 'Checkstyle libraries are isolated to the code-quality analysis
+          phase and do not leak into your artifact's compile or runtime
+          classpath'
+        expires: 2027-03-01T00:00:00.000Z
+        created: 2026-10-08T23:19:10.277Z
 patch: {}
