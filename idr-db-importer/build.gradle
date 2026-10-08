@@ -64,8 +64,8 @@ dependencies {
 		implementation('com.github.jnr:jnr-posix:3.2.4')
 		implementation('commons-beanutils:commons-beanutils:1.11.0')
 		implementation('org.apache.commons:commons-compress:1.28.0')
-		implementation('com.fasterxml.jackson.core:jackson-core:2.22.2')
-		implementation('com.fasterxml.jackson.core:jackson-databind:2.22.2')
+		implementation('com.fasterxml.jackson.core:jackson-core:2.22.3')
+		implementation('com.fasterxml.jackson.core:jackson-databind:2.22.3')
 		implementation('org.apache.thrift:libthrift:0.24.0')
 	}
 }
