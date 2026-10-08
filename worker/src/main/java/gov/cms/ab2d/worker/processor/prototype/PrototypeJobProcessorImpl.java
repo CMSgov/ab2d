@@ -445,7 +445,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         log.error("prototype job {} for contract {} FAILED ({}): {}", jobUuid, contractNumber,
                 reason.tagValue(), message);
         metrics.jobFailed(contractNumber, reason);
-        eventLogger.logAndTrace(job.buildJobStatusChangeEvent(FAILED,
+        eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED,
                 EOB_JOB_FAILURE + " Prototype job " + jobUuid + " for contract " + contractNumber
                         + " failed (" + reason.tagValue() + "): " + message), PUBLIC_LIST);
     }
@@ -472,7 +472,7 @@ public class PrototypeJobProcessorImpl implements PrototypeJobProcessor {
         int processed = tracker == null ? 0 : tracker.getPatientRequestProcessedCount();
         String message = String.format("%s via prototype: processed %d patients into %d file(s)",
                 EOB_JOB_COMPLETED, processed, job.getJobOutputs().size());
-        eventLogger.logAndTrace(job.buildJobStatusChangeEvent(SUCCESSFUL, message), PROD_LIST);
+        eventLogger.logAndAlert(job.buildJobStatusChangeEvent(SUCCESSFUL, message), PROD_LIST);
         metrics.jobCompleted(job.getContractNumber(), processed);
 
         job.setStatus(SUCCESSFUL);
