@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
     id "org.sonarqube" version "7.3.0.8198"
     id 'maven-publish'
     id 'org.cyclonedx.bom' version '3.0.0' apply true
@@ -19,13 +20,17 @@ ext {
     liquibaseVersion = '5.0.0'
     eventClientVersion='3.3.18'
     contractClientVersion='2.3.1'
-
-    // Spring Boot Managed Dependencies
-
-    set('netty.version', '4.2.18.Final')
-    set('tomcat.version', '11.0.26')
-
 }
+
+// Spring Boot Managed Dependencies
+ext['netty.version'] = '4.2.18.Final'
+ext['tomcat.version'] = '11.0.26'
+
+//dependencyManagement {
+//    imports {
+//        mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+//    }
+//}
 
 allprojects {
     apply plugin: "org.cyclonedx.bom"
@@ -35,7 +40,7 @@ allprojects {
     }
 
     dependencies {
-        implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+//        implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
         testImplementation enforcedPlatform("org.testcontainers:testcontainers-bom:${testContainerVersion}")
         implementation "gov.cms.ab2d:ab2d-events-client:${eventClientVersion}"
         implementation "gov.cms.ab2d:ab2d-contracts-client:${contractClientVersion}"
@@ -75,8 +80,8 @@ allprojects {
             implementation 'io.opentelemetry:opentelemetry-api:1.62.0'
             implementation 'commons-beanutils:commons-beanutils:1.11.0'
             implementation 'org.mozilla:rhino:1.7.15'
-            implementation 'com.fasterxml.jackson.core:jackson-core:2.22.2'
-            implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.2'
+            implementation 'com.fasterxml.jackson.core:jackson-core:2.22.3'
+            implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
         }
     }
 
