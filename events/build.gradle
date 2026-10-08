@@ -22,6 +22,11 @@ ext {
     eventClientVersion='3.3.18'
     lombokVersion = '1.18.48'
     commonsLangVersion='3.20.0'
+
+    // Spring Boot Managed Dependencies
+
+    set('netty.version', '4.2.18.Final')
+    set('tomcat.version', '11.0.26')
 }
 
 allprojects {
