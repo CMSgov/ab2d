@@ -20,17 +20,11 @@ ext {
     liquibaseVersion = '5.0.0'
     eventClientVersion='3.3.18'
     contractClientVersion='2.3.1'
+
+    // Spring Boot Managed Dependencies
+    set('netty.version', '4.2.18.Final')
+    set('tomcat.version', '11.0.26')
 }
-
-// Spring Boot Managed Dependencies
-ext['netty.version'] = '4.2.18.Final'
-ext['tomcat.version'] = '11.0.26'
-
-//dependencyManagement {
-//    imports {
-//        mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
-//    }
-//}
 
 allprojects {
     apply plugin: "org.cyclonedx.bom"
@@ -40,7 +34,7 @@ allprojects {
     }
 
     dependencies {
-//        implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+        implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
         testImplementation enforcedPlatform("org.testcontainers:testcontainers-bom:${testContainerVersion}")
         implementation "gov.cms.ab2d:ab2d-events-client:${eventClientVersion}"
         implementation "gov.cms.ab2d:ab2d-contracts-client:${contractClientVersion}"
