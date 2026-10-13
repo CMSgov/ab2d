@@ -1,0 +1,127 @@
+name: idr-db-importer-backfill
+run-name: "idr-db-importer backfill ${{ inputs.month }} → ${{ inputs.environment }} (${{ inputs.contracts }})"
+
+# Restores a month of V3 coverage that missed its archive run (v3.coverage_v3_historical plus the
+# history summary tables), for the listed contracts. It runs the deployed idr-db-importer task with
+# BACKFILL_MONTH/BACKFILL_CONTRACTS overrides; the task does the work and this workflow waits for it.
+# Safe to re-run: each contract is one transaction and already-restored rows are skipped.
+# See ops/services/30-idr-db-importer/BACKFILL.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment"
+        type: choice
+        required: true
+        default: test
+        options:
+          - dev
+          - test
+          - sandbox
+          - prod
+      month:
+        description: "Month to restore, yyyy-MM. Must be older than the current month minus 2"
+        type: string
+        required: true
+      contracts:
+        description: "Comma separated contract numbers, e.g. S4802,S5601"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  # Every run creates, loads and drops the same v3.coverage_v3_backfill table.
+  group: idr-db-importer-backfill-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
+    # The largest contracts' summary rebuild has taken ~40 minutes on its own.
+    timeout-minutes: 360
+
+    env:
+      AB2D_ENV: ${{ inputs.environment }}
+      MONTH: ${{ inputs.month }}
+      CONTRACTS: ${{ inputs.contracts }}
+      CONTAINER: idr-db-importer
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
+
+      # The task validates the inputs. Task definition and network settings come from the importer's
+      # ECS service (desired count 0), so the backfill runs the deployed revision like the daily import.
+      - name: Start the backfill task
+        run: |
+          CLUSTER="ab2d-${AB2D_ENV}"
+          SERVICE=$(aws ecs describe-services --cluster "$CLUSTER" \
+            --services "ab2d-${AB2D_ENV}-${CONTAINER}" --query 'services[0]' --output json)
+          TASK_DEF=$(jq -r '.taskDefinition' <<<"$SERVICE")
+          NETWORK=$(jq -c '.networkConfiguration' <<<"$SERVICE")
+          OVERRIDES=$(jq -nc --arg c "$CONTAINER" --arg m "$MONTH" --arg k "$CONTRACTS" \
+            '{containerOverrides: [{name: $c, environment: [
+              {name: "BACKFILL_MONTH", value: $m}, {name: "BACKFILL_CONTRACTS", value: $k}]}]}')
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --task-definition "$TASK_DEF" \
+            --launch-type FARGATE \
+            --network-configuration "$NETWORK" \
+            --overrides "$OVERRIDES" \
+            --started-by "gha-backfill-${{ github.run_id }}" \
+            --query 'tasks[0].taskArn' --output text)
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "::error::ecs run-task did not start a task"
+            exit 1
+          fi
+
+          echo "Started $TASK_ARN ($TASK_DEF) for $MONTH: $CONTRACTS"
+          echo "CLUSTER=$CLUSTER" >> "$GITHUB_ENV"
+          echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_ENV"
+
+      # Cancelling this workflow does not stop the task. That is intended: each contract commits on its
+      # own, so the task either finishes or stops between contracts, and a re-run picks up the rest.
+      - name: Wait for the task to finish
+        run: |
+          while true; do
+            STATUS=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
+              --query 'tasks[0].lastStatus' --output text)
+            echo "$(date -u +%H:%M:%S) $STATUS"
+            [ "$STATUS" = "STOPPED" ] && break
+            sleep 60
+          done
+
+      - name: Print the task log
+        if: always() && env.TASK_ARN != ''
+        run: |
+          TASK_ID="${TASK_ARN##*/}"
+          aws logs get-log-events \
+            --log-group-name "/aws/ecs/fargate/ab2d-${AB2D_ENV}/idr-db-importer" \
+            --log-stream-name "ab2d-${AB2D_ENV}/${CONTAINER}/${TASK_ID}" \
+            --start-from-head --limit 10000 \
+            --query 'events[].message' --output text | tr '\t' '\n' | grep -v '^\s*at ' || true
+
+      - name: Check the result
+        run: |
+          RESULT=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" --output json)
+          EXIT_CODE=$(jq -r --arg c "$CONTAINER" '.tasks[0].containers[] | select(.name == $c) | .exitCode' <<<"$RESULT")
+          echo "Stopped reason: $(jq -r '.tasks[0].stoppedReason' <<<"$RESULT")"
+          echo "Exit code: $EXIT_CODE"
+
+          {
+            echo "### Backfill $MONTH → $AB2D_ENV"
+            echo "Contracts: \`$CONTRACTS\`"
+            echo "Task: \`$TASK_ARN\`, exit code \`$EXIT_CODE\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "::error::Backfill task exited with $EXIT_CODE. The log above shows which contracts failed and why; re-running is safe."
+            exit 1
+          fi

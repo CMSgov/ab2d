@@ -199,3 +199,61 @@ resource "aws_iam_role_policy_attachment" "idr_db_importer_eventbridge_scheduler
   policy_arn = aws_iam_policy.idr_db_importer_eventbridge_scheduler.arn
   role       = aws_iam_role.idr_db_importer_eventbridge_scheduler.name
 }
+
+# Backfill launcher
+data "aws_iam_role" "github_actions" {
+  count = local.env == local.parent_env ? 1 : 0
+  name  = "${local.app}-${local.env}-github-actions"
+}
+
+data "aws_iam_policy_document" "idr_db_importer_backfill_launcher" {
+  count = local.env == local.parent_env ? 1 : 0
+
+  statement {
+    sid     = "RunImporterTask"
+    actions = ["ecs:RunTask"]
+    resources = [
+      "${trimsuffix(module.service.task_definition.arn, ":${module.service.task_definition.revision}")}:*"
+    ]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "ecs:cluster"
+      values   = [data.aws_ecs_cluster.shared.arn]
+    }
+  }
+
+  statement {
+    sid     = "PassImporterRoles"
+    actions = ["iam:PassRole"]
+    resources = [
+      module.service.task_role_arn,
+      module.service.task_definition.execution_role_arn,
+    ]
+  }
+
+  statement {
+    sid     = "ReadImporterLogs"
+    actions = ["logs:GetLogEvents"]
+    # Same name the CDAP service module builds: "/aws/ecs/fargate/${app}-${env}/${service}".
+    resources = [
+      "arn:aws:logs:${var.region}:${module.platform.aws_caller_identity.account_id}:log-group:/aws/ecs/fargate/${local.app}-${local.env}/${local.service}:log-stream:*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "idr_db_importer_backfill_launcher" {
+  count = local.env == local.parent_env ? 1 : 0
+
+  name        = "${local.service_prefix}-idr-db-importer-backfill-launcher"
+  path        = "/delegatedadmin/developer/"
+  description = "Lets the idr-db-importer-backfill GitHub workflow run the IDR importer task and read its logs."
+  policy      = data.aws_iam_policy_document.idr_db_importer_backfill_launcher[0].json
+}
+
+resource "aws_iam_role_policy_attachment" "idr_db_importer_backfill_launcher" {
+  count = local.env == local.parent_env ? 1 : 0
+
+  role       = data.aws_iam_role.github_actions[0].name
+  policy_arn = aws_iam_policy.idr_db_importer_backfill_launcher[0].arn
+}
