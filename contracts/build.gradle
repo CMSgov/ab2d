@@ -21,7 +21,7 @@ ext {
     eventClientVersion='3.3.18'
     contractClientVersion='2.3.1'
 
-    // Spring Boot Managed Dependencies
+    // Spring Boot managed dependencies
     set('netty.version', '4.2.18.Final')
     set('tomcat.version', '11.0.26')
 }
