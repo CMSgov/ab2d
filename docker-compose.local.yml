@@ -18,7 +18,7 @@ services:
       - ./local-dev/mock-bfd/fixtures:/fixtures:ro
 
   mock-bfd-init:
-    image: curlimages/curl:8.10.1
+    image: alpine:3.20
     depends_on:
       mock-bfd:
         condition: service_started
@@ -27,7 +27,7 @@ services:
     volumes:
       - ./local-dev/mock-bfd/load-expectations.sh:/load.sh:ro
       - ./local-dev/mock-bfd/fixtures:/fixtures:ro
-    entrypoint: ["sh", "/load.sh"]
+    entrypoint: ["sh", "-c", "apk add --no-cache curl jq >/dev/null && sh /load.sh"]
     restart: "no"
 
   api:
@@ -41,6 +41,9 @@ services:
   worker:
     environment:
       - SPRING_PROFILES_ACTIVE=local
+      # pause/resume prototype test knobs (see local-dev/resume-test.sh); default to prod values
+      - EOB_JOB_PATIENT_QUEUE_PAGE_SIZE=${EOB_JOB_PATIENT_QUEUE_PAGE_SIZE:-1000}
+      - PAUSE_RESUME_PROTOTYPE_ITEM_DELAY_MS=${PAUSE_RESUME_PROTOTYPE_ITEM_DELAY_MS:-0}
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       # BFDClientConfiguration still requires a key
@@ -50,6 +53,7 @@ services:
       - AB2D_BFD_TRUSTSTORE_CERT=
       - AB2D_BFD_V3_TRUSTSTORE_CERT=
       - AB2D_BFD_URL=http://host.docker.internal:9999
+      - AB2D_BFD_URL_V3=http://host.docker.internal:9999
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

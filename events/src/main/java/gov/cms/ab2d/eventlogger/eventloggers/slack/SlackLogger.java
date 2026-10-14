@@ -86,7 +86,7 @@ public class SlackLogger {
             return false;
         }
 
-        return validateAndLog(event.asMessage(), ab2dEnvironments, slackAlertWebhooks);
+        return validateAndLog(event.asMessage(), ab2dEnvironments, slackTraceWebhooks);
     }
 
     private boolean validateAndLog(String message, List<Ab2dEnvironment> ab2dEnvironments, List<String> slackWebhooks) {
