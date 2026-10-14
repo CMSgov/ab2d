@@ -11,7 +11,7 @@
       <env name="AB2D_DB_USER" value="ab2d" />
       <env name="AB2D_DB_PASSWORD" value="ab2d" />
       <env name="AB2D_DB_SSL_MODE" value="allow" />
-      <env name="AB2D_EFS_MOUNT" value="/opt/ab2d" />
+      <env name="AB2D_EFS_MOUNT" value="$PROJECT_DIR$/local-dev/out" />
       <env name="AB2D_EXECUTION_ENV" value="local" />
       <env name="AWS_SQS_URL" value="http://localhost:4566" />
       <env name="AWS_ACCESS_KEY_ID" value="test" />
@@ -21,6 +21,7 @@
       <env name="AB2D_V2_ENABLED" value="true" />
       <env name="AB2D_V3_ENABLED" value="false" />
       <env name="AB2D_BFD_URL" value="http://localhost:9999" />
+      <env name="AB2D_BFD_URL_V3" value="http://localhost:9999" />
       <env name="AB2D_BFD_KEYSTORE_LOCATION" value="libs/ab2d-bfd/src/test/resources/bb.keystore" />
       <env name="AB2D_BFD_KEYSTORE_PASSWORD" value="changeit" />
       <env name="AB2D_BFD_KEYSTORE_BASE64" value="" />

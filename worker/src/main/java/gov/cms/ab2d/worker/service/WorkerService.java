@@ -9,4 +9,6 @@ public interface WorkerService {
     Job process(String jobId);
 
     FeatureEngagement getEngagement();
+
+    boolean isPrototypeAdmissible();
 }

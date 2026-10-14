@@ -11,12 +11,16 @@ import java.util.Optional;
 
 public interface CoverageV3Service {
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
+    // used for pause/resume to partition jobs
+    CoveragePagingResult pageCoverageByPatientRange(String contract, long startPatientExclusive, long endPatientInclusive, Optional<Long> cursor, int pageSize);
     CoverageV3SyncResult moveFromStagingToRecentCoverage(String contract, CoverageV3SyncSource source);
     CoverageV3SyncResult moveOldCoverageToHistoricalCoverage(String contract, CoverageV3SyncSource source);
     Map<String, List<YearMonthRecord>> getCoveragePeriods(List<ContractDTO> contracts);
     boolean idrImportInProgress();
     // called before starting a v3 job
     void createAggregatedAttributionTable(String contract);
+    // used by crash recovery to rebuild a table that a prior worker dropped
+    boolean aggregatedTableExists(String contract);
     // called when v3 job is completed, failed, or cancelled via API or manually in which case job UUID will be provided
     void deleteAggregatedTableForContract(String contract, Optional<String> jobUuid);
     // called by cron job to periodically clean up any old tables (in which case job UUID is not provided)
@@ -24,6 +28,10 @@ public interface CoverageV3Service {
 
     // NOTE: Assumes job has been kicked off and aggregated table exists
     int getDistinctPatientCount(String contract);
+    // Prototype pause/resume partitioning: highest row_number (true total row count, incl.
+    // opt-outs and multi-MBI rows) and the patient_id boundaries that split it into partitions.
+    long getMaxRowNumber(String contract);
+    List<Long> getPartitionBoundaryPatientIds(String contract, int size);
     // NOTE: Assumes job has been kicked off and aggregated table exists -- this is a slow process and will be updated in AB2D-7272
     int getCoveragePeriodsInAggregatedTable(String contract);
     // used to find/delete tables from jobs not properly cleaned up
