@@ -40,6 +40,8 @@ public final class PropertyConstants {
 
     public static final String V3_ALLOWLISTED_CONTRACTS = "v3.allowlisted.contracts";
 
+    public static final String V3_ALLOWLIST_ENABLED = "v3.allowlist.enabled";
+
     public static final String V3_IDR_IMPORTER_STATUS = "v3.idr-importer.status";
 
     public static final String V3_IDR_IMPORTER_STATUS_IN_PROGRESS = "import_in_progress";
