@@ -18,9 +18,11 @@ locals {
   ]
 
   # Replaces the CDAP module's SQS monitors. Its DLQ monitor filters on queuename:*dlq*, but AB2D's
-  # dead-letter queues are named *-dead-letter, so it never matched a queue.
+  # dead-letter queues are named *-dead-letter, so it never matched a queue. The only one is
+  # opt-out-import's, which 30-lambda deploys to prod and test only.
   sqs_monitors = [
     {
+      create  = contains(["prod", "test"], local.env)
       name    = "[${upper(local.env)}] [${local.app}] SQS — DLQ Messages Visible"
       type    = "query alert"
       message = "Dead-letter queue {{queuename.name}} has {{value}} messages. Messages that failed processing were moved there and will not be retried on their own."
