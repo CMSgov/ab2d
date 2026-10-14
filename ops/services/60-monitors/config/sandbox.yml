@@ -1,9 +1,3 @@
-enabled:
-  ecs: true
-  sqs: true
-  sns: true
-  lambda: true
-  s3: true
-  rds: true
-lambda:
-  error_rate_threshold: 1
+rds:
+  # Single-instance cluster: no reader, so aws.rds.aurora_replica_lag is never reported.
+  replica_lag_enabled: false

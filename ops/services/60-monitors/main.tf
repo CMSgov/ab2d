@@ -107,9 +107,7 @@ locals {
       thresholds = {
         critical = 0
       }
-      notify_no_data            = false
-      no_data_timeframe_minutes = 1500
-      tags                      = ["service:coverage", "feature:coverage-v3-import"]
+      tags = ["service:coverage", "feature:coverage-v3-import"]
     },
     {
       name     = "AB2D Coverage V3 - Coverage below retention cutoff missing from historical (${local.env})"
@@ -120,9 +118,7 @@ locals {
       thresholds = {
         critical = 0
       }
-      notify_no_data            = false
-      no_data_timeframe_minutes = 1500
-      tags                      = ["service:coverage", "feature:coverage-v3-historical"]
+      tags = ["service:coverage", "feature:coverage-v3-historical"]
     },
     {
       name     = "AB2D Coverage V3 - Historical sync failures detected (${local.env})"
@@ -133,9 +129,7 @@ locals {
       thresholds = {
         critical = 0
       }
-      notify_no_data            = false
-      no_data_timeframe_minutes = 1500
-      tags                      = ["service:coverage", "feature:coverage-v3-historical"]
+      tags = ["service:coverage", "feature:coverage-v3-historical"]
     },
     {
       name     = "AB2D Coverage V3 - Sync failures detected (${local.env})"
@@ -162,7 +156,12 @@ module "common_datadog_monitors" {
   env            = local.env
   monitor_config = local.monitor_config
   custom_monitors = [
-    for m in concat(local.coverage_v3_monitors, local.ecs_monitors) :
+    for m in concat(
+      [for c in local.coverage_v3_monitors : c if local.monitor_config.coverage_v3_monitors],
+      local.ecs_monitors,
+      local.lambda_monitors,
+      local.sqs_monitors,
+    ) :
     merge({ for k, v in m : k => v if k != "critical" }, {
       message = trimspace("${m.message} ${local.alert_time} ${try(m.critical, false) ? local.victorops_critical_notify : ""}")
     })
@@ -173,6 +172,8 @@ module "common_datadog_monitors" {
 # Coverage V3 Import Monitor #
 ##############################
 resource "datadog_monitor" "coverage_v3_import_staged_zero_rows" {
+  count = local.monitor_config.coverage_v3_monitors ? 1 : 0
+
   name = "AB2D Coverage V3 - Import staged no rows on a scheduled import day (${local.env})"
   type = "query alert"
 
@@ -210,4 +211,9 @@ resource "datadog_monitor" "coverage_v3_import_staged_zero_rows" {
   }
 
   tags = concat(local.coverage_v3_base_tags, ["service:coverage", "feature:coverage-v3-import"])
+}
+
+moved {
+  from = datadog_monitor.coverage_v3_import_staged_zero_rows
+  to   = datadog_monitor.coverage_v3_import_staged_zero_rows[0]
 }
