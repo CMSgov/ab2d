@@ -40,9 +40,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.fhir.FhirVersion.R4V3;
-import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
-import static gov.cms.ab2d.common.util.PropertyConstants.V3_ALLOWLISTED_CONTRACTS;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -264,13 +263,21 @@ public class ApiCommon {
         checkContractIsAllowListedForV3(contractNumber);
     }
 
-    // Validate v3.on is enabled, and contract either starts with 'Z' or is allowlisted for V3
+    // Check if 'v3.on' is enabled
+    // If 'v3.allowlist.enabled' is true, contract either starts with 'Z' or is allowlisted for V3
     public void checkContractIsAllowListedForV3(final String contract) {
+        // Check 'v3.on' is true, otherwise deny request
         if (!"true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
             log.info("{} is not enabled", V3_ON);
             throw new EndpointNotAvailableException(AB2D_V3_CURRENTLY_DISABLED);
         }
 
+        // If 'v3.allowlist.enabled' is false, allow request without checking allowlist
+        if (!"false".equalsIgnoreCase(propertiesService.getProperty(V3_ALLOWLIST_ENABLED, "true"))) {
+            return;
+        }
+
+        // Verify contract is in 'v3.allowlisted.contracts', otherwise deny request
         val allowListedContracts = propertiesService.getProperty(V3_ALLOWLISTED_CONTRACTS, "");
         val contractIsAllowListed = Arrays.stream(allowListedContracts.split(","))
                 .anyMatch(value -> value.trim().equalsIgnoreCase(contract));
