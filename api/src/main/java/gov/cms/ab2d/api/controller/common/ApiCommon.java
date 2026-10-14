@@ -263,8 +263,6 @@ public class ApiCommon {
         checkContractIsAllowListedForV3(contractNumber);
     }
 
-    // Check if 'v3.on' is enabled
-    // If 'v3.allowlist.enabled' is true, contract either starts with 'Z' or is allowlisted for V3
     public void checkContractIsAllowListedForV3(final String contract) {
         // Check 'v3.on' is true, otherwise deny request
         if (!"true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
