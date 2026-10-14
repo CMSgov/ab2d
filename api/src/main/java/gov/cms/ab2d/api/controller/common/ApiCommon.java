@@ -273,7 +273,7 @@ public class ApiCommon {
         }
 
         // If 'v3.allowlist.enabled' is false, allow request without checking allowlist
-        if (!"false".equalsIgnoreCase(propertiesService.getProperty(V3_ALLOWLIST_ENABLED, "true"))) {
+        if ("false".equalsIgnoreCase(propertiesService.getProperty(V3_ALLOWLIST_ENABLED, "true"))) {
             return;
         }
 

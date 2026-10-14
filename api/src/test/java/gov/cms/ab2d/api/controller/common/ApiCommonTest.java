@@ -16,8 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 import static gov.cms.ab2d.common.util.Constants.V3_SINCE_EARLIEST_DATE_TIME;
-import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
-import static gov.cms.ab2d.common.util.PropertyConstants.V3_ALLOWLISTED_CONTRACTS;
+import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
@@ -160,6 +159,17 @@ class ApiCommonTest {
     }
 
     @Test
+    void toggleV3AllowListEnabled() {
+        when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
+        when(propertiesService.getProperty(eq(V3_ALLOWLISTED_CONTRACTS), any())).thenReturn("");
+
+        assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkContractIsAllowListedForV3("Z1234"));
+
+        when(propertiesService.getProperty(eq(V3_ALLOWLIST_ENABLED), any())).thenReturn("false");
+        assertDoesNotThrow(() -> apiCommon.checkContractIsAllowListedForV3("Z1234"));
+    }
+
+    @Test
     void v3ContractNotAllowListed() {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("true");
         when(propertiesService.getProperty(eq(V3_ALLOWLISTED_CONTRACTS), any())).thenReturn("S1234,S5555");
@@ -171,5 +181,7 @@ class ApiCommonTest {
         when(propertiesService.getProperty(eq(V3_ON), any())).thenReturn("false");
         assertThrows(EndpointNotAvailableException.class, () -> apiCommon.checkContractIsAllowListedForV3("Z1234"));
     }
+
+
 
 }
