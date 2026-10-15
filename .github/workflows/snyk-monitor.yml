@@ -1,9 +1,6 @@
 name: Snyk monitor
 
 on:
-  push:
-    branches:
-      - "v3-allowlist-plus-version-upgrades--Snyk-CLI"
   workflow_dispatch:
     inputs:
       branch:
