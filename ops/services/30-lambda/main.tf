@@ -312,9 +312,14 @@ resource "aws_lambda_function" "coverage_count" {
   description = "Lambda function to record coverage counts from ab2d, bfd, and hpms"
 }
 
-resource "aws_sns_topic" "coverage_count_sns" {
-  name              = "${local.env}-coverage-count"
-  kms_master_key_id = local.env_key_alias.target_key_id
+resource "aws_sns_topic" "coverage_count" {
+  name              = "ab2d-${local.parent_env}-coverage-count"
+  kms_master_key_id = "alias/aws/sns"
+}
+
+import {
+  to = aws_sns_topic.coverage_count
+  id = "arn:aws:sns:${var.region}:${nonsensitive(module.platform.aws_caller_identity.account_id)}:ab2d-${local.parent_env}-coverage-count"
 }
 
 resource "aws_lambda_permission" "coverage_count_sns_permission" {
@@ -322,11 +327,11 @@ resource "aws_lambda_permission" "coverage_count_sns_permission" {
   function_name = aws_lambda_function.coverage_count.function_name
   principal     = "sns.amazonaws.com"
   statement_id  = "AllowExecutionFromSNS"
-  source_arn    = aws_sns_topic.coverage_count_sns.arn
+  source_arn    = aws_sns_topic.coverage_count.arn
 }
 
 resource "aws_sns_topic_subscription" "coverage_count_lambda_target" {
-  topic_arn = aws_sns_topic.coverage_count_sns.arn
+  topic_arn = aws_sns_topic.coverage_count.arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.coverage_count.arn
 }
