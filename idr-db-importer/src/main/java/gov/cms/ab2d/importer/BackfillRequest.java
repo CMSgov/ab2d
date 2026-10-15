@@ -8,10 +8,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-/**
- * A request to restore one month of V3 coverage that never reached v3.coverage_v3_historical,
- * passed to the task as BACKFILL_MONTH (yyyy-MM) and BACKFILL_CONTRACTS (comma separated).
- */
 public record BackfillRequest(YearMonth month, List<String> contracts) {
 
     private static final Pattern CONTRACT = Pattern.compile("[A-Z]\\d{4}");
@@ -21,12 +17,6 @@ public record BackfillRequest(YearMonth month, List<String> contracts) {
         contracts = List.copyOf(contracts);
     }
 
-    /**
-     * @param currentMonth the month the task is running in (UTC). Only months below the archive cutoff
-     *                     (currentMonth - 2) are accepted: anything newer still lives in v3.coverage_v3,
-     *                     and putting it in historical early leaves moveToHistorical with nothing to
-     *                     move, so it never deletes those rows from the recent table.
-     */
     public static BackfillRequest parse(String month, String contracts, YearMonth currentMonth) {
         YearMonth parsedMonth;
         try {

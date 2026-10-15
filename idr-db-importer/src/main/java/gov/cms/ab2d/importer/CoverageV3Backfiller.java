@@ -15,17 +15,6 @@ import java.util.List;
 
 import static gov.cms.ab2d.importer.CoverageV3HistoricalBackfill.LOAD_TABLE;
 
-/**
- * Restores a month of V3 coverage that missed its archive run (see BackfillRequest). Runs instead of the
- * daily import when the task is started with BACKFILL_MONTH set:
- * <ol>
- *     <li>export that month for the requested contracts from IDR to s3://bucket/coverage_v3_backfill_yyyyMM.csv</li>
- *     <li>load it into v3.coverage_v3_backfill, never v3.coverage_v3_staging</li>
- *     <li>per contract, insert into v3.coverage_v3_historical and rebuild the summary tables</li>
- *     <li>drop v3.coverage_v3_backfill</li>
- * </ol>
- * In environments without Snowflake the CSV must be seeded in the bucket beforehand, as for the daily import.
- */
 @Component
 @Slf4j
 public class CoverageV3Backfiller {
@@ -82,7 +71,6 @@ public class CoverageV3Backfiller {
                 } catch (InterruptedException e) {
                     throw e;
                 } catch (Exception e) {
-                    // One contract failing must not stop the others; its transaction has already rolled back.
                     log.error("V3 backfill of {} failed for contract {}", request.month(), contract, e);
                     failed.add(contract);
                 }

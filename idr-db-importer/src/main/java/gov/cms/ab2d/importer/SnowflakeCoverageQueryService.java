@@ -131,10 +131,6 @@ public class SnowflakeCoverageQueryService {
         return ps;
     }
 
-    /**
-     * The daily extract restricted to one month and the given contracts. Enrollment is read as IDR has
-     * it today, so it can differ slightly from what the daily extract held for that month at the time.
-     */
     public PreparedStatement prepareBackfill(Connection connection, BackfillRequest request) throws SQLException {
         String placeholders = String.join(", ", Collections.nCopies(request.contracts().size(), "?"));
         String sql = SQL_TEMPLATE.formatted(
