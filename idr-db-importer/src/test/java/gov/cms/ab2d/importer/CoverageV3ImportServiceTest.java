@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.function.Consumer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -165,7 +166,7 @@ class CoverageV3ImportServiceTest {
             rows = service.importBackfillWithRetry(BUCKET, KEY, REGION);
         }
 
-        org.junit.jupiter.api.Assertions.assertEquals(10, rows);
+        assertEquals(10, rows);
         verify(createPs).execute();
         verify(truncatePs).execute();
         verify(importPs).setString(1, loadTable);

@@ -1,25 +1,9 @@
 name: idr-db-importer-backfill
-run-name: "idr-db-importer backfill ${{ inputs.month }} → ${{ inputs.environment }} (${{ inputs.contracts }})"
-
-# Restores a month of V3 coverage that missed its archive run (v3.coverage_v3_historical plus the
-# history summary tables), for the listed contracts. It runs the deployed idr-db-importer task with
-# BACKFILL_MONTH/BACKFILL_CONTRACTS overrides; the task does the work and this workflow waits for it.
-# Safe to re-run: each contract is one transaction and already-restored rows are skipped.
-# See ops/services/30-idr-db-importer/BACKFILL.md.
+run-name: "idr-db-importer backfill ${{ inputs.month }} → prod (${{ inputs.contracts }})"
 
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Environment"
-        type: choice
-        required: true
-        default: test
-        options:
-          - dev
-          - test
-          - sandbox
-          - prod
       month:
         description: "Month to restore, yyyy-MM. Must be older than the current month minus 2"
         type: string
@@ -34,18 +18,16 @@ permissions:
   id-token: write
 
 concurrency:
-  # Every run creates, loads and drops the same v3.coverage_v3_backfill table.
-  group: idr-db-importer-backfill-${{ inputs.environment }}
+  group: idr-db-importer-backfill-prod
   cancel-in-progress: false
 
 jobs:
   backfill:
-    runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
-    # The largest contracts' summary rebuild has taken ~40 minutes on its own.
+    runs-on: codebuild-ab2d-prod-${{ github.run_id }}-${{ github.run_attempt }}
     timeout-minutes: 360
 
     env:
-      AB2D_ENV: ${{ inputs.environment }}
+      AB2D_ENV: prod
       MONTH: ${{ inputs.month }}
       CONTRACTS: ${{ inputs.contracts }}
       CONTAINER: idr-db-importer
@@ -54,10 +36,8 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
 
-      # The task validates the inputs. Task definition and network settings come from the importer's
-      # ECS service (desired count 0), so the backfill runs the deployed revision like the daily import.
       - name: Start the backfill task
         run: |
           CLUSTER="ab2d-${AB2D_ENV}"

@@ -5,14 +5,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.support.locks.DistributedLock;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.mockito.ArgumentCaptor;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 
 import java.time.YearMonth;
 import java.util.List;
 
 import static gov.cms.ab2d.importer.CoverageV3HistoricalBackfill.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -40,6 +44,7 @@ class CoverageV3HistoricalBackfillTest {
         when(lockRegistry.obtain(LOCK_NAME_PREFIX + CONTRACT)).thenReturn(lock);
         when(lock.tryLock(LOCK_WAIT, LOCK_TTL)).thenReturn(true);
         when(jdbcTemplate.queryForList(GET_CONTRACTS_WITH_ACTIVE_V3_JOBS, String.class)).thenReturn(List.of());
+        when(jdbcTemplate.queryForObject(eq(QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS), eq(Long.class), any(Object[].class))).thenReturn(0L);
 
         backfill = new CoverageV3HistoricalBackfill(jdbcTemplate, transactionManager, lockRegistry);
     }
@@ -73,7 +78,7 @@ class CoverageV3HistoricalBackfillTest {
 
     @Test
     void rebuildsSummaryWhenRowsExistButThePeriodIsMissing() throws Exception {
-        // A run that died between the historical insert and the summary rebuild, like 2026-05 did.
+        // A run that died between the historical insert and the summary rebuild.
         when(jdbcTemplate.queryForObject(contains("FROM " + LOAD_TABLE), eq(Long.class), any(Object[].class))).thenReturn(100L);
         when(jdbcTemplate.queryForObject(eq(COUNT_COVERAGE_PERIOD), eq(Long.class), any(Object[].class))).thenReturn(0L, 1L);
         when(jdbcTemplate.queryForObject(contains("FROM v3.coverage_v3_historical WHERE"), eq(Long.class), any(Object[].class))).thenReturn(100L);
@@ -108,7 +113,35 @@ class CoverageV3HistoricalBackfillTest {
     }
 
     @Test
-    void leavesContractWithActiveJobAlone() throws Exception {
+    void leavesTestContractAlone() {
+        assertThrows(IllegalStateException.class, () -> backfill.backfill("Z0001", MONTH));
+
+        verifyNoInteractions(lockRegistry, transactionManager);
+    }
+
+    @Test
+    void waitsForBfdCoverageSync() {
+        when(jdbcTemplate.queryForObject(eq(QUERY_BFD_COVERAGE_SYNC_IN_PROGRESS), eq(Long.class), any(Object[].class))).thenReturn(1L);
+
+        assertThrows(IllegalStateException.class, () -> backfill.backfill(CONTRACT, MONTH));
+
+        verifyNoInteractions(lockRegistry, transactionManager);
+    }
+
+    @Test
+    void transactionTimesOutBeforeTheLockExpires() throws Exception {
+        stubCounts(100L, 1L);
+
+        backfill.backfill(CONTRACT, MONTH);
+
+        ArgumentCaptor<TransactionDefinition> definition = ArgumentCaptor.forClass(TransactionDefinition.class);
+        verify(transactionManager).getTransaction(definition.capture());
+        assertEquals(TRANSACTION_TIMEOUT.toSeconds(), definition.getValue().getTimeout());
+        assertTrue(TRANSACTION_TIMEOUT.compareTo(LOCK_TTL) < 0);
+    }
+
+    @Test
+    void leavesContractWithActiveJobAlone() {
         when(jdbcTemplate.queryForList(GET_CONTRACTS_WITH_ACTIVE_V3_JOBS, String.class)).thenReturn(List.of(CONTRACT));
 
         assertThrows(IllegalStateException.class, () -> backfill.backfill(CONTRACT, MONTH));

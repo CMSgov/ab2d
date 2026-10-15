@@ -56,23 +56,23 @@ public class CoverageV3Backfiller {
     @Trace(operationName = "ab2d.idr.backfill")
     public void run(BackfillRequest request) throws Exception {
         String key = request.s3Key();
-        log.info("[V3 backfill] Starting backfill of {} for contracts {}", request.month(), request.contracts());
+        log.info("V3 backfill started: month={} contracts={}", request.month(), request.contracts());
 
         if (coverageQueryService != null) {
             try (Connection conn = coverageQueryService.open();
                  PreparedStatement ps = coverageQueryService.prepareBackfill(conn, request);
                  ResultSet rs = ps.executeQuery()) {
 
-                log.info("[V3 backfill] Exporting Snowflake results to s3://{}/{}", bucket, key);
+                log.info("Exporting Snowflake results to s3://{}/{}", bucket, key);
                 s3Writer.writeSnowflakeToS3(bucket, key, rs);
             }
         } else {
-            log.info("[V3 backfill] Snowflake query service is not configured for this environment; "
-                    + "expecting s3://{}/{} to have been seeded", bucket, key);
+            log.info("Snowflake query service is not configured for this environment. Expecting s3://{}/{} to be seeded.",
+                    bucket, key);
         }
 
         int loadedRows = importService.importBackfillWithRetry(bucket, key, region.id());
-        log.info("[V3 backfill] Loaded {} rows into {}", loadedRows, LOAD_TABLE);
+        log.info("V3 backfill: loaded {} rows into {}", loadedRows, LOAD_TABLE);
 
         List<String> failed = new ArrayList<>();
         try {
@@ -83,7 +83,7 @@ public class CoverageV3Backfiller {
                     throw e;
                 } catch (Exception e) {
                     // One contract failing must not stop the others; its transaction has already rolled back.
-                    log.error("[V3 backfill] Backfill of {} failed for contract {}", request.month(), contract, e);
+                    log.error("V3 backfill of {} failed for contract {}", request.month(), contract, e);
                     failed.add(contract);
                 }
             }
