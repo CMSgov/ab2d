@@ -4,3 +4,14 @@ notifications:
   victorops: false
   additional_webhooks: []
 victorops_critical: false
+coverage_v3_monitors: false
+enabled:
+  ecs: true
+  rds: true
+  # S3 request metrics are off by default
+  s3: false
+  # AB2D topics deliver a few times a week and the module forces require_full_window over 5 minutes, so this monitor never evaluates.
+  sns: false
+  # Replaced by lambda_monitors and sqs_monitors in aws.tf.
+  lambda: false
+  sqs: false

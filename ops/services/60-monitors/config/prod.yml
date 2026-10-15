@@ -1,11 +1,3 @@
-enabled:
-  ecs: true
-  sqs: true
-  sns: true
-  lambda: true
-  s3: true
-  rds: true
-lambda:
-  error_rate_threshold: 1
-
 victorops_critical: true
+# Coverage V3 metrics are only emitted in prod
+coverage_v3_monitors: true
