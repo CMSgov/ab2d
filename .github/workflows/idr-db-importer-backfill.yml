@@ -1,7 +1,10 @@
 name: idr-db-importer-backfill
-run-name: "idr-db-importer backfill ${{ inputs.month }} → prod (${{ inputs.contracts }})"
+run-name: "idr-db-importer backfill for contracts: S9701 and month: 2026-05"
 
 on:
+  push:
+    branches:
+      - v3-month-backfill
   workflow_dispatch:
     inputs:
       month:
@@ -27,10 +30,8 @@ jobs:
     timeout-minutes: 360
 
     env:
-      AB2D_ENV: prod
-      MONTH: ${{ inputs.month }}
-      CONTRACTS: ${{ inputs.contracts }}
-      CONTAINER: idr-db-importer
+      MONTH: "2026-05"
+      CONTRACTS: S9701
 
     steps:
       - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
@@ -40,13 +41,13 @@ jobs:
 
       - name: Start the backfill task
         run: |
-          CLUSTER="ab2d-${AB2D_ENV}"
+          CLUSTER="ab2d-prod"
           SERVICE=$(aws ecs describe-services --cluster "$CLUSTER" \
-            --services "ab2d-${AB2D_ENV}-${CONTAINER}" --query 'services[0]' --output json)
+            --services "ab2d-prod-idr-db-importer" --query 'services[0]' --output json)
           TASK_DEF=$(jq -r '.taskDefinition' <<<"$SERVICE")
           NETWORK=$(jq -c '.networkConfiguration' <<<"$SERVICE")
-          OVERRIDES=$(jq -nc --arg c "$CONTAINER" --arg m "$MONTH" --arg k "$CONTRACTS" \
-            '{containerOverrides: [{name: $c, environment: [
+          OVERRIDES=$(jq -nc --arg m "$MONTH" --arg k "$CONTRACTS" \
+            '{containerOverrides: [{name: "idr-db-importer", environment: [
               {name: "BACKFILL_MONTH", value: $m}, {name: "BACKFILL_CONTRACTS", value: $k}]}]}')
 
           TASK_ARN=$(aws ecs run-task \
@@ -66,8 +67,6 @@ jobs:
           echo "CLUSTER=$CLUSTER" >> "$GITHUB_ENV"
           echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_ENV"
 
-      # Cancelling this workflow does not stop the task. That is intended: each contract commits on its
-      # own, so the task either finishes or stops between contracts, and a re-run picks up the rest.
       - name: Wait for the task to finish
         run: |
           while true; do
@@ -83,25 +82,24 @@ jobs:
         run: |
           TASK_ID="${TASK_ARN##*/}"
           aws logs get-log-events \
-            --log-group-name "/aws/ecs/fargate/ab2d-${AB2D_ENV}/idr-db-importer" \
-            --log-stream-name "ab2d-${AB2D_ENV}/${CONTAINER}/${TASK_ID}" \
+            --log-group-name "/aws/ecs/fargate/ab2d-prod/idr-db-importer" \
+            --log-stream-name "ab2d-prod/idr-db-importer/${TASK_ID}" \
             --start-from-head --limit 10000 \
             --query 'events[].message' --output text | tr '\t' '\n' | grep -v '^\s*at ' || true
 
       - name: Check the result
         run: |
           RESULT=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" --output json)
-          EXIT_CODE=$(jq -r --arg c "$CONTAINER" '.tasks[0].containers[] | select(.name == $c) | .exitCode' <<<"$RESULT")
+          EXIT_CODE=$(jq -r '.tasks[0].containers[] | select(.name == "idr-db-importer") | .exitCode' <<<"$RESULT")
           echo "Stopped reason: $(jq -r '.tasks[0].stoppedReason' <<<"$RESULT")"
           echo "Exit code: $EXIT_CODE"
 
           {
-            echo "### Backfill $MONTH → $AB2D_ENV"
+            echo "### Backfill $MONTH"
             echo "Contracts: \`$CONTRACTS\`"
-            echo "Task: \`$TASK_ARN\`, exit code \`$EXIT_CODE\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$EXIT_CODE" != "0" ]; then
-            echo "::error::Backfill task exited with $EXIT_CODE. The log above shows which contracts failed and why; re-running is safe."
+            echo "::error::Backfill task exited with $EXIT_CODE. See the logs above for details."
             exit 1
           fi
