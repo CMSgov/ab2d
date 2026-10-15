@@ -1,0 +1,92 @@
+name: idr-db-importer-backfill
+run-name: "idr-db-importer backfill for contracts: ${{ inputs.contracts }} and month: ${{ inputs.month }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      month:
+        description: "Month to restore, yyyy-MM. Must be older than the current month minus 2"
+        type: string
+        required: true
+      contracts:
+        description: "Comma separated contract numbers, e.g. S4802,S5601"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: idr-db-importer-backfill-prod
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: codebuild-ab2d-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    timeout-minutes: 360
+
+    env:
+      MONTH: ${{ inputs.month }}
+      CONTRACTS: ${{ inputs.contracts }}
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
+
+      - name: Start the backfill task
+        run: |
+          CLUSTER="ab2d-prod"
+          SERVICE=$(aws ecs describe-services --cluster "$CLUSTER" \
+            --services "ab2d-prod-idr-db-importer" --query 'services[0]' --output json)
+          TASK_DEF=$(jq -r '.taskDefinition' <<<"$SERVICE")
+          NETWORK=$(jq -c '.networkConfiguration' <<<"$SERVICE")
+          OVERRIDES=$(jq -nc --arg m "$MONTH" --arg k "$CONTRACTS" \
+            '{containerOverrides: [{name: "idr-db-importer", environment: [
+              {name: "BACKFILL_MONTH", value: $m}, {name: "BACKFILL_CONTRACTS", value: $k}]}]}')
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --task-definition "$TASK_DEF" \
+            --launch-type FARGATE \
+            --network-configuration "$NETWORK" \
+            --overrides "$OVERRIDES" \
+            --started-by "gha-backfill-${{ github.run_id }}" \
+            --query 'tasks[0].taskArn' --output text)
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "::error::ecs run-task did not start a task"
+            exit 1
+          fi
+
+          echo "Started $TASK_ARN ($TASK_DEF) for $MONTH: $CONTRACTS"
+          echo "CLUSTER=$CLUSTER" >> "$GITHUB_ENV"
+          echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_ENV"
+
+      - name: Wait for the task to finish
+        run: |
+          while true; do
+            STATUS=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
+              --query 'tasks[0].lastStatus' --output text)
+            echo "$(date -u +%H:%M:%S) $STATUS"
+            [ "$STATUS" = "STOPPED" ] && break
+            sleep 60
+          done
+
+      - name: Check the result
+        run: |
+          RESULT=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" --output json)
+          EXIT_CODE=$(jq -r '.tasks[0].containers[] | select(.name == "idr-db-importer") | .exitCode' <<<"$RESULT")
+          echo "Stopped reason: $(jq -r '.tasks[0].stoppedReason' <<<"$RESULT")"
+          echo "Exit code: $EXIT_CODE"
+
+          {
+            echo "### Backfill $MONTH"
+            echo "Contracts: \`$CONTRACTS\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "::error::Backfill task exited with $EXIT_CODE. See log stream ab2d-prod/idr-db-importer/${TASK_ARN##*/} in /aws/ecs/fargate/ab2d-prod/idr-db-importer."
+            exit 1
+          fi

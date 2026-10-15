@@ -38,6 +38,15 @@ public class CoverageV3ImportService {
 
     private static final String TRUNCATE_SQL = "TRUNCATE TABLE %s";
 
+    private static final String CREATE_LOAD_TABLE_SQL = """
+            CREATE UNLOGGED TABLE IF NOT EXISTS %s (
+                patient_id  BIGINT NOT NULL,
+                contract    VARCHAR(15) NOT NULL,
+                year        INT NOT NULL,
+                month       INT NOT NULL,
+                current_mbi VARCHAR(32)
+            )""";
+
     public CoverageV3ImportService(S3Client s3Client) {
         this.s3Client = s3Client;
     }
@@ -48,9 +57,25 @@ public class CoverageV3ImportService {
     )
     @Trace(operationName = "ab2d.idr.import")
     public void importWithRetry(String fqtn, String bucket, String key, String region) throws SQLException {
-        String stagingFqtn = fqtn + "_staging";
+        importInto(fqtn + "_staging", false, bucket, key, region);
+    }
+
+    /**
+     * Creates the backfill load table if needed and loads the extract into it. Returns the row count.
+     */
+    @Retryable(
+            retryFor = Exception.class,
+            backoff = @Backoff(delay = 1000, multiplier = 2.0),
+            recover = "recoverBackfill"
+    )
+    @Trace(operationName = "ab2d.idr.backfill_import")
+    public int importBackfillWithRetry(String bucket, String key, String region) throws SQLException {
+        return importInto(CoverageV3HistoricalBackfill.LOAD_TABLE, true, bucket, key, region);
+    }
+
+    private int importInto(String targetTable, boolean createTable, String bucket, String key, String region) throws SQLException {
         DatadogSpans.setTag("component", "idr");
-        DatadogSpans.setTag("target_table", stagingFqtn);
+        DatadogSpans.setTag("target_table", targetTable);
         DatadogSpans.setTag("s3.bucket", bucket);
         DatadogSpans.setTag("s3.key", key);
 
@@ -58,10 +83,13 @@ public class CoverageV3ImportService {
             connection.setAutoCommit(false);
 
             try {
-                truncate(connection, stagingFqtn);
+                if (createTable) {
+                    execute(connection, String.format(CREATE_LOAD_TABLE_SQL, targetTable));
+                }
+                truncate(connection, targetTable);
                 verifyFileExists(bucket, key);
 
-                int stagedRows = executeImport(connection, stagingFqtn, bucket, key, region);
+                int stagedRows = executeImport(connection, targetTable, bucket, key, region);
                 DatadogSpans.setMetric("idr.staged_rows", stagedRows);
 
                 connection.commit();
@@ -73,15 +101,16 @@ public class CoverageV3ImportService {
                 }
 
                 log.info(
-                        "Coverage_V3 import success: stagedRows={} source=s3://{}/{}",
-                        stagedRows, bucket, key
+                        "Coverage_V3 import success: stagedRows={} source=s3://{}/{} target={}",
+                        stagedRows, bucket, key, targetTable
                 );
+                return stagedRows;
             } catch (Exception e) {
                 rollback(connection);
                 DatadogSpans.markError(e);
                 log.error(
                         "CoverageV3 import failed: source=s3://{}/{}, target={}",
-                        bucket, key, stagingFqtn, e
+                        bucket, key, targetTable, e
                 );
                 throw e;
             }
@@ -97,8 +126,20 @@ public class CoverageV3ImportService {
         throw e;
     }
 
+    @Recover
+    public int recoverBackfill(Exception e, String bucket, String key, String region) throws Exception {
+        log.error(
+                "CoverageV3 backfill import permanently failed after retries: s3://{}/{} → {}",
+                bucket, key, CoverageV3HistoricalBackfill.LOAD_TABLE, e
+        );
+        throw e;
+    }
+
     private void truncate(Connection conn, String fqtn) throws SQLException {
-        String sql = String.format(TRUNCATE_SQL, fqtn);
+        execute(conn, String.format(TRUNCATE_SQL, fqtn));
+    }
+
+    private void execute(Connection conn, String sql) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.execute();
         }
