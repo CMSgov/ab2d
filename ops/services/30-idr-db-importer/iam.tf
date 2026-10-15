@@ -231,22 +231,13 @@ data "aws_iam_policy_document" "idr_db_importer_backfill_launcher" {
       module.service.task_definition.execution_role_arn,
     ]
   }
-
-  statement {
-    sid     = "ReadImporterLogs"
-    actions = ["logs:GetLogEvents"]
-    # Same name the CDAP service module builds: "/aws/ecs/fargate/${app}-${env}/${service}".
-    resources = [
-      "arn:aws:logs:${var.region}:${module.platform.aws_caller_identity.account_id}:log-group:/aws/ecs/fargate/${local.app}-${local.env}/${local.service}:log-stream:*"
-    ]
-  }
 }
 
 resource "aws_iam_policy" "idr_db_importer_backfill_launcher" {
   count = local.env == "prod" ? 1 : 0
 
   name        = "${local.service_prefix}-idr-db-importer-backfill-launcher"
-  description = "Lets the idr-db-importer-backfill GitHub workflow run the IDR importer task and read its logs."
+  description = "Lets the idr-db-importer-backfill GitHub workflow run the IDR importer task."
   policy      = data.aws_iam_policy_document.idr_db_importer_backfill_launcher[0].json
 }
 

@@ -1,10 +1,7 @@
 name: idr-db-importer-backfill
-run-name: "idr-db-importer backfill for contracts: S9701 and month: 2026-05"
+run-name: "idr-db-importer backfill for contracts: ${{ inputs.contracts }} and month: ${{ inputs.month }}"
 
 on:
-  push:
-    branches:
-      - v3-month-backfill
   workflow_dispatch:
     inputs:
       month:
@@ -30,8 +27,8 @@ jobs:
     timeout-minutes: 360
 
     env:
-      MONTH: "2026-05"
-      CONTRACTS: S9701
+      MONTH: ${{ inputs.month }}
+      CONTRACTS: ${{ inputs.contracts }}
 
     steps:
       - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
@@ -77,16 +74,6 @@ jobs:
             sleep 60
           done
 
-      - name: Print the task log
-        if: always() && env.TASK_ARN != ''
-        run: |
-          TASK_ID="${TASK_ARN##*/}"
-          aws logs get-log-events \
-            --log-group-name "/aws/ecs/fargate/ab2d-prod/idr-db-importer" \
-            --log-stream-name "ab2d-prod/idr-db-importer/${TASK_ID}" \
-            --start-from-head --limit 10000 \
-            --query 'events[].message' --output text | tr '\t' '\n' | grep -v '^\s*at ' || true
-
       - name: Check the result
         run: |
           RESULT=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" --output json)
@@ -100,6 +87,6 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$EXIT_CODE" != "0" ]; then
-            echo "::error::Backfill task exited with $EXIT_CODE. See the logs above for details."
+            echo "::error::Backfill task exited with $EXIT_CODE. See log stream ab2d-prod/idr-db-importer/${TASK_ARN##*/} in /aws/ecs/fargate/ab2d-prod/idr-db-importer."
             exit 1
           fi
