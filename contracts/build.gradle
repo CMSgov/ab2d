@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
     id "org.sonarqube" version "7.3.0.8198"
     id 'maven-publish'
     id 'org.cyclonedx.bom' version '3.0.0' apply true
@@ -15,10 +16,17 @@ ext {
     lombokVersion = '1.18.48'
     springCloudAwsVersion = '4.1.1'
     springBootVersion='4.1.1'
+    jacksonVersion='2.22.3'
     testContainerVersion='1.21.4'
     liquibaseVersion = '5.0.0'
     eventClientVersion='3.3.18'
     contractClientVersion='2.3.1'
+
+    // Spring Boot managed dependencies
+    set('netty.version', '4.2.18.Final')
+    set('tomcat.version', '11.0.26')
+    set('testcontainers.version', "${testContainerVersion}")
+    set('jackson-2-bom.version', "${jacksonVersion}")
 }
 
 allprojects {
@@ -69,8 +77,8 @@ allprojects {
             implementation 'io.opentelemetry:opentelemetry-api:1.62.0'
             implementation 'commons-beanutils:commons-beanutils:1.11.0'
             implementation 'org.mozilla:rhino:1.7.15'
-            implementation 'com.fasterxml.jackson.core:jackson-core:2.22.2'
-            implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.2'
+            implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+            implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
         }
     }
 
