@@ -199,3 +199,51 @@ resource "aws_iam_role_policy_attachment" "idr_db_importer_eventbridge_scheduler
   policy_arn = aws_iam_policy.idr_db_importer_eventbridge_scheduler.arn
   role       = aws_iam_role.idr_db_importer_eventbridge_scheduler.name
 }
+
+# Backfill launcher
+data "aws_iam_role" "github_actions" {
+  count = local.env == "prod" ? 1 : 0
+  name  = "${local.app}-${local.env}-github-actions"
+}
+
+data "aws_iam_policy_document" "idr_db_importer_backfill_launcher" {
+  count = local.env == "prod" ? 1 : 0
+
+  statement {
+    sid     = "RunImporterTask"
+    actions = ["ecs:RunTask"]
+    resources = [
+      "${trimsuffix(module.service.task_definition.arn, ":${module.service.task_definition.revision}")}:*"
+    ]
+
+    condition {
+      test     = "ArnLike"
+      variable = "ecs:cluster"
+      values   = [data.aws_ecs_cluster.shared.arn]
+    }
+  }
+
+  statement {
+    sid     = "PassImporterRoles"
+    actions = ["iam:PassRole"]
+    resources = [
+      module.service.task_role_arn,
+      module.service.task_definition.execution_role_arn,
+    ]
+  }
+}
+
+resource "aws_iam_policy" "idr_db_importer_backfill_launcher" {
+  count = local.env == "prod" ? 1 : 0
+
+  name        = "${local.service_prefix}-idr-db-importer-backfill-launcher"
+  description = "Lets the idr-db-importer-backfill GitHub workflow run the IDR importer task."
+  policy      = data.aws_iam_policy_document.idr_db_importer_backfill_launcher[0].json
+}
+
+resource "aws_iam_role_policy_attachment" "idr_db_importer_backfill_launcher" {
+  count = local.env == "prod" ? 1 : 0
+
+  role       = data.aws_iam_role.github_actions[0].name
+  policy_arn = aws_iam_policy.idr_db_importer_backfill_launcher[0].arn
+}

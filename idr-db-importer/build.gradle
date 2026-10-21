@@ -51,6 +51,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-persistence'
 	implementation 'org.springframework.retry:spring-retry'
+	implementation 'org.springframework.integration:spring-integration-jdbc'
 	implementation 'org.postgresql:postgresql:42.7.13'
 	implementation "com.datadoghq:dd-trace-api:${ddTraceApiVersion}"
 	compileOnly 'org.projectlombok:lombok'
