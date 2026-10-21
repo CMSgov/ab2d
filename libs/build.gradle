@@ -22,13 +22,13 @@ ext {
             : System.getenv()['ARTIFACTORY_PASSWORD']
 
     // AB2D libraries
-    fhirVersion='2.5.10'
-    bfdVersion='4.8.4'
-    aggregatorVersion='2.1.8'
-    filtersVersion='3.2.4'
-    eventClientVersion='3.3.18'
-    contractClientVersion='2.3.1'
-    snsClientVersion='1.1.13'
+    fhirVersion='2.5.11'
+    bfdVersion='4.8.5'
+    aggregatorVersion='2.1.9'
+    filtersVersion='3.2.5'
+    eventClientVersion='3.3.19'
+    contractClientVersion='2.3.2'
+    snsClientVersion='1.1.14'
 
     sourcesRepo = 'ab2d-maven-repo'
     deployerRepo = 'ab2d-main'
@@ -43,6 +43,7 @@ ext {
     mockServerVersion='5.15.0'
     liquibaseVersion="5.0.0"
     jacksonVersion = "2.22.2"
+    jackson3Version = "3.1.7"
     slackAPIVersion='1.35.0'
     hl7Version = '6.10.4'
     commonsLangVersion = '3.20.0'
@@ -188,6 +189,8 @@ subprojects {
             implementation('org.mozilla:rhino:1.8.1')
             implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
             implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+            implementation("tools.jackson.core:jackson-databind:$jackson3Version")
+            implementation("tools.jackson.core:jackson-core:$jackson3Version")
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.utilities:$hl7Version")
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:$hl7Version")
             implementation("ca.uhn.hapi.fhir:org.hl7.fhir.r4:$hl7Version")
