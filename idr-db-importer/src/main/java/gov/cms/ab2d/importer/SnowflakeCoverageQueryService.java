@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Properties;
 
 @Slf4j
@@ -31,10 +32,10 @@ public class SnowflakeCoverageQueryService {
     private final String schema;
     private final PrivateKeyLoader privateKeyLoader;
 
-    private static final String SQL = """
+    // %1$s is the month_series body, %2$s an optional extra contract filter.
+    private static final String SQL_TEMPLATE = """
             WITH month_series AS (
-                     SELECT DATEADD(month, -seq4(), DATE_TRUNC('month', CURRENT_DATE()))::DATE AS month_start
-                     FROM TABLE(GENERATOR(ROWCOUNT => 4))
+                     %1$s
                    )
                SELECT
                  bene.bene_xref_efctv_sk AS "patient_id",
@@ -48,14 +49,23 @@ public class SnowflakeCoverageQueryService {
                 AND elec.bene_enrlmt_end_dt >= ms.month_start
                JOIN CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_BENE_HSTRY bene
                  ON elec.bene_sk = bene.bene_sk
-               WHERE elec.bene_cntrct_num LIKE 'S%'
+               WHERE elec.bene_cntrct_num LIKE 'S%%'
                  AND elec.bene_enrlmt_pgm_type_cd IN (2, 3)
                  AND elec.idr_ltst_trans_flg = 'Y'
                  AND elec.idr_trans_obslt_ts > '9999-12-30'
                  AND bene.idr_ltst_trans_flg = 'Y'
-                 AND bene.bene_xref_efctv_sk != 0
+                 AND bene.bene_xref_efctv_sk != 0%2$s
                ORDER BY "patient_id", "year", "month"
             """;
+
+    // The current month and the 3 before it.
+    private static final String DAILY_MONTH_SERIES = """
+            SELECT DATEADD(month, -seq4(), DATE_TRUNC('month', CURRENT_DATE()))::DATE AS month_start
+                     FROM TABLE(GENERATOR(ROWCOUNT => 4))""";
+
+    static final String SQL = SQL_TEMPLATE.formatted(DAILY_MONTH_SERIES, "");
+
+    private static final String BACKFILL_MONTH_SERIES = "SELECT TO_DATE(?) AS month_start";
 
     public SnowflakeCoverageQueryService(
             String url,
@@ -118,6 +128,23 @@ public class SnowflakeCoverageQueryService {
     public PreparedStatement prepare(Connection connection) throws SQLException {
         PreparedStatement ps = connection.prepareStatement(SQL);
         ps.setFetchSize(10_000);
+        return ps;
+    }
+
+    public PreparedStatement prepareBackfill(Connection connection, BackfillRequest request) throws SQLException {
+        String placeholders = String.join(", ", Collections.nCopies(request.contracts().size(), "?"));
+        String sql = SQL_TEMPLATE.formatted(
+                BACKFILL_MONTH_SERIES,
+                " AND elec.bene_cntrct_num IN (" + placeholders + ")"
+        );
+
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setFetchSize(10_000);
+        int i = 1;
+        ps.setString(i++, request.month().atDay(1).toString());
+        for (String contract : request.contracts()) {
+            ps.setString(i++, contract);
+        }
         return ps;
     }
 
