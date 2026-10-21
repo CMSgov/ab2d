@@ -30,12 +30,14 @@ ext {
 	ddTraceApiVersion = '1.63.0'
 	hapiVersion = '8.12.1'
 	hl7Version = '6.10.4'
-	jackson3Version='3.1.7'
+	jacksonVersion='2.22.3'
+	jackson3Version='3.2.2'
 	// override spring boot's managed versions like so:
 	// set('xyz.version', '1.0.0')
 
 	set('netty.version', '4.2.18.Final')
 	set('tomcat.version', '11.0.26')
+	set('jackson-2-bom.version', "${jacksonVersion}")
 	set('jackson-bom.version', "${jackson3Version}")
 }
 
@@ -53,7 +55,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-persistence'
 	implementation 'org.springframework.retry:spring-retry'
-	implementation 'org.postgresql:postgresql:42.7.13'
+	implementation 'org.postgresql:postgresql:42.7.14'
 	implementation "com.datadoghq:dd-trace-api:${ddTraceApiVersion}"
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

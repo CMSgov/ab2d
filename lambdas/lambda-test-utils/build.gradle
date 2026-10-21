@@ -10,9 +10,10 @@ repositories {
 
 dependencies {
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
-    implementation 'org.postgresql:postgresql:42.7.13'
-    implementation 'org.testcontainers:junit-jupiter:1.17.6'
-    implementation "org.testcontainers:postgresql:1.17.6"
+    implementation "org.postgresql:postgresql:$postgresVersion"
+    implementation "org.testcontainers:junit-jupiter:$testContainerVersion"
+    implementation "org.testcontainers:postgresql:$testContainerVersion"
+    implementation "org.testcontainers:localstack:$testContainerVersion"
     implementation 'org.liquibase:liquibase-core:4.21.0'
     implementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
     implementation 'org.junit.platform:junit-platform-commons:1.9.2'
@@ -23,7 +24,6 @@ dependencies {
     implementation 'org.projectlombok:lombok:1.18.42'
     implementation 'org.slf4j:slf4j-api:2.0.4'
     implementation 'org.slf4j:slf4j-reload4j:2.0.4'
-    implementation 'org.testcontainers:localstack:1.17.6'
 
 
     //test
