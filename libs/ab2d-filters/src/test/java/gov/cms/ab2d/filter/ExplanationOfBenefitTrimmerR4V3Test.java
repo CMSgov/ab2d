@@ -7,9 +7,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
+import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4V3.CLIA_SYSTEM;
+import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4V3.NDC_SYSTEM;
 import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.ANESTHESIA_UNIT_COUNT;
 import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.NL_RECORD_IDENTIFICATION;
 import static gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR4.PRICING_STATE;
@@ -30,6 +34,11 @@ class ExplanationOfBenefitTrimmerR4V3Test {
     private static final String DRG_SYSTEM = "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software";
     private static final String CARETEAM_ROLE_SYSTEM = "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole";
     private static final String NPI_SYSTEM = "http://hl7.org/fhir/sid/us-npi";
+
+    // Synthetic MCS professional claim from BFD (apps/bfd-model-idr/out/ExplanationOfBenefit-MCS.json)
+    private static final String MCS_EOB = "eobdata/EOB-for-MCS-R4v3.json";
+
+    private static final String SUPPORTING_INFO_CATEGORY = "https://bluebutton.cms.gov/fhir/CodeSystem/Supporting-Information";
 
     @BeforeEach
     void initFullEob() {
@@ -487,6 +496,151 @@ class ExplanationOfBenefitTrimmerR4V3Test {
         newExtension.setUrl("http://ab2d.cms.gov");
         eob.addExtension(newExtension);
         assertEquals((numExtensions + 1), eob.getExtension().size());
+    }
+
+    // National Drug Codes (item.detail) and CLIA Lab Number (supportingInfo -> contained Observation),
+    // checked against both the copying and the in-place trimmer
+
+    private static UnaryOperator<IBaseResource> trimmer(String name) {
+        return "inPlace".equals(name)
+                ? ExplanationOfBenefitTrimmerR4V3::getBenefitInPlace
+                : ExplanationOfBenefitTrimmerR4V3::getBenefit;
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"copy", "inPlace"})
+    void ndcDetailAndQuantityKept(String trimmerName) {
+        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath(MCS_EOB);
+        ExplanationOfBenefit result = (ExplanationOfBenefit) trimmer(trimmerName).apply(eob);
+
+        ExplanationOfBenefit.DetailComponent detail = result.getItem().get(3).getDetailFirstRep();
+        assertAll("NDC detail",
+                () -> assertEquals(1, result.getItem().get(3).getDetail().size()),
+                () -> assertEquals(1, detail.getSequence()),
+                () -> assertEquals(NDC_SYSTEM, detail.getProductOrService().getCodingFirstRep().getSystem()),
+                () -> assertEquals("00409189001", detail.getProductOrService().getCodingFirstRep().getCode()),
+                () -> assertEquals(1000.0, detail.getQuantity().getValue().doubleValue()),
+                () -> assertEquals("g", detail.getQuantity().getCode())
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"copy", "inPlace"})
+    void cliaLabNumberKept(String trimmerName) {
+        IBaseResource eob = EOBLoadUtilities.getR4EOBFromFileInClassPath(MCS_EOB);
+        ExplanationOfBenefit result = (ExplanationOfBenefit) trimmer(trimmerName).apply(eob);
+
+        List<String> cliaRefs = result.getSupportingInfo().stream()
+                .filter(si -> si.getValue() instanceof Reference)
+                .map(si -> ((Reference) si.getValue()).getReference())
+                .toList();
+        assertEquals(List.of("#line-observation-hct-12", "#line-observation-hgb-13"), cliaRefs);
+
+        List<Observation> observations = result.getContained().stream()
+                .filter(Observation.class::isInstance)
+                .map(Observation.class::cast)
+                .toList();
+        assertEquals(2, observations.size());
+        for (Observation obs : observations) {
+            assertTrue(cliaRefs.contains("#" + obs.getIdPart()), "kept observation must be referenced: " + obs.getIdPart());
+            assertAll("trimmed CLIA observation " + obs.getIdPart(),
+                    () -> assertEquals(Observation.ObservationStatus.FINAL, obs.getStatus()),
+                    () -> assertTrue(obs.getCode().hasCoding()),
+                    () -> assertEquals(1, obs.getPerformer().size()),
+                    () -> assertEquals(CLIA_SYSTEM, obs.getPerformerFirstRep().getIdentifier().getSystem()),
+                    () -> assertEquals("11D1343434", obs.getPerformerFirstRep().getIdentifier().getValue()),
+                    () -> assertFalse(obs.hasValue(), "lab result value must not be shared")
+            );
+        }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"copy", "inPlace"})
+    void detailWithoutNdcDroppedAndNdcDetailTrimmed(String trimmerName) {
+        ExplanationOfBenefit eob = minimalEob();
+        ExplanationOfBenefit.DetailComponent ndcDetail = new ExplanationOfBenefit.DetailComponent()
+                .setSequence(1)
+                .setProductOrService(new CodeableConcept()
+                        .addCoding(new Coding().setSystem(NDC_SYSTEM).setCode("00264180031"))
+                        .addCoding(new Coding().setSystem("http://example.org/other").setCode("x"))
+                        .setText("drug"))
+                .setQuantity(new Quantity().setValue(5).setUnit("ML"))
+                .setNet(new Money().setValue(10))
+                .setUnitPrice(new Money().setValue(2))
+                .setCategory(new CodeableConcept().setText("category"))
+                .setSubDetail(new ArrayList<>(List.of(new ExplanationOfBenefit.SubDetailComponent().setSequence(1))))
+                .setAdjudication(new ArrayList<>(List.of(new ExplanationOfBenefit.AdjudicationComponent())));
+        ndcDetail.addExtension(new Extension("http://example.org/ext", new StringType("x")));
+        ExplanationOfBenefit.DetailComponent nonNdcDetail = new ExplanationOfBenefit.DetailComponent()
+                .setSequence(2)
+                .setProductOrService(new CodeableConcept().addCoding(new Coding().setSystem("http://example.org/other").setCode("y")))
+                .setQuantity(new Quantity().setValue(7));
+        eob.getItemFirstRep().setDetail(new ArrayList<>(List.of(ndcDetail, nonNdcDetail)));
+
+        ExplanationOfBenefit result = (ExplanationOfBenefit) trimmer(trimmerName).apply(eob);
+
+        List<ExplanationOfBenefit.DetailComponent> details = result.getItemFirstRep().getDetail();
+        assertEquals(1, details.size());
+        ExplanationOfBenefit.DetailComponent detail = details.get(0);
+        assertAll("trimmed detail",
+                () -> assertEquals(1, detail.getSequence()),
+                () -> assertEquals(1, detail.getProductOrService().getCoding().size()),
+                () -> assertEquals("00264180031", detail.getProductOrService().getCodingFirstRep().getCode()),
+                () -> assertFalse(detail.getProductOrService().hasText()),
+                () -> assertEquals(5, detail.getQuantity().getValue().intValue()),
+                () -> assertFalse(detail.hasNet()),
+                () -> assertFalse(detail.hasUnitPrice()),
+                () -> assertFalse(detail.hasCategory()),
+                () -> assertFalse(detail.hasSubDetail()),
+                () -> assertFalse(detail.hasAdjudication()),
+                () -> assertFalse(detail.hasExtension())
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"copy", "inPlace"})
+    void observationWithoutCliaPerformerDropped(String trimmerName) {
+        ExplanationOfBenefit eob = minimalEob();
+        Observation noClia = new Observation();
+        noClia.setId("line-observation-1");
+        noClia.setStatus(Observation.ObservationStatus.FINAL);
+        noClia.setCode(new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org").setCode("718-7")));
+        noClia.addPerformer(new Reference().setIdentifier(new Identifier().setSystem("http://example.org/other").setValue("123")));
+        eob.setContained(new ArrayList<>(List.of(noClia)));
+        eob.setSupportingInfo(new ArrayList<>(List.of(labSupportingInfo(1, "#line-observation-1"))));
+
+        ExplanationOfBenefit result = (ExplanationOfBenefit) trimmer(trimmerName).apply(eob);
+
+        assertEquals(0, result.getSupportingInfo().size());
+        assertEquals(0, result.getContained().size());
+    }
+
+    @Test
+    void unreferencedCliaObservationDropped() {
+        ExplanationOfBenefit eob = minimalEob();
+        Observation obs = new Observation();
+        obs.setId("line-observation-1");
+        obs.addPerformer(new Reference().setIdentifier(new Identifier().setSystem(CLIA_SYSTEM).setValue("11D1343434")));
+        eob.setContained(new ArrayList<>(List.of(obs)));
+
+        ExplanationOfBenefit result = (ExplanationOfBenefit) ExplanationOfBenefitTrimmerR4V3.getBenefitInPlace(eob);
+
+        assertEquals(0, result.getContained().size());
+    }
+
+    private static ExplanationOfBenefit.SupportingInformationComponent labSupportingInfo(int sequence, String reference) {
+        return new ExplanationOfBenefit.SupportingInformationComponent()
+                .setSequence(sequence)
+                .setCategory(new CodeableConcept().addCoding(
+                        new Coding().setSystem(SUPPORTING_INFO_CATEGORY).setCode("CLM_LINE_HGB_LVL_NUM")))
+                .setValue(new Reference(reference));
+    }
+
+    private static ExplanationOfBenefit minimalEob() {
+        ExplanationOfBenefit eob = new ExplanationOfBenefit();
+        eob.setPatient(new Reference("Patient/1234"));
+        eob.setItem(new ArrayList<>(List.of(new ExplanationOfBenefit.ItemComponent().setSequence(1))));
+        return eob;
     }
 
     private static Extension extByUrl(List<Extension> exts, String url) {

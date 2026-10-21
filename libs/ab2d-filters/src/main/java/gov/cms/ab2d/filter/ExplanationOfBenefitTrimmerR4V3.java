@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
  * . insurance (focal, coverage)
  * . use (new for R4)
  * . Near Line Record Identification Code (in extension)
+ * . CLIA Lab Number
  * <p>
  * Items not kept:
  * . extension (inherited)
@@ -100,6 +101,7 @@ import java.util.stream.Collectors;
  * Anesthesia Unit Count
  * Pricing State Code
  * Supplier Type Code
+ * . detail
  * <p>
  * Items not kept:
  * . diagnosisSequence
@@ -119,7 +121,6 @@ import java.util.stream.Collectors;
  * . encounter
  * . noteNumber
  * . adjudication
- * . detail
  * . modifierExtension
  */
 @UtilityClass
@@ -136,6 +137,10 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     public static final String MS_DRG_SYSTEM = "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software";
 
     private static final String NPI_SYSTEM = "http://hl7.org/fhir/sid/us-npi";
+
+    public static final String NDC_SYSTEM = "http://hl7.org/fhir/sid/ndc";
+
+    public static final String CLIA_SYSTEM = "http://terminology.hl7.org/NamingSystem/CLIA";
     private static final List<String> roleCodes = List.of("attending", "referring", "operating", "otheroperating", "rendering");
 
     private static final String RENDERING_EXT = "https://bluebutton.cms.gov/fhir/StructureDefinition/";
@@ -227,10 +232,22 @@ public class ExplanationOfBenefitTrimmerR4V3 {
             if (hasNpiIdentifier(r) || hasRenderingExtension(r)) containedToKeep.add(r);
         }
 
+        Set<ExplanationOfBenefit.SupportingInformationComponent> cliaSupportingInfo =
+                Collections.newSetFromMap(new IdentityHashMap<>());
+        for (ExplanationOfBenefit.SupportingInformationComponent si : benefit.getSupportingInfo()) {
+            Observation obs = getCliaObservation(si, containedById);
+            if (obs != null) {
+                cliaSupportingInfo.add(si);
+                containedToKeep.add(obs);
+            }
+        }
+
         // Prune the original lists in place -- no new collections allocated
         benefit.getContained().removeIf(r -> !containedToKeep.contains(r));
+        benefit.getContained().replaceAll(r -> r instanceof Observation obs ? trimCliaObservation(obs) : r);
         benefit.getCareTeam().removeIf(ct -> !matchesRoleCode(ct));
-        benefit.getSupportingInfo().removeIf(si -> !(matchesNlRecord(si) || matchesDrg(si)));
+        benefit.getSupportingInfo().removeIf(si ->
+                !(matchesNlRecord(si) || matchesDrg(si) || cliaSupportingInfo.contains(si)));
         trimInsuranceInPlace(benefit);
 
         for (String element : REMOVABLE_ELEMENTS) {
@@ -273,6 +290,53 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     }
 
     /**
+     * Resolve the contained Observation carrying a CLIA Lab Number that this supportingInfo
+     * references, per FHIRPath
+     * {@code ExplanationOfBenefit.contained.where(id = %root.supportingInfo.valueReference.reference.substring(1)).performer.identifier.value}
+     *
+     * @param si            the supportingInfo entry
+     * @param containedById contained resources of the EOB keyed by id
+     * @return the referenced Observation, or null if the entry does not reference a CLIA lab
+     */
+    private static Observation getCliaObservation(ExplanationOfBenefit.SupportingInformationComponent si,
+                                                  Map<String, Resource> containedById) {
+        if (!(si.getValue() instanceof Reference ref) || !ref.hasReference()) return null;
+        String reference = ref.getReference();
+        if (!reference.startsWith("#")) return null;
+        if (!(containedById.get(reference.substring(1)) instanceof Observation obs)) return null;
+        for (Reference performer : obs.getPerformer()) {
+            if (isCliaIdentifier(performer)) return obs;
+        }
+        return null;
+    }
+
+    private static boolean isCliaIdentifier(Reference performer) {
+        return performer.hasIdentifier()
+                && CLIA_SYSTEM.equals(performer.getIdentifier().getSystem())
+                && performer.getIdentifier().hasValue();
+    }
+
+    /**
+     * Build a minimal copy of a CLIA lab Observation: id plus the elements FHIR requires
+     * (status, code) and the CLIA performer identifier. Everything else, including the
+     * lab result value, is dropped.
+     */
+    private static Observation trimCliaObservation(Observation source) {
+        Observation trimmed = new Observation();
+        trimmed.setId(source.getIdPart());
+        trimmed.setStatus(source.getStatus());
+        trimmed.setCode(source.getCode().copy());
+        for (Reference performer : source.getPerformer()) {
+            if (isCliaIdentifier(performer)) {
+                trimmed.addPerformer(new Reference().setIdentifier(new Identifier()
+                        .setSystem(CLIA_SYSTEM)
+                        .setValue(performer.getIdentifier().getValue())));
+            }
+        }
+        return trimmed;
+    }
+
+    /**
      * Trim each insurance entry in place to keep only {@code focal} and {@code coverage},
      * dropping the entry's id and (modifier)extensions without allocating new components.
      */
@@ -309,9 +373,32 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         copy.setLanguage(benefit.getLanguage());
         copy.setImplicitRules(benefit.getImplicitRules());
 
+        Map<String, Resource> containedById = new HashMap<>();
+        for (Resource r : benefit.getContained()) {
+            if (r.getIdPart() != null) containedById.put(r.getIdPart(), r);
+        }
+        Set<Resource> cliaContained = Collections.newSetFromMap(new IdentityHashMap<>());
+        List<ExplanationOfBenefit.SupportingInformationComponent> cliaSupportingInfo = new ArrayList<>();
+        for (ExplanationOfBenefit.SupportingInformationComponent si : benefit.getSupportingInfo()) {
+            Observation obs = getCliaObservation(si, containedById);
+            if (obs != null) {
+                cliaSupportingInfo.add(si);
+                cliaContained.add(obs);
+            }
+        }
+        // Keep contained ordering so the output matches the in-place trimmer
+        List<Observation> cliaObservations = benefit.getContained().stream()
+                .filter(cliaContained::contains)
+                .map(r -> trimCliaObservation((Observation) r))
+                .toList();
+
         List<ExplanationOfBenefit.SupportingInformationComponent> supportingInfo = new ArrayList<>();
-        supportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), NL_RECORD_IDENTIFICATION));
-        supportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), C4BB_SUPPORTING_INFO_TYPE_SYSTEM, MS_DRG_SYSTEM, "drg"));
+        // Keep the original ordering so the output matches the in-place trimmer
+        for (ExplanationOfBenefit.SupportingInformationComponent si : benefit.getSupportingInfo()) {
+            if (matchesNlRecord(si) || matchesDrg(si) || cliaSupportingInfo.contains(si)) {
+                supportingInfo.add(si);
+            }
+        }
         copy.setSupportingInfo(supportingInfo);
         // Called out data
         copy.setPatient(benefit.getPatient().copy());
@@ -348,6 +435,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
                         .collect(Collectors.toList());
         contained.addAll(npiContained);
         contained.addAll(withRenderingExtensions);
+        contained.addAll(cliaObservations);
 
         copy.setContained(contained);
 
@@ -603,6 +691,7 @@ public class ExplanationOfBenefitTrimmerR4V3 {
                     Pricing State Code
                     Supplier Type Code
               Related Diagnosis Group Code
+              detail (National Drug Code + quantity only)
          */
         clearOutList(component.getInformationSequence());
 
@@ -623,10 +712,54 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         clearOutList(component.getEncounter());
         clearOutList(component.getNoteNumber());
         clearOutList(component.getAdjudication());
-        clearOutList(component.getDetail());
+        trimDetails(component.getDetail());
         clearOutList(component.getModifierExtension());
 
         return component;
+    }
+
+    /**
+     * Keep only item details that carry a National Drug Code, per FHIRPath
+     * {@code ExplanationOfBenefit.item.detail.productOrService.where(coding.system='http://hl7.org/fhir/sid/ndc').coding.code},
+     * and trim each to sequence, the NDC codings of productOrService, and quantity.
+     *
+     * @param details - the item's detail list, mutated in place
+     */
+    private static void trimDetails(List<ExplanationOfBenefit.DetailComponent> details) {
+        if (details == null) {
+            return;
+        }
+        details.removeIf(d -> !hasNdc(d.getProductOrService()));
+        for (ExplanationOfBenefit.DetailComponent detail : details) {
+            CodeableConcept productOrService = detail.getProductOrService();
+            productOrService.getCoding().removeIf(c -> !NDC_SYSTEM.equals(c.getSystem()));
+            productOrService.setText(null);
+            productOrService.setId(null);
+            productOrService.setExtension(null);
+
+            detail.setId(null);
+            detail.setExtension(null);
+            detail.setModifierExtension(null);
+            detail.setRevenue(null);
+            detail.setCategory(null);
+            clearOutList(detail.getModifier());
+            clearOutList(detail.getProgramCode());
+            detail.setUnitPrice(null);
+            detail.setFactor(null);
+            detail.setNet(null);
+            clearOutList(detail.getUdi());
+            clearOutList(detail.getNoteNumber());
+            clearOutList(detail.getAdjudication());
+            clearOutList(detail.getSubDetail());
+        }
+    }
+
+    private static boolean hasNdc(CodeableConcept productOrService) {
+        if (productOrService == null) return false;
+        for (Coding c : productOrService.getCoding()) {
+            if (NDC_SYSTEM.equals(c.getSystem()) && c.hasCode()) return true;
+        }
+        return false;
     }
 
     /**
