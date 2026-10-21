@@ -4,7 +4,7 @@ plugins {
     id "org.sonarqube" version "7.3.0.8198"
     id 'org.cyclonedx.bom' version '3.0.0' apply true
 }
-version = "1.1.12"
+version = "1.1.13"
 group = "gov.cms.ab2d"
 
 dependencies {
@@ -39,7 +39,7 @@ ext {
     deployerRepo = 'ab2d-main'
     resolverRepo = 'ab2d-main'
 
-    postgresVersion = '42.7.13'
+    postgresVersion = '42.7.14'
     testContainerVersion='1.21.4'
 }
 

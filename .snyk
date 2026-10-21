@@ -27,11 +27,11 @@ ignore:
   SNYK-JAVA-ORGAPACHEHTTPCOMPONENTSCLIENT5-19432178:
     - '*':
         reason: >-
-          False positive; Snyk is reporting on a hidden configuration checkstyle
-          uses: 'Checkstyle libraries are isolated to the code-quality analysis
+          False positive; Snyk is reporting on a hidden configuration used by checkstyle:
+          'Checkstyle libraries are isolated to the code-quality analysis
           phase and do not leak into your artifact's compile or runtime
           classpath'
-        expires: 2027-03-01T00:00:00.000Z
+        expires: 2030-01-01T00:00:00.000Z
         created: 2026-10-08T23:19:10.277Z
   SNYK-JAVA-ORGGLASSFISHJAXB-20883142:
     - '*':
@@ -40,4 +40,13 @@ ignore:
           API does not consume XML. An official fix has not been released yet. Ignoring for one month.
         expires: 2026-11-21T00:00:00.000Z
         created: 2026-10-21T18:02:17.621Z
+  SNYK-JAVA-COMGOOGLEGUAVA-20825054:
+    - '*':
+        reason: >-
+          False positive; Snyk is reporting on a hidden configuration used by checkstyle:
+          'Checkstyle libraries are isolated to the code-quality analysis
+          phase and do not leak into your artifact's compile or runtime
+          classpath'
+        expires: 2030-01-01T00:00:00.000Z
+        created: 2026-10-21T18:30:10.231Z
 patch: {}
