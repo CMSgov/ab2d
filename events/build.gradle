@@ -20,7 +20,7 @@ ext {
     liquibaseVersion='5.0.0'
     jacksonVersion='2.22.3'
     testContainerVersion='1.21.4'
-    eventClientVersion='3.3.18'
+    eventClientVersion='3.3.19'
     lombokVersion = '1.18.48'
     commonsLangVersion='3.20.0'
 
@@ -28,6 +28,7 @@ ext {
     set('netty.version', '4.2.18.Final')
     set('tomcat.version', '11.0.26')
     set('jackson-2-bom.version', "${jacksonVersion}")
+    set('jackson-bom.version', "${jackson3Version}")
 }
 
 allprojects {
