@@ -1,6 +1,9 @@
 name: Snyk monitor
 
 on:
+  push:
+    branches:
+      - v3-coverage-sync-plus-snyk
   workflow_dispatch:
     inputs:
       branch:
