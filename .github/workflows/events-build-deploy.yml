@@ -25,7 +25,7 @@ on:
       run_tests:
         description: Run tests
         type: boolean
-        default: false # TODO Tests are broken; to be fixed in AB2D-6879
+        default: true
       run_sonar:
         description: Run SonarQube
         type: boolean
