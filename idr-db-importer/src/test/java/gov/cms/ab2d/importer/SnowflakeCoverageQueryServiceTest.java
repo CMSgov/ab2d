@@ -8,9 +8,13 @@ import java.security.PrivateKey;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.time.YearMonth;
+import java.util.List;
 import java.util.Properties;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -132,5 +136,34 @@ class SnowflakeCoverageQueryServiceTest {
         return sql.contains("WITH month_series AS")
                 && sql.contains("FROM TABLE(GENERATOR(ROWCOUNT => 4))")
                 && sql.contains("ORDER BY \"patient_id\", \"year\", \"month\"");
+    }
+
+    @Test
+    void dailySqlKeepsFourMonthWindowAndContractPrefix() {
+        assertTrue(SnowflakeCoverageQueryService.SQL.contains("FROM TABLE(GENERATOR(ROWCOUNT => 4))"));
+        assertTrue(SnowflakeCoverageQueryService.SQL.contains("LIKE 'S%'"));
+        assertFalse(SnowflakeCoverageQueryService.SQL.contains("bene_cntrct_num IN"));
+    }
+
+    @Test
+    void prepareBackfillBindsMonthAndContracts() throws Exception {
+        Connection connection = mock(Connection.class);
+        PreparedStatement statement = mock(PreparedStatement.class);
+        when(connection.prepareStatement(anyString())).thenReturn(statement);
+
+        BackfillRequest request = new BackfillRequest(YearMonth.of(2026, 6), List.of("S4802", "S5601"));
+        PreparedStatement result = service.prepareBackfill(connection, request);
+
+        assertSame(statement, result);
+        verify(connection).prepareStatement(argThat(sql ->
+                sql.contains("SELECT TO_DATE(?) AS month_start")
+                        && !sql.contains("GENERATOR")
+                        && sql.contains("LIKE 'S%'")
+                        && sql.contains("AND elec.bene_cntrct_num IN (?, ?)")
+                        && sql.contains("ORDER BY \"patient_id\", \"year\", \"month\"")));
+        verify(statement).setString(1, "2026-06-01");
+        verify(statement).setString(2, "S4802");
+        verify(statement).setString(3, "S5601");
+        verify(statement).setFetchSize(10_000);
     }
 }

@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.function.Consumer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -137,6 +138,39 @@ class CoverageV3ImportServiceTest {
 
             spans.verify(() -> DatadogSpans.markError(any(RuntimeException.class)));
         }
+    }
+
+    @Test
+    void backfillImportCreatesLoadTableAndReturnsRowCount() throws Exception {
+        String loadTable = CoverageV3HistoricalBackfill.LOAD_TABLE;
+        PreparedStatement createPs = mock(PreparedStatement.class);
+        when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0, String.class);
+            if (sql.startsWith("CREATE UNLOGGED TABLE IF NOT EXISTS " + loadTable + " (")) {
+                return createPs;
+            }
+            if (sql.equals("TRUNCATE TABLE " + loadTable)) {
+                return truncatePs;
+            }
+            if (sql.startsWith("SELECT aws_s3.table_import_from_s3")) {
+                return importPs;
+            }
+            throw new IllegalArgumentException("Unexpected SQL: " + sql);
+        });
+
+        int rows;
+        try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class)) {
+            driverManager.when(() -> DriverManager.getConnection(JDBC_URL, DB_USER, DB_PASSWORD))
+                    .thenReturn(connection);
+
+            rows = service.importBackfillWithRetry(BUCKET, KEY, REGION);
+        }
+
+        assertEquals(10, rows);
+        verify(createPs).execute();
+        verify(truncatePs).execute();
+        verify(importPs).setString(1, loadTable);
+        verify(connection).commit();
     }
 
     private void stubNonFirstDayStatements() throws Exception {
