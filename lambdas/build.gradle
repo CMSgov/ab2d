@@ -4,7 +4,7 @@ plugins {
     id "org.sonarqube" version "7.3.0.8198"
     id 'org.cyclonedx.bom' version '3.0.0' apply true
 }
-version = "1.1.12"
+version = "1.1.13"
 group = "gov.cms.ab2d"
 
 dependencies {
@@ -35,10 +35,13 @@ ext {
     retrieveVersion = project.version
     optoutVersion = project.version
 
-
     sourcesRepo = 'ab2d-maven-repo'
     deployerRepo = 'ab2d-main'
     resolverRepo = 'ab2d-main'
+
+    postgresVersion = '42.7.14'
+    testContainerVersion='1.21.4'
+    jacksonVersion='2.22.3'
 }
 
 repositories {
@@ -74,8 +77,9 @@ subprojects {
             'org.apache.httpcomponents.core5:httpcore5:5.4.3',
             'org.apache.httpcomponents.core5:httpcore5-h2:5.4.3',
             'org.springframework.retry:spring-retry:2.0.13',
-            'com.fasterxml.jackson.core:jackson-core:2.22.3',
-            'com.fasterxml.jackson.core:jackson-databind:2.22.3'
+            "com.fasterxml.jackson.core:jackson-core:$jacksonVersion",
+            "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion",
+            "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:$jacksonVersion"
         )
     }
     ext {

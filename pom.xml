@@ -38,7 +38,7 @@
         <dd-trace-api.version>1.63.0</dd-trace-api.version>
         <dogstatsd-client.version>4.4.5</dogstatsd-client.version>
         <spring-cloud-aws.version>4.1.1</spring-cloud-aws.version>
-        <postgresql.version>42.7.13</postgresql.version>
+        <postgresql.version>42.7.14</postgresql.version>
         <kotlin.version>2.1.0</kotlin.version>
 
         <!-- Maven plugin versions -->
@@ -47,21 +47,24 @@
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
         <!-- AB2D lib versions -->
-        <bfd-lib.version>4.8.4</bfd-lib.version>
-        <events-client.version>3.3.18</events-client.version>
-        <fhir-lib.version>2.5.10</fhir-lib.version>
-        <aggregator-lib.version>2.1.8</aggregator-lib.version>
-        <filters-lib.version>3.2.5</filters-lib.version>
-        <contract-client.version>2.3.1</contract-client.version>
-        <sns-client.version>1.1.13</sns-client.version>
+        <bfd-lib.version>4.8.5</bfd-lib.version>
+        <events-client.version>3.3.19</events-client.version>
+        <fhir-lib.version>2.5.11</fhir-lib.version>
+        <aggregator-lib.version>2.1.9</aggregator-lib.version>
+        <filters-lib.version>3.2.6</filters-lib.version>
+        <contract-client.version>2.3.2</contract-client.version>
+        <sns-client.version>1.1.14</sns-client.version>
 
         <!-- Dependency versions -->
         <commons-compress.version>1.28.0</commons-compress.version>
         <commons-io.version>2.19.0</commons-io.version>
+        <bouncycastle.version>1.86</bouncycastle.version>
 
         <!-- Spring Boot managed dependencies -->
         <netty.version>4.2.18.Final</netty.version>
         <tomcat.version>11.0.26</tomcat.version>
+        <jackson-2-bom.version>2.22.3</jackson-2-bom.version>
+        <jackson-bom.version>3.2.3</jackson-bom.version>
     </properties>
 
     <dependencyManagement>
@@ -73,10 +76,11 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Remove this? -->
             <dependency>
                 <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>3.1.5</version>
+                <version>${jackson-bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -104,12 +108,12 @@
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpkix-jdk18on</artifactId>
-                <version>1.85</version>
+                <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk18on</artifactId>
-                <version>1.85</version>
+                <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.thrift</groupId>
