@@ -31,7 +31,7 @@ ext {
 	hapiVersion = '8.12.1'
 	hl7Version = '6.10.4'
 	jacksonVersion='2.22.3'
-	jackson3Version='3.2.2'
+	jackson3Version='3.2.3'
 	// override spring boot's managed versions like so:
 	// set('xyz.version', '1.0.0')
 

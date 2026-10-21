@@ -17,7 +17,7 @@ ext {
     springCloudAwsVersion = '4.1.1'
     springBootVersion='4.1.1'
     jacksonVersion='2.22.3'
-    jackson3Version='3.2.2'
+    jackson3Version='3.2.3'
     testContainerVersion='1.21.4'
     liquibaseVersion = '5.0.0'
     eventClientVersion='3.3.19'

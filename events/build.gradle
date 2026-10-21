@@ -19,7 +19,7 @@ ext {
     springCloudAwsVersion = '4.1.1'
     liquibaseVersion='5.0.0'
     jacksonVersion='2.22.3'
-    jackson3Version='3.2.2'
+    jackson3Version='3.2.3'
     testContainerVersion='1.21.4'
     eventClientVersion='3.3.19'
     lombokVersion = '1.18.48'
@@ -82,8 +82,8 @@ allprojects {
 
         constraints {
             implementation('org.apache.thrift:libthrift:0.24.0')
-            implementation('org.bouncycastle:bcprov-jdk18on:1.85')
-            implementation('org.bouncycastle:bcpkix-jdk18on:1.85')
+            implementation('org.bouncycastle:bcprov-jdk18on:1.86')
+            implementation('org.bouncycastle:bcpkix-jdk18on:1.86')
             implementation('org.apache.commons:commons-compress:1.28.0')
 
             // unmanaged dependencies
