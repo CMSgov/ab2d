@@ -9,11 +9,6 @@ exclude:
 version: v1.25.1
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
-  SNYK-JAVA-COMFASTERXMLJACKSONCORE-20059179:
-    - '*':
-        reason: Low/no risk
-        expires: 2026-12-31T00:00:00.000Z
-        created: 2026-10-07T19:31:18.110Z
   SNYK-JAVA-ORGAPACHETOMCATEMBED-20302842:
     - '*':
         reason: Low/no risk
