@@ -35,10 +35,12 @@ ext {
     retrieveVersion = project.version
     optoutVersion = project.version
 
-
     sourcesRepo = 'ab2d-maven-repo'
     deployerRepo = 'ab2d-main'
     resolverRepo = 'ab2d-main'
+
+    postgresVersion = '42.7.13'
+    testContainerVersion='1.21.4'
 }
 
 repositories {

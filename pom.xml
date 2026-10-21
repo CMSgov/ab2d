@@ -38,7 +38,7 @@
         <dd-trace-api.version>1.63.0</dd-trace-api.version>
         <dogstatsd-client.version>4.4.5</dogstatsd-client.version>
         <spring-cloud-aws.version>4.1.1</spring-cloud-aws.version>
-        <postgresql.version>42.7.13</postgresql.version>
+        <postgresql.version>42.7.14</postgresql.version>
         <kotlin.version>2.1.0</kotlin.version>
 
         <!-- Maven plugin versions -->
@@ -62,7 +62,7 @@
         <!-- Spring Boot managed dependencies -->
         <netty.version>4.2.18.Final</netty.version>
         <tomcat.version>11.0.26</tomcat.version>
-        <jackson-bom.version>3.1.7</jackson-bom.version>
+        <jackson-bom.version>3.2.2</jackson-bom.version>
     </properties>
 
     <dependencyManagement>

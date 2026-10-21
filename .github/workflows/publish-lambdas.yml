@@ -64,11 +64,8 @@ jobs:
           ldconfig -p | grep "libstdc++" || echo "libstdc++ is missing!"
           ldconfig -p | grep "zlib" || echo "zlib is missing!"
 
-      - name: Build Lambdas
-        run: ./gradlew
-
       - name: Test Lambdas
-        run: ./gradlew clean test --info
+        run: ./gradlew clean test --info --write-locks
 
       - name: Build Jars
         run: ./gradlew buildZip --info

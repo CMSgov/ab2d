@@ -11,12 +11,12 @@ version: v1.25.1
 ignore:
   SNYK-JAVA-COMFASTERXMLJACKSONCORE-20059179:
     - '*':
-        reason: Low Risk
+        reason: Low/no risk
         expires: 2026-12-31T00:00:00.000Z
         created: 2026-10-07T19:31:18.110Z
   SNYK-JAVA-ORGAPACHETOMCATEMBED-20302842:
     - '*':
-        reason: Low Risk
+        reason: Low/no risk
         expires: 2026-12-31T00:00:00.000Z
         created: 2026-10-07T19:31:23.815Z
   SNYK-JAVA-ORGSPRINGFRAMEWORKCLOUD-19268251:
@@ -33,4 +33,11 @@ ignore:
           classpath'
         expires: 2027-03-01T00:00:00.000Z
         created: 2026-10-08T23:19:10.277Z
+  SNYK-JAVA-ORGGLASSFISHJAXB-20883142:
+    - '*':
+        reason: >-
+          XML External Entity (XXE) Injection issues are low/no risk given the
+          API does not consume XML. An official fix has not been released yet. Ignoring for one month.
+        expires: 2026-11-21T00:00:00.000Z
+        created: 2026-10-21T18:02:17.621Z
 patch: {}
