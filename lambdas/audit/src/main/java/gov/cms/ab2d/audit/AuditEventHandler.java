@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -49,15 +50,22 @@ public class AuditEventHandler implements RequestStreamHandler {
         String efs = properties.getProperty("AB2D_EFS_MOUNT");
         validateEfsMount(efs);
         Set<File> files = findMatchingDirectories(efs, UUID_PATTERN);
-        findAllMatchingFilesAndParentDirs(efs, files, ".ndjson");
-        files.forEach(file -> deleteExpired(file, fileTTL, log));
+        findAllMatchingFilesAndParentDirs(efs, files, ".ndjson", ".ndjson.gz");
+        Set<String> activeJobs = JobStatusRepository.findActiveJobUuids();
+        Path efsPath = Path.of(efs).toAbsolutePath().normalize();
+        files.forEach(file -> deleteExpired(file, fileTTL, efsPath, activeJobs, log));
         outputStream.write("{\"status\": \"ok\" }".getBytes(StandardCharsets.UTF_8));
         log.log("Audit Lambda completed");
     }
 
-    private void deleteExpired(File file, int fileTTL, LambdaLogger log) {
+    private void deleteExpired(File file, int fileTTL, Path efsPath, Set<String> activeJobs, LambdaLogger log) {
         try {
             if (file.exists() && fileOldEnough(file, fileTTL)) {
+                Optional<String> jobUuid = jobUuid(file, efsPath);
+                if (jobUuid.isPresent() && activeJobs.contains(jobUuid.get())) {
+                    log.log(file.getAbsolutePath() + " skipped; job " + jobUuid.get() + " not in terminal state");
+                    return;
+                }
                 File dir = null;
                 if (!file.isDirectory()) {
                     dir = file.getParentFile();
@@ -71,6 +79,18 @@ public class AuditEventHandler implements RequestStreamHandler {
         } catch (IOException e) {
             throw new AuditException(e);
         }
+    }
+
+    /**
+     * Get the job a file belongs to
+     */
+    private Optional<String> jobUuid(File file, Path efsPath) {
+        Path relative = efsPath.relativize(file.toPath().toAbsolutePath().normalize());
+        if (relative.getNameCount() == 0) {
+            return Optional.empty();
+        }
+        String topLevel = relative.getName(0).toString();
+        return UUID_PATTERN.matcher(topLevel).matches() ? Optional.of(topLevel) : Optional.empty();
     }
 
     /**
