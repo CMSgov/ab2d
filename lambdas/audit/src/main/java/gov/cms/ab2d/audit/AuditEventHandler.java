@@ -52,6 +52,7 @@ public class AuditEventHandler implements RequestStreamHandler {
         Set<File> files = findMatchingDirectories(efs, UUID_PATTERN);
         findAllMatchingFilesAndParentDirs(efs, files, ".ndjson", ".ndjson.gz");
         Set<String> activeJobs = JobStatusRepository.findActiveJobUuids();
+        log.log("Found " + activeJobs.size() + " active jobs: " + activeJobs);
         Path efsPath = Path.of(efs).toAbsolutePath().normalize();
         files.forEach(file -> deleteExpired(file, fileTTL, efsPath, activeJobs, log));
         outputStream.write("{\"status\": \"ok\" }".getBytes(StandardCharsets.UTF_8));
