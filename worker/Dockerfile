@@ -12,6 +12,14 @@ ENV JVM_MAX_RAM=80.0
 #Update Packages
 RUN yum update -y --security
 
+# Distrust eMudhra emSign roots (eMudhra intermediate CA key compromise, 2026-10-20).
+RUN keytool -exportcert -rfc -cacerts -storepass changeit -alias emsigneccrootca-c3 -file /etc/pki/ca-trust/source/blocklist/emsigneccrootca-c3.pem ; \
+    keytool -exportcert -rfc -cacerts -storepass changeit -alias emsigneccrootca-g3 -file /etc/pki/ca-trust/source/blocklist/emsigneccrootca-g3.pem ; \
+    keytool -exportcert -rfc -cacerts -storepass changeit -alias emsignrootca-c1    -file /etc/pki/ca-trust/source/blocklist/emsignrootca-c1.pem ; \
+    keytool -exportcert -rfc -cacerts -storepass changeit -alias emsignrootca-g1    -file /etc/pki/ca-trust/source/blocklist/emsignrootca-g1.pem ; \
+    update-ca-trust && \
+    ! keytool -list -cacerts -storepass changeit | grep -qi emsign
+
 #JAVA commands
 CMD ["sh", "-c", "exec java \
     -XX:+UseContainerSupport \
