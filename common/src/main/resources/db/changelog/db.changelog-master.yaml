@@ -223,3 +223,5 @@ databaseChangeLog:
       file: db/changelog/v2026/add_job_lease_pause_requested.sql
   - include:
       file: db/changelog/v2026/add_v3_allow_list_enabled_property.sql
+  - include:
+      file: db/changelog/v2026/add_v3_staging_table_partitions.sql
