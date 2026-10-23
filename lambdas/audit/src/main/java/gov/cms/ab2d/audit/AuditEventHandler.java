@@ -53,6 +53,8 @@ public class AuditEventHandler implements RequestStreamHandler {
         findAllMatchingFilesAndParentDirs(efs, files, ".ndjson", ".ndjson.gz");
         Set<String> activeJobs = JobStatusRepository.findActiveJobUuids();
         log.log("Found " + activeJobs.size() + " active jobs: " + activeJobs);
+        activeJobs.forEach(uuid -> log.log("DEBUG active job='" + uuid + "'"));
+        log.log("DEBUG efs='" + efs + "' files=" + files.size());
         Path efsPath = Path.of(efs).toAbsolutePath().normalize();
         files.forEach(file -> deleteExpired(file, fileTTL, efsPath, activeJobs, log));
         outputStream.write("{\"status\": \"ok\" }".getBytes(StandardCharsets.UTF_8));
@@ -61,8 +63,13 @@ public class AuditEventHandler implements RequestStreamHandler {
 
     private void deleteExpired(File file, int fileTTL, Path efsPath, Set<String> activeJobs, LambdaLogger log) {
         try {
-            if (file.exists() && fileOldEnough(file, fileTTL)) {
-                Optional<String> jobUuid = jobUuid(file, efsPath);
+            boolean exists = file.exists();
+            boolean oldEnough = exists && fileOldEnough(file, fileTTL);
+            log.log("DEBUG deleteExpired file='" + file.getAbsolutePath() + "' exists=" + exists + " oldEnough=" + oldEnough);
+            if (exists && oldEnough) {
+                Optional<String> jobUuid = jobUuid(file, efsPath, log);
+                log.log("DEBUG deleteExpired file='" + file.getAbsolutePath() + "' jobUuid='" + jobUuid.orElse("<none>")
+                        + "' active=" + jobUuid.map(activeJobs::contains).orElse(false));
                 if (jobUuid.isPresent() && activeJobs.contains(jobUuid.get())) {
                     log.log(file.getAbsolutePath() + " skipped; job " + jobUuid.get() + " not in terminal state");
                     return;
@@ -85,13 +92,17 @@ public class AuditEventHandler implements RequestStreamHandler {
     /**
      * Get the job a file belongs to
      */
-    private Optional<String> jobUuid(File file, Path efsPath) {
+    private Optional<String> jobUuid(File file, Path efsPath, LambdaLogger log) {
         Path relative = efsPath.relativize(file.toPath().toAbsolutePath().normalize());
+        log.log("DEBUG jobUuid efsPath='" + efsPath + "' file='" + file.toPath() + "' relative='" + relative
+                + "' nameCount=" + relative.getNameCount());
         if (relative.getNameCount() == 0) {
             return Optional.empty();
         }
         String topLevel = relative.getName(0).toString();
-        return UUID_PATTERN.matcher(topLevel).matches() ? Optional.of(topLevel) : Optional.empty();
+        boolean matches = UUID_PATTERN.matcher(topLevel).matches();
+        log.log("DEBUG jobUuid topLevel='" + topLevel + "' matchesUuidPattern=" + matches);
+        return matches ? Optional.of(topLevel) : Optional.empty();
     }
 
     /**
