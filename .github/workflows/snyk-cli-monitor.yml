@@ -1,4 +1,4 @@
-name: Snyk monitor
+name: Snyk CLI monitor
 
 on:
   push:
