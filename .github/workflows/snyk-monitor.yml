@@ -18,12 +18,59 @@ permissions:
   contents: read
 
 jobs:
-  snyk-monitor:
-    name: 'Snyk monitor for AB2D'
-    uses: CMSGov/CDAP/.github/workflows/snyk-monitor.yml@ab2d-snyk-testing
-    with:
-      app: ab2d
-      ref: ${{ inputs.branch }}
-      cli_args: "--all-projects --exclude=e2e-bfd-test,e2e-test,fhir-test,common,coverage,job,libs,ops,local-dev,scripts --policy-path=.snyk"
-    secrets:
-      PROD_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+  run:
+    runs-on: codebuild-ab2d-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ inputs.app }}-prod-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: cmsgov/cdap/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+
+      - name: Run mvn install for main project
+        run: |
+          mvn -U clean install -s settings.xml -Dcheckstyle.skip -DskipTests -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
+
+      - name: Run gradle for events
+        working-directory: events
+        run: |
+          ./gradlew clean publishToMavenLocal -x test --write-locks
+
+      - name: Run gradle for contracts
+        working-directory: contracts
+        run: |
+          ./gradlew clean publishToMavenLocal -x test --write-locks
+
+      - name: Run gradle for lambdas
+        working-directory: lambdas
+        run: |
+          ./gradlew clean publishToMavenLocal -x test --write-locks
+
+      - name: Run Snyk Code
+        env:
+          PROJECT_NAME: 'Snyk monitor'
+          CLI_ARGS: ${{ inputs.cli_args }}
+        run: |
+          EXIT_CODE=0
+          snyk monitor ${CLI_ARGS} || EXIT_CODE=$?
+          echo "Snyk exit code ${EXIT_CODE}"
+          # Exit code 1 means vulnerabilities were found. Don't fail the workflow.
+          if [ "$EXIT_CODE" -eq 1 ]; then exit 0; else exit "$EXIT_CODE"; fi
+
+      - name: Run Snyk monitor
+        uses: cmsgov/cdap/actions/run-snyk-monitor@snyk-cli-v2
+        with:
+          cli_args: "--all-projects --exclude=e2e-bfd-test,e2e-test,fhir-test,common,coverage,job,libs,ops,local-dev,scripts --policy-path=.snyk"
