@@ -1,0 +1,1 @@
+--all-projects --exclude=e2e-bfd-test,e2e-test,fhir-test,common,coverage,job,libs,ops,local-dev,scripts --policy-path=.snyk
