@@ -1,9 +1,6 @@
 name: Snyk CLI monitor
 
 on:
-  push:
-    branches:
-      - snyk-cli-v2
   workflow_dispatch:
     inputs:
       branch:
