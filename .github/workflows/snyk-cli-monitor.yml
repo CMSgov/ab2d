@@ -1,9 +1,9 @@
 name: Snyk CLI monitor
 
 on:
-  push:
-    branches:
-      - snyk-cli-v2
+  workflow_call:
+  workflow_dispatch:
+
 
 permissions:
   id-token: write
