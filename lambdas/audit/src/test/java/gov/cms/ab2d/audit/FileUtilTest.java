@@ -48,6 +48,27 @@ class FileUtilTest {
     }
 
     @Test
+    void findGzipFiles() throws IOException {
+        String path = System.getProperty("java.io.tmpdir") + "/" + RandomString.make(10) + "/";
+        new File(path).mkdirs();
+        Files.write(Paths.get(path + RandomString.make(10) + ".ndjson"), "test".getBytes(StandardCharsets.UTF_8));
+        Files.write(Paths.get(path + RandomString.make(10) + ".ndjson.gz"), "test".getBytes(StandardCharsets.UTF_8));
+
+        Set<File> ndjson = new HashSet<>();
+        FileUtil.findAllMatchingFilesAndParentDirs(path, ndjson, ".ndjson");
+        assertEquals(1, ndjson.size());
+
+        Set<File> gzipped = new HashSet<>();
+        FileUtil.findAllMatchingFilesAndParentDirs(path, gzipped, ".ndjson.gz");
+        assertEquals(1, gzipped.size());
+        assertTrue(gzipped.iterator().next().getName().endsWith(".ndjson.gz"));
+
+        Set<File> both = new HashSet<>();
+        FileUtil.findAllMatchingFilesAndParentDirs(path, both, ".ndjson", ".ndjson.gz");
+        assertEquals(2, both.size());
+    }
+
+    @Test
     void improperRoot() {
         assertTrue(FileUtil.improperRoot("Δ:/fails"));
     }

@@ -26,18 +26,18 @@ public class FileUtil {
         }
     }
 
-    public static void findAllMatchingFilesAndParentDirs(String directoryName, Set<File> files, String endsWith) {
+    public static void findAllMatchingFilesAndParentDirs(String directoryName, Set<File> files, String... suffixes) {
         File directory = new File(directoryName);
         // Get all files from a directory.
         File[] fList = directory.listFiles();
         if (fList != null)
             for (File file : fList) {
-                if (file.getName()
-                        .endsWith(endsWith)) {
+                if (Arrays.stream(suffixes)
+                        .anyMatch(file.getName()::endsWith)) {
                     files.add(file);
                 }
                 if (file.isDirectory()) {
-                    findAllMatchingFilesAndParentDirs(file.getAbsolutePath(), files, endsWith);
+                    findAllMatchingFilesAndParentDirs(file.getAbsolutePath(), files, suffixes);
                 }
             }
     }
