@@ -51,17 +51,6 @@ jobs:
         run: |
           ./gradlew clean publishToMavenLocal -x test --write-locks
 
-      - name: Run Snyk Code
-        env:
-          PROJECT_NAME: 'Snyk monitor'
-          CLI_ARGS: ${{ inputs.cli_args }}
-        run: |
-          EXIT_CODE=0
-          snyk monitor ${CLI_ARGS} || EXIT_CODE=$?
-          echo "Snyk exit code ${EXIT_CODE}"
-          # Exit code 1 means vulnerabilities were found. Don't fail the workflow.
-          if [ "$EXIT_CODE" -eq 1 ]; then exit 0; else exit "$EXIT_CODE"; fi
-
       - name: Run Snyk monitor
         uses: cmsgov/cdap/actions/run-snyk-monitor@snyk-cli-v2
         with:
