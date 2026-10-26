@@ -1,17 +1,9 @@
 name: Snyk monitor
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        required: true
-        type: string
-        description: 'Branch to scan'
-  workflow_call:
-    inputs:
-      branch:
-        required: true
-        type: string
+  push:
+    branches:
+      - snyk-cli-v2
 
 permissions:
   id-token: write
