@@ -290,7 +290,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
             } else {
                 val identifiers = next.getIdentifiers();
                 if (Objects.equals(Boolean.FALSE, identifiers.getShareDataV3())) {
-                    log.info("Patient at row number {} has opted out; removing coverage summary", identifiers.getRowNumberV3());
+                    log.debug("Patient at row number {} has opted out; removing coverage summary", identifiers.getRowNumberV3());
                     iterator.remove();
                 }
             }
@@ -373,13 +373,13 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
                 // set element to null instead of removing in order to prevent shifting indexes
                 // nulls will be removed later
                 summaries.set(index, null);
-                log.info("Processing duplicate patient at row number {}", summary.getIdentifiers().getRowNumberV3());
+                log.debug("Processing duplicate patient at row number {}", summary.getIdentifiers().getRowNumberV3());
             }
 
             val reducedSummary = reduceSummariesForDuplicatePatientId(summarySubList);
             val firstIndex = indexSubList.get(0);
             summaries.set(firstIndex, reducedSummary);
-            log.info("Reduced duplicate patient records into record from row number {}", reducedSummary.getIdentifiers().getRowNumberV3());
+            log.debug("Reduced duplicate patient records into record from row number {}", reducedSummary.getIdentifiers().getRowNumberV3());
         }
     }
 

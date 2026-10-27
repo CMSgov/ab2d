@@ -180,7 +180,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             log.info("Number of outputs: " + jobOutputs.size());
 
         } catch (InterruptedException | IOException ex) {
-            log.error("interrupted while processing job for contract");
+            log.error("interrupted while processing job for contract", ex);
             DatadogSpans.markError(ex);
         } finally {
             DatadogSpans.setMetric("job.duration", System.currentTimeMillis() - jobStart);
@@ -421,7 +421,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                 Thread.sleep(100);
             }
         } catch (Exception ex) {
-            log.error("Problem killing threads");
+            log.error("Problem killing threads", ex);
         }
         log.info("All threads cancelled");
     }
@@ -586,7 +586,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             try {
                 Files.delete(Path.of(streamingDir.getAbsolutePath()));
             } catch (Exception ex) {
-                log.error("Unable to delete streaming dir");
+                log.error("Unable to delete streaming dir", ex);
             }
         }
         // We're done, all the directories are empty, let's kill the thread

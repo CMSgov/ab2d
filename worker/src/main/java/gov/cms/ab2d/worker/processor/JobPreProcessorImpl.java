@@ -161,6 +161,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             job = jobRepository.save(job);
 
         } catch (CoverageDriverException coverageDriverException) {
+            log.error("could not pull coverage information for contract", coverageDriverException);
             eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_COVERAGE_ISSUE + " Job for "
                     + contract.getContractNumber() + " in progress"), PUBLIC_LIST);
 
