@@ -138,7 +138,7 @@ public class JobProcessorImpl implements JobProcessor {
 
             // Log exception to relevant loggers
             eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " " + message), PUBLIC_LIST);
-            log.error("Unexpected exception executing job {}", e.getMessage());
+            log.error("Unexpected exception executing job {}", e.getMessage(), e);
 
             // Update database status
             job.setStatus(FAILED);
@@ -360,11 +360,13 @@ public class JobProcessorImpl implements JobProcessor {
      */
     private void completeJob(Job job) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
+        long errorFiles = job.getJobOutputs().stream().filter(output -> Boolean.TRUE.equals(output.getError())).count();
         String jobFinishedMessage = String.format(EOB_JOB_COMPLETED + " ContractWorkerDto processed " +
-                "%d patients generating %d eobs and %d files (including the error file if any)",
+                "%d patients generating %d eobs in %d data file(s) and %d error file(s)",
                 progressTracker.getPatientRequestProcessedCount(),
                 progressTracker.getEobsProcessedCount(),
-                job.getJobOutputs().size());
+                job.getJobOutputs().size() - errorFiles,
+                errorFiles);
 
         // In all environments log to database and or Kinesis
         // In prod additionally log to Slack as an alert

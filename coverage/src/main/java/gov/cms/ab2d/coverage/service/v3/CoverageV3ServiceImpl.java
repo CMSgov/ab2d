@@ -79,7 +79,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         val beneficiarySummaries = queryAggregatedCoverageMembership(page, page.getPageSize());
         val beneficiaryRecordsFetched = beneficiarySummaries.size();
         DatadogSpans.setMetric("coverage.v3.beneficiary_records_fetched", beneficiaryRecordsFetched);
-        log.info("[V3] beneficiary summary records fetched = {}", beneficiaryRecordsFetched);
+        log.debug("[V3] beneficiary summary records fetched = {}", beneficiaryRecordsFetched);
 
         if (LOG_ROWS_FETCHED) {
             logRowsFetched(beneficiarySummaries);
@@ -90,7 +90,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         val lastPatientId = reduceAndFilter(beneficiarySummaries);
 
         if (beneficiaryRecordsFetched != beneficiarySummaries.size()) {
-            log.info("[V3] beneficiary summary record count after reducing/filtering = {}", beneficiarySummaries.size());
+            log.debug("[V3] beneficiary summary record count after reducing/filtering = {}", beneficiarySummaries.size());
         }
 
         // Build the next request if more beneficiaries exist
