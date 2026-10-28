@@ -155,7 +155,7 @@ resource "aws_lambda_function" "audit" {
     "arm64",
   ]
   vpc_config {
-    security_group_ids = [local.efs_security_group_id, aws_security_group.audit_lambda.id]
+    security_group_ids = [local.efs_security_group_id, aws_security_group.audit_lambda.id, local.db_sg_id, aws_security_group.database_lambda.id]
     subnet_ids         = local.node_subnet_ids
   }
   file_system_config {
@@ -168,6 +168,9 @@ resource "aws_lambda_function" "audit" {
       JAVA_TOOL_OPTIONS     = local.java_options
       AB2D_EFS_MOUNT        = local.efs_mount
       audit_files_ttl_hours = local.ndjson_ttl
+      DB_URL                = "jdbc:postgresql://${local.ab2d_db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&ApplicationName=${local.service_prefix}-audit"
+      DB_USERNAME           = local.db_username
+      DB_PASSWORD           = local.db_password
     }
   }
   tags = { code = "https://github.com/CMSgov/ab2d/tree/main/lambdas/audit" }

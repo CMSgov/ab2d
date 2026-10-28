@@ -29,15 +29,22 @@ public class FileUtil {
     }
 
     /**
-     * Walk the tree under baseDirectory and delete every file ending with endsWith that was created before cutoff.
+     * Walk the tree under baseDirectory and delete every file ending with one of the suffixes that was created before
+     * cutoff. Top-level directories named in skipDirectories (jobs that are still running) are left alone.
+     * A directory is deleted once a file has been removed from it and it is left empty; baseDirectory never is.
+     * <p>
+     * Directories are streamed rather than listed so memory stays flat however many files a job wrote, and each
+     * directory is checked for emptiness once rather than after every deletion (AB2D-7509).
+     *
      * @return the number of files deleted
      */
-    public static int deleteExpiredFiles(String baseDirectory, String endsWith, Instant cutoff, LambdaLogger logger) {
-        return deleteExpiredFiles(Path.of(baseDirectory), endsWith, cutoff, logger, true);
+    public static int deleteExpiredFiles(String baseDirectory, Instant cutoff, Set<String> skipDirectories,
+                                         LambdaLogger logger, String... suffixes) {
+        return deleteExpiredFiles(Path.of(baseDirectory), cutoff, skipDirectories, logger, suffixes, true);
     }
 
-    private static int deleteExpiredFiles(Path directory, String endsWith, Instant cutoff, LambdaLogger logger,
-                                          boolean isBase) {
+    private static int deleteExpiredFiles(Path directory, Instant cutoff, Set<String> skipDirectories,
+                                          LambdaLogger logger, String[] suffixes, boolean isBase) {
         int deleted = 0;
         try (DirectoryStream<Path> entries = Files.newDirectoryStream(directory)) {
             for (Path entry : entries) {
@@ -45,9 +52,14 @@ public class FileUtil {
                 if (attributes == null) {
                     continue;
                 }
+                String name = entry.getFileName().toString();
                 if (attributes.isDirectory()) {
-                    deleted += deleteExpiredFiles(entry, endsWith, cutoff, logger, false);
-                } else if (entry.getFileName().toString().endsWith(endsWith)
+                    if (isBase && skipDirectories.contains(name)) {
+                        logger.log(entry + " skipped; job " + name + " not in terminal state");
+                        continue;
+                    }
+                    deleted += deleteExpiredFiles(entry, cutoff, skipDirectories, logger, suffixes, false);
+                } else if (Arrays.stream(suffixes).anyMatch(name::endsWith)
                         && attributes.creationTime().toInstant().isBefore(cutoff)) {
                     delete(entry.toFile(), logger);
                     deleted++;
