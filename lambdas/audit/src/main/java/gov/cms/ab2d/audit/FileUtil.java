@@ -4,13 +4,15 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class FileUtil {
 
@@ -26,30 +28,56 @@ public class FileUtil {
         }
     }
 
-    public static void findAllMatchingFilesAndParentDirs(String directoryName, Set<File> files, String endsWith) {
-        File directory = new File(directoryName);
-        // Get all files from a directory.
-        File[] fList = directory.listFiles();
-        if (fList != null)
-            for (File file : fList) {
-                if (file.getName()
-                        .endsWith(endsWith)) {
-                    files.add(file);
-                }
-                if (file.isDirectory()) {
-                    findAllMatchingFilesAndParentDirs(file.getAbsolutePath(), files, endsWith);
-                }
-            }
+    /**
+     * Walk the tree under baseDirectory and delete every file ending with endsWith that was created before cutoff.
+     * @return the number of files deleted
+     */
+    public static int deleteExpiredFiles(String baseDirectory, String endsWith, Instant cutoff, LambdaLogger logger) {
+        return deleteExpiredFiles(Path.of(baseDirectory), endsWith, cutoff, logger, true);
     }
 
-    public static Set<File> findMatchingDirectories(String baseDirectory, Pattern pattern) {
-        File directory = new File(baseDirectory);
-        File[] fList = directory.listFiles();
-        return Arrays.stream(Optional.ofNullable(fList)
-                        .orElse(new File[]{}))
-                .filter(f -> pattern.matcher(f.getName())
-                        .matches())
-                .collect(Collectors.toSet());
+    private static int deleteExpiredFiles(Path directory, String endsWith, Instant cutoff, LambdaLogger logger,
+                                          boolean isBase) {
+        int deleted = 0;
+        try (DirectoryStream<Path> entries = Files.newDirectoryStream(directory)) {
+            for (Path entry : entries) {
+                BasicFileAttributes attributes = readAttributes(entry);
+                if (attributes == null) {
+                    continue;
+                }
+                if (attributes.isDirectory()) {
+                    deleted += deleteExpiredFiles(entry, endsWith, cutoff, logger, false);
+                } else if (entry.getFileName().toString().endsWith(endsWith)
+                        && attributes.creationTime().toInstant().isBefore(cutoff)) {
+                    delete(entry.toFile(), logger);
+                    deleted++;
+                }
+            }
+        } catch (IOException exception) {
+            logger.log(String.format("Directory %s could not be read: %s", directory, exception.getMessage()));
+            return deleted;
+        }
+
+        if (!isBase && deleted > 0 && isEmpty(directory)) {
+            delete(directory.toFile(), logger);
+        }
+        return deleted;
+    }
+
+    private static BasicFileAttributes readAttributes(Path path) {
+        try {
+            return Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        } catch (IOException exception) {
+            return null;
+        }
+    }
+
+    private static boolean isEmpty(Path directory) {
+        try (DirectoryStream<Path> entries = Files.newDirectoryStream(directory)) {
+            return !entries.iterator().hasNext();
+        } catch (IOException exception) {
+            return false;
+        }
     }
 
     public static void validateEfsMount(String efsMount) {
