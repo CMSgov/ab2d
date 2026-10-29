@@ -10,13 +10,18 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.condition.OS.LINUX;
 import static org.junit.jupiter.api.condition.OS.MAC;
 import static org.junit.jupiter.api.condition.OS.WINDOWS;
@@ -35,37 +40,115 @@ class FileUtilTest {
     }
 
     @Test
-    void findFiles() throws IOException {
-        String path = System.getProperty("java.io.tmpdir") + "/" + RandomString.make(10) + "/";
-        new File(path).mkdirs();
-        Files.write(Paths.get(path + RandomString.make(10) + ".ndjson"), "test".getBytes(StandardCharsets.UTF_8));
-        Files.write(Paths.get(path + RandomString.make(10) + ".ndjson2"), "test".getBytes(StandardCharsets.UTF_8));
+    void deleteExpiredFilesOnlyDeletesOldNdjson() throws IOException {
+        Path base = Files.createTempDirectory("audit");
+        Path job = Files.createDirectories(base.resolve(RandomString.make(10)));
+        Path ndjson = Files.writeString(job.resolve(RandomString.make(10) + ".ndjson"), "test");
+        Path other = Files.writeString(job.resolve(RandomString.make(10) + ".ndjson2"), "test");
+        TestContext context = new TestContext();
 
-        Set<File> files = new HashSet<>();
-        FileUtil.findAllMatchingFilesAndParentDirs(path, files, ".ndjson");
-        assertEquals(1, files.size());
+        assertEquals(0, FileUtil.deleteExpiredFiles(base, Instant.now().minus(1, ChronoUnit.HOURS), Set.of(), context.getLogger(), ".ndjson").deleted());
+        assertTrue(Files.exists(ndjson));
 
+        assertEquals(1, FileUtil.deleteExpiredFiles(base, Instant.now().plus(1, ChronoUnit.HOURS), Set.of(), context.getLogger(), ".ndjson").deleted());
+        assertFalse(Files.exists(ndjson));
+        assertTrue(Files.exists(other));
+        assertTrue(Files.exists(job));
     }
 
     @Test
-    void findGzipFiles() throws IOException {
-        String path = System.getProperty("java.io.tmpdir") + "/" + RandomString.make(10) + "/";
-        new File(path).mkdirs();
-        Files.write(Paths.get(path + RandomString.make(10) + ".ndjson"), "test".getBytes(StandardCharsets.UTF_8));
-        Files.write(Paths.get(path + RandomString.make(10) + ".ndjson.gz"), "test".getBytes(StandardCharsets.UTF_8));
+    void deleteExpiredFilesRemovesEmptiedDirectoriesButNotBase() throws IOException {
+        Path base = Files.createTempDirectory("audit");
+        Path job = Files.createDirectories(base.resolve(RandomString.make(10)));
+        Path nested = Files.createDirectories(job.resolve("nested"));
+        Path untouched = Files.createDirectories(base.resolve(RandomString.make(10)));
+        Files.writeString(untouched.resolve("keep.txt"), "test");
+        for (int i = 0; i < 50; i++) {
+            Files.writeString(job.resolve("S0000_partition" + i + "_t1.ndjson"), "test");
+            Files.writeString(job.resolve("S0000_partition" + i + "_t1_error.ndjson"), "test");
+        }
+        Files.writeString(nested.resolve("nested.ndjson"), "test");
+        Files.writeString(base.resolve("root.ndjson"), "test");
+        TestContext context = new TestContext();
 
-        Set<File> ndjson = new HashSet<>();
-        FileUtil.findAllMatchingFilesAndParentDirs(path, ndjson, ".ndjson");
-        assertEquals(1, ndjson.size());
+        assertEquals(102, FileUtil.deleteExpiredFiles(base, Instant.now().plus(1, ChronoUnit.HOURS), Set.of(), context.getLogger(), ".ndjson").deleted());
+        assertFalse(Files.exists(nested));
+        assertFalse(Files.exists(job));
+        assertTrue(Files.exists(untouched));
+        assertTrue(Files.exists(base));
+    }
 
-        Set<File> gzipped = new HashSet<>();
-        FileUtil.findAllMatchingFilesAndParentDirs(path, gzipped, ".ndjson.gz");
-        assertEquals(1, gzipped.size());
-        assertTrue(gzipped.iterator().next().getName().endsWith(".ndjson.gz"));
+    @Test
+    void deleteExpiredFilesMatchesEverySuffix() throws IOException {
+        Path base = Files.createTempDirectory("audit");
+        Path job = Files.createDirectories(base.resolve(RandomString.make(10)));
+        Path ndjson = Files.writeString(job.resolve(RandomString.make(10) + ".ndjson"), "test");
+        Path gzipped = Files.writeString(job.resolve(RandomString.make(10) + ".ndjson.gz"), "test");
+        Instant cutoff = Instant.now().plus(1, ChronoUnit.HOURS);
+        TestContext context = new TestContext();
 
-        Set<File> both = new HashSet<>();
-        FileUtil.findAllMatchingFilesAndParentDirs(path, both, ".ndjson", ".ndjson.gz");
-        assertEquals(2, both.size());
+        assertEquals(1, FileUtil.deleteExpiredFiles(base, cutoff, Set.of(), context.getLogger(), ".ndjson.gz").deleted());
+        assertTrue(Files.exists(ndjson));
+        assertFalse(Files.exists(gzipped));
+
+        assertEquals(1, FileUtil.deleteExpiredFiles(base, cutoff, Set.of(), context.getLogger(), ".ndjson", ".ndjson.gz").deleted());
+        assertFalse(Files.exists(ndjson));
+    }
+
+    @Test
+    void deleteExpiredFilesSkipsActiveJobs() throws IOException {
+        Path base = Files.createTempDirectory("audit");
+        String activeJob = UUID.randomUUID().toString();
+        Path active = Files.createDirectories(base.resolve(activeJob));
+        Path finished = Files.createDirectories(base.resolve(UUID.randomUUID().toString()));
+        Path activeFile = Files.writeString(active.resolve("S0000_partition1_t1.ndjson"), "test");
+        Files.writeString(finished.resolve("S0000_partition1_t1.ndjson"), "test");
+        TestContext context = new TestContext();
+
+        assertEquals(1, FileUtil.deleteExpiredFiles(base, Instant.now().plus(1, ChronoUnit.HOURS),
+                Set.of(activeJob), context.getLogger(), ".ndjson").deleted());
+        assertTrue(Files.exists(activeFile));
+        assertFalse(Files.exists(finished));
+    }
+
+    @Test
+    void deleteExpiredFilesOnlyRemovesEmptyDirectoriesOlderThanCutoff() throws IOException {
+        Path base = Files.createTempDirectory("audit");
+        Path empty = Files.createDirectories(base.resolve(UUID.randomUUID().toString()));
+        TestContext context = new TestContext();
+
+        // Just created, e.g. a job that started after the active job lookup
+        FileUtil.CleanupResult result = FileUtil.deleteExpiredFiles(base, Instant.now().minus(1, ChronoUnit.HOURS),
+                Set.of(), context.getLogger(), ".ndjson");
+        assertEquals(new FileUtil.CleanupResult(0, 0), result);
+        assertTrue(Files.exists(empty));
+
+        result = FileUtil.deleteExpiredFiles(base, Instant.now().plus(1, ChronoUnit.HOURS),
+                Set.of(), context.getLogger(), ".ndjson");
+        assertEquals(new FileUtil.CleanupResult(0, 0), result);
+        assertFalse(Files.exists(empty));
+    }
+
+    @Test
+    @EnabledOnOs({LINUX, MAC})
+    void deleteExpiredFilesCountsFailuresSeparately() throws IOException {
+        assumeFalse("root".equals(System.getProperty("user.name")), "root can delete from read-only directories");
+        Path base = Files.createTempDirectory("audit");
+        Path locked = Files.createDirectories(base.resolve(UUID.randomUUID().toString()));
+        Path open = Files.createDirectories(base.resolve(UUID.randomUUID().toString()));
+        Path stuck = Files.writeString(locked.resolve("S0000_partition1_t1.ndjson"), "test");
+        Path removable = Files.writeString(open.resolve("S0000_partition1_t1.ndjson"), "test");
+        Files.setPosixFilePermissions(locked, PosixFilePermissions.fromString("r-xr-xr-x"));
+        TestContext context = new TestContext();
+        try {
+            FileUtil.CleanupResult result = FileUtil.deleteExpiredFiles(base, Instant.now().plus(1, ChronoUnit.HOURS),
+                    Set.of(), context.getLogger(), ".ndjson");
+            assertEquals(new FileUtil.CleanupResult(1, 1), result);
+            assertTrue(Files.exists(stuck));
+            assertFalse(Files.exists(removable));
+        } finally {
+            Files.setPosixFilePermissions(locked, PosixFilePermissions.fromString("rwxr-xr-x"));
+        }
     }
 
     @Test
