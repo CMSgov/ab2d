@@ -28,7 +28,7 @@ on:
           - R4V3
         default: STU3
       since:
-        description: 'Since date to use for a job. For V3 (R4V3), the earliest accepted date is 2026-04-01T00:00:00.000-05:00. For V1/V2, the earliest accepted date is 2020-02-13T00:00:00.000-05:00. Leave blank to use the default (last successful job date).'
+        description: 'Since date to use for a job. For V3 (R4V3), the earliest recommended date is 2026-03-26T00:00:00.000-05:00. For V1/V2, the earliest accepted date is 2020-02-13T00:00:00.000-05:00. Leave blank to use the default (last successful job date).'
         type: string
         required: false
       until:
