@@ -44,6 +44,8 @@ public final class PropertyConstants {
 
     public static final String V3_IDR_IMPORTER_STATUS = "v3.idr-importer.status";
 
+    public static final String V3_SINCE_DATE_CHECK_ENABLED = "v3.since-date-check.enabled";
+
     public static final String V3_IDR_IMPORTER_STATUS_IN_PROGRESS = "import_in_progress";
 
     // When true, R4V3 EOB processing uses in-place mutation instead of copy-based construction

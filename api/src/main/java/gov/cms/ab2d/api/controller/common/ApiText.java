@@ -15,7 +15,8 @@ public class ApiText {
     public static final String BULK_SINCE = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE;
     public static final String BULK_UNTIL = "The _until parameter is only available with version 2 and version 3 of the API.";
     public static final String BULK_SINCE_DEFAULT = " If no value is provided, it will default to the last time a successful job was requested if it exists. The earliest accepted date is 2020-02-13T00:00:00.000-05:00";
-    public static final String BULK_SINCE_V3 = "If no value is provided, it will default to the last time a successful job was requested if it exists. The earliest accepted date is 2026-04-01T00:00:00.000-05:00";
+    public static final String BULK_SINCE_V3 = "The earliest recommended date is 2026-03-26T00:00:00.000-05:00. If you specify a date prior to March 26th, 2026 with the _since parameter, your request will include " +
+            "a large amount of additional historical data for your enrollees **that may result in your job to timeout**";
     public static final String BULK_UNTIL_DEFAULT = " If no value is provided, it will default to the current date.";
     public static final String BULK_TYPEFILTER = "Provide service-date to further refine results";
     public static final String BULK_RESPONSE_LONG = "Absolute URL of an endpoint for subsequent status requests (polling location)";
