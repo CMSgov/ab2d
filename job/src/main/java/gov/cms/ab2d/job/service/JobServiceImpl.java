@@ -55,7 +55,7 @@ public class JobServiceImpl implements JobService {
     public Job createJob(StartJobDTO startJobDTO) {
         Job job = new Job();
         job.setResourceTypes(startJobDTO.getResourceTypes());
-        job.setJobUuid(generateJobUuid(startJobDTO));
+        job.setJobUuid(generateJobUuid());
         job.setRequestUrl(startJobDTO.getUrl());
         job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
         job.setCreatedAt(OffsetDateTime.now());
@@ -80,13 +80,8 @@ public class JobServiceImpl implements JobService {
         return jobRepository.save(job);
     }
 
-    // For V3 jobs, prefix UUID with "33333333"
-    private String generateJobUuid(StartJobDTO dto) {
-        UUID uuid = UUID.randomUUID();
-        if (dto.getUrl().contains("/v3")) {
-            return "33333333" + uuid.toString().substring(8);
-        }
-        return uuid.toString();
+    private String generateJobUuid() {
+        return UUID.randomUUID().toString();
     }
 
     @Override
