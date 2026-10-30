@@ -655,7 +655,7 @@ class TestRunner {
     @Order(2)
     void runSystemWideExportSince(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         if (version == R4V3) {
-            // Skipping: V3 _since floor is 2026-04-01 but test data pre-dates it, so checkMetadata would fail
+            // Skipping: V3 _since floor is 2026-03-26 but test data pre-dates it, so checkMetadata would fail
             log.info("Skipping test 2 - " + version.toString() + " - not applicable");
             return;
         }
@@ -951,7 +951,7 @@ class TestRunner {
     @Order(16)
     void runSystemWideExportSinceWithoutAcceptEncoding(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         if (version == R4V3) {
-            // Skipping: V3 _since floor is 2026-04-01 but test data pre-dates it, so checkMetadata would fail
+            // Skipping: V3 _since floor is 2026-03-26 but test data pre-dates it, so checkMetadata would fail
             log.info("Skipping test 16 - " + version.toString() + " - not applicable");
             return;
         }
