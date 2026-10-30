@@ -59,7 +59,7 @@ public final class Constants {
     // V3-specific _since constraint: if 'v3.since-date-check.enabled' is true, require _since date
     // to be after March 23 2026 (or null/omitted)
     public static final String V3_SINCE_EARLIEST_DATE = "2026-03-26T00:00:00.000-05:00";
-    public static final OffsetDateTime V3_SINCE_EARLIEST_DATE_TIME = OffsetDateTime.of(2026, 4, 1, 0, 0, 0, 0, ZoneOffset.ofHours(-5));
+    public static final OffsetDateTime V3_SINCE_EARLIEST_DATE_TIME = OffsetDateTime.of(2026, 3, 26, 0, 0, 0, 0, ZoneOffset.ofHours(-5));
 
     public static final String UNTIL_EXAMPLE_DATE = "2024-01-01T00:00:00.000-05:00";
     public static final String ZIPFORMAT = "application/zip";
