@@ -101,15 +101,15 @@ public class ApiCommon {
             throw new InvalidClientInputException("You can not use a time after the current time for _since");
         }
         if (R4V3.equals(version)) {
-            if (date.isBefore(V3_SINCE_EARLIEST_DATE_TIME)) {
+            val sinceDateCheckEnabled = "true".equalsIgnoreCase(propertiesService.getProperty(V3_SINCE_DATE_CHECK_ENABLED, "false"));
+            if (sinceDateCheckEnabled && date.isBefore(V3_SINCE_EARLIEST_DATE_TIME)) {
                 log.error("Invalid _since time received {} for V3", date);
                 throw new InvalidClientInputException("_since must be after " + V3_SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME) + " for V3");
             }
-        } else {
-            if (date.isBefore(SINCE_EARLIEST_DATE_TIME)) {
-                log.error("Invalid _since time received {}", date);
-                throw new InvalidClientInputException("_since must be after " + SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME));
-            }
+        }
+        if (date.isBefore(SINCE_EARLIEST_DATE_TIME)) {
+            log.error("Invalid _since time received {}", date);
+            throw new InvalidClientInputException("_since must be after " + SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME));
         }
     }
 
