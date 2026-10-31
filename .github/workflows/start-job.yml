@@ -110,11 +110,7 @@ jobs:
       - name: Insert record
         run: |
           set -e
-          BASE_ID=$(uuidgen)
-          if [[ "$FHIR_VERSION" == "R4V3" ]]; then
-            export JOB_ID="33333333${BASE_ID:8}"
-          else
-            export JOB_ID="${BASE_ID}"
+          export JOB_ID=$(uuidgen)
           fi
           
           SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
