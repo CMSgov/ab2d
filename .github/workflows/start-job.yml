@@ -111,7 +111,6 @@ jobs:
         run: |
           set -e
           export JOB_ID=$(uuidgen)
-          fi
           
           SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
           export ORGANIZATION=$(psql -t --command="${SQL_GET_ORGANIZATION}" | head -n 1 | xargs | tr -d '\r')
