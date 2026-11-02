@@ -23,11 +23,13 @@ import gov.cms.ab2d.job.service.JobOutputMissingException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.MDC;
@@ -62,6 +64,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     private final ApiCommon apiCommon;
 
     private static final String API_ERROR = "API Error";
+
+    private static final Set<Class> V3_FORBIDDEN = Set.of(ClientNotEnabledException.class, InvalidJobAccessException.class);
 
     private static final HashMap<Class, HttpStatus> RESPONSE_MAP;
         static {
@@ -143,8 +147,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             JwtVerificationException.class,
             InvalidJobAccessException.class
     })
-    public ResponseEntity<Void> handleAuthorizationErrors(Exception ex, HttpServletRequest request) {
-        HttpStatus status = getErrorResponse(ex.getClass());
+    public ResponseEntity<JsonNode> handleAuthorizationErrors(Exception ex, HttpServletRequest request) throws IOException {
+        boolean v3 = FhirVersion.fromAB2DUrl(request.getRequestURI()) == FhirVersion.R4V3;
+        HttpStatus status = v3 ? getV3AuthErrorResponse(ex.getClass()) : getErrorResponse(ex.getClass());
 
         String description = String.format("%s %s for request %s", ex.getClass().getSimpleName(), ex.getMessage(),
                 request.getAttribute(REQUEST_ID));
@@ -157,7 +162,28 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
                 API_ERROR, description, (String) request.getAttribute(REQUEST_ID));
         eventLogger.sendLogs(responseEvent);
 
-        return new ResponseEntity<>(status);
+        if (!v3) {
+            return new ResponseEntity<>(status);
+        }
+
+        String msg = StringUtils.defaultIfBlank(ex.getMessage(), status.getReasonPhrase());
+        IBaseResource operationOutcome = FhirVersion.R4V3.getErrorOutcome(msg);
+        String encoded = FhirVersion.R4V3.outcomePrettyToJSON(operationOutcome);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(CONTENT_TYPE, APPLICATION_JSON);
+        if (status == HttpStatus.UNAUTHORIZED) {
+            httpHeaders.add(WWW_AUTHENTICATE, "Bearer error=\"invalid_token\"");
+        }
+        return new ResponseEntity<>(new ObjectMapper().readTree(encoded), httpHeaders, status);
+    }
+
+    /**
+     * V3 returns 401 for every authentication failure (no token, malformed header, invalid/expired token, unknown
+     * client) and reserves 403 for an authenticated client that is not allowed to access the resource.
+     */
+    private static HttpStatus getV3AuthErrorResponse(Class clazz) {
+        return V3_FORBIDDEN.contains(clazz) ? HttpStatus.FORBIDDEN : HttpStatus.UNAUTHORIZED;
     }
 
     @ExceptionHandler(EndpointNotAvailableException.class)

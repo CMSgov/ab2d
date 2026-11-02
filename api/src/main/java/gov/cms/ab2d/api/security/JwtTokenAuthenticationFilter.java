@@ -23,6 +23,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -44,6 +45,10 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             "/swagger-ui", "/webjars", "/swagger-resources", "/v3/api-docs",
             "/configuration", "/error"
     );
+
+    static final String EXPIRED_TOKEN_MSG = "Token has expired. Request a new access token and retry";
+    static final String INVALID_TOKEN_MSG = "Unable to decode JWT token. Verify the token was issued by the AB2D identity provider and was copied in full";
+    private static final String EXPIRED_JWT_EXCEPTION = "ExpiredJwtException";
 
     private final AccessTokenVerifier accessTokenVerifier;
     private final PdpClientService pdpClientService;
@@ -184,7 +189,10 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             jwt = accessTokenVerifier.decode(token);
         } catch (JwtVerificationException e) {
             log.error("Unable to decode JWT token {}", e.getMessage());
-            throw new BadJWTTokenException("Unable to decode JWT token", e);
+            if (isExpired(e)) {
+                throw new BadJWTTokenException(EXPIRED_TOKEN_MSG, e);
+            }
+            throw new BadJWTTokenException(INVALID_TOKEN_MSG, e);
         }
 
         Object subClaim = jwt.getClaims().get("sub");
@@ -194,6 +202,11 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             throw new BadJWTTokenException(tokenErrorMsg);
         }
         return subClaim.toString();
+    }
+
+    static boolean isExpired(JwtVerificationException e) {
+        return ExceptionUtils.getThrowableList(e).stream()
+                .anyMatch(cause -> EXPIRED_JWT_EXCEPTION.equals(cause.getClass().getSimpleName()));
     }
 
     /**
