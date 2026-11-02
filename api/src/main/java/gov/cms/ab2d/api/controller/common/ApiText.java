@@ -15,10 +15,13 @@ public class ApiText {
     public static final String BULK_SINCE = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE;
     public static final String BULK_UNTIL = "The _until parameter is only available with version 2 and version 3 of the API.";
     public static final String BULK_SINCE_DEFAULT = " If no value is provided, it will default to the last time a successful job was requested if it exists. The earliest accepted date is 2020-02-13T00:00:00.000-05:00";
-    public static final String BULK_SINCE_V3 = "The earliest recommended date is 2026-03-26T00:00:00.000-05:00. If you specify a date prior to March 26th, 2026 with the _since parameter, your request will include " +
-            "a large amount of additional historical data for your enrollees **that may result in your job to timeout**";
+    public static final String BULK_SINCE_V3 = "Unlike prior versions of the API, v3 does not automatically populate the _since and _until parameters for you. " +
+                                               "As a result, a request with no parameters, or one set prior to March 26, 2026 (2026-03-26T00:00:00.000-05:00), will return all of your data. " +
+                                               "This can cause long job run times or even timeouts and failed jobs." +
+                                               "If you need to load historical data, AB2D recommends using _typeFilter to query claims incrementally by service date, as noted below.";
     public static final String BULK_UNTIL_DEFAULT = " If no value is provided, it will default to the current date.";
-    public static final String BULK_TYPEFILTER = "Provide service-date to further refine results";
+    public static final String BULK_TYPEFILTER = "Use _typeFilter to return claims by service date. If you need to load historical data, AB2D recommends using _typeFilter to query claims incrementally " +
+                                                 "by service date, going back to your organization's attestation date.";
     public static final String BULK_RESPONSE_LONG = "Absolute URL of an endpoint for subsequent status requests (polling location)";
     public static final String EXPORT_STARTED = "Export request has started";
     public static final String MAX_JOBS = "Too many jobs are currently running. Either wait for currently running jobs to finish or cancel some/all of those jobs.";
