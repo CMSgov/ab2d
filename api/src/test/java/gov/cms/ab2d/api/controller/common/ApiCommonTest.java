@@ -12,11 +12,15 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import lombok.val;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 import static gov.cms.ab2d.common.util.Constants.V3_SINCE_EARLIEST_DATE_TIME;
 import static gov.cms.ab2d.common.util.PropertyConstants.*;
+import static gov.cms.ab2d.fhir.FhirVersion.R4V3;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
@@ -82,19 +86,42 @@ class ApiCommonTest {
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(SINCE_BEFORE_EARLIEST_DATE_TIME));
     }
 
-    @Test
-    void checkSinceTimeV3Test() {
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void checkSinceTimeV3Test(boolean sinceDateCheckEnabled) {
+        when(propertiesService.getProperty(eq(V3_SINCE_DATE_CHECK_ENABLED), any())).thenReturn(String.valueOf(sinceDateCheckEnabled));
+
         // null is always allowed
-        assertDoesNotThrow(() -> apiCommon.checkSinceTime(null, FhirVersion.R4V3));
-        // date after April 2026 is valid for V3
-        assertDoesNotThrow(() -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME, FhirVersion.R4V3));
-        assertDoesNotThrow(() -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME.plusDays(1), FhirVersion.R4V3));
-        // date before April 2026 is rejected for V3
-        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME.minusDays(1), FhirVersion.R4V3));
-        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(SINCE_EARLIEST_DATE_TIME, FhirVersion.R4V3));
-        // future date is rejected for V3 too
+        assertDoesNotThrow(() -> apiCommon.checkSinceTime(null, R4V3));
+
+        // future date is rejected for V3
         OffsetDateTime oneMonthInTheFuture = OffsetDateTime.now().plusMonths(1);
-        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(oneMonthInTheFuture, FhirVersion.R4V3));
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(oneMonthInTheFuture, R4V3));
+
+        // date before 2020-02-13 is rejected
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(SINCE_EARLIEST_DATE_TIME.minusDays(1), R4V3));
+    }
+
+    @Test
+    void checkSinceDateCheckEnabledV3() {
+        // when 'v3.since-date-check.enabled' is true
+        when(propertiesService.getProperty(eq(V3_SINCE_DATE_CHECK_ENABLED), any())).thenReturn("true");
+        // dates equal to or after 2026-03-26 are valid for V3
+        assertDoesNotThrow(() -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME, R4V3));
+        assertDoesNotThrow(() -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME.plusDays(1), R4V3));
+        // date before 2026-03-26 is rejected for V3
+        assertThrows(InvalidClientInputException.class, () -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME.minusDays(1), R4V3));
+    }
+
+    @Test
+    void checkSinceDateCheckDisabledV3() {
+        // when 'v3.since-date-check.enabled' is false
+        when(propertiesService.getProperty(eq(V3_SINCE_DATE_CHECK_ENABLED), any())).thenReturn("false");
+        // any date is valid as long as it's after 2020-02-13
+        assertDoesNotThrow(() -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME, R4V3));
+        assertDoesNotThrow(() -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME.plusDays(1), R4V3));
+        assertDoesNotThrow(() -> apiCommon.checkSinceTime(V3_SINCE_EARLIEST_DATE_TIME.minusDays(1), R4V3));
     }
 
     @Test
