@@ -67,3 +67,52 @@ resource "aws_ecr_repository" "this" {
     scan_on_push = false
   }
 }
+
+data "aws_ecr_lifecycle_policy_document" "this" {
+  rule {
+    priority    = 1
+    description = "Keep the most recent 15 images built from the main branch"
+    selection {
+      tag_status      = "tagged"
+      tag_prefix_list = ["*-main-*"]
+      count_type      = "imageCountMoreThan"
+      count_number    = 15
+    }
+    action {
+        type = "expire"
+    }
+  }
+
+  rule {
+    priority    = 2
+    description = "Expire images pushed via pull-request workflows after 7 days"
+    selection {
+      tag_status      = "tagged"
+      tag_prefix_list = ["*-merge-*"]
+      count_type      = "sinceImagePushed"
+      count_unit      = "days"
+      count_number    = 7
+    }
+    action {
+        type = "expire"
+    }
+  }
+
+  rule {
+    priority    = 3
+    description = "Expire all other images after 14 days of not being pulled"
+
+    selection {
+      tag_status   = "any"
+      count_type   = "sinceImagePulled"
+      count_unit   = "days"
+      count_number = 14
+    }
+  }
+}
+
+resource "aws_ecr_lifecycle_policy" "this" {
+  for_each   = local.ecr_container_repositories
+  repository = each.value
+  policy     = data.aws_ecr_lifecycle_policy_document.this.json
+}
