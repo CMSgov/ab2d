@@ -73,10 +73,10 @@ data "aws_ecr_lifecycle_policy_document" "this" {
     priority    = 1
     description = "Keep the most recent 15 images built from the main branch"
     selection {
-      tag_status      = "tagged"
-      tag_prefix_list = ["*-main-*"]
-      count_type      = "imageCountMoreThan"
-      count_number    = 15
+      tag_status       = "tagged"
+      tag_pattern_list = ["*-main-*"]
+      count_type       = "imageCountMoreThan"
+      count_number     = 15
     }
     action {
         type = "expire"
@@ -87,11 +87,11 @@ data "aws_ecr_lifecycle_policy_document" "this" {
     priority    = 2
     description = "Expire images older than 14 days created by pull-request workflows"
     selection {
-      tag_status      = "tagged"
-      tag_prefix_list = ["*-merge-*"]
-      count_type      = "sinceImagePushed"
-      count_unit      = "days"
-      count_number    = 14
+      tag_status       = "tagged"
+      tag_pattern_list = ["*-merge-*"]
+      count_type       = "sinceImagePushed"
+      count_unit       = "days"
+      count_number     = 14
     }
     action {
         type = "expire"
