@@ -107,6 +107,9 @@ data "aws_ecr_lifecycle_policy_document" "this" {
       count_unit   = "days"
       count_number = 21
     }
+    action {
+        type = "expire"
+    }
   }
 }
 
