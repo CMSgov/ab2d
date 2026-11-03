@@ -17,7 +17,7 @@ public class ApiText {
     public static final String BULK_SINCE_DEFAULT = " If no value is provided, it will default to the last time a successful job was requested if it exists. The earliest accepted date is 2020-02-13T00:00:00.000-05:00";
     public static final String BULK_SINCE_V3 = "Unlike prior versions of the API, v3 does not automatically populate the _since and _until parameters for you. " +
                                                "As a result, a request with no parameters, or one set prior to March 26, 2026 (2026-03-26T00:00:00.000-05:00), will return all of your data. " +
-                                               "This can cause long job run times or even timeouts and failed jobs." +
+                                               "This can cause long job run times or even timeouts and failed jobs. " +
                                                "If you need to load historical data, AB2D recommends using _typeFilter to query claims incrementally by service date, as noted below.";
     public static final String BULK_UNTIL_DEFAULT = " If no value is provided, it will default to the current date.";
     public static final String BULK_TYPEFILTER = "Use _typeFilter to return claims by service date. If you need to load historical data, AB2D recommends using _typeFilter to query claims incrementally " +
