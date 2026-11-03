@@ -100,12 +100,12 @@ data "aws_ecr_lifecycle_policy_document" "this" {
 
   rule {
     priority    = 3
-    description = "Expire all other images older than 21 days"
+    description = "Expire all other images older than 30 days"
     selection {
       tag_status   = "any"
       count_type   = "sinceImagePushed"
       count_unit   = "days"
-      count_number = 21
+      count_number = 30
     }
   }
 }
