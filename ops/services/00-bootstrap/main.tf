@@ -85,13 +85,13 @@ data "aws_ecr_lifecycle_policy_document" "this" {
 
   rule {
     priority    = 2
-    description = "Expire images older than 7 days created by pull-request workflows"
+    description = "Expire images older than 14 days created by pull-request workflows"
     selection {
       tag_status      = "tagged"
       tag_prefix_list = ["*-merge-*"]
       count_type      = "sinceImagePushed"
       count_unit      = "days"
-      count_number    = 7
+      count_number    = 14
     }
     action {
         type = "expire"
@@ -100,12 +100,12 @@ data "aws_ecr_lifecycle_policy_document" "this" {
 
   rule {
     priority    = 3
-    description = "Expire all other images older than 30 days"
+    description = "Expire all other images older than 21 days"
     selection {
       tag_status   = "any"
       count_type   = "sinceImagePushed"
       count_unit   = "days"
-      count_number = 30
+      count_number = 21
     }
   }
 }
