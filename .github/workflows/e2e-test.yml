@@ -26,16 +26,6 @@ on:
           - test
           - sandbox
         default: test
-      v3_enabled:
-        description: Run V3 tests in addition to V1/V2 tests
-        required: false
-        type: boolean
-        default: true
-      v3_only:
-        description: Run V3 tests only (temporary option - to be removed)
-        required: false
-        type: boolean
-        default: false
       api_base_url:
         description: Overrides the 'base-url' property for testing in ephemeral environments
         required: false
@@ -52,8 +42,7 @@ jobs:
     runs-on: codebuild-ab2d-${{ contains(fromJSON('["dev", "test"]'), inputs.environment) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
     env:
       AB2D_V2_ENABLED: 'true'
-      AB2D_V3_ENABLED: ${{ inputs.v3_enabled }}
-      AB2D_V3_ONLY: ${{ inputs.v3_only }}
+      AB2D_V3_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
       AB2D_ENV: ${{ inputs.environment }}
