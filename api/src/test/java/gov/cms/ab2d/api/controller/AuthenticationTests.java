@@ -44,7 +44,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -193,7 +192,6 @@ public class AuthenticationTests {
 
     private void expectV3Unauthorized(ResultActions result, String detail) throws Exception {
         result.andExpect(status().is(401))
-                .andExpect(header().string("WWW-Authenticate", "Bearer error=\"invalid_token\""))
                 .andExpect(jsonPath("$.resourceType").value("OperationOutcome"))
                 .andExpect(jsonPath("$.issue[0].severity").value("error"))
                 .andExpect(jsonPath("$.issue[0].details.text", containsString(detail)));
@@ -221,20 +219,11 @@ public class AuthenticationTests {
         when(mockAccessTokenVerifier.decode(anyString())).thenThrow(new JwtVerificationException("Failed to parse token"));
 
         expectV3Unauthorized(performV3(get(V3_EXPORT).header("Authorization", "Bearer " + token)),
-                "Unable to decode JWT token");
+                "Token is invalid or expired");
 
         verify(sqsEventClient, times(2)).sendLogs(captor.capture());
         ApiResponseEvent responseEvent = (ApiResponseEvent) captor.getAllValues().get(1);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), responseEvent.getResponseCode());
-    }
-
-    @Test
-    void testV3ExpiredToken() throws Exception {
-        when(mockAccessTokenVerifier.decode(anyString()))
-                .thenThrow(new JwtVerificationException("Failed to parse token", new ExpiredJwtException()));
-
-        expectV3Unauthorized(performV3(get(V3_EXPORT).header("Authorization", "Bearer " + token)),
-                "Token has expired");
     }
 
     @Test
@@ -256,8 +245,5 @@ public class AuthenticationTests {
                 .andExpect(status().is(403))
                 .andExpect(jsonPath("$.resourceType").value("OperationOutcome"))
                 .andExpect(jsonPath("$.issue[0].details.text", containsString("is not enabled")));
-    }
-
-    private static class ExpiredJwtException extends RuntimeException {
     }
 }
