@@ -846,8 +846,8 @@ class TestRunner {
                 .build();
 
         HttpResponse<String> response = apiClient(version).getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
-
-        assertEquals(403, response.statusCode());
+        // V3 returns 401 for every authentication failure
+        assertEquals(version == R4V3 ? 401 : 403, response.statusCode());
     }
 
     @ParameterizedTest
@@ -879,7 +879,8 @@ class TestRunner {
 
         HttpResponse<String> response = apiClient.getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
 
-        assertEquals(403, response.statusCode());
+        // V3 returns 401 for every authentication failure
+        assertEquals(version == R4V3 ? 401 : 403, response.statusCode());
     }
 
     @ParameterizedTest
