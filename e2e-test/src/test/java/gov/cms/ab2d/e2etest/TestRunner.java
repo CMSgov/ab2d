@@ -847,7 +847,7 @@ class TestRunner {
 
         HttpResponse<String> response = apiClient(version).getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
 
-        assertEquals(403, response.statusCode());
+        assertEquals(401, response.statusCode());
     }
 
     @ParameterizedTest
@@ -879,7 +879,7 @@ class TestRunner {
 
         HttpResponse<String> response = apiClient.getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
 
-        assertEquals(403, response.statusCode());
+        assertEquals(401, response.statusCode());
     }
 
     @ParameterizedTest
