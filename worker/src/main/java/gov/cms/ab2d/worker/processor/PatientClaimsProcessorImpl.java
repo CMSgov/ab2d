@@ -95,21 +95,24 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
         File file = null;
-        String anyErrors = null;
+        StringBuilder anyErrors = new StringBuilder();
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
                 searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {
             file = stream.getFile();
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             for (CoverageSummary patient : request.getCoverageSummary()) {
                 List<IBaseResource> eobs = getEobBundleResources(request, patient);
-                anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
+                String patientErrors = writeOutResource(fhirVersion, update, eobs, stream);
+                if (patientErrors != null) {
+                    anyErrors.append(patientErrors);
+                }
                 update.incPatientProcessCount();
             }
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
         }
 
-        return anyErrors;
+        return anyErrors.toString();
     }
 
     void writeOutErrors(String anyErrors, PatientClaimsRequest request) {
@@ -120,7 +123,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             stream.write(anyErrors);
         } catch (IOException e) {
-            log.error("Cannot log error to error file");
+            log.error("Cannot log error to error file", e);
         } finally {
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), errorFile, FileEvent.FileStatus.CLOSE));
         }

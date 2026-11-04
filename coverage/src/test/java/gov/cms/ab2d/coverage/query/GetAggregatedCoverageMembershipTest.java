@@ -124,7 +124,7 @@ class GetAggregatedCoverageMembershipTest {
 	}
 
 	@Test
-	void testDuplicatesAndReduce(CapturedOutput output) {
+	void testDuplicatesAndReduce() {
 
 		val aggregatedMembership = new GetAggregatedCoverageMembership(container.getDataSource());
 
@@ -151,13 +151,12 @@ class GetAggregatedCoverageMembershipTest {
 
 		aggregatedMembership.reduce(duplicateIndexes, list);
 
-		assertTrue(output.getOut().contains("Processing duplicate patient at row number 2"));
-		assertTrue(output.getOut().contains("Processing duplicate patient at row number 3"));
-		assertTrue(output.getOut().contains("Reduced duplicate patient records into record from row number 2"));
-		assertTrue(output.getOut().contains("Processing duplicate patient at row number 6"));
-		assertTrue(output.getOut().contains("Processing duplicate patient at row number 7"));
-		assertTrue(output.getOut().contains("Processing duplicate patient at row number 8"));
-		assertTrue(output.getOut().contains("Reduced duplicate patient records into record from row number 6"));
+		// Each duplicate group collapses into its first row; the other rows are nulled out
+		assertEquals(2L, list.get(1).getIdentifiers().getRowNumberV3());
+		assertNull(list.get(2));
+		assertEquals(6L, list.get(5).getIdentifiers().getRowNumberV3());
+		assertNull(list.get(6));
+		assertNull(list.get(7));
 	}
 
 	@Test

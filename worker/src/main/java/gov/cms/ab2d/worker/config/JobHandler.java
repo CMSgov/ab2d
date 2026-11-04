@@ -17,7 +17,10 @@ import org.springframework.stereotype.Component;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 
@@ -39,6 +42,10 @@ public class JobHandler implements MessageHandler {
     private final LockRegistry lockRegistry;
     private final WorkerService workerService;
 
+    // Jobs already reported as deferred or waiting, so each one is logged once rather than every poll
+    private final Set<String> deferredPrototypeJobs = ConcurrentHashMap.newKeySet();
+    private final Set<String> waitingJobs = ConcurrentHashMap.newKeySet();
+
     public JobHandler(
             LockRegistry lockRegistry,
             WorkerService workerService) {
@@ -57,46 +64,75 @@ public class JobHandler implements MessageHandler {
         final List<Map<String, Object>> payload = (List<Map<String, Object>>) message.getPayload();
 
         if (!payload.isEmpty()) {
-            log.info("iterating over {} submitted jobs to attempt to find one to start", payload.size());
+            log.debug("iterating over {} submitted jobs to attempt to find one to start", payload.size());
         }
+
+        // Forget jobs that are no longer waiting so the sets only hold jobs in the current poll
+        final Set<String> payloadJobIds = payload.stream().map(this::getJobId).collect(Collectors.toSet());
+        deferredPrototypeJobs.retainAll(payloadJobIds);
+        waitingJobs.retainAll(payloadJobIds);
 
         for (Map<String, Object> submittedJob : payload) {
 
             final String jobId = getJobId(submittedJob);
 
             MDC.put(JOB_LOG, jobId);
-
-            // prototype jobs can be deferred and left for the worker to retry picking up when it's not as busy
-            // TODO: remove when done with testing
-            if (isPrototypeJob(submittedJob) && !workerService.isPrototypeAdmissible()) {
-                log.info("{} is a prototype job and this worker is too busy to start one", jobId);
-                MDC.remove(JOB_LOG);
-                continue;
-            }
-
-            final Lock lock = lockRegistry.obtain(jobId);
-
-            // Inability to obtain a lock means other worker is already taking care of the request
-            // in which case we do nothing and return.
-            if (lock.tryLock()) {
-                try {
-                    // Attempt to start (mark an eob job as in progress) an eob job.
-                    // A job may not be started if the workers are busy or if coverage metadata needs an update.
-                    Job job = workerService.process(jobId);
-                    if (job.getStatus() == JobStatus.IN_PROGRESS) {
-                        log.info("{} job has been started so exiting loop", jobId);
-                        break;
-                    }
-
-                } catch (ResourceNotFoundException rnfe) {
-                    throw new MessagingException("could not find job in database for " + jobId + " job uuid", rnfe);
-                } catch (Exception exception) {
-                    throw new MessagingException("could not check coverage due to unexpected exception", exception);
-                } finally {
-                    unlockQuietly(lock, jobId);
+            try {
+                if (tryToStart(submittedJob, jobId)) {
+                    break;
                 }
+            } finally {
+                MDC.remove(JOB_LOG);
             }
-            MDC.remove(JOB_LOG);
+        }
+    }
+
+    /**
+     * Attempt to start one job. Returns true when the job was started.
+     */
+    private boolean tryToStart(Map<String, Object> submittedJob, String jobId) {
+        // prototype jobs can be deferred and left for the worker to retry picking up when it's not as busy
+        // TODO: remove when done with testing
+        if (isPrototypeJob(submittedJob) && !workerService.isPrototypeAdmissible()) {
+            if (deferredPrototypeJobs.add(jobId)) {
+                log.info("{} is a prototype job and this worker is too busy to start one", jobId);
+            }
+            return false;
+        }
+        deferredPrototypeJobs.remove(jobId);
+
+        final Lock lock = lockRegistry.obtain(jobId);
+
+        // Inability to obtain a lock means other worker is already taking care of the request
+        // in which case we do nothing and return.
+        if (!lock.tryLock()) {
+            log.debug("{} is locked by another worker", jobId);
+            return false;
+        }
+
+        try {
+            // Attempt to start (mark an eob job as in progress) an eob job.
+            // A job may not be started if the workers are busy or if coverage metadata needs an update.
+            Job job = workerService.process(jobId);
+            if (job.getStatus() == JobStatus.SUBMITTED) {
+                if (waitingJobs.add(jobId)) {
+                    log.info("{} job is waiting for enrollment information", jobId);
+                }
+                return false;
+            }
+            waitingJobs.remove(jobId);
+            if (job.getStatus() == JobStatus.IN_PROGRESS) {
+                log.info("{} job has been started so exiting loop", jobId);
+                return true;
+            }
+            return false;
+
+        } catch (ResourceNotFoundException rnfe) {
+            throw new MessagingException("could not find job in database for " + jobId + " job uuid", rnfe);
+        } catch (Exception exception) {
+            throw new MessagingException("could not check coverage for job " + jobId + " due to unexpected exception", exception);
+        } finally {
+            unlockQuietly(lock, jobId);
         }
     }
 
