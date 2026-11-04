@@ -655,7 +655,7 @@ class TestRunner {
     @Order(2)
     void runSystemWideExportSince(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         if (version == R4V3) {
-            // Skipping: V3 _since floor is 2026-04-01 but test data pre-dates it, so checkMetadata would fail
+            // Skipping: V3 _since floor is 2026-03-26 but test data pre-dates it, so checkMetadata would fail
             log.info("Skipping test 2 - " + version.toString() + " - not applicable");
             return;
         }
@@ -952,7 +952,7 @@ class TestRunner {
     @Order(16)
     void runSystemWideExportSinceWithoutAcceptEncoding(FhirVersion version, String contract, APIClient apiClient) throws IOException, InterruptedException, JSONException {
         if (version == R4V3) {
-            // Skipping: V3 _since floor is 2026-04-01 but test data pre-dates it, so checkMetadata would fail
+            // Skipping: V3 _since floor is 2026-03-26 but test data pre-dates it, so checkMetadata would fail
             log.info("Skipping test 16 - " + version.toString() + " - not applicable");
             return;
         }
@@ -969,34 +969,6 @@ class TestRunner {
     }
 
     @Order(17)
-    @Test
-    void verifyPdp100NotAllowlistedForV3() throws Exception {
-        if (!v3Enabled()) {
-            log.info("Skipping test 17 - V3 is not enabled");
-            return;
-        }
-        log.info("Starting test 17");
-        val response = apiClient_PDP100.exportRequest(FHIR_TYPE, earliest, R4V3);
-        assertEquals(403, response.statusCode());
-        val expectedResponseBody =
-        """
-        {
-          "resourceType": "OperationOutcome",
-          "issue": [
-            {
-              "severity": "error",
-              "code": "invalid",
-              "details": {
-                "text": "V3 access not enabled for this PDP"
-              }
-            }
-          ]
-        }
-        """;
-        JSONAssert.assertEquals(response.body(), expectedResponseBody, JSONCompareMode.LENIENT);
-    }
-
-    @Order(18)
     @Test
     void testTypeFilterWithValidInput() throws Exception {
         if (!v3Enabled()) {
@@ -1018,7 +990,7 @@ class TestRunner {
         downloadFile(downloadDetails, null, version, apiClient);
     }
 
-    @Order(19)
+    @Order(18)
     @Test
     void testTypeFilterWithoutEobParameter() throws Exception {
         if (!v3Enabled()) {
@@ -1047,7 +1019,7 @@ class TestRunner {
         JSONAssert.assertEquals(response.body(), expectedResponseBody, JSONCompareMode.LENIENT);
     }
 
-    @Order(20)
+    @Order(19)
     @Test
     void testTypeFilterWithoutServiceDate() throws Exception {
         if (!v3Enabled()) {
@@ -1082,12 +1054,6 @@ class TestRunner {
      * @return the stream of arguments
      */
     private Stream<Arguments> getVersionContractAndApiClient() {
-        // Temporary - to be removed
-        if (v3Only()) {
-            return Stream.of(arguments(R4V3, PDP_1000.contract, apiClient_PDP1000));
-        }
-
-        // Define default test contract
         if (v3Enabled()) {
             return Stream.of(
                 arguments(STU3, PDP_100.contract, apiClient_PDP100),
@@ -1113,11 +1079,6 @@ class TestRunner {
      * @return the stream of FHIR versions
      */
     static Stream<Arguments> getVersionAndApiClient() {
-        // Temporary - to be removed
-        if (v3Only()) {
-            return Stream.of(arguments(R4V3, apiClient_PDP1000));
-        }
-
         if (v3Enabled()) {
             return Stream.of(
                 arguments(STU3, apiClient_PDP100),
@@ -1159,19 +1120,8 @@ class TestRunner {
     }
 
     private static boolean v3Enabled() {
-        if (v3Only()) {
-            return true;
-        }
         String v3Enabled = System.getenv("AB2D_V3_ENABLED");
         return v3Enabled != null && v3Enabled.equalsIgnoreCase("true");
     }
-
-    // Temporary - Run only V3 tests for debugging test failures if populated
-    // TODO Revert in AB2D-7173
-    private static boolean v3Only() {
-        String v3Only = System.getenv("AB2D_V3_ONLY");
-        return v3Only != null && v3Only.equalsIgnoreCase("true");
-    }
-
 
 }

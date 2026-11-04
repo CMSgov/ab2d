@@ -34,8 +34,8 @@ public final class EobNdjsonSerializer {
             try {
                 dataLines.add(parser.encodeResourceToString(resource));
             } catch (Exception ex) {
-                log.warn("Encountered exception while serializing job resources: {}", ex.getClass());
                 String errMsg = ExceptionUtils.getRootCauseMessage(ex);
+                log.warn("Encountered exception while serializing job resources: {}", errMsg);
                 IBaseResource operationOutcome = version.getErrorOutcome(errMsg);
                 errorLines.add(parser.encodeResourceToString(operationOutcome));
             }

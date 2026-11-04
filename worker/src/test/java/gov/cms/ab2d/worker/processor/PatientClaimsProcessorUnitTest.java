@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +38,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -112,7 +116,28 @@ class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasDataWithBadLastUpdated() throws ExecutionException, InterruptedException {
+    void writeOutData_keepsErrorLinesFromEveryPatient() throws IOException {
+        CoverageSummary second = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID - 1),
+                contractDTO, List.of(TestUtil.getOpenRange()));
+        CoverageSummary third = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID - 2),
+                contractDTO, List.of(TestUtil.getOpenRange()));
+        PatientClaimsRequest batch = new PatientClaimsRequest(List.of(coverageSummary, second, third), LATER_ATT_DATE,
+                null, null, null, "client", "job", contractNum, Contract.ContractType.NORMAL, STU3,
+                tmpEfsMountDir.getAbsolutePath());
+
+        // A mocked resource can't be encoded
+        PatientClaimsProcessorImpl spyCut = spy(cut);
+        doReturn(List.of(mock(IBaseResource.class))).when(spyCut).getEobBundleResources(batch, coverageSummary);
+        doReturn(List.of(mock(IBaseResource.class))).when(spyCut).getEobBundleResources(batch, second);
+        doReturn(List.of()).when(spyCut).getEobBundleResources(batch, third);
+
+        String errors = spyCut.writeOutData(batch, STU3, new ProgressTrackerUpdate());
+
+        assertEquals(2, errors.lines().count());
+    }
+
+    @Test
+    void process_whenPatientHasDataWithBadLastUpdated()throws ExecutionException, InterruptedException {
         eob.getMeta().setLastUpdated(null);
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         ExplanationOfBenefit eob2 = eob.copy();

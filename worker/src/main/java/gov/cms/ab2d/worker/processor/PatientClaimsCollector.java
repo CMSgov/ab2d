@@ -176,7 +176,7 @@ public class PatientClaimsCollector {
         event.put("eobs", eobs.size());
 
         // (a) structured log line for analytics (replaces NRQL queries against the Insights event)
-        log.info("{} {}", EOB_REQUEST_EVENT, event);
+        log.debug("{} {}", EOB_REQUEST_EVENT, event);
 
         // (b) span metrics for dashboards and (c) span tags for filtering on the active span
         DatadogSpans.setMetric("eob.bundles", bundles);

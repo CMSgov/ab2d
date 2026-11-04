@@ -149,7 +149,8 @@ resource "aws_lambda_function" "audit" {
   role             = aws_iam_role.microservices_lambda.arn
   handler          = "gov.cms.ab2d.audit.AuditEventHandler"
   runtime          = "java25"
-  timeout          = 600
+  memory_size = 256
+  timeout     = 900
   architectures = [
     "arm64",
   ]
