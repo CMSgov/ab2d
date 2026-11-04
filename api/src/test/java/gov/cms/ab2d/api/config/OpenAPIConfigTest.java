@@ -3,6 +3,12 @@ package gov.cms.ab2d.api.config;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +19,20 @@ import java.util.List;
 import java.util.Map;
 
 class OpenAPIConfigTest {
+
+  @Test
+  void testV3AuthResponseMessages() {
+    Operation operation = new Operation().responses(new ApiResponses());
+    OpenAPI api = new OpenAPI().paths(new Paths().addPathItem("/api/v3/fhir/Patient/$export", new PathItem().get(operation)));
+
+    new OpenAPIConfig().v3AuthResponseMessages().customise(api);
+
+    for (String code : List.of("401", "403")) {
+      ApiResponse response = operation.getResponses().get(code);
+      assertEquals("#/components/schemas/OperationOutcome",
+              response.getContent().get("application/json").getSchema().get$ref());
+    }
+  }
 
   @Test
   void testDefaultResponseMessages() {
