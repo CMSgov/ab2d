@@ -122,3 +122,22 @@ resource "aws_iam_role_policy_attachment" "lambda_sns_attachment" {
   role       = aws_iam_role.lambda_sns_role.id
   policy_arn = each.value
 }
+
+# Publishing to the env-key-encrypted coverage-count topic; usable only through SNS
+resource "aws_iam_role_policy" "lambda_sns_kms" {
+  name = "${local.service_prefix}-sns-publish-kms"
+  role = aws_iam_role.lambda_sns_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["kms:GenerateDataKey", "kms:Decrypt"]
+        Effect   = "Allow"
+        Resource = local.env_key_alias.target_key_arn
+        Condition = {
+          StringEquals = { "kms:ViaService" = "sns.${var.region}.amazonaws.com" }
+        }
+      }
+    ]
+  })
+}

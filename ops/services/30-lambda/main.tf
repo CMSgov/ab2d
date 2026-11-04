@@ -32,7 +32,6 @@ locals {
     common      = "/ab2d/${local.env}/common"
     core        = "/ab2d/${local.env}/core"
     bene-prefs  = "/ab2d/${local.env}/bene-prefs"
-    eft         = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
     contracts   = "/ab2d/${local.env}/contracts"
     webhooks    = "/ab2d/mgmt/slack-webhooks"
   }
@@ -103,6 +102,7 @@ resource "aws_vpc_security_group_ingress_rule" "lambda_sg_ingress_access" {
 resource "aws_lambda_function" "slack_lambda" {
   filename      = data.archive_file.python_lambda_package.output_path
   function_name = "${local.service_prefix}-slack-alerts"
+  kms_key_arn   = local.env_key_alias.target_key_arn
   role          = aws_iam_role.slack_lambda.arn
   handler       = "slack_lambda.lambda_handler"
   runtime       = "python3.12"
@@ -124,6 +124,7 @@ resource "aws_lambda_function" "metrics_transform" {
   filename         = "${path.root}/metrics-lambda.zip"
   source_code_hash = base64encode(data.artifactory_file.lambdas["metrics-lambda"].sha256)
   function_name    = "${local.service_prefix}-metrics-transform"
+  kms_key_arn      = local.env_key_alias.target_key_arn
   role             = aws_iam_role.metrics_transform.arn
   handler          = "gov.cms.ab2d.metrics.CloudwatchEventHandler"
   runtime          = "java25"
@@ -146,6 +147,7 @@ resource "aws_lambda_function" "audit" {
   filename         = "${path.root}/audit.zip"
   source_code_hash = base64encode(data.artifactory_file.lambdas["audit"].sha256)
   function_name    = "${local.service_prefix}-audit"
+  kms_key_arn      = local.env_key_alias.target_key_arn
   role             = aws_iam_role.microservices_lambda.arn
   handler          = "gov.cms.ab2d.audit.AuditEventHandler"
   runtime          = "java25"
@@ -247,6 +249,7 @@ resource "aws_cloudwatch_log_subscription_filter" "audit_svc_monitoring" {
 resource "aws_lambda_function" "audit_svc_monitoring" {
   filename      = data.archive_file.monitoring_audit.output_path
   function_name = "${local.service_prefix}-audit-svc-monitoring"
+  kms_key_arn   = local.env_key_alias.target_key_arn
   handler       = "monitoring_audit_svc.lambda_handler"
   role          = aws_iam_role.microservices_lambda.arn
   runtime       = "python3.12"
@@ -291,6 +294,7 @@ resource "aws_lambda_function" "coverage_count" {
   }
   filename         = "${path.root}/coverage-counts.zip"
   function_name    = "${local.service_prefix}-coverage-counts-handler"
+  kms_key_arn      = local.env_key_alias.target_key_arn
   role             = aws_iam_role.lambda_database_sns_role.arn
   handler          = "gov.cms.ab2d.coveragecounts.CoverageCountsHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["coverage-counts"].sha256)
@@ -317,7 +321,7 @@ resource "aws_lambda_function" "coverage_count" {
 
 resource "aws_sns_topic" "coverage_count" {
   name              = "ab2d-${local.parent_env}-coverage-count"
-  kms_master_key_id = "alias/aws/sns"
+  kms_master_key_id = local.env_key_alias.target_key_arn
 }
 
 import {
@@ -342,6 +346,7 @@ resource "aws_sns_topic_subscription" "coverage_count_lambda_target" {
 resource "aws_lambda_function" "database_management" {
   filename         = "${path.root}/database-management.zip"
   function_name    = "${local.service_prefix}-database-management-handler"
+  kms_key_arn      = local.env_key_alias.target_key_arn
   role             = aws_iam_role.lambda_database_sns_role.arn
   handler          = "gov.cms.ab2d.databasemanagement.DatabaseManagementHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["database-management"].sha256)
@@ -375,6 +380,7 @@ resource "aws_lambda_function" "database_management" {
 resource "aws_lambda_function" "hpms_counts" {
   filename         = "${path.root}/retrieve-hpms-counts.zip"
   function_name    = "${local.service_prefix}-hpms-counts-handler"
+  kms_key_arn      = local.env_key_alias.target_key_arn
   role             = aws_iam_role.lambda_sns_role.arn
   handler          = "gov.cms.ab2d.retrievehpmscounts.HPMSCountsHandler"
   source_code_hash = base64encode(data.artifactory_file.lambdas["retrieve-hpms-counts"].sha256)
