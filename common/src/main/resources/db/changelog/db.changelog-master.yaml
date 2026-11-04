@@ -225,3 +225,5 @@ databaseChangeLog:
       file: db/changelog/v2026/add_v3_allow_list_enabled_property.sql
   - include:
       file: db/changelog/v2026/add_v3_staging_table_partitions.sql
+  - include:
+      file: db/changelog/v2026/add_v3_since_date_check.sql

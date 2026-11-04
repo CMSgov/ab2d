@@ -143,8 +143,11 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             JwtVerificationException.class,
             InvalidJobAccessException.class
     })
-    public ResponseEntity<Void> handleAuthorizationErrors(Exception ex, HttpServletRequest request) {
-        HttpStatus status = getErrorResponse(ex.getClass());
+    public ResponseEntity<String> handleAuthorizationErrors(Exception ex, HttpServletRequest request) {
+        boolean v3 = FhirVersion.fromAB2DUrl(request.getRequestURI()) == FhirVersion.R4V3;
+        // V3 returns 401 for every authentication failure and 403 only for an authenticated client without access
+        boolean forbidden = ex instanceof ClientNotEnabledException || ex instanceof InvalidJobAccessException;
+        HttpStatus status = v3 && !forbidden ? HttpStatus.UNAUTHORIZED : getErrorResponse(ex.getClass());
 
         String description = String.format("%s %s for request %s", ex.getClass().getSimpleName(), ex.getMessage(),
                 request.getAttribute(REQUEST_ID));
@@ -157,7 +160,12 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
                 API_ERROR, description, (String) request.getAttribute(REQUEST_ID));
         eventLogger.sendLogs(responseEvent);
 
-        return new ResponseEntity<>(status);
+        if (!v3) {
+            return new ResponseEntity<>(status);
+        }
+
+        String body = FhirVersion.R4V3.outcomePrettyToJSON(FhirVersion.R4V3.getErrorOutcome(ex.getMessage()));
+        return ResponseEntity.status(status).header(CONTENT_TYPE, APPLICATION_JSON).body(body);
     }
 
     @ExceptionHandler(EndpointNotAvailableException.class)

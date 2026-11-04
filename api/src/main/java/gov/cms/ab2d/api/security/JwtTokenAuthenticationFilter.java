@@ -184,7 +184,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             jwt = accessTokenVerifier.decode(token);
         } catch (JwtVerificationException e) {
             log.error("Unable to decode JWT token {}", e.getMessage());
-            throw new BadJWTTokenException("Unable to decode JWT token", e);
+            throw new BadJWTTokenException("Token is invalid or expired. Request a new access token and retry", e);
         }
 
         Object subClaim = jwt.getClaims().get("sub");
