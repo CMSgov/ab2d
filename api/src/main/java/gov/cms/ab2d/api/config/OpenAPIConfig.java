@@ -101,7 +101,34 @@ public class OpenAPIConfig {
                 .pathsToMatch(API_PREFIX_V3 + FHIR_PREFIX + "/**")
                 // Customize the page with default error responses to authentication and internal errors
                 .addOpenApiCustomizer(defaultResponseMessages())
+                // V3 returns an OperationOutcome for 401/403, so replace the default descriptions
+                .addOpenApiCustomizer(v3AuthResponseMessages())
                 .build();
+    }
+
+    public OpenApiCustomizer v3AuthResponseMessages() {
+        return api -> api.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
+            ApiResponses responses = operation.getResponses();
+
+            ApiResponse tokenError = new ApiResponse()
+                    .description("Unauthorized. The bearer token is missing, malformed, invalid, or expired. "
+                            + "Request a new token and retry. " + GENERIC_FHIR_ERR_MSG)
+                    .content(operationOutcomeContent());
+            responses.addApiResponse("401", tokenError);
+
+            ApiResponse authError = new ApiResponse()
+                    .description("Forbidden. The token is valid but the client is not allowed to make this request. "
+                            + GENERIC_FHIR_ERR_MSG)
+                    .content(operationOutcomeContent());
+            responses.addApiResponse("403", authError);
+        }));
+    }
+
+    private static Content operationOutcomeContent() {
+        Schema schema = new Schema();
+        schema.setName("OperationOutcome");
+        schema.set$ref("#/components/schemas/OperationOutcome");
+        return new Content().addMediaType(APPLICATION_JSON_VALUE, new MediaType().schema(schema));
     }
 
     public OpenApiCustomizer defaultResponseMessages() {
@@ -121,23 +148,15 @@ public class OpenAPIConfig {
             api.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
                 ApiResponses responses = operation.getResponses();
 
-                // Response schema that you can display template
-                Schema schema = new Schema();
-                schema.setName("OperationOutcome");
-                schema.set$ref("#/components/schemas/OperationOutcome");
-
-                MediaType mediaType = new MediaType();
-                mediaType.schema(schema);
-
                 // Default responses for standard error conditions
                 ApiResponse internalError = new ApiResponse()
                         .description("An internal error occurred. " + GENERIC_FHIR_ERR_MSG)
-                        .content(new Content().addMediaType(APPLICATION_JSON_VALUE, mediaType));
+                        .content(operationOutcomeContent());
                 responses.addApiResponse("500", internalError);
 
                 ApiResponse requestError = new ApiResponse()
                         .description("There was a problem with the request. " + GENERIC_FHIR_ERR_MSG)
-                        .content(new Content().addMediaType(APPLICATION_JSON_VALUE, mediaType));
+                        .content(operationOutcomeContent());
                 responses.addApiResponse("400", requestError);
 
                 ApiResponse tokenError = new ApiResponse()
