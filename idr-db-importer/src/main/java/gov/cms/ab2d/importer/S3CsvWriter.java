@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.NoSuchUploadException;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
 import java.io.ByteArrayOutputStream;
@@ -31,9 +31,8 @@ public class S3CsvWriter {
         DatadogSpans.setTag("component", "idr");
         DatadogSpans.setTag("s3.bucket", bucket);
         DatadogSpans.setTag("s3.key", finalKey);
-        String tmpKey = finalKey + ".tmp";
         String uploadId = s3.createMultipartUpload(
-                r -> r.bucket(bucket).key(tmpKey).contentType("text/csv")
+                r -> r.bucket(bucket).key(finalKey).contentType("text/csv")
         ).uploadId();
 
         List<CompletedPart> parts = new ArrayList<>();
@@ -53,33 +52,37 @@ public class S3CsvWriter {
                 writeLine(buf, line);
 
                 if (buf.size() >= PART_BYTES) {
-                    parts.add(uploadPart(bucket, tmpKey, uploadId, partNum++, buf.toByteArray()));
+                    parts.add(uploadPart(bucket, finalKey, uploadId, partNum++, buf.toByteArray()));
                     buf.reset();
                 }
             }
 
             if (buf.size() > 0) {
-                parts.add(uploadPart(bucket, tmpKey, uploadId, partNum, buf.toByteArray()));
+                parts.add(uploadPart(bucket, finalKey, uploadId, partNum, buf.toByteArray()));
             }
 
-            s3.completeMultipartUpload(r -> r.bucket(bucket).key(tmpKey).uploadId(uploadId)
-                    .multipartUpload(m -> m.parts(parts)));
+            if (parts.isEmpty()) {
+                throw new IllegalStateException("Snowflake returned no rows for s3://" + bucket + "/" + finalKey);
+            }
 
-            s3.copyObject(r -> r.sourceBucket(bucket).sourceKey(tmpKey).destinationBucket(bucket).destinationKey(finalKey));
-            s3.deleteObject(r -> r.bucket(bucket).key(tmpKey));
+            s3.completeMultipartUpload(r -> r.bucket(bucket).key(finalKey).uploadId(uploadId)
+                    .multipartUpload(m -> m.parts(parts)));
 
         } catch (Exception e) {
             DatadogSpans.markError(e);
-            log.warn("Aborting multipart upload uploadId={} for s3://{}/{}", uploadId, bucket, tmpKey, e);
+            log.warn("Aborting multipart upload uploadId={} for s3://{}/{}", uploadId, bucket, finalKey, e);
+            abort(bucket, finalKey, uploadId);
+            throw e;
+        }
+    }
 
-            try {
-                s3.abortMultipartUpload(r -> r.bucket(bucket).key(tmpKey).uploadId(uploadId));
-            } catch (NoSuchKeyException ex) {
-                log.warn("Multipart upload temp key already missing during abort for s3://{}/{} uploadId={}",
-                        bucket, tmpKey, uploadId);
-            } catch (Exception ex) {
-                log.warn("Failed to abort multipart upload uploadId={} for s3://{}/{}", uploadId, bucket, tmpKey, ex);
-            }
+    private void abort(String bucket, String key, String uploadId) {
+        try {
+            s3.abortMultipartUpload(r -> r.bucket(bucket).key(key).uploadId(uploadId));
+        } catch (NoSuchUploadException ex) {
+            log.warn("Multipart upload already gone during abort for s3://{}/{} uploadId={}", bucket, key, uploadId);
+        } catch (Exception ex) {
+            log.warn("Failed to abort multipart upload uploadId={} for s3://{}/{}", uploadId, bucket, key, ex);
         }
     }
 
