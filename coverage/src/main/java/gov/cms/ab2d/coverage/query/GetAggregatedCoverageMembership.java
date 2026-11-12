@@ -129,7 +129,7 @@ public class GetAggregatedCoverageMembership extends CoverageV3BaseQuery {
     FETCH FIRST :limit ROWS WITH TIES
     """;
 
-    // used by prototype to page coverage by patient_id
+    // used by pause/resume to page coverage by patient_id
     private static final String FETCH_FROM_AGGREGATED_TABLE_BY_PATIENT_RANGE =
             """
             SELECT patient_id,

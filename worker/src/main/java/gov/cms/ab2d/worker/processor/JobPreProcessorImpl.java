@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_ENABLED;
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_ENABLED;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_STARTED;
@@ -67,11 +67,11 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         // If we're being asked to preprocess a job that is in_progress, the preprocessor will
-        // reject it on the normal pathway, and send it for hard recovery on the prototype pathway.
+        // reject it on the normal pathway, and send it for hard recovery on the pause/resume pathway.
         if (IN_PROGRESS.equals(job.getStatus())
-                && propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false)
+                && propertiesService.isToggleOn(PAUSE_RESUME_ENABLED, false)
                 && job.isPauseEligible()) {
-            log.info("Job {} re-entered preprocess while IN_PROGRESS - prototype hard-recovery resume, "
+            log.info("Job {} re-entered preprocess while IN_PROGRESS - pause/resume hard-recovery resume, "
                     + "passing through", jobUuid);
             return job;
         }

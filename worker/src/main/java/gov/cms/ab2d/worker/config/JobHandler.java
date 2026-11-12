@@ -43,7 +43,7 @@ public class JobHandler implements MessageHandler {
     private final WorkerService workerService;
 
     // Jobs already reported as deferred or waiting, so each one is logged once rather than every poll
-    private final Set<String> deferredPrototypeJobs = ConcurrentHashMap.newKeySet();
+    private final Set<String> deferredPauseResumeJobs = ConcurrentHashMap.newKeySet();
     private final Set<String> waitingJobs = ConcurrentHashMap.newKeySet();
 
     public JobHandler(
@@ -69,7 +69,7 @@ public class JobHandler implements MessageHandler {
 
         // Forget jobs that are no longer waiting so the sets only hold jobs in the current poll
         final Set<String> payloadJobIds = payload.stream().map(this::getJobId).collect(Collectors.toSet());
-        deferredPrototypeJobs.retainAll(payloadJobIds);
+        deferredPauseResumeJobs.retainAll(payloadJobIds);
         waitingJobs.retainAll(payloadJobIds);
 
         for (Map<String, Object> submittedJob : payload) {
@@ -91,15 +91,9 @@ public class JobHandler implements MessageHandler {
      * Attempt to start one job. Returns true when the job was started.
      */
     private boolean tryToStart(Map<String, Object> submittedJob, String jobId) {
-        // prototype jobs can be deferred and left for the worker to retry picking up when it's not as busy
-        // TODO: remove when done with testing
-        if (isPrototypeJob(submittedJob) && !workerService.isPrototypeAdmissible()) {
-            if (deferredPrototypeJobs.add(jobId)) {
-                log.info("{} is a prototype job and this worker is too busy to start one", jobId);
-            }
+        if (deferPauseResumeJobUnderLoad(submittedJob, jobId)) {
             return false;
         }
-        deferredPrototypeJobs.remove(jobId);
 
         final Lock lock = lockRegistry.obtain(jobId);
 
@@ -137,6 +131,23 @@ public class JobHandler implements MessageHandler {
     }
 
     /**
+     * if a job is pause/resume, and the worker can accept one, return false
+     *
+     * @deprecated unused, but potentially useful for self-pausing test jobs
+     */
+    @Deprecated
+    private boolean deferPauseResumeJobUnderLoad(Map<String, Object> submittedJob, String jobId) {
+        if (isPauseResumeJob(submittedJob) && !workerService.isPauseResumeAdmissible()) {
+            if (deferredPauseResumeJobs.add(jobId)) {
+                log.info("{} is a pause/resume job and this worker is too busy to start one", jobId);
+            }
+            return true;
+        }
+        deferredPauseResumeJobs.remove(jobId);
+        return false;
+    }
+
+    /**
      * Unlocks the lock, but if the lock was lost, just warn and don't do anything
      */
     private void unlockQuietly(Lock lock, String jobId) {
@@ -156,7 +167,7 @@ public class JobHandler implements MessageHandler {
         return FhirVersion.valueOf(String.valueOf(submittedJob.get("fhir_version")));
     }
 
-    private boolean isPrototypeJob(Map<String, Object> submittedJob) {
+    private boolean isPauseResumeJob(Map<String, Object> submittedJob) {
         return Boolean.TRUE.equals(submittedJob.get("pause_eligible"))
                 && getFhirVersion(submittedJob) == FhirVersion.R4V3;
     }

@@ -21,6 +21,7 @@ import java.util.List;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
+import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
 import static jakarta.persistence.EnumType.STRING;
 
 @Entity
@@ -28,6 +29,8 @@ import static jakarta.persistence.EnumType.STRING;
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Job {
+
+    public static final String PAUSED_STATUS_MESSAGE = "Paused";
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "job_seq")
@@ -109,6 +112,10 @@ public class Job {
 
     public boolean hasJobBeenCancelled() {
         return CANCELLED == status;
+    }
+
+    public boolean isPaused() {
+        return status == SUBMITTED && pauseEligible && PAUSED_STATUS_MESSAGE.equals(statusMessage);
     }
 
     public void pollAndUpdateTime(int delaySeconds) {

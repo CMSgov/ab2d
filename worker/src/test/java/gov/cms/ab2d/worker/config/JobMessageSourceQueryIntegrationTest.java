@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Tests the polling SQL directly to ensure that the recovery/restart path doesn't accidentally
  * restart/recover jobs it's not supposed to. It checks that:
  *   - a SUBMITTED job with an int_lock row does not get picked up
- *   - an IN_PROGRESS job is recoverable only when the prototype flag is on and the job itself is
+ *   - an IN_PROGRESS job is recoverable only when the pause/resume flag is on and the job itself is
  *     pause/resume eligible
  */
 @SpringBootTest
@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringIntegrationTest(noAutoStartup = {"inboundChannelAdapter", "*Source*"})
 class JobMessageSourceQueryIntegrationTest {
 
-    private static final String FLAG_KEY = "pause-resume.prototype.enabled";
+    private static final String FLAG_KEY = "pause-resume.enabled";
     private static final int TTL_SECONDS = 60;
     private static final String CONTRACT = "Z0001";
 
@@ -91,7 +91,7 @@ class JobMessageSourceQueryIntegrationTest {
     @BeforeEach
     void setUp() {
         jdbc = new JdbcTemplate(dataSource);
-        clearPrototypeFlag();
+        clearPauseResumeFlag();
     }
 
     @AfterEach
@@ -102,7 +102,7 @@ class JobMessageSourceQueryIntegrationTest {
             jdbc.update("DELETE FROM job WHERE job_uuid = ?", uuid);
         }
         createdJobUuids.clear();
-        clearPrototypeFlag();
+        clearPauseResumeFlag();
     }
 
     @Test
@@ -158,7 +158,7 @@ class JobMessageSourceQueryIntegrationTest {
     @Test
     @DisplayName("An IN_PROGRESS job with a stale lease and the flag on is recoverable")
     void inProgressWithStaleLeaseAndFlagOnIsRecoverable() {
-        enablePrototypeFlag();
+        enablePauseResumeFlag();
         String uuid = createJob(JobStatus.IN_PROGRESS);
         insertLease(uuid, TTL_SECONDS * 2);
         assertTrue(poll().contains(uuid), "an IN_PROGRESS job with a dead lease should be recovered");
@@ -167,7 +167,7 @@ class JobMessageSourceQueryIntegrationTest {
     @Test
     @DisplayName("An IN_PROGRESS job with a fresh lease is not recovered")
     void inProgressWithFreshLeaseIsNotRecovered() {
-        enablePrototypeFlag();
+        enablePauseResumeFlag();
         String uuid = createJob(JobStatus.IN_PROGRESS);
         insertLease(uuid, 1);
         assertFalse(poll().contains(uuid), "a live worker's heartbeat should keep its job from being stolen");
@@ -176,7 +176,7 @@ class JobMessageSourceQueryIntegrationTest {
     @Test
     @DisplayName("An IN_PROGRESS job with no lease row at all is not recovered")
     void inProgressWithNoLeaseRowIsNotRecovered() {
-        enablePrototypeFlag();
+        enablePauseResumeFlag();
         String uuid = createJob(JobStatus.IN_PROGRESS);
         // no lease row means no recovery
         assertFalse(poll().contains(uuid),
@@ -186,19 +186,19 @@ class JobMessageSourceQueryIntegrationTest {
     @Test
     @DisplayName("A stale IN_PROGRESS job that never opted in to pause/resume is not recovered")
     void inProgressWithStaleLeaseButNotEligibleIsNotRecovered() {
-        enablePrototypeFlag();
+        enablePauseResumeFlag();
         String uuid = createJob(JobStatus.IN_PROGRESS, false);
         insertLease(uuid, TTL_SECONDS * 2);
         assertFalse(poll().contains(uuid), "in_progress jobs should only appear if they are pause/resume");
     }
 
     @Test
-    @DisplayName("A stale IN_PROGRESS job is not recovered while the prototype flag is off")
+    @DisplayName("A stale IN_PROGRESS job is not recovered while the pause/resume flag is off")
     void inProgressWithStaleLeaseButFlagOffIsNotRecovered() {
         // this test can be removed after integrating
         String uuid = createJob(JobStatus.IN_PROGRESS);
         insertLease(uuid, TTL_SECONDS * 2);
-        assertFalse(poll().contains(uuid), "recovery must be gated behind the prototype flag");
+        assertFalse(poll().contains(uuid), "recovery must be gated behind the pause/resume flag");
     }
 
     /** Run the real query and return the set of job_uuids it selects. */
@@ -240,13 +240,13 @@ class JobMessageSourceQueryIntegrationTest {
                 + "VALUES (?, 'test-owner', 1, now() - make_interval(secs => ?), NULL)", uuid, heartbeatAgeSeconds);
     }
 
-    private void enablePrototypeFlag() {
-        clearPrototypeFlag();
+    private void enablePauseResumeFlag() {
+        clearPauseResumeFlag();
         jdbc.update("INSERT INTO property.properties (id, key, value, created, modified) "
                 + "SELECT COALESCE(MAX(id), 0) + 1, ?, 'true', now(), now() FROM property.properties", FLAG_KEY);
     }
 
-    private void clearPrototypeFlag() {
+    private void clearPauseResumeFlag() {
         jdbc.update("DELETE FROM property.properties WHERE key = ?", FLAG_KEY);
     }
 }

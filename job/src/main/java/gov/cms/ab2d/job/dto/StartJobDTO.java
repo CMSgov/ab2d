@@ -30,4 +30,10 @@ public class StartJobDTO {
     @NotNull
     private final FhirVersion version;
     private final List<String> serviceDates;
+    private final boolean pauseEligible;
+
+    public StartJobDTO(String contractNumber, String organization, String resourceTypes, String url, String outputFormat,
+                       OffsetDateTime since, OffsetDateTime until, FhirVersion version, List<String> serviceDates) {
+        this(contractNumber, organization, resourceTypes, url, outputFormat, since, until, version, serviceDates, false);
+    }
 }

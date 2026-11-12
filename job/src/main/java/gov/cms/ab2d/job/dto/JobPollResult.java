@@ -17,4 +17,5 @@ public class JobPollResult {
     private String transactionTime;
     private OffsetDateTime expiresAt;
     private List<JobOutput> jobOutputs;
+    private boolean paused;
 }
