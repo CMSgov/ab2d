@@ -227,3 +227,5 @@ databaseChangeLog:
       file: db/changelog/v2026/add_v3_staging_table_partitions.sql
   - include:
       file: db/changelog/v2026/add_v3_since_date_check.sql
+  - include:
+      file: db/changelog/v2026/rename_pause_resume_property_keys.sql

@@ -2,9 +2,9 @@
 # Submit an export job, poll until complete, download the output
 # submit-job.sh [--version v1|v2|v3] default v1
 #
-#   prototype requires the flag pause-resume.prototype.enabled=true and seeded V3 data
+#   pause/resume requires the flag pause-resume.enabled=true and seeded V3 data
 #   do this locally with:
-#   docker exec ab2d-db-1 psql -U ab2d -d ab2d -c "UPDATE property.properties SET value='true' WHERE key='pause-resume.prototype.enabled';"
+#   docker exec ab2d-db-1 psql -U ab2d -d ab2d -c "UPDATE property.properties SET value='true' WHERE key='pause-resume.enabled';"
 #   Seed v3 benes:
 #   docker exec -i ab2d-db-1 psql -U ab2d -d ab2d < local-dev/sql/seed-v3.sql
 
@@ -41,7 +41,7 @@ mkdir -p "$OUT_DIR"
 
 log() { printf '[job] %s\n' "$*"; }
 
-# --- prototype path -----
+# --- pause/resume path -----
 DB_CONTAINER="${DB_CONTAINER:-ab2d-db-1}"
 DB_USER="${DB_USER:-ab2d}"
 DB_NAME="${DB_NAME:-ab2d}"

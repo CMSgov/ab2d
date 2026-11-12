@@ -6,7 +6,7 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.worker.processor.prototype.PrototypeBatchMetadataRepository;
+import gov.cms.ab2d.worker.processor.pauseresume.PauseResumeBatchMetadataRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_ENABLED;
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_ENABLED;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_CANCELLED;
 import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
@@ -30,7 +30,7 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
     private final SQSEventClient eventLogger;
     private final int cancelThreshold;
     private final CoverageV3Service coverageV3Service;
-    private final PrototypeBatchMetadataRepository batchMeta;
+    private final PauseResumeBatchMetadataRepository batchMeta;
     private final PropertiesService propertiesService;
 
     public CancelStuckJobsProcessorImpl(
@@ -38,7 +38,7 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
             SQSEventClient eventLogger,
             @Value("${stuck.job.cancel.threshold}") int cancelThreshold,
             CoverageV3Service coverageV3Service,
-            PrototypeBatchMetadataRepository batchMeta,
+            PauseResumeBatchMetadataRepository batchMeta,
             PropertiesService propertiesService) {
         this.jobRepository = jobRepository;
         this.eventLogger = eventLogger;
@@ -57,11 +57,11 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
         final List<Job> stuckJobs = jobRepository.findStuckJobs(cutOffTime);
         log.info("Found {} jobs that appears to be stuck", stuckJobs.size());
 
-        final boolean prototypeEnabled = propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false);
+        final boolean pauseResumeEnabled = propertiesService.isToggleOn(PAUSE_RESUME_ENABLED, false);
 
         for (Job stuckJob : stuckJobs) {
             // For pause/resume jobs, the runtime of the job must not include time spent paused
-            if (prototypeEnabled && stuckJob.getFhirVersion() == FhirVersion.R4V3 && stuckJob.isPauseEligible()) {
+            if (pauseResumeEnabled && stuckJob.getFhirVersion() == FhirVersion.R4V3 && stuckJob.isPauseEligible()) {
                 final long activeSeconds = batchMeta.activeRuntimeSeconds(stuckJob.getJobUuid());
                 final long thresholdSeconds = (long) cancelThreshold * 3600L;
                 if (activeSeconds < thresholdSeconds) {

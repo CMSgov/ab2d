@@ -35,7 +35,7 @@ public class WorkerServiceStub implements WorkerService {
     }
 
     @Override
-    public boolean isPrototypeAdmissible() {
+    public boolean isPauseResumeAdmissible() {
         return true;
     }
 }

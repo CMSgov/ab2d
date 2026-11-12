@@ -28,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.PAUSED_PROGRESS_PREFIX;
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
@@ -80,10 +81,14 @@ public class StatusCommon {
                 return getSuccessResponse(jobPollResult, jobUuid, request, apiPrefix);
             case SUBMITTED:
             case IN_PROGRESS:
-                responseHeaders.add(X_PROG, jobPollResult.getProgress() + "% complete");
+                String progress = jobPollResult.getProgress() + "% complete";
+                if (jobPollResult.isPaused()) {
+                    progress = PAUSED_PROGRESS_PREFIX + progress;
+                }
+                responseHeaders.add(X_PROG, progress);
                 responseHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
                 eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.ACCEPTED,
-                        "Job in progress", jobPollResult.getProgress() + "% complete",
+                        jobPollResult.isPaused() ? "Job paused" : "Job in progress", progress,
                         (String) request.getAttribute(REQUEST_ID)));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
             case CANCELLED:

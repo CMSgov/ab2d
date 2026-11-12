@@ -28,6 +28,9 @@ public class ApiText {
     public static final String JOB_COMPLETE = "The job is complete.";
     public static final String STATUS_DELAY = "A delay time in seconds before another status request will be accepted.";
     public static final String PROGRESS = "Completion percentage, such as 50%";
+    public static final String PROGRESS_V3 = "Completion percentage, such as 50%. A paused job reports "
+            + "\"Paused, 50% complete\", and will typically resume automatically.";
+    public static final String PAUSED_PROGRESS_PREFIX = "Paused, ";
     public static final String FILE_EXPIRES = "Indicates when (an HTTP-date timestamp) the files " +
             "listed will no longer be available for access.";
     public static final String CAP_DESC = "A JSON FHIR capability statement matching ";
