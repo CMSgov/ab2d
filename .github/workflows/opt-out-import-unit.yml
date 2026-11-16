@@ -24,10 +24,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
 
       - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: '25'
-          distribution: 'temurin'
+        uses: ./.github/actions/setup-java
 
       - name: Set env vars from AWS params in BCDA management account
         uses: cmsgov/cdap/actions/aws-params-env-action@main
