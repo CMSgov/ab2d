@@ -1,0 +1,43 @@
+name: Set up Java
+inputs:
+  java-version:
+    description: JDK version to install
+    default: '25'
+  distribution:
+    description: JDK distribution to install
+    default: temurin
+  cache:
+    description: Dependency cache to enable (maven, gradle, sbt), or empty for none
+    default: ''
+outputs:
+  path:
+    description: Path of the installed JDK
+    value: ${{ steps.setup-java.outputs.path }}
+  version:
+    description: Installed JDK version
+    value: ${{ steps.setup-java.outputs.version }}
+runs:
+  using: composite
+  steps:
+    - name: Install JDK
+      id: setup-java
+      uses: actions/setup-java@v5
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: ${{ inputs.distribution }}
+        cache: ${{ inputs.cache }}
+
+    - name: Remove emSign roots from JDK trust store
+      shell: bash
+      env:
+        JAVA_HOME: ${{ steps.setup-java.outputs.path }}
+      # Temurin bundles its own cacerts, which still trusts the emSign roots that
+      # AL2023 removed after the eMudhra CA compromise (ALAS2023-2026-3337).
+      run: |
+        aliases=$("$JAVA_HOME/bin/keytool" -list -v -cacerts -storepass changeit |
+          awk '/^Alias name: /{alias=substr($0, 13)} /^Owner: .*(emSign|eMudhra)/{print alias}')
+        while read -r alias; do
+          [ -n "$alias" ] || continue
+          echo "Removing \"$alias\""
+          "$JAVA_HOME/bin/keytool" -delete -alias "$alias" -cacerts -storepass changeit
+        done <<< "$aliases"

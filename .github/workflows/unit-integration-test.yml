@@ -45,10 +45,8 @@ jobs:
           fetch-depth: 0  # Get entire history for SonarQube
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: ./.github/actions/setup-java
         with:
-          java-version: '25'
-          distribution: temurin
           cache: maven
 
       - name: Set env vars from AWS params
