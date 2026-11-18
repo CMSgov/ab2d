@@ -44,6 +44,7 @@ public class JobClientMock extends JobClient {
     private int progress = 100;
     private OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(EXPIRES_IN_DAYS);
     private boolean resultsCreated;
+    private boolean paused;
 
     @Value("classpath:test.ndjson")
     private Resource jobOutputResults;
@@ -89,7 +90,8 @@ public class JobClientMock extends JobClient {
 
     private StartJobDTO convert(StartJobDTO orig, String organization) {
         return new StartJobDTO(orig.getContractNumber(), organization, orig.getResourceTypes(),
-                orig.getUrl(), orig.getOutputFormat(), orig.getSince(), orig.getUntil(), orig.getVersion(), orig.getServiceDates());
+                orig.getUrl(), orig.getOutputFormat(), orig.getSince(), orig.getUntil(), orig.getVersion(), orig.getServiceDates(),
+                orig.isPauseEligible());
     }
 
     public List<String> getActiveJobIds(String organization) {
@@ -150,7 +152,7 @@ public class JobClientMock extends JobClient {
         String transactionTime =
                 new org.hl7.fhir.dstu3.model.DateTimeType(OffsetDateTime.now().toString()).toHumanDisplay();
         return new JobPollResult(startJobDTO.getUrl(), expectedStatus, progress,
-                transactionTime, expiresAt, jobOutputList);
+                transactionTime, expiresAt, jobOutputList, paused);
     }
 
     public void cancelJob(String jobUuid, String organization) {
@@ -185,6 +187,10 @@ public class JobClientMock extends JobClient {
         this.expiresAt = expiresAt;
     }
 
+    public void setPaused(boolean paused) {
+        this.paused = paused;
+    }
+
     public void setResultsCreated(boolean resultsCreated) {
         this.resultsCreated = resultsCreated;
     }
@@ -198,6 +204,7 @@ public class JobClientMock extends JobClient {
         jobOutputList.clear();
         expectedStatus = JobStatus.SUCCESSFUL;
         progress = 100;
+        paused = false;
         pollTimes.clear();
         expiresAt = OffsetDateTime.now().plusDays(EXPIRES_IN_DAYS);
         resultsCreated = false;

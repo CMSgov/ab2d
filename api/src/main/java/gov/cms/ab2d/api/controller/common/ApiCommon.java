@@ -252,8 +252,10 @@ public class ApiCommon {
         checkSinceTime(since, version);
         checkUntilTime(since, until, version);
         checkServiceDates(serviceDates);
+        boolean pauseEligible = version == R4V3
+                && propertiesService.isToggleOn(PAUSE_RESUME_ENABLED, false);
         return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,
-                getCurrentUrl(request), outputFormat, since, until, version, serviceDates);
+                getCurrentUrl(request), outputFormat, since, until, version, serviceDates, pauseEligible);
     }
 
     public void checkContractIsAllowListedForV3() {

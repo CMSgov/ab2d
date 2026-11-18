@@ -7,8 +7,8 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
-import gov.cms.ab2d.worker.processor.prototype.PrototypeJobProcessor;
-import gov.cms.ab2d.worker.processor.prototype.PrototypeProperties;
+import gov.cms.ab2d.worker.processor.pauseresume.PauseResumeJobProcessor;
+import gov.cms.ab2d.worker.processor.pauseresume.PauseResumeProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextClosedEvent;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_PROTOTYPE_ENABLED;
+import static gov.cms.ab2d.common.util.PropertyConstants.PAUSE_RESUME_ENABLED;
 import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 
 /**
@@ -38,13 +38,13 @@ public class WorkerServiceImpl implements WorkerService {
     private final JobProcessor jobProcessor;
     private final ShutDownService shutDownService;
     private final PropertiesService propertiesService;
-    private final PrototypeJobProcessor prototypeJobProcessor;
-    private final PrototypeProperties prototypeProperties;
+    private final PauseResumeJobProcessor pauseResumeJobProcessor;
+    private final PauseResumeProperties pauseResumeProperties;
 
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
-    // The subset of activeJobs that are prototype jobs
-    private final Set<String> prototypeJobs = ConcurrentHashMap.newKeySet();
+    // The subset of activeJobs that are pause/resume jobs
+    private final Set<String> pauseResumeJobs = ConcurrentHashMap.newKeySet();
 
     @Override
     public Job process(String jobUuid) {
@@ -56,20 +56,20 @@ public class WorkerServiceImpl implements WorkerService {
             if (job.getStatus() == JobStatus.IN_PROGRESS) {
                 log.info("{} has been started", jobUuid);
 
-                // The pause/resume prototype handles v3 jobs when the feature flag is on
-                if (propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false)
+                // The pause/resume handles v3 jobs when the feature flag is on
+                if (propertiesService.isToggleOn(PAUSE_RESUME_ENABLED, false)
                         && job.getFhirVersion() == FhirVersion.R4V3
                         && job.isPauseEligible()) {
-                    log.info("{} routed to pause/resume prototype processor", jobUuid);
-                    prototypeJobs.add(jobUuid);
+                    log.info("{} routed to pause/resume processor", jobUuid);
+                    pauseResumeJobs.add(jobUuid);
                     try {
-                        job = prototypeJobProcessor.process(jobUuid);
+                        job = pauseResumeJobProcessor.process(jobUuid);
                     } finally {
-                        prototypeJobs.remove(jobUuid);
+                        pauseResumeJobs.remove(jobUuid);
                     }
                 } else {
-                    // yield the prototype work if we get a real job
-                    yieldPrototypeToRealWork();
+                    // no-op unless pause-resume.pause-under-load is on
+                    yieldPauseResumeToRealWork();
                     job = jobProcessor.process(jobUuid);
                 }
                 log.info("Job was processed");
@@ -95,51 +95,58 @@ public class WorkerServiceImpl implements WorkerService {
         return FeatureEngagement.fromString(propertiesService.getProperty(WORKER_ENGAGEMENT, FeatureEngagement.IN_GEAR.getSerialValue()));
     }
 
+    /**
+     * @deprecated unused, but potentially useful for self-pausing test jobs
+     */
+    @Deprecated
     @Override
-    public boolean isPrototypeAdmissible() {
+    public boolean isPauseResumeAdmissible() {
         if (!yieldingUnderLoad()) {
             return true;
         }
-        return realJobCount() <= prototypeProperties.getRealJobTolerance();
+        return realJobCount() <= pauseResumeProperties.getRealJobTolerance();
     }
 
     /**
-     * If the worker is busy, pause the prototype jobs
+     * If the worker is busy, pause the running pause/resume jobs
+     *
+     * @deprecated unused, but potentially useful for self-pausing test jobs
      */
-    private void yieldPrototypeToRealWork() {
+    @Deprecated
+    private void yieldPauseResumeToRealWork() {
         if (!yieldingUnderLoad()) {
             return;
         }
         int realJobs = realJobCount();
-        if (realJobs <= prototypeProperties.getRealJobTolerance()) {
+        if (realJobs <= pauseResumeProperties.getRealJobTolerance()) {
             return;
         }
-        log.info("All prototype jobs will be paused");
-        prototypeJobProcessor.stopRunning(prototypeJobs);
+        log.info("All pause/resume jobs will be paused");
+        pauseResumeJobProcessor.stopRunning(pauseResumeJobs);
     }
 
     /**
-     * Check the property that decides if we yield prototype jobs at all
+     * Check the property that decides if we yield pause/resume jobs at all
      */
     private boolean yieldingUnderLoad() {
-        return propertiesService.isToggleOn(PAUSE_RESUME_PROTOTYPE_ENABLED, false)
-                && prototypeProperties.isPauseUnderLoad();
+        return propertiesService.isToggleOn(PAUSE_RESUME_ENABLED, false)
+                && pauseResumeProperties.isPauseUnderLoad();
     }
 
     /**
      * How many real jobs this worker is running
      */
     private int realJobCount() {
-        return Math.max(0, activeJobs.size() - prototypeJobs.size());
+        return Math.max(0, activeJobs.size() - pauseResumeJobs.size());
     }
 
     /**
-     * Signal any running prototype batch executions to stop and drain before Spring
+     * Signal any running pause/resume batch executions to stop and drain before Spring
      * tears down context
      */
     @EventListener(ContextClosedEvent.class)
-    public void stopPrototypeJobsBeforeClose() {
-        prototypeJobProcessor.stopForShutdown(prototypeJobs);
+    public void stopPauseResumeJobsBeforeClose() {
+        pauseResumeJobProcessor.stopForShutdown(pauseResumeJobs);
     }
 
     @PreDestroy
@@ -147,9 +154,9 @@ public class WorkerServiceImpl implements WorkerService {
         log.info("Shutdown in progress ... Do house keeping ...");
 
         // this is a stopgap to prevent jobs from being forced to hard-recovery
-        // prototype jobs handle their own shutdown behavior.
+        // pause/resume jobs handle their own shutdown behavior.
         List<String> jobsToReset = new ArrayList<>(activeJobs);
-        jobsToReset.removeAll(prototypeJobs);
+        jobsToReset.removeAll(pauseResumeJobs);
 
         if (!jobsToReset.isEmpty()) {
             shutDownService.resetInProgressJobs(jobsToReset);

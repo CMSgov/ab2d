@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Serialized ndjson output of one beneficiary's EOBs. Contains both the successful and error lines, produced
- * by {@link EobNdjsonSerializer} and shared between the prototype and main code.
+ * by {@link EobNdjsonSerializer} and shared between the pause/resume and main code.
  */
 public record SerializedEobs(List<String> dataLines, List<String> errorLines) {
 

@@ -47,7 +47,7 @@ public class StatusAPIV3 {
     @Parameters(value = @Parameter(name = "jobUuid", description = JOB_ID, required = true, in = ParameterIn.PATH))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = STILL_RUNNING, headers = {
-                @Header(name = X_PROG, description = PROGRESS, schema = @Schema(type = "string")),
+                @Header(name = X_PROG, description = PROGRESS_V3, schema = @Schema(type = "string")),
                 @Header(name = RETRY_AFTER, description = STATUS_DELAY, schema = @Schema(type = "integer"))}
             ),
             @ApiResponse(responseCode = "200", description = JOB_COMPLETE, headers = {

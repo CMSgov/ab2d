@@ -104,7 +104,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
 
     @Override
     public CoveragePagingResult pageCoverageByPatientRange(String contract, long startPatientExclusive, long endPatientInclusive, Optional<Long> cursor, int pageSize) {
-        // prototype assumes normal contract type TODO: update on transition out of prototype
+        // pause/resume assumes a normal contract type TODO: support other contract types
         val contractDto = new ContractForCoverageDTO(contract, null, ContractForCoverageDTO.ContractType.NORMAL);
         val membership = new GetAggregatedCoverageMembership(dataSource);
         val cursorExclusive = cursor.orElse(startPatientExclusive);

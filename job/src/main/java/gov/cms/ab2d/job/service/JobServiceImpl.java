@@ -66,6 +66,7 @@ public class JobServiceImpl implements JobService {
         job.setServiceDates(startJobDTO.getServiceDates());
         job.setFhirVersion(startJobDTO.getVersion());
         job.setOrganization(startJobDTO.getOrganization());
+        job.setPauseEligible(startJobDTO.isPauseEligible());
 
         eventLogger.sendLogs(job.buildJobStatusChangeEvent(JobStatus.SUBMITTED, "Job Created"));
 
@@ -200,7 +201,7 @@ public class JobServiceImpl implements JobService {
         jobRepository.save(job);
         String transactionTime = job.getFhirVersion().getFhirTime(job.getCreatedAt());
         return new JobPollResult(job.getRequestUrl(), job.getStatus(), job.getProgress(), transactionTime,
-                job.getExpiresAt(), job.getJobOutputs());
+                job.getExpiresAt(), job.getJobOutputs(), job.isPaused());
     }
 
     @Override

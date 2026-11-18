@@ -10,5 +10,9 @@ public interface WorkerService {
 
     FeatureEngagement getEngagement();
 
-    boolean isPrototypeAdmissible();
+    /**
+     * @deprecated unused, but potentially useful for self-pausing test jobs
+     */
+    @Deprecated
+    boolean isPauseResumeAdmissible();
 }

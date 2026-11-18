@@ -28,7 +28,7 @@ public interface CoverageV3Service {
 
     // NOTE: Assumes job has been kicked off and aggregated table exists
     int getDistinctPatientCount(String contract);
-    // Prototype pause/resume partitioning: highest row_number (true total row count, incl.
+    // Pause/resume partitioning: highest row_number (true total row count, incl.
     // opt-outs and multi-MBI rows) and the patient_id boundaries that split it into partitions.
     long getMaxRowNumber(String contract);
     List<Long> getPartitionBoundaryPatientIds(String contract, int size);

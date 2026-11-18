@@ -14,7 +14,7 @@ import javax.sql.DataSource;
  */
 public class JobMessageSource extends JdbcPollingChannelAdapter {
 
-    // Checks in-progress jobs only if the prototype is enabled, and only if those jobs have a lease row.
+    // Checks in-progress jobs only if pause/resume is enabled, and only if those jobs have a lease row.
     // Jobs without a lease row are started by the normal worker, and are ignored.
     private static final String QUERY_TEMPLATE =
     """
@@ -30,7 +30,7 @@ public class JobMessageSource extends JdbcPollingChannelAdapter {
             OR (
                 status = 'IN_PROGRESS'
                 AND EXISTS (SELECT 1 FROM property.properties
-                            WHERE key = 'pause-resume.prototype.enabled' AND value = 'true')
+                            WHERE key = 'pause-resume.enabled' AND value = 'true')
                 AND job.pause_eligible
                 AND EXISTS (
                     SELECT 1 FROM ab2d.job_lease l

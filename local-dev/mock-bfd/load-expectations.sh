@@ -107,7 +107,7 @@ for id in 20140000008325 20140000009893; do
 done
 
 # === V3 stubs ===
-# prototype/v3 needs matching patient id in the eob
+# pause/resume (v3) needs matching patient id in the eob
 # so use a template and inject whatever id we need
 
 register "/v3/fhir/metadata" "" "v3/meta.json"

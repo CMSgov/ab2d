@@ -19,8 +19,8 @@ import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
-import gov.cms.ab2d.worker.processor.prototype.PrototypeJobProcessor;
-import gov.cms.ab2d.worker.processor.prototype.PrototypeProperties;
+import gov.cms.ab2d.worker.processor.pauseresume.PauseResumeJobProcessor;
+import gov.cms.ab2d.worker.processor.pauseresume.PauseResumeProperties;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -34,8 +34,8 @@ class WorkerServiceImplTest {
     JobProcessor jobProcessor = mock(JobProcessor.class);
     ShutDownService shutDownService = mock(ShutDownService.class);
     PropertiesService propertiesService = mock(PropertiesService.class);
-    CoverageV3Service coverageV3Service = mock(CoverageV3Service.class);
-    PrototypeJobProcessor prototypeJobProcessor = mock(PrototypeJobProcessor.class);
+    mock(CoverageV3Service.class);
+    PauseResumeJobProcessor pauseResumeJobProcessor = mock(PauseResumeJobProcessor.class);
 
     Job job = new Job();
     job.setStatus(status);
@@ -43,7 +43,7 @@ class WorkerServiceImplTest {
 
     // assertDoesNotThrow is really the best we can do here... all the function does is log.
     assertDoesNotThrow(() -> {
-      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, prototypeJobProcessor, new PrototypeProperties());
+      WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, pauseResumeJobProcessor, new PauseResumeProperties());
       workerServiceImpl.process("jobUuid");
     });
   }
@@ -54,11 +54,11 @@ class WorkerServiceImplTest {
     JobProcessor jobProcessor = mock(JobProcessor.class);
     ShutDownService shutDownService = mock(ShutDownService.class);
     PropertiesService propertiesService = mock(PropertiesService.class);
-    CoverageV3Service coverageV3Service = mock(CoverageV3Service.class);
-    PrototypeJobProcessor prototypeJobProcessor = mock(PrototypeJobProcessor.class);
+    mock(CoverageV3Service.class);
+    PauseResumeJobProcessor pauseResumeJobProcessor = mock(PauseResumeJobProcessor.class);
 
 
-    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, prototypeJobProcessor, new PrototypeProperties());
+    WorkerServiceImpl workerServiceImpl = new WorkerServiceImpl(jobPreprocessor, jobProcessor, shutDownService, propertiesService, pauseResumeJobProcessor, new PauseResumeProperties());
 
     // verify "resetInProgressJobs" wasn't called, because "activeJobs" is empty
     workerServiceImpl.resetInProgressJobs();
