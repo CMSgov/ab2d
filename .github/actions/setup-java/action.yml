@@ -34,10 +34,12 @@ runs:
       # Temurin bundles its own cacerts, which still trusts the emSign roots that
       # AL2023 removed after the eMudhra CA compromise (ALAS2023-2026-3337).
       run: |
-        aliases=$("$JAVA_HOME/bin/keytool" -list -v -cacerts -storepass changeit |
+        sudo=
+        [ -w "$JAVA_HOME/lib/security/cacerts" ] || sudo=sudo
+        aliases=$($sudo "$JAVA_HOME/bin/keytool" -list -v -cacerts -storepass changeit |
           awk '/^Alias name: /{alias=substr($0, 13)} /^Owner: .*(emSign|eMudhra)/{print alias}')
         while read -r alias; do
           [ -n "$alias" ] || continue
           echo "Removing \"$alias\""
-          "$JAVA_HOME/bin/keytool" -delete -alias "$alias" -cacerts -storepass changeit
+          $sudo "$JAVA_HOME/bin/keytool" -delete -alias "$alias" -cacerts -storepass changeit
         done <<< "$aliases"
